@@ -1,0 +1,265 @@
+
+.about{
+  width: 100vw;  
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6rem;
+  min-height: 100vh;
+  margin-bottom: -5.3%;
+  background-color: rgb(16, 39, 94);
+}
+.banner{
+  display: flex;
+  background-color: white;
+  width: 95vw;
+  height: 14vh;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  margin-top: 5px;
+  margin-bottom: 5px;
+  text-align: center;
+}
+.banner h1{
+  font-size: 30px;
+}
+.info{
+  height: 60vh;
+  width: 95vw;
+  overflow: hidden;
+  border: 1px solid black;
+  background-color: black;
+  border-radius: var(--border-radius);
+ 
+}
+.heroImg{
+  position: absolute;
+  bottom: 9.9%;
+  left: 24%;
+  overflow: hidden;
+  border-radius: var(--border-radius);
+  object-fit: cover;
+ 
+}
+
+.container {
+height: 100%;
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-evenly;
+}
+
+.wrapper {
+display: flex;
+align-items: center;
+justify-content: space-evenly;
+height: 100%;
+width: 100%;
+}
+
+.grid {
+display: grid;
+grid-template-columns: repeat(3, minmax(25%, auto));
+width: 100%;
+max-width: 100%;
+height: 100%;
+}
+
+.card {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: space-evenly;
+width: 100%;
+height: 100%;
+background-color: white;
+border: 1px solid black;
+border-radius: var(--border-radius);
+}
+.card h2{
+text-align: center;
+width: 97%;
+}
+.card p{
+font-size: 13px;
+width: 85%;
+text-align: center;
+font-weight: bold;
+}
+.card button{
+  height: 50px;
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  border-radius: var(--border-radius);
+  border: 1px solid rgb(16, 39, 94);
+  background-color: black;
+  box-shadow: 5px 15px 25px rgb(16, 39, 94);;
+  color: white;
+}
+.contact{
+  width: 95vw;
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+.card:hover {
+  background: rgba(var(--card-rgb), 0.1);
+  border: 1px solid rgba(var(--card-border-rgb), 0.15);
+  color: white;
+ 
+}
+
+.card:hover span {
+  transform: translateX(4px);
+}
+
+}
+
+
+
+
+
+/* Mobile */
+@media screen and (max-width: 700px) {
+  .heroImg{
+    position: absolute;
+    bottom: 22%;
+    left: 3%;
+    overflow: hidden;
+    height: 56.4%;
+    width: 62.5%;
+    z-index: 1;
+   
+  }
+
+.about{
+  width: 100vw;  
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6rem;
+  min-height: 100vh;
+  margin-bottom: -5.3%;
+  background-color: rgb(16, 39, 94);
+}
+.banner{
+  display: flex;
+  background-color: white;
+  width: 95vw;
+  height: 10vh;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.banner h1{
+  font-size: 16px;
+  font-weight: bold;
+}
+.info{
+  height: 60vh;
+  width: 95vw;
+  overflow: hidden;
+  border: 1px solid black;
+  background-color: black;
+  border-radius: var(--border-radius);
+ 
+}
+
+.container {
+height: 100%;
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-evenly;
+}
+
+.wrapper {
+display: flex;
+align-items: center;
+justify-content: space-evenly;
+height: 100%;
+width: 100%;
+}
+
+.grid {
+display: grid;
+grid-template-columns: repeat(2, minmax(25%, auto));
+width: 100%;
+max-width: 100%;
+height: 100%;
+}
+
+.card {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: space-evenly;
+width: 100%;
+height: 100%;
+background-color: white;
+border: 1px solid black;
+border-radius: var(--border-radius);
+}
+.card h2{
+text-align: center;
+width: 97%;
+font-size: 15px;
+}
+.card p{
+font-size: 8px;
+width: 95%;
+text-align: center;
+font-weight: bold;
+}
+.card button{
+  height: 50px;
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  border-radius: var(--border-radius);
+  border: 1px solid rgb(16, 39, 94);
+  background-color: black;
+  box-shadow: 5px 15px 25px rgb(16, 39, 94);;
+  color: white;
+}
+
+
+}
+@media screen and (max-width:281px){
+  .card button{
+    height: 20px;
+    width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid rgb(16, 39, 94);
+    background-color: black;
+    box-shadow: 5px 15px 25px rgb(16, 39, 94);;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  .about{
+    margin-bottom: -10.3%;
+  }
+  .wrapper{
+    background: transparent;
+  }
+}
+
+/* Tablet and Smaller Desktop */
+@media (min-width: 701px) and (max-width: 1120px) {
+  .about{
+    margin-bottom: -10.3%;
+  }
+}

@@ -1,0 +1,190 @@
+.form{
+    height: 85vh;
+    width: 47vw;
+    background-color: whitesmoke;
+    /* margin-top: 1%; */
+    box-shadow: 5px 10px 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    border-radius: var(--border-radius);
+    margin-left: 1.5%;
+}
+
+.formInput{
+    width: 70%;
+    margin-left: 4%;
+    height: 10%;
+    border-radius: 5px;
+    box-shadow: 5px 10px 15px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+.checkbox{
+    width: 85%;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    margin-left: 12%;
+}
+
+.contactMessage{
+    height: 30%;
+    width: 90%;
+    margin-left: 4%;
+    border-radius: 5px;
+    box-shadow: 2px 2px 8px;
+    cursor: pointer;
+}
+.formSubmit{
+    width: 50%;
+    height: 30px;
+    margin-left: 25%;
+    box-shadow: 2px 2px 8px;
+    cursor: pointer;
+    color: black;
+    border-radius: 15px;
+}
+
+@media screen and (max-width:480px) and (min-width:390px) {
+    .form{
+        height: 100vh;
+        max-width: 480px;
+        min-width: 390px;
+        width: 100vw;
+        background-color: whitesmoke;
+        margin-top: 15%;
+    }
+    .formContainer{
+        height: 100%;
+        width: 100%;
+        display: flex;
+    }
+    .formWrapper{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-evenly;
+        flex: 2;
+        height: 80%;
+        width: 80%;
+        border: none;
+        box-shadow: 2px 50px 45px;
+        margin-top: 5px;
+        margin-right: 20px;
+        /* margin-left: 5%; */
+    
+        
+    }
+    .formLeft{
+        flex: 1;
+        background-image: url(../public/form.png);
+        background-position: center;
+        background-size: 275px;
+        background-repeat: no-repeat;
+        height: 100%;
+        width: 100%;
+        
+    }
+    .formRight{
+        flex: 1;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: navy;
+        
+        
+    }
+    .contactForm{
+        height: 80%;
+        width: 90%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        border-radius: 5px;
+        box-shadow: 2px 42px 56px;
+        background-color: whitesmoke;
+        
+    }
+    .formInput{
+        width: 70%;
+        margin-left: 4%;
+        height: 10%;
+        border-radius: 5px;
+        box-shadow: 12px 5px 12px;
+        border: none;
+        cursor: pointer;
+    }
+    .checkbox{
+        width: 75%;
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        margin-left: 10%;
+        font-size: 11px;
+    }
+    .spanCheckbox{
+        margin-left: 1%;
+        margin-top: 2px;
+        cursor: pointer;
+    }
+    .contactMessage{
+        height: 30%;
+        width: 90%;
+        margin-left: 4%;
+        border-radius: 5px;
+        box-shadow: 2px 2px 8px;
+        cursor: pointer;
+    }
+    .formSubmit{
+        width: 50%;
+        margin-left: 25%;
+        box-shadow: 2px 2px 8px;
+        cursor: pointer;
+        color: black;
+        background-color: lightgray;
+    }
+    
+    
+}
+@media (max-width: 700px) {
+    .form{
+        height: 60vh;
+        width: 95vw;
+        background-color: whitesmoke;
+    }
+    
+    
+    .formInput{
+        width: 70%;
+        margin-left: 4%;
+        height: 10%;
+        border-radius: 5px;
+        box-shadow: 12px 5px 12px;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .contactMessage{
+        height: 30%;
+        width: 90%;
+        margin-left: 4%;
+        border-radius: 5px;
+        box-shadow: 2px 2px 8px;
+        cursor: pointer;
+    }
+    .formSubmit{
+        width: 50%;
+        margin-left: 25%;
+        box-shadow: 2px 2px 8px;
+        cursor: pointer;
+        color: black;
+        background-color: lightgray;
+    }
+    
+    
+}
+

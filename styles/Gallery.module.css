@@ -1,0 +1,31 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6rem;
+  min-height: 100vh;
+  margin-bottom: -20px;
+  background-color: rgb(16, 39, 94);
+  margin-bottom: -5.3%;
+  width: 100vw;
+  
+}
+@media screen and (max-width: 700px) {
+  .main{
+    margin-bottom: -7.3%;
+  }
+  
+}
+@media screen and (max-width: 281px) {
+  .main{
+    margin-bottom: -10.3%;
+  }
+  
+}
+@media screen and (max-width: 821px) {
+  .main{
+    margin-bottom: -10.3%;
+  }
+  
+}
