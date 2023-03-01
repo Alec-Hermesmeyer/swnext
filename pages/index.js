@@ -26,7 +26,7 @@ export default function Home({ data}) {
   return (
     <>
       <Head>
-        <title>Commercial Pier Drilling | S&amp;W Foundation</title>
+        <title>S&amp;W Foundation | Commercial Foundation Drilling Company</title>
         <meta name="description" content="S&amp;W Foundation provides high-quality commercial pier drilling services in the United States. Contact us today for a quote! Trust S&amp;W for and unmatched combo of expierience, equipment and safety" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta property="og:title" content="Commercial Pier Drilling | S&amp;W Foundation" />
