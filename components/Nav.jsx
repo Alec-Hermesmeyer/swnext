@@ -68,8 +68,8 @@ export default function Nav () {
         </div>
         <div className={styles.right}>
           <div className={styles.socialIcons}>
-            <a href='https://www.facebook.com/SWFoundationContractors' target="_blank" rel="noopener noreferrer" ><FaFacebookSquare /></a>
-            <a href='https://www.linkedin.com/company/s-w-foundation-contractors-inc' target="_blank" rel="noopener noreferrer" ><FaLinkedin /></a>
+            <Link href='https://www.facebook.com/SWFoundationContractors' target="_blank" rel="noopener noreferrer" ><FaFacebookSquare /></Link>
+            <Link href='https://www.linkedin.com/company/s-w-foundation-contractors-inc' target="_blank" rel="noopener noreferrer" ><FaLinkedin /></Link>
             <div onClick={() => setIsActive(!active)}>
             <div className={ active ? styles.activeHamburger : styles.hamburger}></div>
             </div>

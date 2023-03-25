@@ -39,7 +39,8 @@ export default function Home({ data}) {
         <meta name="twitter:description" content="S&amp;W Foundation provides high-quality commercial pier drilling services in the United States. Contact us today for a quote!" />
         <meta name="twitter:image" content="https://www.swfoundation.com/images/logo.png" />
         <link rel="canonical" href="https://www.swfoundation.com/" />
-        <link rel="icon" href="/favicon.ico" />
+        {/* <link rel="icon" href="/swlogorwb.png" /> */}
+        <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
       </Head>
 
       <div className={styles.main}>

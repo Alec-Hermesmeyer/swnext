@@ -55,7 +55,7 @@ export default function About() {
                         </div>
                         <div className={styles.card}>
                             <h2 className={inter.className}>James Millhorn</h2>
-                           <p className={inter.className}> Chief Operation Officer<br></br><br></br>Jamesm@swfoundation.com<br></br><br></br>214-202-8443</p>
+                           <p className={inter.className}> Chief Operation Officer/ Owner<br></br><br></br>Jamesm@swfoundation.com<br></br><br></br>214-202-8443</p>
                            <Link href='contact'><button>Get A Free Quote</button></Link>
 
                         </div>
