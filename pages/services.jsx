@@ -23,6 +23,7 @@ export default function Services() {
         <meta property="og:url" content="https://www.swfoundation.com/services/" />
         <meta property="og:image" content="https://www.swfoundation.com/images/galleryImages/gal18.jpeg" />
         <meta property='og:site_name' content='S&amp;W Foundation Repair Contractors' />
+        <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
       </Head>
      
     <div className={styles.service}>
