@@ -158,26 +158,6 @@
         height: 600px;
     }
 }
-@media screen and (min-width: 1350px) {
-        .heroImg {
-            position: relative;
-            bottom: 540px;
-            left: 40%;
-            width: 620px;
-            height: 600px;
-        }
-    
-}
-@media screen and (min-width: 1305px) {
-    .heroImg {
-        position: relative;
-        bottom: 540px;
-        left: 53px;
-        width: 620px;
-        height: 600px;
-    }
-
-}
 
 @media screen and (min-width: 1300px) {
     .hero {
@@ -248,9 +228,9 @@
     
     .heroImg {
         position: relative;
-        bottom: 540px;
+        bottom: 600px;
         left: 40%;
-        width: 620px;
+        width: 530px;
         height: 600px;
     }
     
