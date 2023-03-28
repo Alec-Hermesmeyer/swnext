@@ -103,7 +103,7 @@ const GalleryGrid = () => {
                 <div className={styles.card}>
                     <Image
                         className={styles.img}
-                        src='/galleryImages/gal8.jpeg'
+                        src='/galleryImages/gal41.jpeg'
                         height={300}
                         width={300}
                         alt="Groundhand working hard to make sure the hole is prepared for the S&amp;W Pier Drilling Rig to continue drilling"
@@ -474,7 +474,7 @@ const GalleryGrid = () => {
             <div className={styles.card}>
                 <Image
                     className={styles.img}
-                    src='/galleryImages/gal37.jpeg'
+                    src='/galleryImages/gal42.jpeg'
                     height={300}
                     width={300}
                     alt="Pier Drilling Rig and Crane working together as the Foundation contractors for Foundation repairs"
