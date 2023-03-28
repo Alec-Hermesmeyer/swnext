@@ -166,7 +166,11 @@
         left: 55px;
         width: 530px;
         height: 600px;
+        z-index: 1;
         
+    }
+    .right{
+        z-index: 2;
     }
      
 }
