@@ -159,6 +159,7 @@
     }
 }
 
+
 @media screen and (min-width: 1300px) {
     .hero {
         height: 75vh;
@@ -228,9 +229,9 @@
     
     .heroImg {
         position: relative;
-        bottom: 600px;
+        bottom: 540px;
         left: 40%;
-        width: 530px;
+        width: 620px;
         height: 600px;
     }
     
