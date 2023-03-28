@@ -163,10 +163,12 @@
     .heroImg {
         position: relative;
         bottom: 600px;
-        left: 35%;
+        left: 30%;
         width: 530px;
         height: 600px;
+        
     }
+     
 }
 @media screen and (min-width: 1300px) {
     .hero {
