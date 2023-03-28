@@ -159,11 +159,11 @@
     }
 }
 
-@media screen and (min-width: 1310px){
+@media screen and (min-width: 1301px){
     .heroImg {
         position: relative;
         bottom: 600px;
-        left: 40%;
+        left: 35%;
         width: 530px;
         height: 600px;
     }
