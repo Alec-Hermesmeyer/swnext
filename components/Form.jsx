@@ -1,4 +1,4 @@
-
+"use client"
 import React ,{ useState } from 'react'
 import styles from '../styles/Form.module.css'
 import { createClient } from '@supabase/supabase-js'
