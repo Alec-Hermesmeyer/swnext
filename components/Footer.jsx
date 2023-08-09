@@ -35,7 +35,7 @@ const Footer = () => {
                   <li>
                     <Link style={{ color: 'white' }} href='/gallery'>Gallery</Link>
                   </li>
-
+                  
                 </ul>
               </div>
               <div className={styles.right}>
