@@ -67,11 +67,7 @@ export default function About() {
 
                         </div>
                         <div className={styles.card}>
-<<<<<<< HEAD
                             <h2 className={inter.className}>Jase Giron</h2>
-=======
-                            <h2 className={inter.className}>Jace Giron</h2>
->>>>>>> f7aac1262e1914798edc87fa8eda994c2ed9d4df
                            
                            <p className={inter.className}>Project Manager<br></br><br></br>Jaceg@swfoundation.com<br></br><br></br>469-649-2975 </p>
                            <Link href='contact'><button>Get A Free Quote</button></Link>
