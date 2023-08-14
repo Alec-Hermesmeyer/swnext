@@ -67,9 +67,9 @@ export default function About() {
 
                         </div>
                         <div className={styles.card}>
-                            <h2 className={inter.className}>Joshua Mctee</h2>
+                            <h2 className={inter.className}>Jase Giron</h2>
                            
-                           <p className={inter.className}>Project Manager<br></br><br></br>Joshm@swfoundation.com<br></br><br></br>214-649-2219 </p>
+                           <p className={inter.className}>Project Manager<br></br><br></br>Jaceg@swfoundation.com<br></br><br></br>469-649-2975 </p>
                            <Link href='contact'><button>Get A Free Quote</button></Link>
 
                         </div>
