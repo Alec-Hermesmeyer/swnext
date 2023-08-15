@@ -75,7 +75,7 @@
     border: none;
     border-bottom: 1px solid #ccc; /* Add a bottom border */
     padding: 10px 0;
-    filter: drop-shadow(0px 22px 12px #6f788e);
+    filter: drop-shadow(13px 22px 5px #6f788e);
 }
 .formSubmit{
     width: 30%;
