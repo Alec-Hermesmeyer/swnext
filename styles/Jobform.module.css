@@ -224,12 +224,4 @@
     }
     
 }
-@media (max-width: 1025px){
-    .form{
-        height: 55dvh;
-        width: 45dvw;
-        background-color: white;
-        overflow: scroll;
-    }
-}
 

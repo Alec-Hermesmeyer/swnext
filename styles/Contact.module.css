@@ -7,14 +7,14 @@
     flex-direction: column;
     background-color: rgb(16, 39, 94);
     margin-bottom: -5.3%;
-    margin-top: -5.6%;
+    margin-top: -3.6%;
 }
 
 .container {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 75%;
+    height: 85%;
     width: 95vw;
     margin-bottom: -20px;
 
@@ -25,44 +25,135 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    flex: 3;
+    flex: 4;
     height: 100%;
     width: 100%;
-    background-color: black;
+    border: 2px solid black;
+    background-color: white;
     border-radius: 15px;
     margin-top: 40px;
+    overflow: hidden;
 }
 
 .left {
-    flex: 1.45;
+    flex: 1.5;
     height: 100%;
     width: 100%;
-    background-color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 2px 5px 8px;
-    border-radius: var(--border-radius);
+    
+}
+.leftContainer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+.leftWrapper{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    
+  
 }
 
 .right {
-    flex: 1.55;
+    flex: 2.5;
     height: 100%;
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.logo{
+  filter: grayscale(70%);
+  z-index: 1;
+}
+@media (max-width: 821px) {
+  .contact {
+      width: 100dvw;
+      height: 140dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgb(16, 39, 94);
+  }
+  .container{
     width: 100%;
-    box-shadow: 2px 5px 8px;
-    background-color: black;
-    border-radius: var(--border-radius);
+    height: 100%;
+  }
+  .wrapper{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+  }
+  .logo{
+    height: 650px;
+    width: 700px;
+  }
+
+}
+@media (max-width: 769px) {
+  .logo{
+    height: 550px;
+    width: 700px;
+  }
+}
+@media (max-width: 913px){
+  .contact {
+    width: 100dvw;
+    height: 140dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(16, 39, 94);
+}
+.container{
+  width: 100%;
+  height: 100%;
+}
+.wrapper{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+.logo{
+  height: 650px;
+  width: 700px;
 }
 
+}
+@media (max-width: 1025px){
+  .contact {
+    width: 100dvw;
+    height: 180dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(16, 39, 94);
+    margin-bottom: -80px;
+  }
+  
+  
+}
 @media (max-width: 700px) {
     .contact {
-        width: 100vw;
-        height: 140vh;
+        width: 100dvw;
+        height: 140dvh;
         display: flex;
         align-items: center;
         justify-content: center;
         background-color: rgb(16, 39, 94);
-        margin-top: -100px;
+        margin-top: 100px;
         margin-bottom: -20px;
     }
     
@@ -81,7 +172,7 @@
         flex: 4;
         height: 100%;
         width: 100%;
-        background-color: black;
+        background-color: white;
         border-radius: 15px;
        
     }
@@ -95,26 +186,124 @@
     
     .right {
         flex: 2;
-        background-color: black;
+        background-color: white;
         z-index: 1;
-        width: 95vw;
+        width: 95dvw;
         box-shadow: none;
         margin-left: -10px;
     }
+    .rightContainer{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+  }
+  .top{
+    margin-bottom: -10rem;
+  }
     .logo{
         height: 350px;
-        width: 350px;
+        width: 500px;
+        margin-top: 15rem;
     } 
 }
+@media (max-width: 361px){
+  .contact{
+    height: 140vh;
+    margin-top: -100px;
+    overflow: hidden;
+  }
+  .wrapper{
+    flex-direction: column;
+    margin-top: 30px;
+    overflow-y: scroll;
+  }
+  .left{
+    flex: 1;
+    margin-bottom: -20%;
+  }
+  .right{
+    flex: 1;
+    margin-top: 10px;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100dvh;
+  }
+  .logo{
+    height: 350px;
+    width: 500px;
+    margin-top: 30dvh;
+  }
+  .bottom{
+    height: 70dvh;
+  }
+}
+@media (max-width: 415px){
+  .contact{
+    height: 200vh;
+    margin-top: -110px;
+    overflow: scroll;
+  }
+  .logo{
+    height: 650px;
+    width: 500px;
+    margin-top: -20px;
+  }
+  .right{
+    height: 120vh;
+  }
+}
+@media (max-width: 378px){
+  .contact {
+    height: 140vh;
+    margin-top: -80px;
+    overflow: hidden;
+}
+
+.wrapper {
+    flex-direction: column;
+    margin-top: 30px;
+}
+
+.left {
+    flex: 1;
+    margin-bottom: -20%;
+}
+
+.right {
+    flex: 1;
+    margin-top: 30px;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.logo {
+  margin-top: 50px;
+  height: 350px;
+  width: 500px;
+  margin-bottom: 35px;
+}
+.top{
+  margin-bottom: .1rem;
+}
+}
+
 @media (max-width: 390px) {
     .contact {
         height: 160vh;
-        margin-top: -120px;
+        margin-top: -100px;
+        overflow: hidden;
     }
     
     .wrapper {
         flex-direction: column;
         margin-top: 30px;
+        overflow: scroll;
     }
     
     .left {
@@ -126,88 +315,98 @@
         flex: 1;
         margin-top: 30px;
         margin-left: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
+    
     
     .logo {
-        height: 250px;
-        width: 250px;
+        height: 550px;
+        width: 500px;
+        margin-top: 30dvh;
     }
 }
-@media (max-width: 700px) and (max-width: 280px) {
-    .contact {
-        height: 140vh;
-        margin-top: -100px;
-        margin-bottom: -20px;
-    }
-   
-    .wrapper {
-      flex-direction: column;
-      margin-top: 20px;
-    }
-  
-    .left {
-      flex: 1;
-      height: 50%;
-      margin-bottom: 0;
-    }
-  
-    .right {
-      flex: 1;
-      height: 50%;
-      margin-left: 0;
-    }
-  }
+
   @media (max-width:540px) and (min-width: 530px){
     .contact {
-        height: 140vh;
-        margin-top: -100px;
-        margin-bottom: -20px;
-    }
-   
-    .wrapper {
-      flex-direction: column;
-      margin-top: 20px;
-    }
-  
-    .left {
-      flex: 1;
-      height: 50%;
-      margin-bottom: 0;
-    }
-  
-    .right {
-      flex: 1;
-      height: 50%;
-      margin-left: 0;
-    }
+      width: 100dvw;
+      height: 140dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgb(16, 39, 94);
+      margin-top: -80px;
+      
   }
-  @media screen and (max-width: 375px) and (min-width:359px){
-    .contact {
-        height: 140vh;
-        margin-top: -100px;
-        margin-bottom: -20px;
-    }
-   
-    .wrapper {
-      flex-direction: column;
-      margin-top: 20px;
-    }
   
-    .left {
-      flex: 1;
-      height: 50%;
-      margin-bottom: 0;
-    }
+  .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
   
-    .right {
-      flex: 1;
-      height: 50%;
-      margin-left: 0;
-    }
   }
-  @media screen and (max-width: 821px) {
-    .contact{
-      margin-bottom: -10.3%;
-    }
+  
+  .wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 4;
+      height: 100%;
+      width: 100%;
+      background-color: white;
+      border-radius: 15px;
+     
+  }
+  
+  .left {
+      flex: 2;
+      z-index: 2;
+      margin-bottom: -13%;
+      
+  }
+  
+  .right {
+      flex: 2;
+      background-color: white;
+      z-index: 1;
+      width: 95dvw;
+      box-shadow: none;
+      margin-left: -10px;
+      
+  }
+  .rightContainer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
     
+}
+.top{
+  margin-bottom: -1rem;
+}
+  .logo{
+      display: none;
+  } 
+   
+  
+  }
+  
+  @media screen and (min-width: 1900px) {
+    .logo{
+      height: 950px;
+      width: 700px;
+      overflow: hidden;
+    }
+    .left{
+      overflow: hidden;
+    }
+  }
+  @media  (max-width: 281px){
+    .logo{
+      display: none;
+    }
   }
