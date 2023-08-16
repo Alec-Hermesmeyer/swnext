@@ -145,6 +145,16 @@
   
   
 }
+@media (min-width: 428px){
+  .contact {
+    height: 140dvh;
+    margin-top: -1000px;
+  }
+  .wrapper{
+    flex-direction: column;
+    margin-top: 30px;
+  }
+}
 @media (max-width: 700px) {
     .contact {
         width: 100dvw;
@@ -242,7 +252,7 @@
     height: 70dvh;
   }
 }
-@media (max-width: 415px){
+@media (max-width: 429px){
   .contact{
     height: 200vh;
     margin-top: -110px;
