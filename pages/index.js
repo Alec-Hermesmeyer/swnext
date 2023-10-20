@@ -43,7 +43,7 @@ export default function Home({ data}) {
     
     <link rel="canonical" href="https://www.swfoundation.com/" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
-</Head>
+  </Head>
 
 
       <div className={styles.main}>
