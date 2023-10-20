@@ -14,19 +14,20 @@ export default function Services() {
     <>
     
     <Head>
-    <title>Services | S&W Foundation - Comprehensive Pier Drilling & Construction Support in Dallas, TX</title>
-    <meta name="description" content="S&W Foundation offers a suite of specialized services in Dallas, TX: pier drilling, limited-access pier drilling, turnkey solutions, crane, and trucking services. Leveraging years of experience and cutting-edge equipment, we're your trusted partner in commercial construction support." />
+    <title>Services | S&amp;W Foundation - Comprehensive Pier Drilling &amp; Construction Support in Dallas, TX</title>
+    <meta name="description" content="S&amp;W Foundation offers a suite of specialized services in Dallas, TX: pier drilling, limited-access pier drilling, turnkey solutions, crane, and trucking services. Leveraging years of experience and cutting-edge equipment, we&apos;re your trusted partner in commercial construction support." />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     
-    <meta property="og:title" content="Services | S&W Foundation - Your Partner in Commercial Construction in Dallas, TX" />
-    <meta property="og:description" content="Discover S&W Foundation's range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
+    <meta property="og:title" content="Services | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX" />
+    <meta property="og:description" content="Discover S&amp;W Foundation&apos;s range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.swfoundation.com/services/" />
     <meta property="og:image" content="https://www.swfoundation.com/images/galleryImages/gal18.jpeg" />
-    <meta property='og:site_name' content='S&W Commercial Construction Support' />
+    <meta property='og:site_name' content='S&amp;W Commercial Construction Support' />
     
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
 </Head>
+
      
     <div className={styles.service}>
       <section >
