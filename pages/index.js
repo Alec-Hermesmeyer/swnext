@@ -35,12 +35,11 @@ export default function Home({ data}) {
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.swfoundation.com/" />
     <meta property="og:image" content="https://www.swfoundation.com/images/logo.png" />
-    
+    <meta name="keywords" content="commercial pier drilling, construction services, Dallas, TX, S&W Foundation, crane services, trucking services, turnkey construction, trusted partner, commercial construction support, US, top-tier equipment, safety record" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="S&amp;W Foundation | Dallas, TX&apos;s Premier Commercial Construction Partner" />
     <meta name="twitter:description" content="Expertise in commercial pier drilling, crane &amp; trucking services, and more. See why businesses trust S&amp;W Foundation for their construction needs." />
     <meta name="twitter:image" content="https://www.swfoundation.com/images/logo.png" />
-    
     <link rel="canonical" href="https://www.swfoundation.com/" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
 </Head>
