@@ -16,7 +16,7 @@ export default function Gallery() {
     <meta property="og:description" content="Dive into S&W Foundation's gallery, showcasing top-tier pier drilling projects across Dallas, TX and the wider US. Experience our dedication to quality firsthand." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.swfoundation.com/gallery/" />
-    <meta property="og:image" content="https://www.swfoundation.com/images/gallery-cover.jpg" /> <!-- This should be a representative image from the gallery -->
+{/*     <meta property="og:image" content="https://www.swfoundation.com/images/gallery-cover.jpg" /> <!-- This should be a representative image from the gallery --> */}
     <meta property='og:site_name' content='S&W Commercial Pier Drilling' />
     
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
