@@ -16,7 +16,7 @@ export default function About() {
     <title>About S&W Foundation | Commercial Pier Drilling Specialists in Dallas, TX</title>
     <meta name="description" content="S&W Foundation specializes in commercial pier drilling for new construction projects across Dallas, TX and beyond. Rely on S&W for unmatched expertise, top-tier equipment, and paramount safety." />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    
+     <meta name="keywords" content="commercial pier drilling, Dallas, TX, construction projects, top-tier equipment, safety, S&W Foundation, new construction, expertise, commitment to excellence" />
     <meta property="og:title" content="About S&W Foundation | Commercial Pier Drilling Specialists in Dallas, TX" />
     <meta property="og:description" content="S&W Foundation offers premier commercial pier drilling services for various projects across the US. Discover our commitment to excellence and safety!" />
     <meta property="og:type" content="website" />
