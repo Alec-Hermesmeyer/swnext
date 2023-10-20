@@ -25,23 +25,26 @@ export default function Home({ data}) {
 
   return (
     <>
-      <Head>
-        <title>S&amp;W Foundation | Commercial Foundation Drilling Company</title>
-        <meta name="description" content="S&amp;W Foundation provides high-quality commercial pier drilling services in the United States. Contact us today for a quote! Trust S&amp;W for and unmatched combo of expierience, equipment and safety" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta property="og:title" content="Commercial Pier Drilling | S&amp;W Foundation" />
-        <meta property="og:description" content="S&amp;W Foundation provides high-quality commercial pier drilling services in the United States. Contact us today for a quote!" />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.swfoundation.com/" />
-        <meta property="og:image" content="https://www.swfoundation.com/images/logo.png" />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="Commercial Pier Drilling | S&amp;W Foundation" />
-        <meta name="twitter:description" content="S&amp;W Foundation provides high-quality commercial pier drilling services in the United States. Contact us today for a quote!" />
-        <meta name="twitter:image" content="https://www.swfoundation.com/images/logo.png" />
-        <link rel="canonical" href="https://www.swfoundation.com/" />
-        {/* <link rel="icon" href="/swlogorwb.png" /> */}
-        <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
-      </Head>
+     <Head>
+    <title>S&W Foundation | Leading Commercial Pier Drilling & Construction Services in Dallas, TX</title>
+    <meta name="description" content="S&W Foundation, based in Dallas, TX, offers premier commercial pier drilling, crane, trucking, and turnkey construction solutions. With unparalleled experience, top-tier equipment, and a stellar safety record, we're your trusted partner for commercial construction support in the US." />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <meta property="og:title" content="S&W Foundation | Expert Commercial Construction & Pier Drilling in Dallas, TX" />
+    <meta property="og:description" content="From commercial pier drilling to turnkey construction solutions, S&W Foundation stands as the go-to choice for businesses across the US. Discover our legacy of excellence." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.swfoundation.com/" />
+    <meta property="og:image" content="https://www.swfoundation.com/images/logo.png" />
+    
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="S&W Foundation | Dallas, TX's Premier Commercial Construction Partner" />
+    <meta name="twitter:description" content="Expertise in commercial pier drilling, crane & trucking services, and more. See why businesses trust S&W Foundation for their construction needs." />
+    <meta name="twitter:image" content="https://www.swfoundation.com/images/logo.png" />
+    
+    <link rel="canonical" href="https://www.swfoundation.com/" />
+    <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
+</Head>
+
 
       <div className={styles.main}>
         <section style={{ marginBottom: 5 }} className={styles.hero}><Hero />
