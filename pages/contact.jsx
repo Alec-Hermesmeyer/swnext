@@ -12,17 +12,19 @@ export default function Contact() {
   return (
     <>
       <Head>
-        <title>Contact S&amp;W Foundation | Industrial Foundation Repair Experts </title>
-        <meta name="description" content="S&amp;W Foundation provides high-quality commercial pier drilling services in the United States. Contact us today for a quote! Trust S&amp;W for and unmatched combo of expierience, equipment and safety" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta property="og:title" content="Contact S&amp;W Foundation | Industrial Foundation Repair Experts" />
-        <meta property="og:description" content="Contact S&amp;W Foundation provides high-quality commercial pier drilling services in the United States. Contact us today for a quote!" />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.swfoundation.com/contact/" />
-        <meta property="og:image" content="https://www.swfoundation.com/images/form.png" />
-        <meta property='og:site_name' content='S&amp;W Foundation Repair Contractors' />
-        <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon' />
-      </Head>
+    <title>Contact S&W Foundation | Commercial Pier Drilling Specialists in Dallas, TX</title>
+    <meta name="description" content="Reach out to S&W Foundation, the leading specialists in commercial pier drilling across Dallas, TX and the wider US. Let's discuss how our expertise, advanced equipment, and commitment to safety can serve your project." />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <meta property="og:title" content="Contact S&W Foundation | Commercial Pier Drilling Specialists in Dallas, TX" />
+    <meta property="og:description" content="Looking for top-tier commercial pier drilling services in the US? Get in touch with S&W Foundation today for a comprehensive quote and experience our commitment to excellence." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.swfoundation.com/contact/" />
+    <meta property="og:image" content="https://www.swfoundation.com/images/form.png" />
+    <meta property='og:site_name' content='S&W Commercial Pier Drilling' />
+    
+    <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
+</Head>
       {/* <div className={styles.contact}>
       <div className={styles.container}>
         <div className={styles.wrapper}>
