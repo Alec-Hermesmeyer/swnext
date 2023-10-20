@@ -29,7 +29,7 @@ export default function Home({ data}) {
     <title>S&amp;W Foundation | Leading Commercial Pier Drilling &amp; Construction Services in Dallas, TX</title>
     <meta name="description" content="S&amp;W Foundation, based in Dallas, TX, offers premier commercial pier drilling, crane, trucking, and turnkey construction solutions. With unparalleled experience, top-tier equipment, and a stellar safety record, we&apos;re your trusted partner for commercial construction support in the US." />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    
+    <meta name="google-site-verification" content="DOxscx8m8UxfwG_v4MKHOndXU19gJHMMVf5cvy5V46c" />
     <meta property="og:title" content="S&amp;W Foundation | Expert Commercial Construction &amp; Pier Drilling in Dallas, TX" />
     <meta property="og:description" content="From commercial pier drilling to turnkey construction solutions, S&amp;W Foundation stands as the go-to choice for businesses across the US. Discover our legacy of excellence." />
     <meta property="og:type" content="website" />
