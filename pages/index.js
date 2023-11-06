@@ -21,6 +21,35 @@ const LogoImage = () => (
 );
 
 export default function Home({ data}) {
+  const businessSchema = {
+    "@context": "http://schema.org",
+    "@type": "LocalBusiness",
+    "name": "S&W Foundation Contractors Inc.",
+    "description": "S&W Foundations specializes in laying strong foundations for new commercial construction projects. With a focus on innovation and durability, our team ensures the groundwork for your venture is set to the highest standards. We cater exclusively to commercial clients and do not offer foundation repair or residential services.",
+    "image": "http://www.swfoundation.com/swlogorwb.png",
+    "telephone": "(214) 703-0484",
+    "email": "bids@swfoundation.com",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "2806 Singleton St.",
+      "addressLocality": "Rowlett",
+      "addressRegion": "TX",
+      "postalCode": "75088",
+      "addressCountry": "USA"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": "32.90144",
+      "longitude": "-96.57587"
+    },
+    "url": "http://www.swfoundation.com",
+    "paymentAccepted": "Cash, Credit Card",
+    "openingHours": "Mo,Tu,We,Th,Fr 08:00-17:00",
+    "sameAs": [
+      "http://www.facebook.com/SWFoundationContractors",
+      "http://www.linkedin.com/company/s-w-foundation-contractors-inc",
+    ]
+  };
 
 
   return (
@@ -42,6 +71,7 @@ export default function Home({ data}) {
     <meta name="twitter:image" content="https://www.swfoundation.com/images/logo.png" />
     <link rel="canonical" href="https://www.swfoundation.com/" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }} />
 </Head>
 
 
