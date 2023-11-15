@@ -105,10 +105,7 @@ export default function Home({ data}) {
       </Script>
 
 
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MJNDLQZ"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
+
       <div className={styles.main}>
         <section style={{ marginBottom: 5 }} className={styles.hero}><Hero />
           
