@@ -73,6 +73,9 @@ export default function Home({ data}) {
     <link rel="canonical" href="https://www.swfoundation.com/" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }} />
+  
+  
+</Head>
   <Script 
         src="https://www.googletagmanager.com/gtag/js?id=G-BXEC44GZQV" 
         strategy="afterInteractive" 
@@ -86,8 +89,6 @@ export default function Home({ data}) {
           gtag('config', 'G-BXEC44GZQV');
         `}
       </Script>
-  
-</Head>
 
 
 
