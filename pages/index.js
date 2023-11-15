@@ -6,6 +6,7 @@ import Info from '@/components/Info';
 import Grid from '@/components/Grid';
 import SocialGrid from '@/components/SocialGrid';
 import handler from '../pages/api/gridData';
+import Script from 'next/script';
 
 
 const LogoImage = () => (
@@ -72,14 +73,7 @@ export default function Home({ data}) {
     <link rel="canonical" href="https://www.swfoundation.com/" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }} />
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BXEC44GZQV"></script>
-  <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments)};
-  gtag('js', new Date());
-
-  gtag('config', 'G-BXEC44GZQV');
-</script>
+  
 </Head>
 
 
