@@ -72,6 +72,7 @@ export default function Home({ data}) {
     <meta name="twitter:image" content="https://www.swfoundation.com/images/logo.png" />
     <link rel="canonical" href="https://www.swfoundation.com/" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }} />
 </Head>
   <Script 
         id="google-tag-manager"
