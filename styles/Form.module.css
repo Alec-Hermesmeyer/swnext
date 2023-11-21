@@ -1,6 +1,6 @@
 .form{
-    height: 40dvh;
-    width: 60dvw;
+    height: 40vh;
+    width: 60vw;
     background-color: white;
     display: flex;
     flex-direction: column;
@@ -85,6 +85,7 @@
     border-radius: 15px;
     border: .5px solid black;
     background-color: #d0cf9f;
+    
     
 }
 

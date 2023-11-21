@@ -76,6 +76,8 @@
   filter: grayscale(70%);
   z-index: 1;
 }
+
+
 @media (max-width: 821px) {
   .contact {
       width: 100dvw;
@@ -142,6 +144,7 @@
     background-color: rgb(16, 39, 94);
     margin-bottom: -80px;
   }
+  
   
   
 }

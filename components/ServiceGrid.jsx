@@ -2,8 +2,21 @@ import React from 'react';
 import Link from 'next/link';
 import { Inter } from '@next/font/google'
 import styles from '../styles/ServiceGrid.module.css'
+import Image from 'next/image';
 
 const inter = Inter({ subsets: ['latin'] })
+
+const LogoImage = () => (
+  <Image
+    className={styles.logo}
+    src='/att.png'
+    height={250}
+    width={250}
+    alt='S&amp;W Foundations Logo'
+    loading='lazy'
+    quality={80}
+  />
+);
 
 const ServicesGrid = () => {
   return (
@@ -21,7 +34,7 @@ const ServicesGrid = () => {
                 </div>
                
                 <div className={styles.card}>
-                    <h2 className={inter.className}>Limited-Access Pier Drilling</h2>
+                <h2 className={inter.className}>Limited-Access Pier Drilling</h2>
                    
                    <p className={inter.className}>
                    S&W Foundations offers specialized limited-access pier drilling services for challenging site conditions. Our experienced team and state-of-the-art equipment provide safe and efficient drilling in hard-to-reach areas. Trust us for quality and safety in all your limited-access pier drilling needs.</p>
@@ -42,17 +55,14 @@ const ServicesGrid = () => {
                 </div>
                
                 <div className={styles.card}>
-                    <h2 className={inter.className}>Trucking Services</h2>
-                   
-                   <p className={inter.className}>
-                   S&W Foundations offers reliable and efficient trucking services for your construction project with a modern fleet of trucks and experienced drivers available for hauling a variety of materials, from construction equipment to debris removal, to ensure your project runs smoothly and on schedule. Trust us for all your trucking needs.</p>
-                     <Link href='contact'><button>Get A Free Quote</button></Link>
+                     <LogoImage />
                 </div>
                 <div className={styles.card}>
                     <h2 className={inter.className}>Soil Retention</h2>
                    <p className={inter.className}>
                    S&W Foundations provides comprehensive soil retention services with advanced technology and techniques for safe and efficient completion of your construction project, offering a wide range of tailored services for temporary shoring. Trust us for quality soil retention solutions.</p>
                      <Link href='contact'><button>Get A Free Quote</button></Link>
+                     
                 </div>
             </div>
 

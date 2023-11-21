@@ -25,27 +25,6 @@ export default function Contact() {
     <link rel="canonical" href="https://www.swfoundation.com/contact" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
 </Head>
-      {/* <div className={styles.contact}>
-      <div className={styles.container}>
-        <div className={styles.wrapper}>
-          <div className={styles.left}>
-            <Image
-              src={logo}
-              className={styles.logo}
-              alt='form logo'
-              width={380}
-              height={380}
-              priority
-            />
-          </div>
-          <div className={styles.right}>
-            <Form />
-          </div>
-
-        </div>
-      </div>
-      
-    </div> */}
       <div className={styles.contact}>
         <div className={styles.container}>
           <div className={styles.wrapper}>
