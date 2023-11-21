@@ -26,6 +26,7 @@ const data = [
         link: '/gallery',
     },
     
+    
 ];
 
 
@@ -47,7 +48,8 @@ export default function Nav () {
         src='/swlogorwb.png'
         alt='logo'
         width={100}
-        height={100} />
+        height={100}
+        priority />
         </Link>
         </div>
         <div className={styles.center}>
@@ -64,6 +66,7 @@ export default function Nav () {
             <li>
               <Link href='/gallery'>Gallery</Link>
             </li> 
+            
           </ul>
         </div>
         <div className={styles.right}>

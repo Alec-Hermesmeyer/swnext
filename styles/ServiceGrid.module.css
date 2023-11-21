@@ -3,7 +3,6 @@
     width: 95vw;
     overflow: hidden;
     border: 1px solid black;
-    background-color: black;
     border-radius: var(--border-radius);
    
 }
@@ -149,6 +148,12 @@
     border: none;
 
 }
+.logo
+   {
+    height: 150px;
+    width: 150px;
+    
+  }
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
     background: rgba(var(--card-rgb), 0.1);

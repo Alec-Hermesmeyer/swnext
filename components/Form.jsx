@@ -1,5 +1,5 @@
-
-import React ,{ useState } from 'react'
+"use client"
+import React, { useState } from 'react'
 import styles from '../styles/Form.module.css'
 import { createClient } from '@supabase/supabase-js'
 
@@ -14,14 +14,15 @@ const Form = () => {
   const [email, setEmail] = useState('')
   const [number, setNumber] = useState('')
   const [message, setMessage] = useState('')
+  const [company, setCompany] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
     // Submit form data to Supabase table
     const { data, error } = await supabase
-    .from('contact_form')
-    .upsert({ name, email, number, message })
+      .from('contact_form')
+      .upsert({ name, email, number, message, company })
 
     if (error) {
       console.error(error)
@@ -33,12 +34,17 @@ const Form = () => {
     setEmail('')
     setNumber('')
     setMessage('')
+    setCompany('')
   }
- 
+
   return (
     <>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <input
+    <form onSubmit={handleSubmit} className={styles.form}>
+    <h1 className={styles.h1}>Contact Us Today!</h1>
+        <div className={styles.formContainer}>
+          <div className={styles.formWrapper}>
+            <div className={styles.formTop}>
+            <input
           className={styles.formInput}
           type='text'
           placeholder='Your Name'
@@ -58,7 +64,9 @@ const Form = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <input
+            </div>
+            <div className={styles.formCenter}>
+            <input
           className={styles.formInput}
           type='tel'
           placeholder='Contact Number'
@@ -68,13 +76,26 @@ const Form = () => {
           value={number}
           onChange={(e) => setNumber(e.target.value)}
         />
-
-              <span className={styles.checkbox}>
-                
-              </span>
-              <textarea onChange={(e) => setMessage(e.target.value)} value={message} required id='message' name='message' className={styles.contactMessage} placeholder='Tell Us About Your Project'></textarea>
-              <button className={styles.formSubmit} type='submit'>Submit</button>
-            </form></>
-    )
+            <input
+          className={styles.formInput}
+          type='text'
+          placeholder='Company Name'
+          id='company'
+          name='company'
+          required
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+        />
+            </div>
+            <div className={styles.formBottom}>
+            <textarea onChange={(e) => setMessage(e.target.value)} value={message} required id='message' name='message' className={styles.contactMessage} placeholder='Tell Us About Your Project'></textarea>
+            <button className={styles.formSubmit} type='submit'><b>Submit</b></button>
+            </div>
+          </div>
+        </div>
+      </form>
+      </>
+      
+  )
 }
 export default Form;

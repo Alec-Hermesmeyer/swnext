@@ -1,6 +1,6 @@
 .form{
-    height: 40vh;
-    width: 60vw;
+    height: 40dvh;
+    width: 60dvw;
     background-color: white;
     display: flex;
     flex-direction: column;
@@ -61,7 +61,7 @@
     border: none;
     border-bottom: 1px solid #ccc; /* Add a bottom border */
     padding: 10px 0;
-    filter: drop-shadow(13px 22px 5px #6f788e);
+    filter: drop-shadow(13px 22px 5px #ccc);
 }
 
 
@@ -75,7 +75,7 @@
     border: none;
     border-bottom: 1px solid #ccc; /* Add a bottom border */
     padding: 10px 0;
-    filter: drop-shadow(13px 22px 5px #6f788e);
+    filter: drop-shadow(0px 22px 12px #ccc);
 }
 .formSubmit{
     width: 30%;
@@ -84,8 +84,7 @@
     color: black;
     border-radius: 15px;
     border: .5px solid black;
-    background-color: #d0cf9f;
-    
+    background-color: #ccc;
     
 }
 
@@ -118,7 +117,16 @@
     
         
     }
-    
+    .formLeft{
+        flex: 1;
+        background-image: url(../public/form.png);
+        background-position: center;
+        background-size: 275px;
+        background-repeat: no-repeat;
+        height: 100%;
+        width: 100%;
+        
+    }
     .formRight{
         flex: 1;
         height: 100%;
@@ -215,13 +223,5 @@
         filter: none;
     }
     
-}
-@media (max-width: 1025px){
-    .form{
-        height: 55dvh;
-        width: 45dvw;
-        background-color: white;
-        overflow: scroll;
-    }
 }
 

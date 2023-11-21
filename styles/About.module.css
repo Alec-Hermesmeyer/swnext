@@ -30,7 +30,6 @@
   width: 95vw;
   overflow: hidden;
   border: 1px solid black;
-  background-color: black;
   border-radius: var(--border-radius);
  
 }

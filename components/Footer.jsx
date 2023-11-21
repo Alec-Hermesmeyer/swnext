@@ -35,7 +35,7 @@ const Footer = () => {
                   <li>
                     <Link style={{ color: 'white' }} href='/gallery'>Gallery</Link>
                   </li>
-
+                  
                 </ul>
               </div>
               <div className={styles.right}>
@@ -48,7 +48,7 @@ const Footer = () => {
             </div>
             <div className={styles.bottom}>
               <div className={styles.bottomLeft}>
-              &#169;2023 S&amp;W Foundation. All Rights Reserved | <Link href='/'>Site Map</Link> |  <Link href='/'>Privacy Policy</Link> |  <Link href='/'>Terms of Use</Link> 
+              &#169;2023 S&amp;W Foundation. All Rights Reserved | <Link href='/sitemap.xml'>Site Map</Link> |  <Link href='/'>Privacy Policy</Link> |  <Link href='/'>Terms of Use</Link> 
               <br></br>
                <Link href='https://www.google.com/maps/place/S%26W+Foundation+Contractors,+Inc/@32.9011454,-96.5784943,17z/data=!3m1!4b1!4m5!3m4!1s0x864c1f00ef50672f:0xdd234fc753135183!8m2!3d32.9011454!4d-96.5759194' target="_blank" rel="noopener noreferrer">2806 Singleton St, Rowlett, TX 75088</Link><br></br>
                    214-703-0484
