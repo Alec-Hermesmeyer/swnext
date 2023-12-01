@@ -115,9 +115,9 @@ export default function Home({ data}) {
 
 
       <div className={styles.main}>
-         <section className={styles.hero}><HeroSection />
+         {/* <section className={styles.hero}><HeroSection />
           
-        </section>
+        </section> */}
         {/* <section style={{ marginBottom: 5 }} className={styles.info}><Info /></section>
         <section className={styles.gridSection}><Grid data={data} /></section>
         <div className={styles.break1}></div>
