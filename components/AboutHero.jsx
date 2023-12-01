@@ -2,7 +2,7 @@ import React from 'react'
 import Image from 'next/image'
 import styles from '../styles/AboutHero.module.css'
 import Link from 'next/link'
-import { Inter } from '@next/font/google'
+import { Inter } from "next/font/google"
 
 
 const inter = Inter({ subsets: ['latin'] })

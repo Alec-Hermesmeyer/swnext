@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Inter } from '@next/font/google'
+import { Inter } from "next/font/google"
 import { FaLinkedin, FaFacebookSquare, FaLocationArrow } from 'react-icons/fa'
 import {BsFillTelephoneFill} from 'react-icons/bs'
 import styles from '../styles/Grid.module.css'

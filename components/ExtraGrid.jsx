@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Inter } from '@next/font/google'
+import { Inter } from "next/font/google"
 import styles from '../styles/ServiceGrid.module.css'
 
 const inter = Inter({ subsets: ['latin'] })

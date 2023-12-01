@@ -1,6 +1,6 @@
 import React from 'react'
 // import Image from 'next/image'
-import { Inter } from '@next/font/google'
+import { Inter } from "next/font/google"
 // import { BsBookHalf, BsFillCompassFill } from 'react-icons/bs'
 // import { SiYourtraveldottv } from 'react-icons/si'
 // import Link from 'next/link'

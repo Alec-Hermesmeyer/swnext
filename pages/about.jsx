@@ -1,7 +1,7 @@
 import React from 'react'
 import styles from '../styles/About.module.css'
 import Link from 'next/link'
-import { Inter } from '@next/font/google'
+import { Inter } from "next/font/google"
 import Head from 'next/head'
 import AboutGrid from '@/components/AboutGrid'
 import SocialGrid from '@/components/SocialGrid'

@@ -1,7 +1,7 @@
 import React from 'react'
 import styles from '../styles/Serve.module.css'
 import ServicesGrid from '@/components/ServiceGrid'
-import { Inter } from '@next/font/google'
+import { Inter } from "next/font/google"
 import Head from 'next/head'
 import SocialGrid from '@/components/SocialGrid'
 import ServiceHero from '@/components/ServiceHero'
