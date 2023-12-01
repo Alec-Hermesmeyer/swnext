@@ -6,10 +6,11 @@
     color: black;
     display: flex;
     align-items: center;
-   justify-content: center;
+    justify-content: center;
     width: 100vw;
     position: fixed;
     z-index: 99;
+    border: 2px solid yellow;
     /* border-bottom: 1px solid black; 
     box-shadow: 5px 15px 25px; */
 }

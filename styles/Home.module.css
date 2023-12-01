@@ -5,10 +5,28 @@
   align-items: center;
   padding: 6rem;
   min-height: 100vh;
-  margin-bottom: -20px;
-  background-color: rgb(16, 39, 94);
-  margin-bottom: -5.3%;
+  /* margin-bottom: -20px; */
+  background-color: white;
+  border: 2px solid red;
+  /* background-color: rgb(16, 39, 94); */
+  /* margin-bottom: -5.3%; */
+  width: 100dvw;
   
+  
+}
+.heroSection{
+  background-image: url(../public/galleryImages/gal4.jpeg);
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 100dvw;
+  height: 55vh;
+}
+.hero{
+  overflow: hidden;
+  z-index: 2;
+  border: 2px solid red;  
+  display: flex;
+  margin-top: -4.4rem;
 }
 .heroImg{
   position: absolute;

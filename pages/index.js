@@ -1,10 +1,10 @@
 import Head from 'next/head';
 import Image from 'next/image';
 import styles from '@/styles/Home.module.css';
-import Hero from '@/components/Hero';
-import Info from '@/components/Info';
-import Grid from '@/components/Grid';
-import SocialGrid from '@/components/SocialGrid';
+// import Hero from '@/components/Hero';
+// import Info from '@/components/Info';
+// import Grid from '@/components/Grid';
+// import SocialGrid from '@/components/SocialGrid';
 import handler from '../pages/api/gridData';
 import Script from 'next/script';
 
@@ -20,6 +20,13 @@ const LogoImage = () => (
     quality={80}
   />
 );
+function HeroSection() {
+  return (
+    <div className={styles.heroSection}>
+
+    </div>
+  )
+}
 
 export default function Home({ data}) {
   const businessSchema = {
@@ -108,10 +115,10 @@ export default function Home({ data}) {
 
 
       <div className={styles.main}>
-        <section style={{ marginBottom: 5 }} className={styles.hero}><Hero />
+         <section className={styles.hero}><HeroSection />
           
         </section>
-        <section style={{ marginBottom: 5 }} className={styles.info}><Info /></section>
+        {/* <section style={{ marginBottom: 5 }} className={styles.info}><Info /></section>
         <section className={styles.gridSection}><Grid data={data} /></section>
         <div className={styles.break1}></div>
         <div className={styles.image}>
@@ -119,7 +126,9 @@ export default function Home({ data}) {
         </div>
         <br />
         <div className={styles.break2}></div>
-        <section className={styles.socialG}><SocialGrid /></section>
+        <section className={styles.socialG}><SocialGrid /></section> */}
+        
+
       </div>
     </>
   );

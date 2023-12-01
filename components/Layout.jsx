@@ -9,13 +9,13 @@ import Nav from './Nav'
 const Layout = ({ children }) => {
   return (
     <>
-    <nav>
+    <nav className={styles.nav}>
      <Nav />
     </nav>
     <div className={styles.container}>
         <main className={styles.main}>{children}</main>
     </div>
-    <footer>
+    <footer className={styles.footer}>
       <Footer />
     </footer>
     

@@ -1,7 +1,9 @@
 .container {
   padding: 0 2rem;
 }
-
+.nav{
+  padding-bottom: 0px;
+}
 .main {
   min-height: 100vh;
   padding: 4rem 0;
@@ -10,9 +12,10 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  margin-bottom: -5%;
 }
 
-.footer {
+/* .footer {
   display: flex;
   flex: 1;
   padding: 2rem 0;
@@ -106,7 +109,7 @@
 .logo {
   height: 1em;
   margin-left: 0.5rem;
-}
+} */
 
 @media (max-width: 600px) {
   .grid {
