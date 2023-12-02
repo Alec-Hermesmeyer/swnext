@@ -45,10 +45,10 @@ export default function Nav () {
         href='/'
         >
         <Image
-        src='/swlogorwb.png'
+        src='Images/public/swlogorwb.png'
         alt='logo'
-        width={100}
-        height={100}
+        width={120}
+        height={120}
         priority />
         </Link>
         </div>

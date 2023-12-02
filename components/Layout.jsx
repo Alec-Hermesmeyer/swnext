@@ -6,6 +6,7 @@ import styles from '../styles/Layout.module.css'
 import Nav from './Nav'
 
 
+
 const Layout = ({ children }) => {
   return (
     <>
@@ -13,6 +14,7 @@ const Layout = ({ children }) => {
      <Nav />
     </nav>
     <div className={styles.container}>
+      
         <main className={styles.main}>{children}</main>
     </div>
     <footer className={styles.footer}>

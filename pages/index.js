@@ -7,6 +7,8 @@ import styles from '@/styles/Home.module.css';
 // import SocialGrid from '@/components/SocialGrid';
 import handler from '../pages/api/gridData';
 import Script from 'next/script';
+import { GridPattern } from '@/components/GridPattern';
+import { Container } from '@/components/Container';
 
 
 const LogoImage = () => (
@@ -20,13 +22,7 @@ const LogoImage = () => (
     quality={80}
   />
 );
-function HeroSection() {
-  return (
-    <div className={styles.heroSection}>
 
-    </div>
-  )
-}
 
 export default function Home({ data}) {
   const businessSchema = {
@@ -115,9 +111,14 @@ export default function Home({ data}) {
 
 
       <div className={styles.main}>
-         {/* <section className={styles.hero}><HeroSection />
+        <Container>
+      <GridPattern
+        className={styles.gridPattern }
+        yOffset={-96}
+        interactive />
+        </Container>
           
-        </section> */}
+         
         {/* <section style={{ marginBottom: 5 }} className={styles.info}><Info /></section>
         <section className={styles.gridSection}><Grid data={data} /></section>
         <div className={styles.break1}></div>
@@ -127,6 +128,7 @@ export default function Home({ data}) {
         <br />
         <div className={styles.break2}></div>
         <section className={styles.socialG}><SocialGrid /></section> */}
+       
         
 
       </div>

@@ -1,6 +1,6 @@
 .nav{
     
-    height: 90px;
+    height: 120px;
     background-color: white;
     font-size: 14px;
     color: black;
@@ -10,9 +10,7 @@
     width: 100vw;
     position: fixed;
     z-index: 99;
-    border: 2px solid yellow;
-    /* border-bottom: 1px solid black; 
-    box-shadow: 5px 15px 25px; */
+    box-shadow: 5px 15px 25px; 
 }
 .container{
     height: 100%;
@@ -29,10 +27,9 @@
 }
 .left{
     flex: 1;
-    height: 100%;
-    width: 100%;
+    margin-top: 18px;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     margin-left: -7%;
 }
@@ -57,8 +54,16 @@
     cursor: pointer;
     font-weight: bold;
     color: black;
-    
-    
+    height: 40px;
+    width: 140px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    }
+    .center li:hover{
+        /* border-bottom: 2px solid rgb(255, 101, 47); */
+        color: rgb(255, 0, 0);
+        transition: all 0.5s ease-in-out;
     }
 .right{
     flex: 1;
@@ -69,6 +74,7 @@
     justify-content: flex-end;
 }
 .socialIcons{
+    margin-top: 10px;
     display: flex;
     align-items: center; 
     justify-content: space-evenly;
