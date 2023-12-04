@@ -111,12 +111,27 @@ export default function Home({ data}) {
 
 
       <div className={styles.main}>
-        <Container>
-      <GridPattern
+      <section className={styles.hero}>
+        <div className={styles.heroContainer}>
+          <div className={styles.heroWrapper}>
+            <div className={styles.heroLeft}>
+            <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>S&amp;W Foundation Contractors</h1>
+          <h2 className={styles.heroSubtitle}>Commercial Pier Drilling &amp; Construction Services</h2>
+        </div>
+            </div>
+            <div className={styles.heroCenter}>
+              
+            </div>
+            <div className={styles.heroRight}></div>
+          </div>
+        </div>
+        <GridPattern
         className={styles.gridPattern }
         yOffset={-96}
         interactive />
-        </Container>
+        </section>
+        
           
          
         {/* <section style={{ marginBottom: 5 }} className={styles.info}><Info /></section>

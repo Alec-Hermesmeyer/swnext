@@ -3,7 +3,7 @@ import styles from '../styles/GalleryGrid.module.css'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Inter } from "next/font/google"
-import { FadeIn, FadeOut } from './FadeIn'
+import { FadeIn, FadeOut, FadeInStagger } from './FadeIn'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -15,7 +15,7 @@ const GalleryGrid = () => {
         </div>
         
             <div className={styles.grid}>
-            <FadeIn>
+            
                 <div className={styles.card}>
                     
                     <Image
@@ -66,10 +66,12 @@ const GalleryGrid = () => {
                     />
                     
                 </div>
-                </FadeIn>
+                
             </div>
+            
             <div className={styles.grid}>
-            <FadeOut>
+            
+           
                 <div className={styles.card}>
                     <Image
                         className={styles.img}
@@ -118,10 +120,13 @@ const GalleryGrid = () => {
 
                     />
                 </div>
-                </FadeOut>
+                
+                
             </div>
             
+            
             <div className={styles.grid}>
+                
             <div className={styles.card}>
                 <Image
                     className={styles.img}
@@ -175,6 +180,7 @@ const GalleryGrid = () => {
 
                     />
                 </div>
+                
             </div>
             <div className={styles.grid}>
             <div className={styles.card}>
