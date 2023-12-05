@@ -24,7 +24,6 @@
   background-color: #f5f5f4; /* fill-blue-900, assuming blue-900 is #3b82f6 */
   color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
   background-image: linear-gradient(to right, #991b1b, white, #3b82f6); /* from-red-700, via-white, to-neutral-50 */
-  mask-image: linear-gradient(to bottom left, rgba(255, 255, 255, 0.5), transparent); /* mask-image with linear gradient */
   overflow: hidden;
   
 }
@@ -52,6 +51,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 6;
   
 }
 .heroWrapper{
@@ -67,12 +67,11 @@
    
   color: black; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
   
-  height: 99%;
+  height: 90%;
   width: 95%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: center;
   border-radius: var(--border-radius); 
   text-align: center;
   
@@ -89,6 +88,14 @@
   left: 14%;
   overflow: hidden;
  
+}
+.servicesSection{
+  height: 50vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6;
 }
 
 .grid {

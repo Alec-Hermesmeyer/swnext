@@ -9,6 +9,8 @@ import handler from '../pages/api/gridData';
 import Script from 'next/script';
 import { GridPattern } from '@/components/GridPattern';
 import { Container } from '@/components/Container';
+import { FadeIn } from '@/components/FadeIn';
+// import { Container } from '@/components/Container';
 
 
 const LogoImage = () => (
@@ -22,6 +24,46 @@ const LogoImage = () => (
     quality={80}
   />
 );
+
+const ServicesSection = () => (
+  <Container>
+    <FadeIn>
+      <div className={styles.servicesSection}>
+        <div className={styles.servicesContainer}>
+          <div className={styles.servicesWrapper}>
+            <div className={styles.servicesLeft}>
+              <div className={styles.serviceLeftContainer}>
+                <div className={styles.serviceLeftWrapper}>
+                  <div className={styles.serviceLeftTop}>
+                    
+                  </div>
+                  <div className={styles.serviceLeftBottom}>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className={styles.servicesCenter}>
+
+            </div>
+            <div className={styles.servicesRight}>
+              <div className={styles.serviceRightContainer}>
+                <div className={styles.serviceRightWrapper}>
+                  <div className={styles.serviceRightTop}>
+                    
+                  </div>
+                  <div className={styles.serviceRightBottom}>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </FadeIn>
+  </Container>
+)
 
 
 export default function Home({ data}) {
@@ -117,7 +159,7 @@ export default function Home({ data}) {
             <div className={styles.heroLeft}>
             <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>S&amp;W Foundation Contractors</h1>
-          <h2 className={styles.heroSubtitle}>Commercial Pier Drilling &amp; Construction Services</h2>
+          <h2 className={styles.heroSubtitle}>Commercial Pier Drilling</h2>
         </div>
             </div>
             <div className={styles.heroCenter}>
@@ -126,11 +168,15 @@ export default function Home({ data}) {
             <div className={styles.heroRight}></div>
           </div>
         </div>
-        <GridPattern
+       <Container>
+       <GridPattern
         className={styles.gridPattern }
         yOffset={-96}
         interactive />
+       </Container>
+       
         </section>
+        <section className={styles.services}><ServicesSection /></section>
         
           
          
