@@ -51,6 +51,74 @@ function HeroSection () {
         </section>
   )
 }
+function InfoSection () {
+  return (
+   <Container>
+   <GridPattern
+            className={styles.gridPattern}
+            yOffset={-96}
+            interactive
+          />
+          <FadeIn>
+     <section className={styles.infoSection}>
+      <article className={styles.infoContainer}>
+      <h4 className={inter.className}>S&W Foundation Contractors offers an unmatched combination of customer service, experience, equipment and safety.</h4>
+        <p className={inter.className}>At S&W Foundation Contractors, our story is one of family, 
+        hard work, and dedication. Founded in 1986 in Rowlett, Texas, our business has grown to become 
+        a leader in the pier drilling industry, with a reputation for providing reliable, high-quality 
+        solutions to clients across the United States. Today, we remain a family-owned and operated business, 
+        with a commitment to upholding the values of honesty, integrity, and excellence that have been at the
+        core of our success for over 35 years. From our state-of-the-art equipment to our team of experienced 
+        professionals, every aspect of our business is designed to meet the needs of our clients and exceed 
+        their expectations. We take pride in our work and in the relationships we have built with our clients, 
+        and we look forward to continuing to serve the construction industry for many years to come.
+        </p>
+      </article>
+    </section>
+    </FadeIn>
+    <GridPattern
+            className={styles.gridPattern}
+            yOffset={-96}
+            interactive
+          />
+    
+   </Container>
+  )
+}
+function TestSection () {
+  return (
+   <Container>
+   <GridPattern
+            className={styles.gridPattern}
+            yOffset={-96}
+            interactive
+          />
+      <FadeIn>
+     <section className={styles.infoSection}>
+      <article className={styles.infoContainer}>
+      <h4 className={inter.className}>S&W Foundation Contractors offers an unmatched combination of customer service, experience, equipment and safety.</h4>
+        <p className={inter.className}>At S&W Foundation Contractors, our story is one of family, 
+        hard work, and dedication. Founded in 1986 in Rowlett, Texas, our business has grown to become 
+        a leader in the pier drilling industry, with a reputation for providing reliable, high-quality 
+        solutions to clients across the United States. Today, we remain a family-owned and operated business, 
+        with a commitment to upholding the values of honesty, integrity, and excellence that have been at the
+        core of our success for over 35 years. From our state-of-the-art equipment to our team of experienced 
+        professionals, every aspect of our business is designed to meet the needs of our clients and exceed 
+        their expectations. We take pride in our work and in the relationships we have built with our clients, 
+        and we look forward to continuing to serve the construction industry for many years to come.
+        </p>
+      </article>
+    </section>
+    </FadeIn>
+    <GridPattern
+            className={styles.gridPattern}
+            yOffset={-96}
+            interactive
+          />
+    
+   </Container>
+  )
+}
 
 function ServicesSection () {
   return (
@@ -214,8 +282,14 @@ export default function Home({ data}) {
 
 
       <div className={styles.main}>
-        <section className={styles.hero}><HeroSection /></section>
-        <section className={styles.info}><SpacerSection /></section>
+        <section className={styles.hero}><HeroSection />
+        </section>
+        
+          <section className={styles.info}><InfoSection /></section>
+      
+        
+        
+        {/* <section className={styles.info}><SpacerSection /></section> */}
         <section className={styles.services}><ServicesSection /></section>
       
         

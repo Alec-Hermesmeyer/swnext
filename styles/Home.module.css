@@ -13,6 +13,7 @@
   
   
 }
+/* HERO SECTION */
 
 .heroSection{
   background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/trucks2.jpg);
@@ -36,6 +37,7 @@
   height: 66dvh;
   width: 100dvw;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 6;
@@ -50,6 +52,7 @@
   align-items: center;
   justify-content: space-evenly;
   z-index: 6;
+  margin-bottom: -80%;
   
 }
 .heroWrapper{
@@ -119,13 +122,48 @@
   font-size: 1rem;
   font-weight: bold;
 }
-/* .heroImg{
-  position: absolute;
-  bottom: 9.9%;
-  left: 14%;
-  overflow: hidden;
- 
-} */
+/* INFO SECTION */
+.info{
+  box-shadow: 5px 15px 25px; 
+  width: 100vw;
+  background-image: linear-gradient(to right, #991b1b, white, #3b82f6); /* from-red-700, via-white, to-neutral-50 */
+}
+.infoSection{
+  height: 30vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6;
+  color: black;
+  box-shadow: 5px 15px 25px; 
+  margin-top: -10px;
+  
+}
+.infoContainer{
+  width: 95%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  background-color: transparent;
+  padding-bottom: 20px;
+  
+
+}
+.infoContainer h4{
+  font-size: 1.5rem;
+  font-weight: 600;
+  width: 80%;
+  padding-top: 40px;
+  margin-bottom: 20px;
+}
+.infoContainer p {
+  font-size: 1rem;
+  width: 80%;
+}
+/*SERVICES SECTION */
 .services{
   height: 50vh;
   width: 100vw;
@@ -133,7 +171,7 @@
   align-items: center;
   justify-content: center;
   z-index: 6;
-  margin-top: -15%;
+  
   
 }
 .servicesSection{
@@ -145,8 +183,7 @@
   z-index: 6;
   color: white;
   box-shadow: 5px 15px 25px; 
-  margin-top: -25%;
-  margin-bottom: -8%;
+  
   
 }
 .servicesContainer{
