@@ -10,9 +10,10 @@ import Script from 'next/script';
 import { GridPattern } from '@/components/GridPattern';
 import { Container } from '@/components/Container';
 import { FadeIn } from '@/components/FadeIn';
+import { Inter } from "next/font/google";
 // import { Container } from '@/components/Container';
 
-
+const inter = Inter({ subsets: ["latin"] });
 const LogoImage = () => (
   <Image
     className={styles.logo}
@@ -24,8 +25,35 @@ const LogoImage = () => (
     quality={80}
   />
 );
+function HeroSection () {
+  return(
+    <section className={styles.heroSection}>
+        <div className={styles.heroContainer}>
+          <div className={styles.heroWrapper}>
+            <div className={styles.heroLeft}>
+           <h1>Left</h1>
+            </div>
+            <div className={styles.heroCenter}>
+            <div className={styles.heroContent}>
+          <h1 className={inter.className}>S&amp;W Foundation Contractors</h1>
+          <h2 className={inter.className}>Commercial Pier Drilling</h2>
+          <span><button>Contact Us Today</button><button>Join Our Team</button></span>
+        </div>
+            </div>
+            <div className={styles.heroRight}>
+              {/* <span>
+              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3349.8883093482623!2d-96.57852562368612!3d32.90112117763211!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x864ea800d0cccb39%3A0x3140a4ce8b0e4e7!2s2806%20Singleton%20St%2C%20Rowlett%2C%20TX%2075088!5e0!3m2!1sen!2sus!4v1701818848986!5m2!1sen!2sus"  allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style={{width:'500px', height:'480px'}}></iframe>
+              </span> */}
+            </div>
+          </div>
+        </div>
+       
+        </section>
+  )
+}
 
-const ServicesSection = () => (
+function ServicesSection () {
+  return (
   <Container>
     <FadeIn>
       <div className={styles.servicesSection}>
@@ -35,25 +63,45 @@ const ServicesSection = () => (
               <div className={styles.serviceLeftContainer}>
                 <div className={styles.serviceLeftWrapper}>
                   <div className={styles.serviceLeftTop}>
-                    
+                    <h3 className={inter.className}>Pier Drilling</h3>
+                    <details>
+                      <summary className={inter.className}>Click me</summary>
+                      <p className={inter.className}>Here's some content to show when you click the button.</p>
+                    </details>
                   </div>
                   <div className={styles.serviceLeftBottom}>
-
+                  <h3 className={inter.className}>Limited-Access Drilling</h3>
+                    <details>
+                      <summary className={inter.className}>Click me</summary>
+                      <p className={inter.className}>Here's some content to show when you click the button.</p>
+                    </details>
                   </div>
                 </div>
               </div>
             </div>
             <div className={styles.servicesCenter}>
-
+            <h3 className={inter.className}>About Us</h3>
+                    <details>
+                      <summary className={inter.className}>Click me</summary>
+                      <p className={inter.className}>Here's some content to show when you click the button.</p>
+                    </details>
             </div>
             <div className={styles.servicesRight}>
               <div className={styles.serviceRightContainer}>
                 <div className={styles.serviceRightWrapper}>
                   <div className={styles.serviceRightTop}>
-                    
+                  <h3 className={inter.className}>Turn-Key Drilling Solutions</h3>
+                    <details>
+                      <summary className={inter.className}>Click me</summary>
+                      <p>Here's some content to show when you click the button.</p>
+                    </details>
                   </div>
                   <div className={styles.serviceRightBottom}>
-
+                  <h3 className={inter.className}>All Services</h3>
+                    <details>
+                      <summary className={inter.className}>Click me</summary>
+                      <p className={inter.className}>Here's some content to show when you click the button.</p>
+                    </details>
                   </div>
                 </div>
               </div>
@@ -64,6 +112,19 @@ const ServicesSection = () => (
     </FadeIn>
   </Container>
 )
+  }
+
+  function SpacerSection () {
+    return (
+      <div className={styles.spacerSection}>
+        <GridPattern
+            className={styles.gridPattern}
+            yOffset={-96}
+            interactive
+          />
+      </div>
+    )
+  }
 
 
 export default function Home({ data}) {
@@ -153,30 +214,11 @@ export default function Home({ data}) {
 
 
       <div className={styles.main}>
-      <section className={styles.hero}>
-        <div className={styles.heroContainer}>
-          <div className={styles.heroWrapper}>
-            <div className={styles.heroLeft}>
-            <div className={styles.heroContent}>
-          <h1 className={styles.heroTitle}>S&amp;W Foundation Contractors</h1>
-          <h2 className={styles.heroSubtitle}>Commercial Pier Drilling</h2>
-        </div>
-            </div>
-            <div className={styles.heroCenter}>
-              
-            </div>
-            <div className={styles.heroRight}></div>
-          </div>
-        </div>
-       <Container>
-       <GridPattern
-        className={styles.gridPattern }
-        yOffset={-96}
-        interactive />
-       </Container>
-       
-        </section>
+        <section className={styles.hero}><HeroSection /></section>
+        <section className={styles.info}><SpacerSection /></section>
         <section className={styles.services}><ServicesSection /></section>
+      
+        
         
           
          
