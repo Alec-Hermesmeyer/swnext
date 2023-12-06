@@ -66,14 +66,14 @@ function ServicesSection () {
                     <h3 className={inter.className}>Pier Drilling</h3>
                     <details>
                       <summary className={inter.className}>Click me</summary>
-                      <p className={inter.className}>Here's some content to show when you click the button.</p>
+                      <p className={inter.className}>Here&apos;s some content to show when you click the button.</p>
                     </details>
                   </div>
                   <div className={styles.serviceLeftBottom}>
                   <h3 className={inter.className}>Limited-Access Drilling</h3>
                     <details>
                       <summary className={inter.className}>Click me</summary>
-                      <p className={inter.className}>Here's some content to show when you click the button.</p>
+                      <p className={inter.className}>Here&apos;s some content to show when you click the button.</p>
                     </details>
                   </div>
                 </div>
@@ -83,7 +83,7 @@ function ServicesSection () {
             <h3 className={inter.className}>About Us</h3>
                     <details>
                       <summary className={inter.className}>Click me</summary>
-                      <p className={inter.className}>Here's some content to show when you click the button.</p>
+                      <p className={inter.className}>Here&apos;s some content to show when you click the button.</p>
                     </details>
             </div>
             <div className={styles.servicesRight}>
@@ -93,14 +93,14 @@ function ServicesSection () {
                   <h3 className={inter.className}>Turn-Key Drilling Solutions</h3>
                     <details>
                       <summary className={inter.className}>Click me</summary>
-                      <p>Here's some content to show when you click the button.</p>
+                      <p>Here&apos;s some content to show when you click the button.</p>
                     </details>
                   </div>
                   <div className={styles.serviceRightBottom}>
                   <h3 className={inter.className}>All Services</h3>
                     <details>
                       <summary className={inter.className}>Click me</summary>
-                      <p className={inter.className}>Here's some content to show when you click the button.</p>
+                      <p className={inter.className}>Here&apos;s some content to show when you click the button.</p>
                     </details>
                   </div>
                 </div>
