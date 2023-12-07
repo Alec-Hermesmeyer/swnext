@@ -2,12 +2,25 @@ import React from 'react'
 import styles from '../styles/About.module.css'
 import Link from 'next/link'
 import { Inter } from "next/font/google"
+import { GridPattern } from "@/components/GridPattern";
+import { Container } from "@/components/Container";
 import Head from 'next/head'
 import AboutGrid from '@/components/AboutGrid'
 import SocialGrid from '@/components/SocialGrid'
 import AboutHero from '@/components/AboutHero'
 
 const inter = Inter({ subsets: ['latin'] })
+
+function Hero() {
+    return(
+        <div className={styles.heroSection}>
+            
+            <div className={styles.heroContainer}>
+                <h1 className={inter.className}>About Us</h1>
+            </div>
+        </div>
+    )
+}
 
 export default function About() {
     return (
@@ -27,7 +40,10 @@ export default function About() {
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
 </Head>
         <div className={styles.about}>
-           <section>
+            <section className={styles.hero}>
+            <Hero />
+            </section>
+           {/* <section>
           <AboutHero />
            </section>
            <section className={styles.banner}>
@@ -94,7 +110,7 @@ export default function About() {
            </section>
            <section>
                <SocialGrid />
-           </section>
+           </section> */}
         </div>
         </>
     )

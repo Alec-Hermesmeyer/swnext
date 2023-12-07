@@ -7,8 +7,33 @@
   align-items: center;
   padding: 6rem;
   min-height: 100vh;
-  margin-bottom: -5.3%;
-  background-color: rgb(16, 39, 94);
+  /* background-color: rgb(16, 39, 94); */
+}
+.hero{
+  width: 100vw;
+  height: 30vw;
+}
+.heroSection{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 100vw;
+  height: 30vw;
+  z-index: 12;
+}
+.gridPattern{
+  position: absolute;
+  left: 0;
+  right: 0;
+    /* This corresponds to top-14 in Tailwind */
+  height: 50vh;
+  width: 100%;
+  /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
+  color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
+  background-image: linear-gradient(to right, #991b1b, white, #3b82f6); /* from-red-700, via-white, to-neutral-50 */
+  mask-image: linear-gradient(to right, #991b1b, white, #3b82f6); /* from-red-700, via-white, to-neutral-50 */
+  
 }
 .banner{
   display: flex;

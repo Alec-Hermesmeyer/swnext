@@ -38,7 +38,7 @@ function HeroSection() {
               <h1 className={inter.className}>
                 S&amp;W Foundation Contractors
               </h1>
-              <h2 className={inter.className}>Commercial Pier Drilling</h2>
+              <h2 className={inter.className}>Commercial Pier Drilling Solutions - Dallas, Texas</h2>
               <span>
                 <button>Contact Us Today</button>
                 <button>Join Our Team</button>
@@ -93,8 +93,7 @@ function InfoSection() {
               <div className={styles.infoCenter}>
               <article className={styles.infoCenterContainer}>
                   <h4 className={inter.className}>
-                    S&W Foundation Contractors offers an unmatched combination
-                    of customer service, experience, equipment and safety.
+                  Expert Pier Drilling Services Texas
                   </h4>
                   <p className={inter.className}>
                     At S&W Foundation Contractors, our story is one of family,
@@ -120,8 +119,7 @@ function InfoSection() {
               <div className={styles.infoBottom}>
               <article className={styles.infoBottomContainer}>
                   <h4 className={inter.className}>
-                    S&W Foundation Contractors offers an unmatched combination
-                    of customer service, experience, equipment and safety.
+                  Foundation Drilling Contractors Dallas
                   </h4>
                   <p className={inter.className}>
                     At S&W Foundation Contractors, our story is one of family,
