@@ -151,45 +151,12 @@ function InfoSection() {
     </Container>
   );
 }
-function TestSection() {
-  return (
-    <Container>
-      <GridPattern className={styles.gridPattern} yOffset={-96} interactive />
-      <FadeIn>
-        <section className={styles.infoSection}>
-          <article className={styles.infoContainer}>
-            <h4 className={inter.className}>
-              S&W Foundation Contractors offers an unmatched combination of
-              customer service, experience, equipment and safety.
-            </h4>
-            <p className={inter.className}>
-              At S&W Foundation Contractors, our story is one of family, hard
-              work, and dedication. Founded in 1986 in Rowlett, Texas, our
-              business has grown to become a leader in the pier drilling
-              industry, with a reputation for providing reliable, high-quality
-              solutions to clients across the United States. Today, we remain a
-              family-owned and operated business, with a commitment to upholding
-              the values of honesty, integrity, and excellence that have been at
-              the core of our success for over 35 years. From our
-              state-of-the-art equipment to our team of experienced
-              professionals, every aspect of our business is designed to meet
-              the needs of our clients and exceed their expectations. We take
-              pride in our work and in the relationships we have built with our
-              clients, and we look forward to continuing to serve the
-              construction industry for many years to come.
-            </p>
-          </article>
-        </section>
-      </FadeIn>
-      <GridPattern className={styles.gridPattern} yOffset={-96} interactive />
-    </Container>
-  );
-}
+
 
 function ServicesSection() {
   return (
     <Container>
-      <FadeIn>
+      
         <div className={styles.servicesSection}>
           <div className={styles.servicesContainer}>
             <div className={styles.servicesWrapper}>
@@ -197,6 +164,7 @@ function ServicesSection() {
                 <div className={styles.serviceLeftContainer}>
                   <div className={styles.serviceLeftWrapper}>
                     <div className={styles.serviceLeftTop}>
+                      <div className={styles.serviceLeftTopContainer}>
                       <h3 className={inter.className}>Pier Drilling</h3>
                       <details>
                         <summary className={inter.className}>Click me</summary>
@@ -205,8 +173,10 @@ function ServicesSection() {
                           button.
                         </p>
                       </details>
+                      </div>
                     </div>
                     <div className={styles.serviceLeftBottom}>
+                      <div className={styles.serviceLeftBottomContainer}>
                       <h3 className={inter.className}>
                         Limited-Access Drilling
                       </h3>
@@ -217,23 +187,28 @@ function ServicesSection() {
                           button.
                         </p>
                       </details>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
               <div className={styles.servicesCenter}>
+                <div className={styles.serviceCenterContainer}>
                 <h3 className={inter.className}>About Us</h3>
                 <details>
                   <summary className={inter.className}>Click me</summary>
                   <p className={inter.className}>
                     Here&apos;s some content to show when you click the button.
                   </p>
-                </details>
+                  </details>
+                </div>
+                
               </div>
               <div className={styles.servicesRight}>
                 <div className={styles.serviceRightContainer}>
                   <div className={styles.serviceRightWrapper}>
                     <div className={styles.serviceRightTop}>
+                      <div className={styles.serviceRightTopContainer}>
                       <h3 className={inter.className}>
                         Turn-Key Drilling Solutions
                       </h3>
@@ -244,9 +219,11 @@ function ServicesSection() {
                           button.
                         </p>
                       </details>
+                      </div>
                     </div>
                     <div className={styles.serviceRightBottom}>
-                      <h3 className={inter.className}>All Services</h3>
+                     <div className={styles.serviceRightBottomContainer}>
+                     <h3 className={inter.className}>All Services</h3>
                       <details>
                         <summary className={inter.className}>Click me</summary>
                         <p className={inter.className}>
@@ -254,6 +231,7 @@ function ServicesSection() {
                           button.
                         </p>
                       </details>
+                     </div>
                     </div>
                   </div>
                 </div>
@@ -261,7 +239,7 @@ function ServicesSection() {
             </div>
           </div>
         </div>
-      </FadeIn>
+      
     </Container>
   );
 }
@@ -407,7 +385,9 @@ export default function Home({ data }) {
         {/* <section className={styles.info}><SpacerSection /></section> */}
         <section className={styles.services}>
           <ServicesSection />
+          <GridPattern className={styles.gridPattern} yOffset={-96} interactive />
         </section>
+        
 
         {/* <section style={{ marginBottom: 5 }} className={styles.info}><Info /></section>
         <section className={styles.gridSection}><Grid data={data} /></section>

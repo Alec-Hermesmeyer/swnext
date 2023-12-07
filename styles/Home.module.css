@@ -34,6 +34,7 @@
   height: 50vh;
   width: 100vw;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 6;
@@ -250,8 +251,7 @@
   z-index: 6;
   color: white;
   box-shadow: 5px 15px 25px; 
-  
-  
+  margin-bottom: -50%;
 }
 .servicesContainer{
   width: 95%;
@@ -261,6 +261,8 @@
   justify-content: center;
   box-shadow: 5px 15px 25px black; 
   border-radius: var(--border-radius);
+ 
+  
 }
 .servicesWrapper{
   width: 100%;
@@ -269,6 +271,8 @@
   align-items: center;
   justify-content: space-evenly;
   flex: 3;
+  z-index: 16;
+  
 }
 .servicesWrapper h3{
   font-size: 1.8rem;
@@ -284,6 +288,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/galleryImages/gal12.jpeg);
+  background-repeat: no-repeat;
+  background-size: cover;
 
 }
 .serviceLeftWrapper{
@@ -299,30 +306,44 @@
   flex: 1;
   height: 100%;
   width: 100%;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/galleryImages/gal12.jpeg);
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: top;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-evenly;
   flex-direction: column;
 }
+.serviceLeftTopContainer {
+  height: 25%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+.serviceLeftTopContainer h3 {
+  margin-bottom: 1rem;
+}
 
 .serviceLeftBottom{
   flex: 1;
   height: 100%;
   width: 100%;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/galleryImages/gal12.jpeg);
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-evenly;
   flex-direction: column;
+}
+.serviceLeftBottomContainer {
+  height: 40%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+.serviceLeftBottomContainer h3 {
+  margin-bottom: 1rem;
 }
 .servicesCenter{
   flex: 1;
@@ -340,6 +361,17 @@
   border-left: 2px solid white;
   border-right: 2px solid white;
 }
+.serviceCenterContainer {
+  height: 25%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+.serviceCenterContainer h3 {
+  margin-bottom: 1rem;
+}
 
 .servicesRight{
   flex: 1;
@@ -352,6 +384,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/slider1.jpeg);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 
 }
 .serviceRightWrapper{
@@ -367,56 +403,56 @@
   flex: 1;
   height: 100%;
   width: 100%;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/slider1.jpeg);
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-evenly;
   flex-direction: column;
+}
+.serviceRightTopContainer {
+  height: 25%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+.serviceRightTopContainer h3 {
+  margin-bottom: 1rem;
 }
 
 .serviceRightBottom{
   flex: 1;
   height: 100%;
   width: 100%;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/slider1.jpeg);
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: bottom;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-evenly;
   flex-direction: column;
 }
-
-.spacerSection{
-  height: 50vh;
-  width: 100vw;
+.serviceRightBottomContainer {
+  height: 40%;
+  width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  z-index: -1;
-  /* margin-top: 2rem; */
-  /* background-color: #f4f4f5; */
-  
+  justify-content: space-between;
 }
+.serviceRightBottomContainer h3 {
+  margin-bottom: 1rem;
+}
+
 .gridPattern{
   position: relative;
   left: 0;
-  right: 0;
-   /* This corresponds to top-14 in Tailwind */
-  
-  height: 100%;
+  right: 0;  /* This corresponds to top-14 in Tailwind */
+  height: 50vh;
   width: 100%;
-  background-color: #f5f5f4; /* fill-blue-900, assuming blue-900 is #3b82f6 */
+  /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
   color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
   background-image: linear-gradient(to right, #991b1b, white, #3b82f6); /* from-red-700, via-white, to-neutral-50 */
   mask-image: linear-gradient(to right, #991b1b, white, #3b82f6); /* from-red-700, via-white, to-neutral-50 */
-  overflow: hidden;
   
 }
 .infoContainer{
