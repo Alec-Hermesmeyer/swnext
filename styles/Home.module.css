@@ -126,11 +126,12 @@
   justify-content: space-evenly;
 }
 .heroContent button{
-  height: 40px;
+  height: 50px;
   width: 160px;
   border-radius: 5px;
   border: none;
-  background-color: #0088ff;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23));
+  border: 2px solid#fff;
   color: white;
   font-size: 1rem;
   font-weight: bold;
@@ -187,7 +188,7 @@
   padding-bottom: 40px;
   margin-right: 5rem;
   background-color: rgb(16, 39, 94);
-  box-shadow: 55px 15px 25px; 
+  box-shadow: 15px 15px 55px; 
   margin-bottom: 10px;
   border: 2px solid white;
 }
@@ -201,13 +202,13 @@
   padding-bottom: 40px;
   margin-left: 5rem;
   background-color: rgb(16, 39, 94);
-  box-shadow: -55px 15px 25px; 
+  box-shadow: -15px 15px 55px; 
   margin-bottom: 10px;
   border: 2px solid white;
 }
 
 .infoCenterContainer h4{
-  text-align: right;
+  text-align: center;
 }
 .infoCenterContainer p{
   text-align: right;
@@ -223,7 +224,7 @@
   margin-right: 5rem;
   background-color: rgb(16, 39, 94);
   padding-bottom: 40px;
-  box-shadow: 55px 15px 25px; 
+  box-shadow: 15px 25px 155px; 
   border: 2px solid white;
 }
 .infoCenter{
@@ -252,6 +253,7 @@
   padding-top: 40px;
   margin-bottom: 20px;
   color: white;
+  text-align: center;
 }
 .infoWrapper p {
   font-size: 1rem;
@@ -292,6 +294,17 @@
   flex: 3;
   z-index: 16;
   
+}
+.servicesWrapper button{
+  height: 40px;
+  width: 160px;
+  border-radius: 5px;
+  border: none;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23));
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
 }
 .servicesWrapper h3{
   font-size: 1.8rem;

@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "@/styles/Home.module.css";
 // import Hero from '@/components/Hero';
 // import Info from '@/components/Info';
@@ -9,11 +10,15 @@ import handler from "../pages/api/gridData";
 import Script from "next/script";
 import { GridPattern } from "@/components/GridPattern";
 import { Container } from "@/components/Container";
-import { FadeIn } from "@/components/FadeIn";
+import { FadeIn, FadeInStagger } from "@/components/FadeIn";
 import { Inter } from "next/font/google";
+import { Oswald } from "next/font/google";
+import { Montserrat } from "next/font/google";
 // import { Container } from '@/components/Container';
 
 const inter = Inter({ subsets: ["latin"] });
+const oswald = Oswald({ subsets: ["latin"] });
+const montserrat = Montserrat({ subsets: ["latin"] });
 const LogoImage = () => (
   <Image
     className={styles.logo}
@@ -31,17 +36,17 @@ function HeroSection() {
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
           <div className={styles.heroLeft}>
-            <h1>Left</h1>
+            
           </div>
           <div className={styles.heroCenter}>
             <div className={styles.heroContent}>
               <h1 className={inter.className}>
                 S&amp;W Foundation Contractors
               </h1>
-              <h2 className={inter.className}>Commercial Pier Drilling Solutions - Dallas, Texas</h2>
+              <h2 className={montserrat.className}>Commercial Pier Drilling Contractors - Dallas, Texas</h2>
               <span>
-                <button>Contact Us Today</button>
-                <button>Join Our Team</button>
+                <Link href='/contact'><button className={montserrat.className}>Contact Us Today</button></Link>
+                <Link href='/contact'><button className={montserrat.className}>Join Our Team</button></Link>
               </span>
             </div>
           </div>
@@ -89,6 +94,7 @@ function InfoSection() {
                 </article>
               </div>
               </FadeIn>
+              <FadeInStagger>
               <FadeIn>
               <div className={styles.infoCenter}>
               <article className={styles.infoCenterContainer}>
@@ -115,6 +121,8 @@ function InfoSection() {
                 </article>
               </div>
               </FadeIn>
+              </FadeInStagger>
+              <FadeInStagger>
               <FadeIn>
               <div className={styles.infoBottom}>
               <article className={styles.infoBottomContainer}>
@@ -141,6 +149,7 @@ function InfoSection() {
                 </article>
               </div>
               </FadeIn>
+              </FadeInStagger>
             </div>
             
           </div>
@@ -164,13 +173,7 @@ function ServicesSection() {
                     <div className={styles.serviceLeftTop}>
                       <div className={styles.serviceLeftTopContainer}>
                       <h3 className={inter.className}>Pier Drilling</h3>
-                      <details>
-                        <summary className={inter.className}>Click me</summary>
-                        <p className={inter.className}>
-                          Here&apos;s some content to show when you click the
-                          button.
-                        </p>
-                      </details>
+                      <Link href='/services'><button className={montserrat.className}>Learn More</button></Link>
                       </div>
                     </div>
                     <div className={styles.serviceLeftBottom}>
@@ -178,13 +181,7 @@ function ServicesSection() {
                       <h3 className={inter.className}>
                         Limited-Access Drilling
                       </h3>
-                      <details>
-                        <summary className={inter.className}>Click me</summary>
-                        <p className={inter.className}>
-                          Here&apos;s some content to show when you click the
-                          button.
-                        </p>
-                      </details>
+                      <Link href='/services'><button className={montserrat.className}>Learn More</button></Link>
                       </div>
                     </div>
                   </div>
@@ -193,12 +190,7 @@ function ServicesSection() {
               <div className={styles.servicesCenter}>
                 <div className={styles.serviceCenterContainer}>
                 <h3 className={inter.className}>About Us</h3>
-                <details>
-                  <summary className={inter.className}>Click me</summary>
-                  <p className={inter.className}>
-                    Here&apos;s some content to show when you click the button.
-                  </p>
-                  </details>
+                <Link href='/about'><button className={montserrat.className}>Learn More</button></Link>
                 </div>
                 
               </div>
@@ -210,25 +202,13 @@ function ServicesSection() {
                       <h3 className={inter.className}>
                         Turn-Key Drilling Solutions
                       </h3>
-                      <details>
-                        <summary className={inter.className}>Click me</summary>
-                        <p>
-                          Here&apos;s some content to show when you click the
-                          button.
-                        </p>
-                      </details>
+                      <Link href='/services'><button className={montserrat.className}>Learn More</button></Link>
                       </div>
                     </div>
                     <div className={styles.serviceRightBottom}>
                      <div className={styles.serviceRightBottomContainer}>
                      <h3 className={inter.className}>All Services</h3>
-                      <details>
-                        <summary className={inter.className}>Click me</summary>
-                        <p className={inter.className}>
-                          Here&apos;s some content to show when you click the
-                          button.
-                        </p>
-                      </details>
+                     <Link href='/services'><button className={montserrat.className}>Learn More</button></Link>
                      </div>
                     </div>
                   </div>
@@ -379,35 +359,16 @@ export default function Home({ data }) {
         <section className={styles.info}>
           <InfoSection />
         </section>
-
-        {/* <section className={styles.info}><SpacerSection /></section> */}
         <section className={styles.services}>
           <ServicesSection />
-          <GridPattern className={styles.gridPattern} yOffset={-96} interactive />
+          <GridPattern className={styles.gridPattern} yOffset={0} interactive />
         </section>
         
-
-        {/* <section style={{ marginBottom: 5 }} className={styles.info}><Info /></section>
-        <section className={styles.gridSection}><Grid data={data} /></section>
-        <div className={styles.break1}></div>
-        <div className={styles.image}>
-          <LogoImage />
-        </div>
-        <br />
-        <div className={styles.break2}></div>
-        <section className={styles.socialG}><SocialGrid /></section> */}
       </div>
     </>
   );
 }
 
-// export async function getServerSideProps() {
-//   const data = await handler();
-
-//   return {
-//     props: { data },
-//   };
-// }
 export async function getServerSideProps({ req, res }) {
   const data = await handler();
   res.setHeader(

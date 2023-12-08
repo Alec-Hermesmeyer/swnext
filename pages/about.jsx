@@ -41,7 +41,7 @@ export default function About() {
 </Head>
         <div className={styles.about}>
             <section className={styles.hero}>
-            <Hero />
+                <Hero />
             </section>
            {/* <section>
           <AboutHero />
