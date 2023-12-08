@@ -409,12 +409,13 @@ export default function Home({ data }) {
 //   };
 // }
 export async function getServerSideProps({ req, res }) {
+  const data = await handler();
   res.setHeader(
     'Cache-Control',
-    'public, s-maxage=10, stale-while-revalidate=59'
-  )
- 
+    'public, s-maxage=86400, stale-while-revalidate=43200'
+  );
+
   return {
-    props: {},
-  }
+    props: { data },
+  };
 }
