@@ -92,7 +92,7 @@ function InfoSection() {
               <FadeIn>
               <div className={styles.infoCenter}>
               <article className={styles.infoCenterContainer}>
-                  <h4 className={inter.className}>
+                 <h4 className={inter.className}>
                   Expert Pier Drilling Services Texas
                   </h4>
                   <p className={inter.className}>
@@ -401,10 +401,20 @@ export default function Home({ data }) {
   );
 }
 
-export async function getServerSideProps() {
-  const data = await handler();
+// export async function getServerSideProps() {
+//   const data = await handler();
 
+//   return {
+//     props: { data },
+//   };
+// }
+export async function getServerSideProps({ req, res }) {
+  res.setHeader(
+    'Cache-Control',
+    'public, s-maxage=10, stale-while-revalidate=59'
+  )
+ 
   return {
-    props: { data },
-  };
+    props: {},
+  }
 }
