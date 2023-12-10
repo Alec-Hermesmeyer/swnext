@@ -80,7 +80,7 @@ function InfoSection() {
                     S&W Foundation Contractors is distinguished by its
                     exceptional blend of customer service, vast experience,
                     advanced equipment, and a strong commitment to safety. Our
-                    company's journey began in 1986 in Rowlett, Texas, rooted in
+                    company&apos;s journey began in 1986 in Rowlett, Texas, rooted in
                     family values, hard work, and a steadfast dedication to our
                     craft. As a family-run business, we have evolved into a
                     prominent name in the pier drilling sector, recognized
@@ -92,7 +92,7 @@ function InfoSection() {
                     professionals, all focused on fulfilling and surpassing the
                     expectations of our clients. We take immense pride in both
                     the quality of our work and the strong client relationships
-                    we've fostered over the years. As we look to the future, S&W
+                    we&apos;ve fostered over the years. As we look to the future, S&W
                     Foundation Contractors is excited to continue providing
                     top-tier services to the construction industry for many more
                     years.
@@ -122,7 +122,7 @@ function InfoSection() {
                       clients across the United States. Our team is equipped to
                       handle the logistical and technical demands of nationwide
                       operations, ensuring the same high standards of quality
-                      and reliability, regardless of location. Whether it's a
+                      and reliability, regardless of location. Whether it&apos;s a
                       project in the bustling urban landscape of Dallas or a
                       large-scale operation in another state, S&W Foundation
                       Contractors is committed to delivering excellence in pier
@@ -141,7 +141,7 @@ function InfoSection() {
                       Bringing Foundation Drilling Solutions to Dallas
                     </h4>
                     <p className={inter.className}>
-                      We're a full service pier drilling contractor with
+                      We&apos;re a full service pier drilling contractor with
                       expertise in commercial and industrial foundation
                       projects, large-scale residential developments, tilt-up
                       pier construction, cast-in-place pier networks, and a full
@@ -153,7 +153,7 @@ function InfoSection() {
                       the specific geotechnical needs of each project. Our team
                       is adept at navigating the intricacies of different soil
                       types and environmental conditions, ensuring optimal
-                      foundation solutions irrespective of the project's
+                      foundation solutions irrespective of the project&apos;s
                       complexity or scale. Our commitment to innovation and
                       staying abreast of the latest industry advancements allows
                       us to offer our clients cutting-edge solutions in pier
