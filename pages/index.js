@@ -35,26 +35,30 @@ function HeroSection() {
     <section className={styles.heroSection}>
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
-          <div className={styles.heroLeft}>
-            
-          </div>
+          <div className={styles.heroLeft}></div>
           <div className={styles.heroCenter}>
             <div className={styles.heroContent}>
               <h1 className={inter.className}>
                 S&amp;W Foundation Contractors
               </h1>
-              <h2 className={montserrat.className}>Commercial Pier Drilling Contractors - Dallas, Texas</h2>
+              <h2 className={montserrat.className}>
+                Commercial Pier Drilling Contractors - Dallas, Texas
+              </h2>
               <span>
-                <Link href='/contact'><button className={montserrat.className}>Contact Us Today</button></Link>
-                <Link href='/contact'><button className={montserrat.className}>Join Our Team</button></Link>
+                <Link href="/contact">
+                  <button className={montserrat.className}>
+                    Contact Us Today
+                  </button>
+                </Link>
+                <Link href="/careers">
+                  <button className={montserrat.className}>
+                    Join Our Team
+                  </button>
+                </Link>
               </span>
             </div>
           </div>
-          <div className={styles.heroRight}>
-            {/* <span>
-              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3349.8883093482623!2d-96.57852562368612!3d32.90112117763211!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x864ea800d0cccb39%3A0x3140a4ce8b0e4e7!2s2806%20Singleton%20St%2C%20Rowlett%2C%20TX%2075088!5e0!3m2!1sen!2sus!4v1701818848986!5m2!1sen!2sus"  allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style={{width:'500px', height:'480px'}}></iframe>
-              </span> */}
-          </div>
+          <div className={styles.heroRight}>{/* */}</div>
         </div>
       </div>
     </section>
@@ -63,153 +67,181 @@ function HeroSection() {
 function InfoSection() {
   return (
     <Container>
-      
-        <section className={styles.infoSection}>
-          <div className={styles.infoContainer}>
-            <div className={styles.infoWrapper}>
+      <section className={styles.infoSection}>
+        <div className={styles.infoContainer}>
+          <div className={styles.infoWrapper}>
             <FadeIn>
               <div className={styles.infoTop}>
                 <article className={styles.infoTopContainer}>
                   <h4 className={inter.className}>
-                    S&W Foundation Contractors offers an unmatched combination
-                    of customer service, experience, equipment and safety.
+                    A Legacy of Excellence in Foundation Contracting
                   </h4>
                   <p className={inter.className}>
-                    At S&W Foundation Contractors, our story is one of family,
-                    hard work, and dedication. Founded in 1986 in Rowlett,
-                    Texas, our business has grown to become a leader in the pier
-                    drilling industry, with a reputation for providing reliable,
-                    high-quality solutions to clients across the United States.
-                    Today, we remain a family-owned and operated business, with
-                    a commitment to upholding the values of honesty, integrity,
-                    and excellence that have been at the core of our success for
-                    over 35 years. From our state-of-the-art equipment to our
-                    team of experienced professionals, every aspect of our
-                    business is designed to meet the needs of our clients and
-                    exceed their expectations. We take pride in our work and in
-                    the relationships we have built with our clients, and we
-                    look forward to continuing to serve the construction
-                    industry for many years to come.
+                    S&W Foundation Contractors is distinguished by its
+                    exceptional blend of customer service, vast experience,
+                    advanced equipment, and a strong commitment to safety. Our
+                    company's journey began in 1986 in Rowlett, Texas, rooted in
+                    family values, hard work, and a steadfast dedication to our
+                    craft. As a family-run business, we have evolved into a
+                    prominent name in the pier drilling sector, recognized
+                    nationwide for delivering dependable and superior-quality
+                    services. For more than three decades, our guiding
+                    principles of honesty, integrity, and excellence have been
+                    fundamental to our enduring success. Our business is
+                    equipped with cutting-edge technology and staffed by skilled
+                    professionals, all focused on fulfilling and surpassing the
+                    expectations of our clients. We take immense pride in both
+                    the quality of our work and the strong client relationships
+                    we've fostered over the years. As we look to the future, S&W
+                    Foundation Contractors is excited to continue providing
+                    top-tier services to the construction industry for many more
+                    years.
                   </p>
                 </article>
               </div>
-              </FadeIn>
-              <FadeInStagger>
+            </FadeIn>
+            <FadeInStagger>
               <FadeIn>
-              <div className={styles.infoCenter}>
-              <article className={styles.infoCenterContainer}>
-                 <h4 className={inter.className}>
-                  Expert Pier Drilling Services Texas
-                  </h4>
-                  <p className={inter.className}>
-                    At S&W Foundation Contractors, our story is one of family,
-                    hard work, and dedication. Founded in 1986 in Rowlett,
-                    Texas, our business has grown to become a leader in the pier
-                    drilling industry, with a reputation for providing reliable,
-                    high-quality solutions to clients across the United States.
-                    Today, we remain a family-owned and operated business, with
-                    a commitment to upholding the values of honesty, integrity,
-                    and excellence that have been at the core of our success for
-                    over 35 years. From our state-of-the-art equipment to our
-                    team of experienced professionals, every aspect of our
-                    business is designed to meet the needs of our clients and
-                    exceed their expectations. We take pride in our work and in
-                    the relationships we have built with our clients, and we
-                    look forward to continuing to serve the construction
-                    industry for many years to come.
-                  </p>
-                </article>
-              </div>
+                <div className={styles.infoCenter}>
+                  <article className={styles.infoCenterContainer}>
+                    <h4 className={inter.className}>
+                      Expert Pier Drilling Services Offered Nationwide
+                    </h4>
+                    <p className={inter.className}>
+                      At S&W Foundation Contractors, we specialize in providing
+                      expert commercial pier drilling services that cater to a
+                      diverse range of projects, both locally in Dallas, Texas,
+                      and across the nation. Our roots in Dallas give us a
+                      unique understanding of the local terrain and construction
+                      needs, allowing us to offer specialized, region-specific
+                      solutions right at the heart of Texas. This local
+                      expertise, combined with our extensive experience,
+                      positions us perfectly to extend our services on a
+                      national scale. We harness the same dedication and
+                      precision that we apply in our local projects to serve
+                      clients across the United States. Our team is equipped to
+                      handle the logistical and technical demands of nationwide
+                      operations, ensuring the same high standards of quality
+                      and reliability, regardless of location. Whether it's a
+                      project in the bustling urban landscape of Dallas or a
+                      large-scale operation in another state, S&W Foundation
+                      Contractors is committed to delivering excellence in pier
+                      drilling, tailored to the unique needs of each project and
+                      location.
+                    </p>
+                  </article>
+                </div>
               </FadeIn>
-              </FadeInStagger>
-              <FadeInStagger>
+            </FadeInStagger>
+            <FadeInStagger>
               <FadeIn>
-              <div className={styles.infoBottom}>
-              <article className={styles.infoBottomContainer}>
-                  <h4 className={inter.className}>
-                  Foundation Drilling Contractors Dallas
-                  </h4>
-                  <p className={inter.className}>
-                    At S&W Foundation Contractors, our story is one of family,
-                    hard work, and dedication. Founded in 1986 in Rowlett,
-                    Texas, our business has grown to become a leader in the pier
-                    drilling industry, with a reputation for providing reliable,
-                    high-quality solutions to clients across the United States.
-                    Today, we remain a family-owned and operated business, with
-                    a commitment to upholding the values of honesty, integrity,
-                    and excellence that have been at the core of our success for
-                    over 35 years. From our state-of-the-art equipment to our
-                    team of experienced professionals, every aspect of our
-                    business is designed to meet the needs of our clients and
-                    exceed their expectations. We take pride in our work and in
-                    the relationships we have built with our clients, and we
-                    look forward to continuing to serve the construction
-                    industry for many years to come.
-                  </p>
-                </article>
-              </div>
+                <div className={styles.infoBottom}>
+                  <article className={styles.infoBottomContainer}>
+                    <h4 className={inter.className}>
+                      Bringing Foundation Drilling Solutions to Dallas
+                    </h4>
+                    <p className={inter.className}>
+                      We're a full service pier drilling contractor with
+                      expertise in commercial and industrial foundation
+                      projects, large-scale residential developments, tilt-up
+                      pier construction, cast-in-place pier networks, and a full
+                      range of drilling-related specialties. Beyond these core
+                      services, we offer a comprehensive range of
+                      drilling-related specialties. This includes but is not
+                      limited to soil testing, site analysis, deep foundation
+                      drilling, and customized drilling solutions tailored to
+                      the specific geotechnical needs of each project. Our team
+                      is adept at navigating the intricacies of different soil
+                      types and environmental conditions, ensuring optimal
+                      foundation solutions irrespective of the project's
+                      complexity or scale. Our commitment to innovation and
+                      staying abreast of the latest industry advancements allows
+                      us to offer our clients cutting-edge solutions in pier
+                      drilling and foundation construction. Whether it’s a
+                      challenging industrial project requiring precise and deep
+                      drilling, or a residential development seeking a reliable
+                      foundation, our goal is to provide top-tier service and
+                      results that not only meet but exceed expectations. With
+                      S&W Foundation Contractors, clients are assured of a
+                      partner that brings expertise, experience, and excellence
+                      to every project.
+                    </p>
+                  </article>
+                </div>
               </FadeIn>
-              </FadeInStagger>
-            </div>
-            
+            </FadeInStagger>
           </div>
-        </section>
-      
+        </div>
+      </section>
     </Container>
   );
 }
 
-
 function ServicesSection() {
   return (
     <Container>
-      
-        <div className={styles.servicesSection}>
-          <div className={styles.servicesContainer}>
-            <div className={styles.servicesWrapper}>
-              <div className={styles.servicesLeft}>
-                <div className={styles.serviceLeftContainer}>
-                  <div className={styles.serviceLeftWrapper}>
-                    <div className={styles.serviceLeftTop}>
-                      <div className={styles.serviceLeftTopContainer}>
+      <div className={styles.servicesSection}>
+        <div className={styles.servicesContainer}>
+          <div className={styles.servicesWrapper}>
+            <div className={styles.servicesLeft}>
+              <div className={styles.serviceLeftContainer}>
+                <div className={styles.serviceLeftWrapper}>
+                  <div className={styles.serviceLeftTop}>
+                    <div className={styles.serviceLeftTopContainer}>
                       <h3 className={inter.className}>Pier Drilling</h3>
-                      <Link href='/services'><button className={montserrat.className}>Learn More</button></Link>
-                      </div>
+                      <Link href="/pier-drilling">
+                        <button className={montserrat.className}>
+                          Learn More
+                        </button>
+                      </Link>
                     </div>
-                    <div className={styles.serviceLeftBottom}>
-                      <div className={styles.serviceLeftBottomContainer}>
+                  </div>
+                  <div className={styles.serviceLeftBottom}>
+                    <div className={styles.serviceLeftBottomContainer}>
                       <h3 className={inter.className}>
                         Limited-Access Drilling
                       </h3>
-                      <Link href='/services'><button className={montserrat.className}>Learn More</button></Link>
-                      </div>
+                      <Link href="/limited-access">
+                        <button className={montserrat.className}>
+                          Learn More
+                        </button>
+                      </Link>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className={styles.servicesCenter}>
-                <div className={styles.serviceCenterContainer}>
+            </div>
+            <div className={styles.servicesCenter}>
+              <div className={styles.serviceCenterContainer}>
                 <h3 className={inter.className}>About Us</h3>
-                <Link href='/about'><button className={montserrat.className}>Learn More</button></Link>
-                </div>
-                
+                <Link href="/about">
+                  <button className={montserrat.className}>Learn More</button>
+                </Link>
               </div>
-              <div className={styles.servicesRight}>
-                <div className={styles.serviceRightContainer}>
-                  <div className={styles.serviceRightWrapper}>
-                    <div className={styles.serviceRightTop}>
-                      <div className={styles.serviceRightTopContainer}>
+            </div>
+            <div className={styles.servicesRight}>
+              <div className={styles.serviceRightContainer}>
+                <div className={styles.serviceRightWrapper}>
+                  <div className={styles.serviceRightTop}>
+                    <div className={styles.serviceRightTopContainer}>
                       <h3 className={inter.className}>
                         Turn-Key Drilling Solutions
                       </h3>
-                      <Link href='/services'><button className={montserrat.className}>Learn More</button></Link>
-                      </div>
+                      <Link href="/turn-key">
+                        <button className={montserrat.className}>
+                          Learn More
+                        </button>
+                      </Link>
                     </div>
-                    <div className={styles.serviceRightBottom}>
-                     <div className={styles.serviceRightBottomContainer}>
-                     <h3 className={inter.className}>All Services</h3>
-                     <Link href='/services'><button className={montserrat.className}>Learn More</button></Link>
-                     </div>
+                  </div>
+                  <div className={styles.serviceRightBottom}>
+                    <div className={styles.serviceRightBottomContainer}>
+                      <h3 className={inter.className}>All Services</h3>
+                      <Link href="/services">
+                        <button className={montserrat.className}>
+                          Learn More
+                        </button>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -217,11 +249,70 @@ function ServicesSection() {
             </div>
           </div>
         </div>
-      
+      </div>
     </Container>
   );
 }
-
+function ContactSection() {
+  return (
+    <div className={styles.contactSection}>
+      <div className={styles.contactContainer}>
+        <div className={styles.contactWrapper}>
+          <div className={styles.top}>
+            <Container>
+              <FadeIn>
+              <span className={styles.map}>
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3349.8883093482623!2d-96.57852562368612!3d32.90112117763211!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x864ea800d0cccb39%3A0x3140a4ce8b0e4e7!2s2806%20Singleton%20St%2C%20Rowlett%2C%20TX%2075088!5e0!3m2!1sen!2sus!4v1701818848986!5m2!1sen!2sus"
+                allowfullscreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                style={{ width: "1200px", height: "350px" }}
+              ></iframe>
+            </span>
+              </FadeIn>
+            </Container>
+          </div>
+          <div className={styles.bottom}>
+            <div className={styles.bottomContainer}>
+              <div className={styles.bottomWrapper}>
+                <div className={styles.bottomLeft}>
+                    <div className={styles.bottomLeftContainer}>
+                    <h3 className={montserrat.className}>Contact Us</h3>
+                    <p className={montserrat.className}>
+                      S&W Foundation Contractors Inc.
+                    </p>
+                    <p className={montserrat.className}>
+                      2806 Singleton St. Rowlett, TX 75088
+                    </p>
+                    <p className={montserrat.className}>
+                      <a href="tel:214-703-0484">(214) 703-0484</a>
+                    </p>
+                    <p className={montserrat.className}>
+                      <a href="mailto:"></a>
+                    </p>
+                  </div>                                    
+                </div>
+                <div className={styles.bottomCenter}></div>
+                <div className={styles.bottomRight}>
+                <div className={styles.bottomRightContainer}>
+                    <h3 className={montserrat.className}>Follow Us</h3>
+                    <p className={montserrat.className}>
+                      Facebook
+                    </p>
+                    <p className={montserrat.className}>
+                      LinkedIn
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 function SpacerSection() {
   return (
     <div className={styles.spacerSection}>
@@ -363,7 +454,9 @@ export default function Home({ data }) {
           <ServicesSection />
           <GridPattern className={styles.gridPattern} yOffset={0} interactive />
         </section>
-        
+        <section className={styles.contact}>
+          <ContactSection />
+        </section>
       </div>
     </>
   );
@@ -372,8 +465,8 @@ export default function Home({ data }) {
 export async function getServerSideProps({ req, res }) {
   const data = await handler();
   res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=86400, stale-while-revalidate=43200'
+    "Cache-Control",
+    "public, s-maxage=31536000, stale-while-revalidate"
   );
 
   return {
