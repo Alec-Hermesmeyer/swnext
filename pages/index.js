@@ -265,6 +265,7 @@ function ContactSection() {
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3349.8883093482623!2d-96.57852562368612!3d32.90112117763211!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x864ea800d0cccb39%3A0x3140a4ce8b0e4e7!2s2806%20Singleton%20St%2C%20Rowlett%2C%20TX%2075088!5e0!3m2!1sen!2sus!4v1701818848986!5m2!1sen!2sus"
                 allowfullscreen=""
+                title="S&W Foundation Contractors Inc."
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 style={{ width: "1200px", height: "350px" }}
@@ -298,10 +299,11 @@ function ContactSection() {
                 <div className={styles.bottomRightContainer}>
                     <h3 className={montserrat.className}>Follow Us</h3>
                     <p className={montserrat.className}>
-                      Facebook
+                    <Link href='https://www.facebook.com/SWFoundationContractors' target="_blank" rel="noopener noreferrer" >Facebook</Link>
                     </p>
                     <p className={montserrat.className}>
-                      LinkedIn
+                    <Link href='https://www.linkedin.com/company/s-w-foundation-contractors-inc' target="_blank" rel="noopener noreferrer" >LinkedIn</Link>
+
                     </p>
                   </div>
                 </div>
