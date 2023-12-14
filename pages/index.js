@@ -125,10 +125,14 @@ export default function Home({ data}) {
   );
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps({ req, res }) {
   const data = await handler();
+  res.setHeader(
+    "Cache-Control",
+    "public, s-maxage=31536000, stale-while-revalidate"
+  );
 
   return {
-    props: {  data }
+    props: { data },
   };
 }
