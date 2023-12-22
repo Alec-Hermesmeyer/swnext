@@ -1,14 +1,11 @@
 .main {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: space-evenly;
   align-items: center;
   padding: 6rem;
-  min-height: 100vh;
-  /* margin-bottom: -20px; */
+  min-height: 100dvh;
   background-color: white;
-  /* background-color: rgb(16, 39, 94); */
-  /* margin-bottom: -5.3%; */
   width: 100dvw;
 }
 /* SECTIONS */
@@ -29,6 +26,7 @@
 }
 .info{
   width: 100vw;
+  height: 135vh;
 }
 .services{
   height: 50vh;
@@ -57,9 +55,11 @@
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
-  width: 100%;
-  height: 100%;
+  height: 66dvh;
+  width: 100dvw;
   box-shadow: 5px 15px 25px; 
+  display: flex;
+  justify-content: center;
 }
 .heroTitle{
   color: white;
@@ -70,30 +70,27 @@
 
 .heroContainer{
   height: 100%;
-  width: 100%;
+  width: 85%;
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: center;
   z-index: 6;
-  margin-bottom: -80%;
   
 }
 .heroWrapper{
-  height: 100%;
-  width: 90%;
+  height: 80%;
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: center;
   flex: 3;
 }
 .heroLeft{
-  flex: 1;
-  height: 100%;
+  flex: 2;
+  height: 80%;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  
 }
 .heroRight{
   flex: 1;
@@ -102,26 +99,99 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
 }
+.rightCard{
+  height: 65%;
+  width: 85%;
+  background-color: rgb(16, 39, 94);
+  border-top: 28px solid red;
+  border-radius: var(--border-radius);
+  margin-right: 5%;
+  margin-top: 15%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cardWrapper{
+  height: 100%;
+  width: 92%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
 
-.heroCenter{
-  flex: 1;
-  height: 50%;
-  width: 100%;
 }
-.heroCenter h1{
-  color: white;
-  font-size: 2rem;
-  font-weight: 600;
-}
-.heroCenter h2{
-  color: white;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-.heroContent{
+.cardContent{
   height: 100%;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  flex-direction: column;
+}
+.cardContent h3{
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-align: left;
+
+}
+.cardContent ul{
+  list-style: none;
+  padding-left: 0;
+}
+.cardContent li{
+  color: white;
+  font-size: 1rem;
+  line-height: 2em;
+  font-weight: 400;
+  text-align: left;
+  list-style: none;
+  padding-left: 0;
+}
+.cardContent span{
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 100%;
+}
+.cardContent button{
+  height: 40px;
+  width: 120px;
+  border-radius: 5px;
+  border: none;
+  background-color: red;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.heroLeft h1{
+  color: white;
+  font-size: 42px;
+  font-weight: 900;
+  color: white;
+  letter-spacing: 2px;
+  line-height: 2.2em;
+  text-transform: uppercase;
+}
+.heroLeft h2{
+  color: white;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  line-height: 1.6em;
+}
+.heroLeft h6{
+  color: white;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  line-height: 2.6em;
+}
+.heroContent{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -140,11 +210,11 @@
   width: 160px;
   border-radius: 5px;
   border: none;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23));
+  background-image: linear-gradient(to right, rgb(16, 39, 94, .75), rgba(0, 0, 0, 0.23));
   border: 2px solid#fff;
   color: white;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 900;
   box-shadow: 5px 5px 5px rgb(0, 0, 0); 
   cursor: pointer;
 }
@@ -158,9 +228,6 @@
   justify-content: center;
   z-index: 6;
   color: black;
-  /* box-shadow: 5px 15px 25px;  */
-  /* margin-top: -10px; */
-  
 }
 .infoContainer{
   width: 100%;
@@ -191,18 +258,60 @@
   flex-direction: column;
 }
 .infoTopContainer{
+  height: 45vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+}
+.infoTopWrapper{
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  flex: 4;
+}
+.infoTopLeft{
+  flex: 3.2;
+  height: 100%;
+  border: 2px solid green;
+}
+.infoTopRight{
+  flex: .8;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: right;
+  width: 100%;
+}
+.imgContainer{
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+}
+.infoImage{
+  object-fit: fill;
+  filter: grayscale(100%);
+}
+.infoImage:hover{
+  filter: grayscale(0%);
+  transition: ease 1s all;
+}
+.article{
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   flex-direction: column;
   justify-content: center;
-  padding-bottom: 40px;
-  margin-right: 5rem;
-  background-color: rgb(16, 39, 94);
-  box-shadow: 15px 15px 55px; 
-  margin-bottom: 10px;
-  border: 2px solid white;
+  color: black;
 }
 .infoCenterContainer{
   width: 100%;
@@ -258,20 +367,21 @@
   justify-content: space-evenly;
   flex-direction: column;
 }
-.infoWrapper h4{
-  font-size: 1.5rem;
-  font-weight: 600;
-  width: 80%;
-  padding-top: 40px;
+.infoWrapper h2{
+  font-size: 44px;
+  font-weight: 900;
+  width: 100%;
   margin-bottom: 20px;
-  color: white;
+  letter-spacing: 2px;
+  line-height: 1.6em;
   text-align: center;
 }
 .infoWrapper p {
   font-size: 1rem;
   width: 80%;
   padding-bottom: 10px;
-  color: white;
+  font-weight: 400;
+  
 }
 /*SERVICES SECTION */
 
@@ -428,7 +538,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/slider1.jpeg);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(51, 32, 127, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/slider1.jpeg);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;

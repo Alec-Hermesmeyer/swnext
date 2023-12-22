@@ -2,23 +2,19 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "@/styles/Home.module.css";
-// import Hero from '@/components/Hero';
-// import Info from '@/components/Info';
-// import Grid from '@/components/Grid';
-// import SocialGrid from '@/components/SocialGrid';
-import handler from "../pages/api/gridData";
-import Script from "next/script";
 import { GridPattern } from "@/components/GridPattern";
 import { Container } from "@/components/Container";
 import { FadeIn, FadeInStagger } from "@/components/FadeIn";
 import { Inter } from "next/font/google";
 import { Oswald } from "next/font/google";
 import { Montserrat } from "next/font/google";
+import { Lato } from "next/font/google";
 // import { Container } from '@/components/Container';
 
 const inter = Inter({ subsets: ["latin"] });
 const oswald = Oswald({ subsets: ["latin"] });
 const montserrat = Montserrat({ subsets: ["latin"] });
+const lato = Lato({  weight:['900', '100', '300', '400', '700'],subsets: ["latin"] });
 const LogoImage = () => (
   <Image
     className={styles.logo}
@@ -35,30 +31,46 @@ function HeroSection() {
     <section className={styles.heroSection}>
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
-          <div className={styles.heroLeft}></div>
-          <div className={styles.heroCenter}>
-            <div className={styles.heroContent}>
-              <h1 className={inter.className}>
-                S&amp;W Foundation Contractors
+          <div className={styles.heroLeft}>
+            <FadeIn>
+          <div className={styles.heroContent}>
+          <h1 className={lato.className}>
+               S&amp;W Foundation Contractors 
               </h1>
-              <h2 className={montserrat.className}>
+              <h2 className={lato.className}>
                 Commercial Pier Drilling Contractors - Dallas, Texas
               </h2>
+              <h6 className={lato.className}><em>Drilling Beyond Limits</em></h6>
               <span>
-                <Link href="/contact">
-                  <button className={montserrat.className}>
-                    Contact Us Today
-                  </button>
+                <Link href="/services">
+                  <button className={lato.className}>Our Services</button>
                 </Link>
-                <Link href="/careers">
-                  <button className={montserrat.className}>
-                    Join Our Team
-                  </button>
-                </Link>
+
               </span>
             </div>
+            </FadeIn>
           </div>
-          <div className={styles.heroRight}>{/* */}</div>
+          <div className={styles.heroRight}>
+            <div className={styles.rightCard}>
+             <div className={styles.cardWrapper}>
+             <div className={styles.cardContent}>
+                <h3 className={lato.className}> We Provide Nation-Wide Service</h3>
+                <ul>
+                  <Link href='tel: +2147030484'><li className={lato.className}>Call: (214)-703-0484</li></Link>
+                  <li>Address: 2806 Singleton St. Rowlett, TX 75088</li>
+                </ul>
+                <span>
+                  <Link href="/contact">
+                    <button className={lato.className}>Contact Us</button>
+                  </Link>
+                  <Link href="/careers">
+                    <button className={lato.className}>Careers</button>
+                  </Link>
+                </span>
+              </div>
+             </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -72,11 +84,14 @@ function InfoSection() {
           <div className={styles.infoWrapper}>
             <FadeIn>
               <div className={styles.infoTop}>
-                <article className={styles.infoTopContainer}>
-                  <h4 className={inter.className}>
+                <div className={styles.infoTopContainer}>
+                  <div className={styles.infoTopWrapper}>
+                    <div className={styles.infoTopLeft}>
+                    <article className={styles.article}>
+                  <h2 className={lato.className}>
                     A Legacy of Excellence in Foundation Contracting
-                  </h4>
-                  <p className={inter.className}>
+                  </h2>
+                  <p className={lato.className}>
                     S&W Foundation Contractors is distinguished by its
                     exceptional blend of customer service, vast experience,
                     advanced equipment, and a strong commitment to safety. Our
@@ -98,6 +113,14 @@ function InfoSection() {
                     years.
                   </p>
                 </article>
+                    </div>
+                    <div className={styles.infoTopRight}>
+                      <div className={styles.imgContainer}>
+                      <Image className={styles.infoImage} src='Images/public/IMG_8061.webp' height={400} width={320} alt="S&W Foundations" loading="lazy" quality={80} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </FadeIn>
             <FadeInStagger>
@@ -264,7 +287,7 @@ function ContactSection() {
               <span className={styles.map}>
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3349.8883093482623!2d-96.57852562368612!3d32.90112117763211!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x864ea800d0cccb39%3A0x3140a4ce8b0e4e7!2s2806%20Singleton%20St%2C%20Rowlett%2C%20TX%2075088!5e0!3m2!1sen!2sus!4v1701818848986!5m2!1sen!2sus"
-                allowfullscreen=""
+                allowFullScreen=""
                 title="S&W Foundation Contractors Inc."
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
@@ -303,7 +326,6 @@ function ContactSection() {
                     </p>
                     <p className={montserrat.className}>
                     <Link href='https://www.linkedin.com/company/s-w-foundation-contractors-inc' target="_blank" rel="noopener noreferrer" >LinkedIn</Link>
-
                     </p>
                   </div>
                 </div>
@@ -413,7 +435,7 @@ export default function Home({ data }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }}
         />
       </Head>
-      <Script
+      {/* <Script
         id="google-tag-manager"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
@@ -442,7 +464,7 @@ export default function Home({ data }) {
           gtag('js', new Date());
           gtag('config', 'G-BXEC44GZQV');
         `}
-      </Script>
+      </Script> */}
 
       <div className={styles.main}>
         <section className={styles.hero}>
@@ -465,13 +487,13 @@ export default function Home({ data }) {
 }
 
 export async function getServerSideProps({ req, res }) {
-  const data = await handler();
+  // const data = await handler();
   res.setHeader(
     "Cache-Control",
     "public, s-maxage=31536000, stale-while-revalidate"
   );
 
   return {
-    props: { data },
+    props: {  },
   };
 }

@@ -5,133 +5,46 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: 6rem;
+  padding: 3rem;
   min-height: 100vh;
   /* background-color: rgb(16, 39, 94); */
 }
 .hero{
   width: 100vw;
-  height: 30vw;
+  height: 35vw;
 }
+
 .heroSection{
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7297.webp);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: bottom;
+  width: 100%;
+  height: 100%;
+  box-shadow: 5px 15px 25px; 
+}
+.heroContainer{
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: space-evenly;
   align-items: center;
-  width: 100vw;
-  height: 30vw;
-  z-index: 12;
 }
-.gridPattern{
-  position: absolute;
-  left: 0;
-  right: 0;
-    /* This corresponds to top-14 in Tailwind */
-  height: 50vh;
-  width: 100%;
-  /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
-  color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
-  background-image: linear-gradient(to right, #991b1b, white, #3b82f6); /* from-red-700, via-white, to-neutral-50 */
-  mask-image: linear-gradient(to right, #991b1b, white, #3b82f6); /* from-red-700, via-white, to-neutral-50 */
-  
-}
-.banner{
+.heroWrapper{
+  width: 90%;
+  height: 100%;
   display: flex;
-  background-color: white;
-  width: 95vw;
-  height: 14vh;
   align-items: center;
-  justify-content: center;
-  border-radius: var(--border-radius);
-  margin-top: 5px;
-  margin-bottom: 5px;
-  text-align: center;
+  justify-content: flex-start;
 }
-.banner h1{
-  font-size: 30px;
-}
-.info{
-  height: 60vh;
-  width: 95vw;
-  overflow: hidden;
-  border: 1px solid black;
-  border-radius: var(--border-radius);
- 
-}
-.heroImg{
-  position: absolute;
-  bottom: 9.9%;
-  left: 24%;
-  overflow: hidden;
-  border-radius: var(--border-radius);
-  object-fit: cover;
- 
-}
-
-.container {
-height: 100%;
-width: 100%;
-display: flex;
-align-items: center;
-justify-content: space-evenly;
-}
-
-.wrapper {
-display: flex;
-align-items: center;
-justify-content: space-evenly;
-height: 100%;
-width: 100%;
-}
-
-.grid {
-display: grid;
-grid-template-columns: repeat(3, minmax(25%, auto));
-width: 100%;
-max-width: 100%;
-height: 100%;
-}
-
-.card {
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: space-evenly;
-width: 100%;
-height: 100%;
-background-color: white;
-border: 1px solid black;
-border-radius: var(--border-radius);
-}
-.card h2{
-text-align: center;
-width: 97%;
-}
-.card p{
-font-size: 13px;
-width: 85%;
-text-align: center;
-font-weight: bold;
-}
-.card button{
-  height: 50px;
-  width: 100%;
-  padding-right: 15px;
-  padding-left: 15px;
-  border-radius: var(--border-radius);
-  border: 1px solid rgb(16, 39, 94);
-  background-color: black;
-  box-shadow: 5px 15px 25px rgb(16, 39, 94);;
+.heroWrapper h1{
+  font-size: 72px;
+  font-weight: bold;
   color: white;
+  letter-spacing: 2px;
+  line-height: 1.2em;
 }
-.contact{
-  width: 95vw;
-  height: 60vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 @media (hover: hover) and (pointer: fine) {
 .card:hover {
   background: rgba(var(--card-rgb), 0.1);
