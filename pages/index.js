@@ -54,7 +54,7 @@ function HeroSection() {
             <div className={styles.rightCard}>
              <div className={styles.cardWrapper}>
              <div className={styles.cardContent}>
-                <h3 className={lato.className}> We Provide Nation-Wide Service</h3>
+                <h3 className={lato.className}> For Nation-Wide Service</h3>
                 <ul>
                   <Link href='tel: +2147030484'><li className={lato.className}>Call: (214)-703-0484</li></Link>
                   <li>Address: 2806 Singleton St. Rowlett, TX 75088</li>
