@@ -49,7 +49,7 @@ const JobForm = () => {
 
     return (
         <>
-            <form onSubmit={handleSubmit} className={styles.form}>
+            <form onSubmit={handleSubmit} className={styles.form} id='jobForm'>
                 <h1 className={styles.h1}>Join Our Team</h1>
                 <div className={styles.formContainer}>
                     <div className={styles.formWrapper}>
@@ -104,7 +104,7 @@ const JobForm = () => {
                         </div>
                         <div className={styles.formBottom}>
                             <textarea onChange={(e) => setMessage(e.target.value)} value={message} required id='message' name='message' className={styles.contactMessage} placeholder='Tell Us About Your Experience'></textarea>
-                            <button className={styles.formSubmit} type='submit'><b>Submit</b></button>
+                            <button id='jobFormBtn' className={styles.formSubmit} type='submit'><b>Submit</b></button>
                         </div>
                     </div>
                 </div>
