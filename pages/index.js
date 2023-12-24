@@ -54,7 +54,7 @@ function HeroSection() {
             <div className={styles.rightCard}>
              <div className={styles.cardWrapper}>
              <div className={styles.cardContent}>
-                <h3 className={lato.className}> For Nation-Wide Service</h3>
+                <h3 className={lato.className}> We Provide Nation-Wide Service</h3>
                 <ul>
                   <Link href='tel: +2147030484'><li className={lato.className}>Call: (214)-703-0484</li></Link>
                   <li>Address: 2806 Singleton St. Rowlett, TX 75088</li>
@@ -125,13 +125,16 @@ function InfoSection() {
             </FadeIn>
             <FadeInStagger>
               <FadeIn>
-                <div className={styles.infoCenter}>
-                  <article className={styles.infoCenterContainer}>
-                    <h4 className={inter.className}>
-                      Expert Pier Drilling Services Offered Nationwide
-                    </h4>
-                    <p className={inter.className}>
-                      At S&W Foundation Contractors, we specialize in providing
+                <div className={styles.infoTop}>
+                <div className={styles.infoTopContainer}>
+                  <div className={styles.infoTopWrapperC}>
+                    <div className={styles.infoTopLeft}>
+                    <article className={styles.article}>
+                  <h2 className={lato.className}>
+                  Expert Pier Drilling Services Offered Nationwide
+                  </h2>
+                  <p className={lato.className}>
+                  At S&W Foundation Contractors, we specialize in providing
                       expert commercial pier drilling services that cater to a
                       diverse range of projects, both locally in Dallas, Texas,
                       and across the nation. Our roots in Dallas give us a
@@ -151,20 +154,31 @@ function InfoSection() {
                       Contractors is committed to delivering excellence in pier
                       drilling, tailored to the unique needs of each project and
                       location.
-                    </p>
-                  </article>
+                  </p>
+                </article>
+                    </div>
+                    <div className={styles.infoTopRight}>
+                      <div className={styles.imgContainer}>
+                      <Image className={styles.infoImage} src='Images/public/IMG_7620.webp' height={400} width={320} alt="S&W Foundations" loading="lazy" quality={80} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
               </FadeIn>
             </FadeInStagger>
             <FadeInStagger>
               <FadeIn>
-                <div className={styles.infoBottom}>
-                  <article className={styles.infoBottomContainer}>
-                    <h4 className={inter.className}>
-                      Bringing Foundation Drilling Solutions to Dallas
-                    </h4>
-                    <p className={inter.className}>
-                      We&apos;re a full service pier drilling contractor with
+                 <div className={styles.infoTop}>
+                <div className={styles.infoTopContainer}>
+                  <div className={styles.infoTopWrapper}>
+                    <div className={styles.infoTopLeft}>
+                    <article className={styles.article}>
+                  <h2 className={lato.className}>
+                  Bringing Foundation Drilling Solutions to Dallas
+                  </h2>
+                  <p className={lato.className}>
+                  We&apos;re a full service pier drilling contractor with
                       expertise in commercial and industrial foundation
                       projects, large-scale residential developments, tilt-up
                       pier construction, cast-in-place pier networks, and a full
@@ -188,9 +202,18 @@ function InfoSection() {
                       S&W Foundation Contractors, clients are assured of a
                       partner that brings expertise, experience, and excellence
                       to every project.
-                    </p>
-                  </article>
+                  </p>
+                </article>
+                    </div>
+                    <div className={styles.infoTopRight}>
+                      <div className={styles.imgContainer}>
+                      <Image className={styles.infoImage} src='Images/public/IMG_7653.webp' height={400} width={320} alt="S&W Foundations" loading="lazy" quality={80} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+                
               </FadeIn>
             </FadeInStagger>
           </div>

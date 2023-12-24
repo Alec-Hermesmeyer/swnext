@@ -22,11 +22,16 @@
   z-index: 6;
   box-shadow: 5px 15px 25px; 
   margin-top: -5%;
+  margin-bottom: -2.3%;
   
 }
 .info{
   width: 100vw;
-  height: 135vh;
+  height: 155vh;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: space-evenly;
 }
 .services{
   height: 50vh;
@@ -51,7 +56,7 @@
 /* HERO SECTION */
 
 .heroSection{
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/trucks2.jpg);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/trucks2.webp);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -210,8 +215,7 @@
   width: 160px;
   border-radius: 5px;
   border: none;
-  background-image: linear-gradient(to right, rgb(16, 39, 94, .75), rgba(0, 0, 0, 0.23));
-  border: 2px solid#fff;
+  background-color: red;
   color: white;
   font-size: 1rem;
   font-weight: 900;
@@ -221,7 +225,7 @@
 /* INFO SECTION */
 
 .infoSection{
-  height: 135vh;
+  height: 145vh;
   width: 100vw;
   display: flex;
   align-items: center;
@@ -235,7 +239,7 @@
   display: flex;
   align-items: center;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-evenly;
   background-color: transparent;
   padding-bottom: 20px;
 }
@@ -245,8 +249,8 @@
   display: flex;
   align-items: center;
   flex-direction: column;
-  justify-content: space-evenly;
-  flex: 3;
+  justify-content: space-between;
+  flex: 1;
 }
 .infoTop{
   flex: 1;
@@ -256,6 +260,8 @@
   align-items: center;
   justify-content: space-evenly;
   flex-direction: column;
+  padding-top: 15px;
+  box-shadow: 5px 5px 5px;
 }
 .infoTopContainer{
   height: 45vh;
@@ -273,10 +279,19 @@
   justify-content: space-evenly;
   flex: 4;
 }
+.infoTopWrapperC{
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-evenly;
+  flex: 4;
+}
 .infoTopLeft{
   flex: 3.2;
   height: 100%;
-  border: 2px solid green;
+  border-top: 25px solid red;
 }
 .infoTopRight{
   flex: .8;
@@ -298,12 +313,13 @@
 }
 .infoImage{
   object-fit: fill;
-  filter: grayscale(100%);
+  /* filter: grayscale(100%);
+   transition: ease 1s all; */
 }
-.infoImage:hover{
+/* .infoImage:hover{
   filter: grayscale(0%);
   transition: ease 1s all;
-}
+} */
 .article{
   width: 100%;
   height: 100%;
