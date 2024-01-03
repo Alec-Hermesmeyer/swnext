@@ -8,7 +8,7 @@ import { Oswald } from "next/font/google";
 import { Montserrat } from "next/font/google";
 import { Lato } from "next/font/google";
 import { FadeIn } from "@/components/FadeIn";
-// import { Container } from '@/components/Container';
+
 
 const inter = Inter({ subsets: ["latin"] });
 const oswald = Oswald({ subsets: ["latin"] });

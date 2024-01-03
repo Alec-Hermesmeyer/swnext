@@ -6,16 +6,14 @@
     max-width: 100vw;
     background-color: transparent;
     border-radius: var(--border-radius);
-    margin-bottom: 5px;
+    margin-bottom: 2px;
   }
   
   .card {
     padding: 1rem 1.2rem;
     border-radius: var(--border-radius);
     background: rgba(var(--card-rgb), 0);
-    border: 1px solid black;
     transition: background black 200ms, border 200ms;
-    background-color: white;
     display: flex;
     align-items: center;
     justify-content: center;

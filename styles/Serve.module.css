@@ -1,36 +1,269 @@
 .service {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6rem;
-    min-height: 100vh;
-    margin-bottom: -20px;
-    background-color: rgb(16, 39, 94);
-    margin-bottom: -5.3%;
-    
-  }
+  width: 100vw;  
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3rem;
+  min-height: 100vh;
+  /* background-color: rgb(16, 39, 94); */
+}
+.hero{
+  width: 100vw;
+  height: 35vw;
+}
+.heroLink{
+  height: 40px;
+  width: 120px;
+  border-radius: 5px;
+  border: none;
+  background-color: red;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-weight: 900;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 5px 15px 25px black; 
+}
 
-  .banner{
-      height: 20vh;
-      width: 95vw;
-      background-color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--border-radius);
-      margin-top: 5px;
-      margin-bottom: 5px;
-  }
-  .heroImg{
-    position: absolute;
-    bottom: 9.9%;
-    left: 24%;
-    overflow: hidden;
-    border-radius: var(--border-radius);
-    object-fit: cover;
-   
-  }
+.heroSection{
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7517.webp);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: bottom;
+  width: 100%;
+  height: 100%;
+  box-shadow: 5px 15px 25px; 
+}
+.heroContainer{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+}
+.heroWrapper{
+  width: 90%;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: column;
+}
+.heroWrapper span {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-evenly;
+  height: 60px;
+  width: 400px;
+  margin-top: 2%;
+  margin-left: -4%;
+}
+.heroWrapper h1{
+  font-size: 72px;
+  font-weight: bold;
+  color: white;
+  letter-spacing: 2px;
+  line-height: 1.2em;
+}
+.info{
+  height: 100%;
+  width: 100vw;
+  padding-top: 2%;
+}
+.infoBtn{
+  height: 40px;
+  width: 200px;
+  border-radius: 5px;
+  border: none;
+  background-color: red;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-weight: 900;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 5px 15px 25px black; 
+}
+.infoSection{
+  height: 200vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.infoContainer{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.infoWrapper{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  flex: 3;
+}
+.infoTop{
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 5%;
+}
+.infoTopContainer{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.infoTopWrapper{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 3;
+}
+.infoTopWrapperC{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 3;
+}
+.infoTopWrapperC{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: center;
+  flex: 3;
+}
+.infoTopLeft{
+  flex: 2;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  z-index: 1;
+  margin-right: -2%;
+  
+}
+.infoTopLeftC{
+  flex: 2;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  z-index: 1;
+  margin-right: 2%;
+  
+}
+.infoTopLeftContainer{
+  width: 100%;
+  height: 95%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  flex-direction: column;
+  background-color: #10275E;
+  border-top: 25px solid red;
+}
+.infoTopLeftContainerC{
+  width: 100%;
+  height: 95%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  flex-direction: column;
+  background-color: #10275E;
+  border-top: 25px solid red;
+}
+.infoTopLeftContainer h2{
+  font-size: 48px;
+  font-weight: 900;
+  text-align: center;
+  width: 90%;
+  color: white;
+}
+.infoTopLeftContainerC h2{
+  font-size: 48px;
+  font-weight: 900;
+  text-align: center;
+  width: 90%;
+  color: white;
+}
+.infoImage{
+  box-shadow: 5px 15px 25px black;
+}
+.infoTopLeftContainer p{
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  width: 90%;
+  color: white;
+  line-height: 1.4em;
+}
+.infoTopLeftContainerC p{
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  width: 90%;
+  color: white;
+  line-height: 1.4em;
+}
+.infoTopRight{
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  
+}
+.infoCenter{
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 1%;
+  
+}
+.infoBottom{
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 5%;
+}
 
   @media screen and (max-width: 700px) {
     .service {

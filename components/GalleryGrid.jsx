@@ -11,11 +11,6 @@ const inter = Inter({ subsets: ["latin"] });
 const GalleryGrid = () => {
   return (
     <>
-      <div className={styles.banner}>
-        <h1 className={inter.className}>
-          Enjoy The Views of our Most Recent Projects
-        </h1>
-      </div>
       <Container>
         <FadeInStagger>
           <FadeIn>
