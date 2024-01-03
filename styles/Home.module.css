@@ -192,10 +192,10 @@
   letter-spacing: 2px;
   line-height: 1.6em;
 }
-.heroLeft h6{
+.heroLeft h3{
   color: white;
-  font-size: 22px;
-  font-weight: 400;
+  /* font-size: 22px; */
+  font-weight: 900;
   letter-spacing: 2px;
   line-height: 2.6em;
 }
@@ -466,7 +466,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/galleryImages/gal12.jpeg);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/galleryImages/gal12.webp);
   background-repeat: no-repeat;
   background-size: cover;
 
@@ -527,7 +527,7 @@
   flex: 1;
   height: 100%;
   width: 100%;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/ttyy.jpeg);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/ttyy.webp);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -562,7 +562,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(51, 32, 127, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/slider1.jpeg);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(51, 32, 127, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/slider1.webp);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -689,7 +689,8 @@
   color: white;
   width: 80%;
   padding-bottom: 2%;
-  margin-left: 10%;
+  /* margin-left: 10%; */
+  text-align: center;
 }
 .map button{
   height: 80px;

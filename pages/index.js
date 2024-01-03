@@ -40,7 +40,7 @@ function HeroSection() {
               <h2 className={lato.className}>
                 Commercial Pier Drilling Contractors - Dallas, Texas
               </h2>
-              <h6 className={lato.className}><em>Drilling Beyond Limits</em></h6>
+              <h3 className={lato.className}><em>Drilling Beyond Limits</em></h3>
               <span>
                 <Link href="/services">
                   <button className={lato.className}>Our Services</button>

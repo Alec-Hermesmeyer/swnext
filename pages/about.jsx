@@ -21,6 +21,14 @@ function Hero() {
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
           <h1 className={lato.className}>About Us</h1>
+          <span>
+            <Link className={styles.heroLink} href="/contact">
+              Contact Us
+            </Link>
+            <Link className={styles.heroLink} href="/services">
+              Services
+            </Link>
+          </span>
         </div>
       </div>
     </div>
@@ -60,7 +68,7 @@ function InfoSection() {
                   <div className={styles.infoTopRight}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/galleryImages/gal21.jpeg"
+                      src="Images/public/home.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"
@@ -79,29 +87,20 @@ function InfoSection() {
                   <div className={styles.infoTopLeftC}>
                     <div className={styles.infoTopLeftContainerC}>
                       <h2 className={lato.className}>
-                        The Leaders In Drilling Never Stop
+                        Pier Drilling Services Tailored To Your Needs
                       </h2>
                       <p className={lato.className}>
-                        At S&W Foundation Contractors, our story is one of
-                        family, hard work, and dedication. Founded in 1986 in
-                        Rowlett Texas, our business has grown to become a leader
-                        in the pier drilling industry, with a reputation for
-                        providing reliable, high-quality solutions to our
-                        clients across the United States. Today, we remain a
-                        family-owned and operated business, with a commitment to
-                        upholding the values of honesty, integrity , and
-                        excellence that have been at the core of our success for
-                        over 35 years. From our state of the art equipment to
-                        our team of experienced professionals, every aspect of
-                        our business is designed to meet the needs of clients
-                        and exceed their expectations.
+                        At S&W Foundation Contractors, we aim to be your your one-stop shop for all of your pier drilling needs. With over 30 years experience in the indusry, we offer comprehensive drilling services
+                        for commercial and industrial projects across the United States. Whether you require supplementary labor or a complete product we offer a wide range of services delivered by our versatile and experienced team, backed 
+                        by our state of the art fleet. Trust us to provide reliable, efficient, and cost-effective solutions to meet your drilling needs. 
+                        <br></br><strong>Your hole is our goal!</strong>
                       </p>
                     </div>
                   </div>
                   <div className={styles.infoTopRightC}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/galleryImages/gal21.jpeg"
+                      src="Images/public/prat1e.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"
@@ -120,29 +119,56 @@ function InfoSection() {
                   <div className={styles.infoTopLeft}>
                     <div className={styles.infoTopLeftContainer}>
                       <h2 className={lato.className}>
-                        The Leaders In Drilling Never Stop
+                        Experience You Can Count On
                       </h2>
                       <p className={lato.className}>
-                        At S&W Foundation Contractors, our story is one of
-                        family, hard work, and dedication. Founded in 1986 in
-                        Rowlett Texas, our business has grown to become a leader
-                        in the pier drilling industry, with a reputation for
-                        providing reliable, high-quality solutions to our
-                        clients across the United States. Today, we remain a
-                        family-owned and operated business, with a commitment to
-                        upholding the values of honesty, integrity , and
-                        excellence that have been at the core of our success for
-                        over 35 years. From our state of the art equipment to
-                        our team of experienced professionals, every aspect of
-                        our business is designed to meet the needs of clients
-                        and exceed their expectations.
+                        S&W Foundation Contractors, is a name you can trust for all of your pier drilling needs.
+                        Our team of experienced professionals are equipped with the latest technolgy and techniques
+                        to provide innovative drilling solutions tailored to your specific requirements. 
+                        We take pride in operating one of the largest fleets of limited access pier drilling equipment in the United States,
+                        ensuring that we have the right tools and equipment for any job, no matter how complex. 
+                        Our commitment to safety and efficiency in every project means you can rely on us to deliver high-quality drilling services that
+                        exceed all expectations.
                       </p>
                     </div>
                   </div>
                   <div className={styles.infoTopRight}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/galleryImages/gal21.jpeg"
+                      src="Images/public/1703009714442.webp"
+                      height={380}
+                      width={430}
+                      alt="S&W Foundations"
+                      loading="lazy"
+                      quality={80}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+          <FadeIn>
+            <div className={styles.infoCenter}>
+              <div className={styles.infoTopContainer}>
+                <div className={styles.infoTopWrapperC}>
+                  <div className={styles.infoTopLeftC}>
+                    <div className={styles.infoTopLeftContainerC}>
+                      <h2 className={lato.className}>
+                       Trusted By Clients Nation Wide
+                      </h2>
+                      <p className={lato.className}>
+                        Since 1986, S&W Foundation Contractors has been a leading family-owned and operated pier drilling
+                        company based in Rowlett, Texas, serving clients across the United States. Our commitment to providing
+                        reliable and efficient pier drilling services and solutions has earned us a reputation for excellence in the industry.
+                        Our team of experts, equipped with the latest drilling technology and equipment, works closely with our clients to ensure their project requirements are met
+                        with precision and efficiency. From Limited Access Pier Drilling to soil retention and crane services, we offer a wide range of drilling solutions to meet your specific needs.
+                        </p>
+                    </div>
+                  </div>
+                  <div className={styles.infoTopRightC}>
+                    <Image
+                      className={styles.infoImage}
+                      src="Images/public/IMG_7621.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"

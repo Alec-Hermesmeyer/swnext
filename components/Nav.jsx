@@ -45,7 +45,7 @@ export default function Nav () {
         href='/'
         >
         <Image
-        src='Images/public/swlogorwb.png'
+        src='Images/public/swlogorwb.webp'
         alt='logo'
         width={120}
         height={120}
