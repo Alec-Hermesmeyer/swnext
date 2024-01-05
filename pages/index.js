@@ -9,6 +9,7 @@ import { Inter } from "next/font/google";
 import { Oswald } from "next/font/google";
 import { Montserrat } from "next/font/google";
 import { Lato } from "next/font/google";
+import supabaseLoader from "@/supabase-image-loader";
 // import { Container } from '@/components/Container';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -322,13 +323,7 @@ function ContactSection() {
     </div>
   );
 }
-function SpacerSection() {
-  return (
-    <div className={styles.spacerSection}>
-      <GridPattern className={styles.gridPattern} yOffset={-96} interactive />
-    </div>
-  );
-}
+
 
 export default function Home({ data }) {
   const businessSchema = {
@@ -477,6 +472,7 @@ export async function getServerSideProps({ req, res }) {
     "Cache-Control",
     "public, s-maxage=31536000, stale-while-revalidate"
   );
+  
 
   return {
     props: {  },

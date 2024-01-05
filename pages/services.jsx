@@ -189,6 +189,29 @@ function InfoSection() {
     </div>
   );
 }
+function ContactSection() {
+  return (
+    <div className={styles.contactSection}>
+      <div className={styles.contactContainer}>
+        <div className={styles.contactWrapper}>
+            
+              <FadeIn>
+              <div className={styles.map}>
+              <h2 className={lato.className}>Get Your Free Quote Today and
+                                            Let S&amp;W Take Your Next Project To New Depths
+              </h2>
+              <Link href="/contact">
+                  <button className={lato.className}>Contact Us</button>
+                </Link>
+            </div>
+            
+              </FadeIn>
+            
+        </div>
+      </div>
+    </div>
+  );
+}
 
 
 export default function Services() {
@@ -217,6 +240,9 @@ export default function Services() {
         </section>
         <section className={styles.info}>
           <InfoSection />
+        </section>
+        <section className={styles.contact}>
+          <ContactSection />
         </section>
     </div>
     </>
