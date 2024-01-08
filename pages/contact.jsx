@@ -78,8 +78,8 @@ function OfficeContacts() {
             <div className={styles.card} key={index}>
                 <h2 className={lato.className}>{contact.name}</h2>
                 <p className={lato.className}>{contact.job_title}<br></br>
-                <br></br>{contact.email}<br></br>
-                <br></br>{contact.phone}</p>
+                <br></br><Link href={`mailto:${contact.email}`}>{contact.email}</Link> <br></br>
+                <br></br><Link href={`tel:${contact.phone}`}>{contact.phone}</Link></p>
             </div>
         ))}
     </div>

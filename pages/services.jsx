@@ -49,19 +49,12 @@ function InfoSection() {
                         Pier Drilling
                       </h2>
                       <p className={lato.className}>
-                        At S&W Foundation Contractors, our story is one of
-                        family, hard work, and dedication. Founded in 1986 in
-                        Rowlett Texas, our business has grown to become a leader
-                        in the pier drilling industry, with a reputation for
-                        providing reliable, high-quality solutions to our
-                        clients across the United States. Today, we remain a
-                        family-owned and operated business, with a commitment to
-                        upholding the values of honesty, integrity , and
-                        excellence that have been at the core of our success for
-                        over 35 years. From our state of the art equipment to
-                        our team of experienced professionals, every aspect of
-                        our business is designed to meet the needs of clients
-                        and exceed their expectations.
+                         S&W Foundation Contractors speacilizes in providing high quality pier drilling 
+                         services for all types of commercial and industrial foundation projects. Our experienced
+                         and knowledgeable team utilize state-of-the-art equipment to deliver robust pier solutions tailored to your 
+                         exact specifiations and site conditions. You can trust our drilling experts to assess the site, recommend a suitable 
+                         pier foundation system, and execute the instiallation plan effciently and safely. We stay current on the latest engineering best practices 
+                         and technologies in the pier drilling industryso we can adapt to complex projects with innovative techniques and solutions.
                       </p>
                       <Link className={styles.infoBtn} href="/pier-drilling">Learn More</Link>
                     </div>
@@ -69,7 +62,7 @@ function InfoSection() {
                   <div className={styles.infoTopRight}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/home.webp"
+                      src="Images/public/IMG_7621.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"
@@ -91,10 +84,9 @@ function InfoSection() {
                         Limited-Access Pier Drilling
                       </h2>
                       <p className={lato.className}>
-                        At S&W Foundation Contractors, we aim to be your your one-stop shop for all of your pier drilling needs. With over 30 years experience in the indusry, we offer comprehensive drilling services
-                        for commercial and industrial projects across the United States. Whether you require supplementary labor or a complete product we offer a wide range of services delivered by our versatile and experienced team, backed 
-                        by our state of the art fleet. Trust us to provide reliable, efficient, and cost-effective solutions to meet your drilling needs. 
-                        <br></br><strong>Your hole is our goal!</strong>
+                        Many commercial construction projects require drilling piers in hard-to-access areas
+                        with space constraints or obstacles. S&W Foundation Contractors specializes in Limited-Access Pier Drilling using advanced techniques and equipment to overcome complex site conditions.
+                        our experienced crews are highly trained to perform safe, effecient pier installation in the tightest spots.
                       </p>
                       <Link className={styles.infoBtn} href="/limited-access">Learn More</Link>
                     </div>
@@ -124,13 +116,13 @@ function InfoSection() {
                         Turn-Key Drilling Solutions
                       </h2>
                       <p className={lato.className}>
-                        S&W Foundation Contractors, is a name you can trust for all of your pier drilling needs.
-                        Our team of experienced professionals are equipped with the latest technolgy and techniques
-                        to provide innovative drilling solutions tailored to your specific requirements. 
-                        We take pride in operating one of the largest fleets of limited access pier drilling equipment in the United States,
-                        ensuring that we have the right tools and equipment for any job, no matter how complex. 
-                        Our commitment to safety and efficiency in every project means you can rely on us to deliver high-quality drilling services that
-                        exceed all expectations.
+                      Turn-Key Drilling Solutions stands at the forefront of providing comprehensive drilling services tailored to the unique needs 
+                      of each project. Our expertise encompasses a full range of drilling requirements, from initial site assessment to the completion 
+                      of complex drilling operations. With a focus on delivering all-inclusive, ready-to-implement solutions, we equip our clients with 
+                      the convenience and efficiency of a single-source provider. Our team, armed with state-of-the-art technology and extensive industry 
+                      knowledge, ensures precision, reliability, and timely execution. We pride ourselves on our ability to navigate challenging environments 
+                      and deliver top-notch results, making Turn-Key Drilling Solutions the go-to choice for clients seeking efficient, high-quality drilling 
+                      operations from start to finish.
                       </p>
                       <Link className={styles.infoBtn} href="/turn-key">Learn More</Link>
                     </div>
@@ -160,11 +152,14 @@ function InfoSection() {
                        Crane Services
                       </h2>
                       <p className={lato.className}>
-                        Since 1986, S&W Foundation Contractors has been a leading family-owned and operated pier drilling
-                        company based in Rowlett, Texas, serving clients across the United States. Our commitment to providing
-                        reliable and efficient pier drilling services and solutions has earned us a reputation for excellence in the industry.
-                        Our team of experts, equipped with the latest drilling technology and equipment, works closely with our clients to ensure their project requirements are met
-                        with precision and efficiency. From Limited Access Pier Drilling to soil retention and crane services, we offer a wide range of drilling solutions to meet your specific needs.
+                      Our Crane Services offer unparalleled support for projects requiring high-level lifting and material handling. 
+                      We specialize in providing a comprehensive range of crane solutions, tailored to meet the specific demands of 
+                      each unique project. Our fleet, equipped with state-of-the-art cranes, is capable of handling a diverse array 
+                      of lifting tasks, from the delicate placement of structural components to the heavy lifting of industrial equipment. 
+                      Safety, precision, and efficiency are at the core of our operations. Our team of certified operators and technicians 
+                      are rigorously trained and adhere to stringent safety standards, ensuring each lift is conducted with utmost precision 
+                      and care. With a commitment to adaptability and reliability, our Crane Services are designed to tackle the most challenging 
+                      tasks, ensuring your project's success with seamless, safe, and effective lifting solutions.
                         </p>
                         <Link className={styles.infoBtn} href="/crane">Learn More</Link>
                     </div>
@@ -172,7 +167,7 @@ function InfoSection() {
                   <div className={styles.infoTopRightC}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/IMG_7621.webp"
+                      src="Images/public/home.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"
