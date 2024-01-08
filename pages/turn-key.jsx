@@ -20,7 +20,7 @@ function Hero() {
     <div className={styles.heroSection}>
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
-          <h1 className={lato.className}>Pier Drilling</h1>
+          <h1 className={lato.className}>Turn Key Drilling Solutions</h1>
           <span>
             <Link className={styles.heroLink} href="/contact">
               Contact Us
@@ -104,7 +104,7 @@ function ArticleSection() {
     );
 }
 
-const PierDrilling = () => {
+const TurnKey = () => {
   return (
     <>
     <Head>
@@ -137,4 +137,4 @@ const PierDrilling = () => {
   );
 };
 
-export default PierDrilling;
+export default TurnKey;

@@ -20,7 +20,7 @@ function Hero() {
     <div className={styles.heroSection}>
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
-          <h1 className={lato.className}>Pier Drilling</h1>
+          <h1 className={lato.className}>Limited-Access Pier Drilling</h1>
           <span>
             <Link className={styles.heroLink} href="/contact">
               Contact Us
@@ -96,7 +96,7 @@ function ArticleSection() {
         </div>
         <span className={styles.btns}>
             <Link className={styles.infoBtn} href="/pier-drilling">Pier Drilling</Link>
-            <Link  className={styles.infoBtn} href="/turn-key">Turnk-Key</Link>
+            <Link  className={styles.infoBtn} href="/turn-key">Turn-Key</Link>
           </span>
       </div>
     </div>
@@ -104,7 +104,7 @@ function ArticleSection() {
     );
 }
 
-const PierDrilling = () => {
+const LimtedAccess = () => {
   return (
     <>
     <Head>
@@ -137,4 +137,4 @@ const PierDrilling = () => {
   );
 };
 
-export default PierDrilling;
+export default LimtedAccess;
