@@ -71,6 +71,7 @@ export default function Home({ data}) {
     <meta name="twitter:description" content="Expertise in commercial pier drilling, crane &amp; trucking services, and more. See why businesses trust S&amp;W Foundation for their construction needs." />
     <meta name="twitter:image" content="https://www.swfoundation.com/images/logo.png" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
+    <link rel="canonical" href="https://www.swfoundation.com/" />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }} />
 </Head>
   <Script 
