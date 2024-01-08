@@ -45,6 +45,7 @@ const JobForm = () => {
         'Mechanic',
         'Welder',
         'Shop Manager',
+        'Assistant Project Manager',
     ]
 
     return (
