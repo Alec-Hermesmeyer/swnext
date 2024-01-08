@@ -49,7 +49,7 @@ function InfoSection() {
                         Pier Drilling
                       </h2>
                       <p className={lato.className}>
-                         S&W Foundation Contractors speacilizes in providing high quality pier drilling 
+                         S&amp;W Foundation Contractors speacilizes in providing high quality pier drilling 
                          services for all types of commercial and industrial foundation projects. Our experienced
                          and knowledgeable team utilize state-of-the-art equipment to deliver robust pier solutions tailored to your 
                          exact specifiations and site conditions. You can trust our drilling experts to assess the site, recommend a suitable 
@@ -85,7 +85,7 @@ function InfoSection() {
                       </h2>
                       <p className={lato.className}>
                         Many commercial construction projects require drilling piers in hard-to-access areas
-                        with space constraints or obstacles. S&W Foundation Contractors specializes in Limited-Access Pier Drilling using advanced techniques and equipment to overcome complex site conditions.
+                        with space constraints or obstacles. S&amp;W Foundation Contractors specializes in Limited-Access Pier Drilling using advanced techniques and equipment to overcome complex site conditions.
                         our experienced crews are highly trained to perform safe, effecient pier installation in the tightest spots.
                       </p>
                       <Link className={styles.infoBtn} href="/limited-access">Learn More</Link>
@@ -159,7 +159,7 @@ function InfoSection() {
                       Safety, precision, and efficiency are at the core of our operations. Our team of certified operators and technicians 
                       are rigorously trained and adhere to stringent safety standards, ensuring each lift is conducted with utmost precision 
                       and care. With a commitment to adaptability and reliability, our Crane Services are designed to tackle the most challenging 
-                      tasks, ensuring your project's success with seamless, safe, and effective lifting solutions.
+                      tasks, ensuring your project&apos;s success with seamless, safe, and effective lifting solutions.
                         </p>
                         <Link className={styles.infoBtn} href="/crane">Learn More</Link>
                     </div>
