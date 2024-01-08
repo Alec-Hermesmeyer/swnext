@@ -89,7 +89,7 @@ function ArticleSection() {
               and accurately. Our crews apply innovative drilling techniques and sequences tailored for specific soil conditions and project needs. Customers turn 
               to us because the know we will deliver robust pier foundations that provide the load-bearing capacity required, even in challeging ground conditions.
               Our specialized expertise in caisson, pile, micropile and helix pier construction provides deep foundation solutions enginnered for safety and longevity.
-              Whether it's constructing a high-rise core on friction piles, securing a hillside on caisson secant walls, or anchoring a tank farm on helical piers, you can count 
+              Whether it&apos;s constructing a high-rise core on friction piles, securing a hillside on caisson secant walls, or anchoring a tank farm on helical piers, you can count 
               on us to deliver. Contact us today to learn more about our comprehensive portfolio of Commercial Pier Drilling Services.
             </p>
           </article>
