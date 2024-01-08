@@ -22,7 +22,6 @@ export default function Contact() {
     <meta property="og:url" content="https://www.swfoundation.com/contact/" />
     <meta property="og:image" content="https://www.swfoundation.com/images/form.png" />
     <meta property='og:site_name' content='S&W Commercial Pier Drilling' />
-    <link rel="canonical" href="https://www.swfoundation.com/contact" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
 </Head>
       <div className={styles.contact}>
