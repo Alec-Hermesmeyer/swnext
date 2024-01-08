@@ -3,6 +3,10 @@ import Link from 'next/link';
 import { FaLinkedin, FaFacebookSquare } from 'react-icons/fa'
 import styles from '../styles/Nav.module.css'
 import Image from 'next/image';
+import { Lato } from "next/font/google";
+
+const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+
 
 const data = [
     {
@@ -54,16 +58,16 @@ export default function Nav () {
         </div>
         <div className={styles.center}>
           <ul>
-            <li>
+            <li className={lato.className}>
               <Link href='/about'>About</Link>
             </li>
-            <li>
+            <li className={lato.className}>
               <Link href='/services'>Services</Link>
             </li>
-            <li>
+            <li className={lato.className}>
               <Link href='/contact'>Contact</Link>
             </li>
-            <li>
+            <li className={lato.className}>
               <Link href='/gallery'>Gallery</Link>
             </li> 
             
