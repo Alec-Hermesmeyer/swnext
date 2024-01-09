@@ -283,8 +283,8 @@ function ServicesSection() {
                   </div>
                   <div className={styles.serviceRightBottom}>
                     <div className={styles.serviceRightBottomContainer}>
-                      <h3 className={inter.className}>All Services</h3>
-                      <Link href="/services">
+                      <h3 className={inter.className}>Careers</h3>
+                      <Link href="/careers#jobPostings">
                         <button className={montserrat.className}>
                           Learn More
                         </button>
@@ -385,7 +385,7 @@ export default function Home({ data }) {
         <meta property="og:url" content="https://www.swfoundation.com/" />
         <meta
           property="og:image"
-          content="https://www.swfoundation.com/images/logo.png"
+          content="https://www.swfoundation.com/images/logo.webp"
         />
         <meta
           name="keywords"
@@ -407,7 +407,7 @@ export default function Home({ data }) {
         <link rel="canonical" href="https://www.swfoundation.com/" />
         <link
           rel="icon"
-          href="/android-chrome-512x512.png"
+          href="Images/public//android-chrome-512x512.png"
           type="image/x-icon"
         />
         <script

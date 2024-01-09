@@ -288,7 +288,7 @@ function FormSection() {
           <Form />
         </div>
         <div className={styles.formRight}>
-          <JobForm />
+          <JobForm/>
         </div>
       </div>
     </div>
@@ -321,7 +321,7 @@ export default function Contact({ contacts}) {
           <GridPattern className={styles.gridPattern} yOffset={10} interactive />
           </div>
         <FadeIn>
-        <section className={styles.formSection}>
+        <section className={styles.formSection} id='jobForm'>
          <FormSection />
           </section>
           </FadeIn>

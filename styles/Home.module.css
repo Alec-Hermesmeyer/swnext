@@ -20,7 +20,7 @@
   align-items: center;
   justify-content: center;
   z-index: 6;
-  box-shadow: 5px 15px 25px; 
+  box-shadow: 5px 10px 25px rgba(0, 0, 0, 0.53); 
   margin-top: -5%;
   margin-bottom: -2.3%;
   
@@ -41,7 +41,7 @@
   align-items: center;
   justify-content: center;
   z-index: 6;
-  box-shadow: 5px -15px 25px; 
+  box-shadow: 5px -12px 10px rgba(0, 0, 0, 0.33); 
 }
 .contact {
   height: 70vh;
@@ -49,7 +49,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7753.webp);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.63), rgba(0, 0, 0, 0.13)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7753.webp);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: bottom;
@@ -264,7 +264,7 @@
   justify-content: space-evenly;
   flex-direction: column;
   padding-top: 15px;
-  box-shadow: 5px 5px 5px;
+  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.53);
 }
 .infoTopContainer{
   height: 45vh;
