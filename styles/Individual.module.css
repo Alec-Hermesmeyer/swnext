@@ -351,3 +351,11 @@
             justify-content: center;
             width: 100%;
           }
+          .infoBtn p{
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            width: 100%;
+            color: white;
+            margin-bottom: 2%;
+          }

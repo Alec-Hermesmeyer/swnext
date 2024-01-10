@@ -446,7 +446,7 @@
   width: 160px;
   border-radius: 5px;
   border: none;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23));
+  background-image: linear-gradient(to right, rgba(255, 0, 0, 0.99), rgba(255, 0, 0, 0.79));
   color: white;
   font-size: 1rem;
   font-weight: bold;

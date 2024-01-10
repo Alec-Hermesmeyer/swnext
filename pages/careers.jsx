@@ -157,13 +157,15 @@ function JobPostings() {
       <div className={styles.grid}>
       {jobPostings.map((jobPosting, index) => (
         <div className={styles.card} key={index}>
+          <FadeIn>
         <details className={styles.jobPostInfo}>
         <summary className={lato.className}>{jobPosting.jobTitle}</summary>
         <p className={lato.className}>
           {jobPosting.jobDesc}
         </p>
-        <span className={styles.jobBtns}><Link className={styles.infoBtn} href='/contact#jobForm'>Apply Today</Link></span>
+        <span className={styles.jobBtns}><Link className={styles.infoBtn} href='/contact#jobForm'><p className={lato.className}>Apply Today</p></Link></span>
       </details>
+      </FadeIn>
       </div>
       ))}
       </div>
