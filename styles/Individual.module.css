@@ -359,3 +359,22 @@
             color: white;
             margin-bottom: 2%;
           }
+
+          @media only screen and (min-width: 1441px) {
+            /* Add your styles here */
+            .infoTopLeft{
+              margin-right: -2%;
+            }
+            .infoTopLeftContainer{
+              border-top: 45px solid red;
+              width: 75dvw;
+            }
+            .infoTopLeftContainerC{
+              border-top: 45px solid red;
+              width: 75dvw;
+            }
+            .infoTopWrapper{
+              margin-left: -3%;
+            }
+            
+          }
