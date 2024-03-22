@@ -226,7 +226,9 @@
   cursor: pointer;
 }
 /* INFO SECTION */
-
+.infoSectionMobile{
+  display: none;
+}
 .infoSection{
   height: 145vh;
   width: 100vw;
@@ -393,10 +395,10 @@
   flex-direction: column;
 }
 .infoWrapper h2{
-  font-size: 44px;
-  font-weight: 900;
+  font-size: 42px;
+  font-weight: 700;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   letter-spacing: 2px;
   line-height: 1.6em;
   text-align: center;
@@ -404,8 +406,9 @@
 .infoWrapper p {
   font-size: 1rem;
   width: 80%;
-  padding-bottom: 10px;
+  padding-bottom: 20px;
   font-weight: 400;
+  line-height: 1.4em;
   
 }
 /*SERVICES SECTION */
@@ -709,7 +712,7 @@
 
 /* MEDIA QUERIES */
 /* Larger Desktop */
-@media only screen and (min-width: 1201px) {
+@media only screen and (min-width: 1441px) {
   .main { 
     min-height: 350dvh;
   }
@@ -737,6 +740,10 @@
     height: 100%;
     border-top: 45px solid red;
   }
+  .infoWrapper p{
+    line-height: 1.8rem;
+    font-size: 1.2rem;
+  }
   .infoTopLeftC{
     height: 100%;
     border-top: 45px solid rgb(16, 39, 94);
@@ -756,148 +763,159 @@
   }
 }
 /* MOBILE */
-@media only screen and (max-width: 431px) {
-  .main{
-    margin-top: -60vh;
-    height: 670dvh;
-    max-width: 430px;
-  }
-  .hero{
-    height: 65svh;
-    width: 100svw;
-    margin-top: -17%;
-  }
-  .heroSection{
-    height: 125svh;
-    width: 100svw;
-    max-width: 430px;
-    background-size: cover;
+@media screen and (max-width: 700px) {
+  /* Add your styles here */
+  .main{ 
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-top: 0;
 
   }
-  .heroSection h1{
-    font-size: 1.3rem;
-    margin-bottom: 2%;
+  .hero{
+    height: 100%;
+    margin-top: -5svh;
   }
-  .heroSection h2{
-    font-size: 1.2rem;
+  .heroSection{
+    height: 100%;
+    margin-bottom: 55dvh;
   }
-  .heroSection h3 {
-    margin-top: 2%;
-    margin-bottom: 3%;
-  }
-  .heroContainer{
-    width: 100%;
+  .heroSection{
+    height: 100%;
   }
   .heroWrapper{
+    height: 100%;
+    display: flex;
     flex-direction: column;
     flex: 4;
   }
   .heroLeft{
     flex: 2;
     height: 100%;
-    width: 94%;
     
   }
   .heroRight{
     flex: 2;
     height: 100%;
     width: 100%;
+    padding-bottom: 20px;
+  }
+  .heroWrapper h1{
+    font-size: 28px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
+    width: 100%;
+  }
+  .heroWrapper h2{
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+  }
+  .cardWrapper{
+    width: 95dvw;
+    height: 20dvh;
   }
   .rightCard{ 
     margin-top: 8%;
     margin-right: 0%;
-    padding-bottom: 1%;
-    height: 105%;
-  }
-  .info{
-    height: 120svh;
-    width: 100svw;
-    margin-top: 80vh;
-    
-  }
-  .infoTop{
-    height: 120svh;
-    width: 100svw;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    flex-direction: column;
-    padding-top: 15px;
+    padding-bottom: 4%;
+    height: 80%;
+  }   
+  .heroWrapper h3{
+    font-size: 18px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
   }
   .infoSection{
-    height: 100%;
-    width: 100svw;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-  }
-  .infoContainer{
-    justify-content: space-evenly;
-  }
-  .infoTopContainer{
-    height: 100svh;
-    width: 100svw;
-    display: flex;
-    align-items: center;
-    padding-bottom: 20px;
-  }
-  .infoWrapper{
-    justify-content: space-evenly;
-  }
-  .infoTopWrapper{
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    flex-direction: column;
-  }
-  .infoTopWrapperC{
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    flex-direction: column;
-  }
-  .infoImage{
-    height: 70%;
-    width: 90%;
-  }
-  .article{
-    overflow: scroll;
-  }
-  .infoWrapper h2 {
-    font-size: 24px;
-    margin-top: 10%;
-  }
-  .infoWrapper p {
-    font-size: 1rem;
-    width: 90%;
-  }
-  .services{
-    height: 100svh;
-    width: 100svw;
-    /* margin-top: -10vh;
-    margin-bottom: -50vh; */
-
-  }
-  .servicesSection{
-    height: 100svh;
-    width: 100svw;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-  }
-  .servicesWrapper{
-    flex-direction: column;
-  }
-  .gridPattern{
     display: none;
   }
-  .servicesCenter{
-    border-left: 0;
-    border-right: 0;
+  .infoSectionMobile{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    height: 155dvh;
+    width: 100dvw;
+    margin-bottom: 100dvh;
+  }
+  .infoContainerMobile{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+  
+  }
+  .infoWrapperMobile{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    flex: 3;
+  }
+  .infoTopMobile{
+    flex: 1;
+    height: 80dvh;
+    width: 100%;
+    border-top: 25px solid red;
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+    margin-bottom: 2svh;
+    overflow: scroll;
+  }
+  .infoCenterMobile{
+    flex: 1;
+    height: 80dvh;
+    width: 100%;
+    border-top: #10275E 25px solid;
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+    margin-bottom: 2svh;
+    overflow: scroll;
+  }
+  .infoBottomMobile{
+    flex: 1;
+    height: 80dvh;
+    width: 100%;
+    border-top: 25px solid red;
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+    overflow: scroll;
+  }
+  .infoMobileContent{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    height: auto;
+  
+  }
+  .infoMobileContent h2{
+    font-size: 28px;
+    font-weight: 900;
+    color: black;
+    letter-spacing: 1px;
+    width: 100%;
+    text-align: center;
+    padding-bottom: 2svh;
+    margin-top: 1svh;
+  }
+  .infoMobileContent p{
+    font-size: 1rem;
+    width: 80%;
+    padding-bottom: 20px;
+    font-weight: 400;
+    line-height: 1.4em;
+    height: 60%;
+    /* overflow: scroll; */
+  }
+  .infoImageMobile{
+    padding-bottom: 2svh;
   }
 }
 

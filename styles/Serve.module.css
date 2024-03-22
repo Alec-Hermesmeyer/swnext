@@ -332,8 +332,40 @@
   box-shadow: 5px 5px 5px rgb(0, 0, 0); 
   cursor: pointer;
 }
+/* MEDIA QUERIES */
+/* Larger Desktop */
+@media only screen and (min-width: 1441px) {
+  /* Add your styles here */
+  .infoTopLeft{
+    margin-right: -2%;
+  }
+  .infoTopLeftContainer{
+    border-top: 45px solid red;
+    width: 75dvw;
+  }
+  .infoTopLeftContainerC{
+    border-top: 45px solid red;
+    width: 75dvw;
+  }
+  .infoTopWrapper{
+    margin-left: -3%;
+  }
+  
+}
 
-  @media screen and (max-width: 700px) {
+
+
+/* Mobile */
+@media screen and (max-width: 700px) {
+  /* Add your styles here */
+}
+
+/* Tablet and Smaller Desktop */
+@media (min-width: 701px) and (max-width: 1120px) {
+  /* Add your styles here */
+}
+
+  /* @media screen and (max-width: 700px) {
     .service {
         display: flex;
         flex-direction: column;
@@ -381,4 +413,4 @@
     margin-bottom: -10.3%;
   }
    
- }
+ } */
