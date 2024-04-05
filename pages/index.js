@@ -269,6 +269,7 @@ function InfoSectionMobile() {
       <section className={styles.infoSectionMobile}>
         <div className={styles.infoContainerMobile}>
           <div className={styles.infoWrapperMobile}>
+          <FadeIn>
             <div className={styles.infoTopMobile}>
               <div className={styles.infoTopContainerMobile}>
                 <div className={styles.infoMobileContent}>
@@ -301,8 +302,8 @@ function InfoSectionMobile() {
                         <Image
                           className={styles.infoImageMobile}
                           src="Images/public/IMG_8061.webp"
-                          height={200}
-                          width={200}
+                          height={300}
+                          width={320}
                           alt="S&W Foundations"
                           loading="lazy"
                           quality={80}
@@ -310,6 +311,9 @@ function InfoSectionMobile() {
                 </div>
               </div>
             </div>
+            </FadeIn>
+            <FadeInStagger>
+              <FadeIn>
             <div className={styles.infoCenterMobile}>
               <div className={styles.infoCenterContainerMobile}>
                 <div className={styles.infoMobileContent}>
@@ -343,8 +347,8 @@ function InfoSectionMobile() {
                           <Image
                             className={styles.infoImageMobile}
                             src="Images/public/IMG_7620.webp"
-                            height={200}
-                            width={200}
+                            height={300}
+                            width={320}
                             alt="S&W Foundations"
                             loading="lazy"
                             quality={80}
@@ -352,6 +356,10 @@ function InfoSectionMobile() {
                 </div>
               </div>
             </div>
+            </FadeIn>
+            </FadeInStagger>
+            <FadeInStagger>
+              <FadeIn>
             <div className={styles.infoBottomMobile}>
               <div className={styles.infoBottomContainerMobile}>
                 <div className={styles.infoMobileContent}>
@@ -391,8 +399,8 @@ function InfoSectionMobile() {
                           <Image
                             className={styles.infoImageMobile}
                             src="Images/public/IMG_7653.webp"
-                            height={200}
-                            width={220}
+                            height={300}
+                            width={320}
                             alt="S&W Foundations"
                             loading="lazy"
                             quality={80}
@@ -400,6 +408,8 @@ function InfoSectionMobile() {
                 </div>
               </div>
             </div>
+            </FadeIn>
+            </FadeInStagger>
           </div>
         </div>
       </section>

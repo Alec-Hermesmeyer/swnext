@@ -762,28 +762,433 @@
     background-color: black;
   }
 }
-/* MOBILE */
-@media screen and (max-width: 700px) {
-  /* Add your styles here */
+/* Tablet */
+@media screen and (min-width: 701px) and (max-width: 1080px){
   .main{ 
-    min-height: 100dvh;
+    min-height: auto;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    margin-top: 0;
+    margin: 0;
+  }
+  .hero{
+    height: 70dvh;
+    margin-top: -6svh;
+  }
+  .heroSection{
+    height: 100%;
+  }
+  
+  .heroWrapper{
+    height: 75%;
+    display: flex;
+    flex-direction: column;
+    flex: 4;
+  }
+  .heroLeft{
+    flex: 2;
+    height: 100%;
+    
+  }
+  .heroRight{
+    flex: 2;
+    height: 100%;
+    width: 100%;
+    padding-bottom: 20px;
+  }
+  .heroWrapper h1{
+    font-size: 38px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
+    width: 100%;
+  }
+  .heroWrapper h2{
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+  }
+  .cardWrapper{
+    width: auto;
+    height: 100%;
+  }
+  .rightCard{ 
+    margin-top: 8%;
+    margin-right: 0%;
+    padding-bottom: 4%;
+    height: 80%;
+  }   
+  .cardContent li{
+    color: white;
+    font-size: 1.4rem;
+    line-height: 2em;
+    font-weight: 400;
+    text-align: left;
+    list-style: none;
+    padding-left: 0;
+  }
+  .cardContent button{
+    height: 40px;
+    width: 120px;
+    border-radius: 5px;
+    border: none;
+    background-color: red;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-weight: 900;
+  }
+  
+  .heroWrapper h3{
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
+    margin-bottom: 2%;
+  }
+  .infoSection{
+    display: none;
+  }
+  .info{
+    height: 100%;
+    margin-top: 4%;
+    margin-bottom: 2%;
+  }
+  .infoImageMobile{
+    padding-bottom: 2svh;
+    height: 400px;
+    width: 420px;
+  }
+  .infoSectionMobile{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    height: auto;
+    width: 100dvw;
+  }
+  
+  .infoContainerMobile{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+  
+  }
+  .infoWrapperMobile{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    flex: 3;
+  }
+  .infoTopMobile{
+    flex: 1;
+    height: auto;
+    width: 100%;
+    border-top: 25px solid red;
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+    margin-bottom: 2svh;
+    overflow: scroll;
+  }
+  .infoCenterMobile{
+    flex: 1;
+    height: auto;
+    width: 100%;
+    border-top: #10275E 25px solid;
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+    margin-bottom: 2svh;
+    overflow: scroll;
+  }
+  .infoBottomMobile{
+    flex: 1;
+    height: auto;
+    width: 100%;
+    border-top: 25px solid red;
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+    overflow: scroll;
+  }
+  .infoMobileContent{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    height: auto;
+  
+  }
+  .infoMobileContent h2{
+    font-size: 28px;
+    font-weight: 900;
+    color: black;
+    letter-spacing: 1px;
+    width: 100%;
+    text-align: center;
+    padding-bottom: 2svh;
+    margin-top: 1svh;
+  }
+  .infoMobileContent p{
+    font-size: 1.3rem;
+    width: 90%;
+    padding-bottom: 20px;
+    font-weight: 400;
+    line-height: 1.4em;
+  }
+  .infoImageMobile{
+    padding-bottom: 2svh;
+  }
+  .services{
+    height: auto;
+    width: 100dvw;
+  }
+  .servicesSection{
+    height: 50dvh;
+    margin-bottom: 0;
+  }
+  .servicesContainer{
+    width: 100%;
+    height: 100%;
+  }
+  .servicesWrapper h3{
+    text-align: center;
+  }
+  .serviceCenterContainer{
+    height: auto;
+  }
+  .servicesCenter {
+    border: none;
+  }
+  .gridPattern{
+    display: none;
+  }
+  .contact{
+    height: auto;
+    margin: 2px;
+    margin-bottom: -13dvh;
+  }
+  .contact h2{
+    font-size: 2.5rem;
+    padding-bottom: 4%;
+  
+  }
+}
+
+/* MOBILE */
+@media screen and (min-width: 501px) and (max-width: 700px) {
+  .main{ 
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0;
+  }
+  .hero{
+    height: 70dvh;
+    margin-top: -6svh;
+  }
+  .heroSection{
+    height: 100%;
+  }
+  
+  .heroWrapper{
+    height: 97%;
+    display: flex;
+    flex-direction: column;
+    flex: 4;
+  }
+  .heroLeft{
+    flex: 2;
+    height: 100%;
+    
+  }
+  .heroRight{
+    flex: 2;
+    height: 100%;
+    width: 100%;
+    padding-bottom: 20px;
+  }
+  .heroWrapper h1{
+    font-size: 28px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
+    width: 100%;
+  }
+  .heroWrapper h2{
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+  }
+  .cardWrapper{
+    width: 95dvw;
+    height: 20dvh;
+  }
+  .rightCard{ 
+    margin-top: 8%;
+    margin-right: 0%;
+    padding-bottom: 4%;
+    height: 80%;
+  }   
+  .heroWrapper h3{
+    font-size: 18px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
+  }
+  .infoSection{
+    display: none;
+  }
+  .info{
+    height: 100%;
+    margin-top: 4%;
+    margin-bottom: 2%;
+  }
+  .infoSectionMobile{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    height: auto;
+    width: 100dvw;
+  }
+  .infoContainerMobile{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+  
+  }
+  .infoWrapperMobile{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    flex: 3;
+  }
+  .infoTopMobile{
+    flex: 1;
+    height: auto;
+    width: 100%;
+    border-top: 25px solid red;
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+    margin-bottom: 2svh;
+    overflow: scroll;
+  }
+  .infoCenterMobile{
+    flex: 1;
+    height: auto;
+    width: 100%;
+    border-top: #10275E 25px solid;
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+    margin-bottom: 2svh;
+    overflow: scroll;
+  }
+  .infoBottomMobile{
+    flex: 1;
+    height: auto;
+    width: 100%;
+    border-top: 25px solid red;
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+    overflow: scroll;
+  }
+  .infoMobileContent{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    height: auto;
+  
+  }
+  .infoMobileContent h2{
+    font-size: 28px;
+    font-weight: 900;
+    color: black;
+    letter-spacing: 1px;
+    width: 100%;
+    text-align: center;
+    padding-bottom: 2svh;
+    margin-top: 1svh;
+  }
+  .infoMobileContent p{
+    font-size: 1rem;
+    width: 80%;
+    padding-bottom: 20px;
+    font-weight: 400;
+    line-height: 1.4em;
+  }
+  .infoImageMobile{
+    padding-bottom: 2svh;
+  }
+  .services{
+    height: auto;
+    width: 100dvw;
+  }
+  .servicesSection{
+    height: 70dvh;
+    margin-bottom: 0;
+  }
+  .servicesContainer{
+    width: 100%;
+    height: 100%;
+  }
+  .servicesWrapper button{
+    height: 40px;
+    width: 130px;
+  }
+  .servicesWrapper h3{
+    font-size: 1.2rem;
+    text-align: center;
+  }
+  .serviceCenterContainer{
+    height: auto;
+  }
+  .servicesCenter {
+    border: none;
+  }
+  .gridPattern{
+    display: none;
+  }
+  .contact{
+    height: auto;
+    margin: 2px;
+    margin-bottom: -18dvh;
+  }
+  .contact h2{
+    font-size: 2.5rem;
+    padding-bottom: 4%;
+  
+  }
+}
+@media screen and (max-width: 500px) {
+  /* Add your styles here */
+  .main{ 
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0;
 
   }
   .hero{
     height: 100%;
-    margin-top: -5svh;
-  }
-  .heroSection{
-    height: 100%;
-    margin-bottom: 55dvh;
+    margin-top: -4svh;
   }
   .heroSection{
     height: 100%;
   }
+  
   .heroWrapper{
     height: 100%;
     display: flex;
@@ -833,14 +1238,18 @@
   .infoSection{
     display: none;
   }
+  .info{
+    height: 100%;
+    margin-top: 4%;
+    margin-bottom: 2%;
+  }
   .infoSectionMobile{
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
     align-items: center;
-    height: 155dvh;
+    height: auto;
     width: 100dvw;
-    margin-bottom: 100dvh;
   }
   .infoContainerMobile{
     width: 100%;
@@ -862,7 +1271,7 @@
   }
   .infoTopMobile{
     flex: 1;
-    height: 80dvh;
+    height: auto;
     width: 100%;
     border-top: 25px solid red;
     box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
@@ -871,7 +1280,7 @@
   }
   .infoCenterMobile{
     flex: 1;
-    height: 80dvh;
+    height: auto;
     width: 100%;
     border-top: #10275E 25px solid;
     box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
@@ -880,7 +1289,7 @@
   }
   .infoBottomMobile{
     flex: 1;
-    height: 80dvh;
+    height: auto;
     width: 100%;
     border-top: 25px solid red;
     box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
@@ -911,11 +1320,219 @@
     padding-bottom: 20px;
     font-weight: 400;
     line-height: 1.4em;
-    height: 60%;
-    /* overflow: scroll; */
   }
   .infoImageMobile{
     padding-bottom: 2svh;
+  }
+  .services{
+    height: auto;
+    width: 100dvw;
+  }
+  .servicesSection{
+    height: 40dvh;
+    margin-bottom: 0;
+  }
+  .servicesContainer{
+    width: 100%;
+    height: 100%;
+  }
+  .servicesWrapper button{
+    height: 30px;
+    width: 120px;
+  }
+  .servicesWrapper h3{
+    font-size: 1.2rem;
+    text-align: center;
+  }
+  .serviceCenterContainer{
+    height: auto;
+  }
+  .servicesCenter {
+    border: none;
+  }
+  .gridPattern{
+    display: none;
+  }
+  .contact{
+    height: auto;
+    margin: 2px;
+    margin-bottom: -13dvh;
+  }
+  .contact h2{
+    font-size: 2.5rem;
+    padding-bottom: 4%;
+  
+  }
+}
+@media screen and (max-width: 399px) {
+
+  .main{ 
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0;
+  }
+  .hero{
+    height: auto;
+    margin-top: -5dvh;
+  }
+  .hero h1{
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    width: 98dvw;
+    margin-top: 2%;
+  }
+  .hero h2{
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+    width: 95dvw;
+    margin-bottom: 2%;
+  }
+  .heroContent h3{
+    font-size: 16px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
+    width: 95dvw;
+    margin-bottom: 2%;
+  }
+  .rightCard{
+    width: 95dvw
+  }
+  .cardContent button{
+    height: 30px;
+    width: 100px;
+  }
+  .infoSectionMobile h2{
+    font-size: 22px;
+  }
+  .servicesSection{
+    height: 45dvh;
+    margin-bottom: 0;
+  }
+  .servicesCenter {
+  border: none;
+}
+  .servicesWrapper button{
+    height: 25px;
+    width: 105px;
+  }
+  .servicesWrapper h3{
+    font-size: 1rem;
+    text-align: center;
+  }
+  .contact{
+    height: auto;
+    margin: 2px;
+    margin-bottom: -18dvh;
+  }
+  .contact h2 {
+    font-size: 2rem;
+    padding-bottom: 4%;
+  }
+  .contact button{
+    height: 60px;
+    width: 300px;
+    margin-top: 5%;
+  
+  }
+}
+@media screen and  (max-width: 300px){
+  .main{ 
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0;
+  }
+  .hero{
+    height: auto;
+    margin-top: -7dvh;
+  }
+  .info{
+    margin-bottom: 2dvh;
+  }
+  .infoImageMobile{
+    padding-bottom: 2svh;
+    height: 90%;
+    width: 90%;
+  }
+  .hero h1{
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    width: 98dvw;
+    margin-top: 2%;
+  }
+  .hero h2{
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+    width: 95dvw;
+    margin-bottom: 2%;
+  }
+  .heroContent h3{
+    font-size: 16px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
+    width: 95dvw;
+    margin-bottom: 2%;
+  }
+  .rightCard{
+    width: 95dvw;
+    height: 33dvh;
+  }
+  .rightCard h3{
+    font-size: 1rem;
+    margin-left: 3%;
+  }
+  .rightCard li{
+    font-size: .91rem;
+    margin-left: 2%;
+  }
+  .cardContent button{
+    height: 30px;
+    width: 100px;
+  }
+  .infoSectionMobile h2{
+    font-size: 18px;
+  }
+  .servicesSection{
+    height: 45dvh;
+    margin-bottom: 0;
+  }
+  .servicesCenter {
+  border: none;
+}
+  .servicesWrapper button{
+    height: 25px;
+    width: 90px;
+    font-size: .8rem;
+  }
+  .servicesWrapper h3{
+    font-size: .98rem;
+    text-align: center;
+  }
+  .contact{
+    height: auto;
+    margin: 2px;
+    margin-bottom: -18dvh;
+  }
+  .contact h2 {
+    font-size: 2rem;
+    padding-bottom: 4%;
+  }
+  .contact button{
+    height: 60px;
+    width: 200px;
+    margin-top: 5%;
+  
   }
 }
 

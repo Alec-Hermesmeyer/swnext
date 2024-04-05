@@ -244,28 +244,27 @@
     }
     .activeMobile {
         position: fixed;
-        top: 90px;
+        top: 120px;
         left: 0;
         width: 100%;
-        height: calc(100vh - 90px);
-        background: black;
+        height: calc(100dvh - 90px);
+        background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+        mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
         transition: all 0.5s ease-in-out;
-        transform: translateX(40%);
-        border-radius: var(--border-radius);
         display: flex;
       }
     .activeMobile ul{
         list-style: none;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-evenly;
         flex-direction: column;
         height: 100%;
-        margin-left: 100px;
+        width: 100%;
     }
     .mobileLink{
-        margin-left: 20%;
         color: white;
+        text-shadow: 2px 2px 2px black;
         text-align: center;
         font-size: 20px;
         font-weight: bold;
@@ -277,8 +276,8 @@
    
 }
 @media screen and (max-width:281px){
-    .activeMobile ul{
+    /* .activeMobile ul{
         margin-left: 55px;
-    }
+    } */
 }
 
