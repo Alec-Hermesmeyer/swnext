@@ -356,61 +356,217 @@
 
 
 /* Mobile */
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 600px) {
   /* Add your styles here */
+  .about{ 
+    min-height: auto;
+  }
+  .hero{
+    height: 50dvh;
+  }
+  .heroWrapper span{
+   margin-top: 4%;
+   margin-left: -13%;
+  }
+  .info{
+    height: 100%;
+    width: auto;
+    margin-bottom: -2dvh;
+  }
+  .infoSection{
+    height: 100%;
+    width: 100dvw;
+  }
+  .infoTop{
+    padding-left: 0;
+    width: 100dvw;
+  }
+  .infoTopLeft{
+    margin-right: 0;
+    width: 100dvw;
+  }
+  .infoTopLeftC{
+    margin-right: 0;
+    width: 100dvw;
+  }
+  .infoTopLeftC h2{
+    margin-bottom: 4%;
+    margin-top: 2%;
+    font-size: 28px;
+  }
+  .infoTopLeftC p{
+    margin-bottom: 4%;
+  }
+  .infoTopLeft h2{
+    margin-bottom: 4%;
+    margin-top: 2%;
+    font-size: 28px;
+  }
+  .infoTopLeft p{
+    margin-bottom: 4%;
+  }
+  .infoTopRightC{
+    width: 100dvw;
+  }
+  .infoBottom{
+    padding-left: 0;
+  }
+  .infoTopWrapper{
+    flex-direction: column;
+    margin-bottom: 2%;
+  }
+  .infoTopWrapperC{
+    flex-direction: column;
+    margin-bottom: 2%;
+  }
+  .infoSection h2{
+    font-size: 28px;
+  }
+  .infoImage{
+   height: 20%;
+   width: 100%;
+  }
+  .contact{
+    height: 80vh;
+    margin-bottom: -11dvh;
+  }
+  .contactWrapper h2{
+    font-size: 2.5rem;
+    margin-bottom: 5dvh;
+  }
+  .contactWrapper button{
+    height: 60px;
+    width: 300px;
+    font-size: 1.5rem;
+  }
+  .infoBtn{
+    margin-bottom: 4%;
+   }
+  
+}
+@media screen and (max-width: 300px){
+  .hero h1{
+    font-size: 48px;
+  }
+  .heroWrapper span{
+    margin-top: 7%;
+    margin-left: -9%;
+    width: 300px;
+   }
+   .info h2{
+      font-size: 1.5rem;
+   }
+   .info p{
+     font-size: .91rem;
+   }
+   .infoImage{
+    height: 20%;
+    width: 100%;
+   }
+   .infoBtn{
+    margin-bottom: 4%;
+   }
+   .contact{  
+     height: 80vh;
+     margin-bottom: -11dvh;
+    }
+   .contact h2{
+      font-size: 1.5rem;
+    
+   }
+   .contact button{
+     height: 40px;
+     width: 200px;
+     font-size: 1rem;
+   }
+
 }
 
 /* Tablet and Smaller Desktop */
 @media (min-width: 701px) and (max-width: 1120px) {
   /* Add your styles here */
+  .service{ 
+    min-height: auto;
+  }
+  .hero{
+    height: 50dvh;
+  }
+  .heroWrapper span{
+   margin-top: 4%;
+   margin-left: -7.5%;
+  }
+  .info{
+    height: 100%;
+    width: auto;
+    margin-bottom: -2dvh;
+  }
+  .infoBtn{
+    margin-bottom: 4%;
+   }
+  .infoSection{
+    height: 100%;
+    width: 100dvw;
+  }
+  .infoTop{
+    padding-left: 0;
+    width: 100dvw;
+  }
+  .infoTopLeft{
+    margin-right: 0;
+    width: 100dvw;
+  }
+  .infoTopLeftC{
+    margin-right: 0;
+    width: 100dvw;
+  }
+  .infoTopLeftC h2{
+    margin-bottom: 4%;
+    margin-top: 2%;
+    font-size: 36px;
+  }
+  .infoTopLeftC p{
+    margin-bottom: 4%;
+  }
+  .infoTopLeft h2{
+    margin-bottom: 4%;
+    margin-top: 2%;
+    font-size: 36px;
+  }
+  .infoTopLeft p{
+    margin-bottom: 4%;
+  }
+  .infoTopRightC{
+    width: 100dvw;
+  }
+  .infoBottom{
+    padding-left: 0;
+  }
+  .infoTopWrapper{
+    flex-direction: column;
+    margin-bottom: 2%;
+  }
+  .infoTopWrapperC{
+    flex-direction: column;
+    margin-bottom: 2%;
+  }
+  .infoSection h2{
+    font-size: 36px;
+  }
+  .infoImage{
+   height: 20%;
+   width: 100%;
+  }
+  .contact{
+    height: 80vh;
+    margin-bottom: -11dvh;
+  }
+  .contactWrapper h2{
+    font-size: 2.5rem;
+    margin-bottom: 5dvh;
+  }
+  .contactWrapper button{
+    height: 60px;
+    width: 300px;
+    font-size: 1.5rem;
+  }
 }
-
-  /* @media screen and (max-width: 700px) {
-    .service {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
-        padding: 6rem;
-        min-height: 100vh;
-        margin-bottom: -20px;
-        background-color: rgb(16, 39, 94);
-        margin-bottom: -5.3%;
-        
-      }
-      .heroImg{
-        position: absolute;
-        bottom: 22%;
-        left: 3%;
-        overflow: hidden;
-        height: 56.4%;
-        width: 62.5%;
-        z-index: 1;
-       
-      }
-    
-      .banner{
-          height: 14vh;
-          width: 95vw;
-          font-size: 14px;
-          text-align: center;
-      }
-  }
-
-  @media screen and (max-width: 281px){
-    .service{
-      margin-bottom: -10.3%;
-    }
-  }
- @media screen and (max-width:769px) and (min-width: 701px) {
-  .service{
-    margin-bottom: -10.3%;
-  }
-   
- }
- @media screen and (max-width:1024px) and (min-width: 769px) {
-  .service{
-    margin-bottom: -10.3%;
-  }
-   
- } */

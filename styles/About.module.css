@@ -6,12 +6,12 @@
   justify-content: space-between;
   align-items: center;
   padding: 3rem;
-  min-height: 100vh;
+  min-height: 100dvh;
   /* background-color: rgb(16, 39, 94); */
 }
 .hero{
   width: 100vw;
-  height: 35vw;
+  height: 70dvh;
 }
 .heroLink{
   height: 40px;
@@ -74,12 +74,12 @@
 }
 .info{
   height: 100%;
-  width: 100vw;
+  width: 100dvw;
   padding-top: 2%;
 }
 .infoSection{
-  height: 200vh;
-  width: 100vw;
+  height: 200dvh;
+  width: 100dvw;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -357,11 +357,208 @@
 
 
 /* Mobile */
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 600px) {
   /* Add your styles here */
+  .about{ 
+    min-height: auto;
+  }
+  .hero{
+    height: 50dvh;
+  }
+  .heroWrapper span{
+   margin-top: 4%;
+   margin-left: -13%;
+  }
+  .info{
+    height: 100%;
+    width: auto;
+    margin-bottom: -2dvh;
+  }
+  .infoSection{
+    height: 100%;
+    width: 100dvw;
+  }
+  .infoTop{
+    padding-left: 0;
+    width: 100dvw;
+  }
+  .infoTopLeft{
+    margin-right: 0;
+    width: 100dvw;
+  }
+  .infoTopLeftC{
+    margin-right: 0;
+    width: 100dvw;
+  }
+  .infoTopLeftC h2{
+    margin-bottom: 4%;
+    margin-top: 2%;
+    font-size: 28px;
+  }
+  .infoTopLeftC p{
+    margin-bottom: 4%;
+  }
+  .infoTopLeft h2{
+    margin-bottom: 4%;
+    margin-top: 2%;
+    font-size: 28px;
+  }
+  .infoTopLeft p{
+    margin-bottom: 4%;
+  }
+  .infoTopRightC{
+    width: 100dvw;
+  }
+  .infoBottom{
+    padding-left: 0;
+  }
+  .infoTopWrapper{
+    flex-direction: column;
+    margin-bottom: 2%;
+  }
+  .infoTopWrapperC{
+    flex-direction: column;
+    margin-bottom: 2%;
+  }
+  .infoSection h2{
+    font-size: 28px;
+  }
+  .infoImage{
+   height: 20%;
+   width: 100%;
+  }
+  .contact{
+    height: 80vh;
+    margin-bottom: -11dvh;
+  }
+  .contactWrapper h2{
+    font-size: 2.5rem;
+    margin-bottom: 5dvh;
+  }
+  .contactWrapper button{
+    height: 60px;
+    width: 300px;
+    font-size: 1.5rem;
+  }
+  
+}
+@media screen and (max-width: 300px){
+  .hero h1{
+    font-size: 48px;
+  }
+  .heroWrapper span{
+    margin-top: 7%;
+    margin-left: -9%;
+    width: 300px;
+   }
+   .info h2{
+      font-size: 1.5rem;
+   }
+   .info p{
+     font-size: .91rem;
+   }
+   .infoImage{
+    height: 20%;
+    width: 100%;
+   }
+   .contact{  
+     height: 80vh;
+     margin-bottom: -11dvh;
+    }
+   .contact h2{
+      font-size: 1.5rem;
+    
+   }
+   .contact button{
+     height: 40px;
+     width: 200px;
+     font-size: 1rem;
+   }
+
 }
 
 /* Tablet and Smaller Desktop */
 @media (min-width: 701px) and (max-width: 1120px) {
   /* Add your styles here */
+  .about{ 
+    min-height: auto;
+  }
+  .hero{
+    height: 50dvh;
+  }
+  .heroWrapper span{
+   margin-top: 4%;
+   margin-left: -7.5%;
+  }
+  .info{
+    height: 100%;
+    width: auto;
+    margin-bottom: -2dvh;
+  }
+  .infoSection{
+    height: 100%;
+    width: 100dvw;
+  }
+  .infoTop{
+    padding-left: 0;
+    width: 100dvw;
+  }
+  .infoTopLeft{
+    margin-right: 0;
+    width: 100dvw;
+  }
+  .infoTopLeftC{
+    margin-right: 0;
+    width: 100dvw;
+  }
+  .infoTopLeftC h2{
+    margin-bottom: 4%;
+    margin-top: 2%;
+    font-size: 36px;
+  }
+  .infoTopLeftC p{
+    margin-bottom: 4%;
+  }
+  .infoTopLeft h2{
+    margin-bottom: 4%;
+    margin-top: 2%;
+    font-size: 36px;
+  }
+  .infoTopLeft p{
+    margin-bottom: 4%;
+  }
+  .infoTopRightC{
+    width: 100dvw;
+  }
+  .infoBottom{
+    padding-left: 0;
+  }
+  .infoTopWrapper{
+    flex-direction: column;
+    margin-bottom: 2%;
+  }
+  .infoTopWrapperC{
+    flex-direction: column;
+    margin-bottom: 2%;
+  }
+  .infoSection h2{
+    font-size: 36px;
+  }
+  .infoImage{
+   height: 20%;
+   width: 100%;
+  }
+  .contact{
+    height: 80vh;
+    margin-bottom: -11dvh;
+  }
+  .contactWrapper h2{
+    font-size: 2.5rem;
+    margin-bottom: 5dvh;
+  }
+  .contactWrapper button{
+    height: 60px;
+    width: 300px;
+    font-size: 1.5rem;
+  }
 }
