@@ -399,6 +399,9 @@
             .infoTopLeft{
               margin-right: -2%;
             }
+            .infoTopLeft h2{
+              margin-bottom: 1%;
+            }
             .infoTopLeftContainer{
               border-top: 45px solid red;
               width: 75dvw;
