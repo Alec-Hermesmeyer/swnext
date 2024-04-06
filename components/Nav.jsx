@@ -51,8 +51,8 @@ export default function Nav () {
         <Image
         src='Images/public/att.webp'
         alt='logo'
-        width={100}
-        height={100}
+        width={80}
+        height={80}
         priority />
         </Link>
         </div>
