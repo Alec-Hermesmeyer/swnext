@@ -211,6 +211,8 @@ function JobForm()  {
       'Crane Operator',
       'Mechanic',
       'Welder',
+      'Project Manager Assistant',
+      'Production Assistant',
   ]
 
   return (

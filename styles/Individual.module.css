@@ -423,9 +423,9 @@
               font-size: x-large;
             }
             .heroWrapper span{
-              width: 100%;
-              height: 40px;
-            }
+              margin-top: 4%;
+              margin-left: -13%;
+             }
             .info{
               height: 100%;
               width: auto;
@@ -612,3 +612,13 @@
             margin-top: 5%;
           }
         }
+        @media screen and (max-width: 300px){
+          .hero h1{
+            font-size: x-large;
+          }
+          .heroWrapper span{
+            margin-top: 7%;
+            margin-left: -9%;
+            width: 300px;
+           }
+          }

@@ -291,13 +291,12 @@
   .hero{
     height: 40dvh;
   }
-  .hero h1{
-    font-size: x-large;
-  }
+  /* 
+  } */
   .heroWrapper span{
-    width: 100%;
-    height: 40px;
-  }
+    margin-top: 4%;
+    margin-left: -7%;
+   }
   .heroLink{
     height: 40px;
     width: 160px;
@@ -369,6 +368,14 @@
     height: 40px;
     width: 110px;
     font-size: medium;
+  }
+  .heroWrapper span{
+    margin-top: 7%;
+    margin-left: -9%;
+    width: 300px;
+   }
+  .hero h1{
+    font-size: x-large;
   }
 }
 @media (min-width: 701px) and (max-width: 1120px) {

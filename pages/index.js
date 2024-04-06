@@ -10,6 +10,7 @@ import { Oswald } from "next/font/google";
 import { Montserrat } from "next/font/google";
 import { Lato } from "next/font/google";
 import supabaseLoader from "@/supabase-image-loader";
+import { GrayscaleTransitionImage } from "@/components/GrayscaleTransitionImage";
 // import { Container } from '@/components/Container';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -137,7 +138,9 @@ function InfoSection() {
                           loading="lazy"
                           quality={80}
                         />
+                        
                       </div>
+                     
                     </div>
                   </div>
                 </div>
