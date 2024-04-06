@@ -263,8 +263,8 @@
         width: 100%;
     }
     .mobileLink{
-        color: white;
-        text-shadow: 2px 2px 2px black;
+        color: black;
+        text-shadow: 2px 2px 2px white;
         text-align: center;
         font-size: 20px;
         font-weight: bold;
