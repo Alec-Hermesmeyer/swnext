@@ -61,7 +61,7 @@ function InfoSection() {
                         check out the positions we have and if they are
                         available below!
                       </p>
-                      <Link className={styles.infoBtn} href='#jobPostings'>
+                      <Link className={styles.infoBtn1} href='#jobPostings'>
                         Learn More
                       </Link>
                     </div>
@@ -121,10 +121,10 @@ function ArticleSection() {
             </article>
           </div>
           <span className={styles.btns}>
-            <Link className={styles.infoBtn} href="/services">
+            <Link className={styles.infoBtn1} href="/services">
               Services
             </Link>
-            <Link className={styles.infoBtn} href="/limited-access">
+            <Link className={styles.infoBtn2} href="/limited-access">
               Limited-Access
             </Link>
           </span>
@@ -158,13 +158,11 @@ function JobPostings() {
       {jobPostings.map((jobPosting, index) => (
         <div className={styles.card} key={index}>
           <FadeIn>
-        <details className={styles.jobPostInfo}>
+        <div className={styles.jobPostInfo}>
         <summary className={lato.className}>{jobPosting.jobTitle}</summary>
-        <p className={lato.className}>
-          {jobPosting.jobDesc}
-        </p>
-        <span className={styles.jobBtns}><Link className={styles.infoBtn} href='/contact#jobForm'><p className={lato.className}>Apply Today</p></Link></span>
-      </details>
+        
+        <span className={styles.jobBtns}><Link className={styles.infoBtn3} href='/contact#jobForm'><p className={lato.className}>Apply Today</p></Link></span>
+      </div>
       </FadeIn>
       </div>
       ))}

@@ -95,8 +95,8 @@ function ArticleSection() {
           </article>
         </div>
         <span className={styles.btns}>
-            <Link className={styles.infoBtn} href="/services">Services</Link>
-            <Link  className={styles.infoBtn} href="/limited-access">Limited-Access</Link>
+            <Link className={styles.infoBtn1} href="/services">Services</Link>
+            <Link  className={styles.infoBtn2} href="/limited-access">Limited-Access</Link>
           </span>
       </div>
     </div>
