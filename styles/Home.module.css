@@ -1171,7 +1171,7 @@
   
   }
 }
-@media screen and (max-width: 500px) {
+@media screen and (max-width: 600px) {
   /* Add your styles here */
   .main{ 
     min-height: auto;
@@ -1356,7 +1356,7 @@
   .contact{
     height: auto;
     margin: 2px;
-    margin-bottom: -13dvh;
+    margin-bottom: -15dvh;
   }
   .contact h2{
     font-size: 2.5rem;

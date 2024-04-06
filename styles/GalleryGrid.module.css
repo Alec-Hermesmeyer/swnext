@@ -55,7 +55,7 @@
   
   }
   /* Mobile */
-  @media (max-width: 700px) {
+  @media screen and (max-width: 700px) {
   
     .grid {
       display: grid;
@@ -63,17 +63,16 @@
       height: 40vh;
       width: 97vw;
       max-width: 100vw;
-      background-color: black;
+      background-color: transparent;
       border-radius: var(--border-radius);
     }
     
     .card {
       padding: 1rem 1.2rem;
       border-radius: var(--border-radius);
-      background: rgba(var(--card-rgb), 0);
-      border: 1px solid black;
+      background-color: rgb(16, 39, 94);
+      /* border: 1px solid black; */
       /* transition: background 200ms, border 200ms; */
-      background-color: white;
     
     }
     
@@ -99,10 +98,16 @@
       font-size: 15px;
       text-align: center;
     }
+    .img{
+      object-fit: cover;
+    }
   }
   @media screen and (max-width: 281px){
     .banner{
       font-size: 10px;
+    }
+    .img{
+      object-fit: cover;
     }
   }
   
@@ -113,5 +118,8 @@
   .grid {
     grid-template-columns: repeat(2, 50%);
   }
+  .img{
+      object-fit: cover;
+    }
   }
   

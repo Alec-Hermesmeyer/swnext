@@ -15,6 +15,7 @@
 @media screen and (max-width: 700px) {
   .main{
     margin-bottom: -7.3%;
+    background-color: rgb(16, 39, 94);
   }
   
 }
@@ -27,6 +28,12 @@
 @media screen and (max-width: 821px) {
   .main{
     margin-bottom: -10.3%;
+  }
+  
+}
+@media (min-width: 701px) and (max-width: 1120px) {
+  .main{
+    margin-bottom: -2.3%;
   }
   
 }

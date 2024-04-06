@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { GridPattern } from "@/components/GridPattern";
 import { FadeIn } from "@/components/FadeIn";
 import Link from 'next/link';
@@ -78,7 +77,7 @@ function OfficeContacts() {
             <div className={styles.card} key={index}>
                 <h2 className={lato.className}>{contact.name}</h2>
                 <p className={lato.className}>{contact.job_title}<br></br>
-                <br></br><Link href={`mailto:${contact.email}`}>{contact.email}</Link> <br></br>
+                <br></br><Link className={styles.email} href={`mailto:${contact.email}`}>{contact.email}</Link> <br></br>
                 <br></br><Link href={`tel:${contact.phone}`}>{contact.phone}</Link></p>
             </div>
         ))}
@@ -333,7 +332,7 @@ export default function Contact({ contacts}) {
           <OfficeContacts />
         </section>
         </FadeIn>
-        <div className={styles.spacer}>
+        <div className={styles.spacer} id='spacer2'>
           <GridPattern className={styles.gridPattern} yOffset={0} interactive />
           </div>
       </div>  
