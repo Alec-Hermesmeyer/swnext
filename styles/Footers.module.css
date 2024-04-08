@@ -1,5 +1,5 @@
 .footer {
-    height: 20vh;
+    height: auto;
     width: 100vw;
     background-color: black;
     display: flex;
@@ -34,6 +34,7 @@
     flex: 4;
     margin-bottom: 5vh;
     color: white;
+    padding-top: 40px;;
 }
 
 .left {
@@ -109,6 +110,7 @@
     align-items: baseline;
     justify-content: space-evenly;
     text-align: center;
+    padding-bottom: 40px;
 }
 
 @media screen and (max-width:480px) and (min-width:390px) {

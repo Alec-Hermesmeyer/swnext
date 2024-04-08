@@ -357,7 +357,7 @@
 
 
 /* Mobile */
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 699px) {
   /* Add your styles here */
   .about{ 
     min-height: auto;
@@ -432,13 +432,13 @@
     margin-bottom: -11dvh;
   }
   .contactWrapper h2{
-    font-size: 2.5rem;
+    font-size: xx-large;
     margin-bottom: 5dvh;
   }
   .contactWrapper button{
     height: 60px;
     width: 300px;
-    font-size: 1.5rem;
+    font-size: xx-large;
   }
   
 }
@@ -478,7 +478,7 @@
 }
 
 /* Tablet and Smaller Desktop */
-@media (min-width: 701px) and (max-width: 1120px) {
+@media (min-width: 701px) and (max-width: 1350px) {
   /* Add your styles here */
   .about{ 
     min-height: auto;

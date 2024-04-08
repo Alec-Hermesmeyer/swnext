@@ -378,7 +378,7 @@
     font-size: x-large;
   }
 }
-@media (min-width: 701px) and (max-width: 1120px) {
+@media (min-width: 701px) and (max-width: 1350px) {
   .contact{
     min-height: auto;
     margin-bottom: -13vh;
