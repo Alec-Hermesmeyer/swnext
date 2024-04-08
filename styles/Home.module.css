@@ -1331,14 +1331,36 @@
   .services{
     height: auto;
     width: 100dvw;
+    padding-bottom: 2px;
   }
   .servicesSection{
-    height: 40dvh;
+    height: 90dvh;
     margin-bottom: 0;
   }
   .servicesContainer{
     width: 100%;
     height: 100%;
+  }
+  .servicesWrapper{
+    flex-direction: column;
+  }
+  .servicesLeft{
+    height: 100%;
+    width: 100%;
+    flex: 1;
+    border-bottom: 1px solid #fff;
+  }
+  .servicesCenter{
+    height: 100%;
+    width: 100%;
+    flex: 1;
+   
+  }
+  .servicesRight{
+    height: 100%;
+    width: 100%;
+    flex: 1;
+    border-top: 1px solid #fff;
   }
   .servicesWrapper button{
     height: 30px;
@@ -1419,7 +1441,7 @@
     font-size: 22px;
   }
   .servicesSection{
-    height: 45dvh;
+    height: 100dvh;
     margin-bottom: 0;
   }
   .servicesCenter {
@@ -1439,13 +1461,14 @@
     margin-bottom: -18dvh;
   }
   .contact h2 {
-    font-size: 2rem;
+    font-size: xx-large;
     padding-bottom: 4%;
   }
   .contact button{
     height: 60px;
     width: 300px;
     margin-top: 5%;
+    font-size: xx-large;
   
   }
 }
@@ -1470,14 +1493,14 @@
     width: 90%;
   }
   .hero h1{
-    font-size: 22px;
+    font-size: large;
     font-weight: 900;
     color: white;
-    width: 98dvw;
-    margin-top: 2%;
+    width: 100dvw;
+    margin-top: 20px;
   }
   .hero h2{
-    font-size: 18px;
+    font-size: medium;
     font-weight: 700;
     color: white;
     letter-spacing: 1px;
@@ -1512,7 +1535,7 @@
     font-size: 18px;
   }
   .servicesSection{
-    height: 45dvh;
+    height: 100dvh;
     margin-bottom: 0;
   }
   .servicesCenter {
@@ -1533,13 +1556,13 @@
     margin-bottom: -18dvh;
   }
   .contact h2 {
-    font-size: 2rem;
+    font-size: xx-large;
     padding-bottom: 4%;
   }
   .contact button{
     height: 40px;
     width: 200px;
-    font-size: 1rem;
+    font-size: xx-large;
   }
 }
 
