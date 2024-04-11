@@ -250,7 +250,7 @@
         height: calc(100dvh - 90px);
         background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
         mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
-        transition: all 0.5s ease-in-out;
+        transition: all 0.8s ease-in-out;
         display: flex;
       }
     .activeMobile ul{
