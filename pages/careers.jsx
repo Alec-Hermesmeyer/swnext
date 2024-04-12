@@ -192,7 +192,7 @@ const Careers = () => {
         />
         <meta
           property="og:title"
-          content="Services | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX"
+          content="Careers | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX"
         />
         <meta
           property="og:description"
