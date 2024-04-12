@@ -253,6 +253,9 @@
         transition: all 0.8s ease-in-out;
         display: flex;
       }
+      .activeMoblie::after{
+        z-index: 999;
+      }
     .activeMobile ul{
         list-style: none;
         display: flex;
