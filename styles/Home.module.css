@@ -1595,3 +1595,6 @@
   }
 }
 
+@media (orientation: landscape) and (min-width: 800px) {
+  /* CSS styles for landscape mode with a viewport width of at least 800px */
+}
