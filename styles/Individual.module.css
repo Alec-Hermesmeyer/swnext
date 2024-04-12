@@ -689,3 +689,38 @@
             width: 300px;
            }
           }
+          @media (orientation: landscape) and (max-width: 900px) {
+            .hero{
+              height: 100dvh;
+              width: 100dvw;
+              margin-top: -10dvh;
+            }
+            .hero h1{
+              font-size: xx-large;
+              margin-bottom: 5%;
+              margin-left: 4%;
+            }
+            .info{
+              height: 100%;
+              width: auto;
+              margin-bottom: 2dvh;
+            }
+            .infoTopLeft{
+              height: auto;
+            }
+            .infoTopLeftContainer{
+              height: auto;
+              padding-bottom: 2%;
+            }
+            .infoTopLeftC{
+              height: auto;
+            }
+            .infoTopLeftContainerC{
+              height: auto;
+              padding-bottom: 2%;
+            }
+            .grid{
+              grid-template-columns: repeat(1, minmax(25%, auto));
+              width: 75%;
+            }
+          }

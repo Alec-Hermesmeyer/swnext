@@ -332,16 +332,12 @@
   }
   .formInput{
     margin-bottom: 2%;
-    /* border: 1px solid black;
-    border-radius: var(--border-radius); */
   }
   .formTop{
     margin-bottom: 3%;
-    /* gap: 2%; */
     width: 95%;
   }
   .formCenter{
-    /* gap: 2%; */
     width: 95%;
   }
   .formSubmit{
@@ -351,8 +347,6 @@
   .contactMessage{
     width: 95%;
     height: 10dvh;
-    /* border: 1px solid black;
-    border-radius: var(--border-radius); */
   }
   .spacer{
     height: 10vh;
@@ -454,5 +448,27 @@
   .formSubmit{
     width: 70%;
     margin-top: 2%;
+  }
+}
+@media (orientation: landscape) and (max-width: 900px) {
+  .contact{
+    min-height: auto;
+    margin-bottom: -25dvh;
+  }
+  .hero{
+    height: 100dvh;
+    margin-top: -14dvh;
+  }
+  .form{
+    height: 100dvh;
+    margin-bottom: 5%;
+  }
+  .formSection{
+    height: auto;
+    width: 100dvw;
+  }
+  .formSectionWrapper{
+    flex-direction: column;
+    width: 100%;
   }
 }

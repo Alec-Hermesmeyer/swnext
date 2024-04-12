@@ -280,6 +280,12 @@
     }
    
 }
+@media (orientation: landscape) and (max-width: 900px) {
+    .nav {
+        height: 25dvh;
+    
+    }
+}
 @media screen and (max-width:281px){
     /* .activeMobile ul{
         margin-left: 55px;

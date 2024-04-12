@@ -1570,7 +1570,152 @@
     font-size: xx-large;
   }
 }
-
+@media (orientation: landscape) and (min-width: 800px) {
+  /* CSS styles for landscape mode with a viewport width of at least 800px */
+  .main{ 
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0;
+    margin-bottom: 0;
+  }
+  .hero{
+    height: auto;
+    margin-top: -25dvh;
+  }
+  .services{
+    height: auto;
+    width: 100dvw;
+    padding-bottom: 2dvh;
+  }
+  .servicesSection{
+    height: 160dvh;
+    margin-bottom: 0;
+  }
+  .servicesContainer{
+    width: 100%;
+    height: 100%;
+  }
+  .servicesWrapper{
+    flex-direction: column;
+  }
+  .servicesLeft{
+    height: 100%;
+    width: 100%;
+    flex: 1;
+    border-bottom: 1px solid #fff;
+  }
+  .servicesCenter{
+    height: 100%;
+    width: 100%;
+    flex: 1;
+   
+  }
+  .servicesRight{
+    height: 100%;
+    width: 100%;
+    flex: 1;
+    border-top: 1px solid #fff;
+  }
+  .servicesWrapper button{
+    height: 30px;
+    width: 120px;
+  }
+  .servicesWrapper h3{
+    font-size: medium;
+    text-align: center;
+  }
+  .serviceCenterContainer{
+    height: auto;
+  }
+  .servicesCenter {
+    border: none;
+  }
+  .contact{
+    height: 80dvh;
+    margin: 2px;
+    margin-bottom: -32dvh;
+  }
+  .contact h2{
+    font-size: 2.5rem;
+    padding-bottom: 4%;
+  
+  }
+}
+@media (orientation: landscape) and (max-width: 799px) {
+  /* CSS styles for landscape mode with a viewport width of at least 800px */
+  .main{ 
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0;
+    margin-bottom: 0;
+  }
+  .hero{
+    height: auto;
+    margin-top: -30dvh;
+  }
+  .services{
+    height: auto;
+    width: 100dvw;
+    padding-bottom: 2dvh;
+  }
+  .servicesSection{
+    height: 180dvh;
+    margin-bottom: 0;
+  }
+  .servicesContainer{
+    width: 100%;
+    height: 100%;
+  }
+  .servicesWrapper{
+    flex-direction: column;
+  }
+  .servicesLeft{
+    height: 100%;
+    width: 100%;
+    flex: 1;
+    border-bottom: 1px solid #fff;
+  }
+  .servicesCenter{
+    height: 100%;
+    width: 100%;
+    flex: 1;
+   
+  }
+  .servicesRight{
+    height: 100%;
+    width: 100%;
+    flex: 1;
+    border-top: 1px solid #fff;
+  }
+  .servicesWrapper button{
+    height: 30px;
+    width: 120px;
+  }
+  .servicesWrapper h3{
+    font-size: medium;
+    text-align: center;
+  }
+  .serviceCenterContainer{
+    height: auto;
+  }
+  .servicesCenter {
+    border: none;
+  }
+  .contact{
+    height: 80dvh;
+    margin: 2px;
+    margin-bottom: -37dvh;
+  }
+  .contact h2{
+    font-size: 2.5rem;
+    padding-bottom: 4%;
+  
+  }
+}
 
 
 /* Enable hover only on non-touch devices */
@@ -1595,6 +1740,3 @@
   }
 }
 
-@media (orientation: landscape) and (min-width: 800px) {
-  /* CSS styles for landscape mode with a viewport width of at least 800px */
-}
