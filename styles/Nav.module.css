@@ -244,7 +244,7 @@
     }
     .activeMobile {
         position: fixed;
-        top: 13dvh;
+        top: 15dvh;
         left: 0;
         width: 100%;
         height: calc(100vh - 120px);
