@@ -68,7 +68,7 @@ function InfoSection() {
                   <div className={styles.infoTopRight}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/home.webp"
+                      src="Images/public/IMG_7617.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"
@@ -93,14 +93,14 @@ function InfoSection() {
                         At S&W Foundation Contractors, we aim to be your your one-stop shop for all of your pier drilling needs. With over 30 years experience in the indusry, we offer comprehensive drilling services
                         for commercial and industrial projects across the United States. Whether you require supplementary labor or a complete product we offer a wide range of services delivered by our versatile and experienced team, backed 
                         by our state of the art fleet. Trust us to provide reliable, efficient, and cost-effective solutions to meet your drilling needs. 
-                        <br></br><strong>Your hole is our goal!</strong>
+                        <br></br> <br></br><strong>Your hole is our goal!</strong>
                       </p>
                     </div>
                   </div>
                   <div className={styles.infoTopRightC}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/prat1e.webp"
+                      src="Images/public/2rigs1pipe.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"

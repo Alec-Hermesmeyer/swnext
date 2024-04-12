@@ -62,7 +62,7 @@ function InfoSection() {
                   <div className={styles.infoTopRight}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/IMG_7621.webp"
+                      src="Images/public/preperation.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"
@@ -130,7 +130,7 @@ function InfoSection() {
                   <div className={styles.infoTopRight}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/1703009714442.webp"
+                      src="Images/public/indacut.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"

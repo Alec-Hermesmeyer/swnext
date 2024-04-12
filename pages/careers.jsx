@@ -69,7 +69,7 @@ function InfoSection() {
                   <div className={styles.infoTopRight}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/IMG_7621.webp"
+                      src="Images/public/newimages/AFDB03DE-805D-45B2-9A37-1EAFA841A828.webp"
                       height={380}
                       width={430}
                       alt="S&W Foundations"

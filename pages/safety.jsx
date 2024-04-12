@@ -17,7 +17,7 @@ const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
 function Hero() {
   return (
-    <div className={styles.heroSection}>
+    <div className={styles.heroSectionSD}>
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
           <h1 className={lato.className}>Safety</h1>
@@ -56,9 +56,9 @@ function InfoSection() {
                   <div className={styles.infoTopRight}>
                     <Image
                       className={styles.infoImage}
-                      src="Images/public/IMG_7621.webp"
+                      src="Images/public/IMG_7642.webp"
                       height={380}
-                      width={430}
+                      width={410}
                       alt="S&W Foundations"
                       loading="lazy"
                       quality={80}
