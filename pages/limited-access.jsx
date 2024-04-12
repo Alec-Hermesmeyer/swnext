@@ -88,7 +88,7 @@ function ArticleSection() {
               to tackle even the most challenging drilling projects. We specialize in providing comprehensive drilling 
               solutions for projects with limited access, ensuring that each foundation is solid, stable, and built to last. 
               With a focus on safety, efficiency, and quality, we are committed to delivering exceptional results that meet and 
-              exceed our clients' expectations. Contact us today to learn more about our Limited-Access Pier Drilling services and 
+              exceed our clients expectations. Contact us today to learn more about our Limited-Access Pier Drilling services and 
               how we can help you with your next project.
             </p>
           </article>
