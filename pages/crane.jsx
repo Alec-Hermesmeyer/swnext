@@ -46,10 +46,12 @@ function InfoSection() {
                   <div className={styles.infoTopLeft}>
                     <div className={styles.infoTopLeftContainer}>
                       <h2 className={lato.className}>
-                       State of the Art Equipment
+                      Crane Services
                       </h2>
                       <p className={lato.className}>
-                         S&amp;W Foundation Contractors operates a fleet of 23 state-of-the-art drill rigs, allowing us to effeciently handle drilling operations for projects of all speacilizesand complexities. Our Advanced drilling equipment ensures that each foundation is solid, stable and capable of withstanding the test of time.
+                         S&amp;W Foundation Contractors owns and operates a fleet of 6 state of the art crane rigs, and has been leading the way for crane services and construction needs across Texas. We stress the importance of safety and high-quality work to ensure
+                         that evert project is completed to the best of our ability, while mitigating risks involved with this line of work. Working with heavy equipment can often present many dangers and challenges,
+                         but our years of professional experience make us the best choice for your crane service needs. Contact us today to learn more about our comprehensive portfolio of Crane Services.
                       </p>
                     </div>
                   </div>
@@ -79,18 +81,14 @@ function ArticleSection() {
   <div className={styles.articleSection}>
     <div className={styles.articleContainer}>
       <div className={styles.articleWrapper}>
-        <h3 className={lato.className}>We set the standard and innovate to overcome obstacles...</h3>
+        <h3 className={lato.className}>If You Need A Lift, We Have Got You Covered...</h3>
         <div className={styles.contentContainer}>
           <article className={styles.articleContent}>
             <p className={lato.className}>
-              We are the leaders in Commercial Pier Drilling for good reason! We deliver comprehensive Pier Drilling Solutions for major construction
-              projects across the United States. Our project management approach utilizes advanced technologies to drive efficiency and productivty onsite.
-              We invest in state of the art hydraulic rotary drills, auger cast pile rigs, and excavator mounted equipment to execute pier installation rapidly
-              and accurately. Our crews apply innovative drilling techniques and sequences tailored for specific soil conditions and project needs. Customers turn 
-              to us because the know we will deliver robust pier foundations that provide the load-bearing capacity required, even in challeging ground conditions.
-              Our specialized expertise in caisson, pile, micropile and helix pier construction provides deep foundation solutions enginnered for safety and longevity.
-              Whether it&apos;s constructing a high-rise core on friction piles, securing a hillside on caisson secant walls, or anchoring a tank farm on helical piers, you can count 
-              on us to deliver. Contact us today to learn more about our comprehensive portfolio of Commercial Pier Drilling Services.
+              Clients entrust us for our proven ability to provide robust lifting solutions, regardless of complexity. Our specialized
+              expertise spans a wide range, from heavy machinery to construction materials. Our crane services are designed to meet the expecations of the job at hand.
+              Our Commitment to Safety is paramount, and we ensure that all of our operators are trained and certified to operate our equipment. Contact us today to explore the comprehensive array of lifting solutions we offer, designed to elevate your 
+              projects to new heights while keeping safety and effeciency at the forefront of our operations.
             </p>
           </article>
         </div>

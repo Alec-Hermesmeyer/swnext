@@ -46,10 +46,10 @@ function InfoSection() {
                   <div className={styles.infoTopLeft}>
                     <div className={styles.infoTopLeftContainer}>
                       <h2 className={lato.className}>
-                       State of the Art Equipment
+                      Safety
                       </h2>
                       <p className={lato.className}>
-                         S&amp;W Foundation Contractors operates a fleet of 23 state-of-the-art drill rigs, allowing us to effeciently handle drilling operations for projects of all speacilizesand complexities. Our Advanced drilling equipment ensures that each foundation is solid, stable and capable of withstanding the test of time.
+                         S&amp;W Foundation Contractors top priority is the safety of our employees, customers, and the general public. We are committed to providing a safe and healthy work environment for all of our employees and subcontractors. Our safety program is designed to meet or exceed all OSHA standards and regulations. We provide ongoing safety training to all employees to ensure that they are up-to-date on the latest safety procedures and best practices. Our safety program includes regular safety meetings, job site inspections, and safety audits to identify and correct potential hazards. We also have a comprehensive safety manual that outlines our safety policies and procedures. At S&amp;W Foundation Contractors, safety is not just a priority, it is a core value that guides everything we do.
                       </p>
                     </div>
                   </div>
@@ -79,18 +79,11 @@ function ArticleSection() {
   <div className={styles.articleSection}>
     <div className={styles.articleContainer}>
       <div className={styles.articleWrapper}>
-        <h3 className={lato.className}>We set the standard and innovate to overcome obstacles...</h3>
+        <h3 className={lato.className}>Leaving How You Arrived Is The Standard...</h3>
         <div className={styles.contentContainer}>
           <article className={styles.articleContent}>
             <p className={lato.className}>
-              We are the leaders in Commercial Pier Drilling for good reason! We deliver comprehensive Pier Drilling Solutions for major construction
-              projects across the United States. Our project management approach utilizes advanced technologies to drive efficiency and productivty onsite.
-              We invest in state of the art hydraulic rotary drills, auger cast pile rigs, and excavator mounted equipment to execute pier installation rapidly
-              and accurately. Our crews apply innovative drilling techniques and sequences tailored for specific soil conditions and project needs. Customers turn 
-              to us because the know we will deliver robust pier foundations that provide the load-bearing capacity required, even in challeging ground conditions.
-              Our specialized expertise in caisson, pile, micropile and helix pier construction provides deep foundation solutions enginnered for safety and longevity.
-              Whether it&apos;s constructing a high-rise core on friction piles, securing a hillside on caisson secant walls, or anchoring a tank farm on helical piers, you can count 
-              on us to deliver. Contact us today to learn more about our comprehensive portfolio of Commercial Pier Drilling Services.
+            S&amp;W Foundation Contractors commitment to safety is our highest priority. We are dedicated to providing a safe and healthy work environment for all of our employees, customers, and the general public. Our safety program is designed to meet or exceed all OSHA standards and regulations. We provide ongoing safety training to all employees to ensure that they are up-to-date on the latest safety procedures and best practices. Our safety program includes regular safety meetings, job site inspections, and safety audits to identify and correct potential hazards. We also have a comprehensive safety manual that outlines our safety policies and procedures. At S&amp;W Foundation Contractors, safety is not just a priority, it is a core value that guides everything we do.
             </p>
           </article>
         </div>

@@ -46,10 +46,10 @@ function InfoSection() {
                   <div className={styles.infoTopLeft}>
                     <div className={styles.infoTopLeftContainer}>
                       <h2 className={lato.className}>
-                       State of the Art Equipment
+                      Limited-Access Pier Drilling Experts
                       </h2>
                       <p className={lato.className}>
-                         S&amp;W Foundation Contractors operates a fleet of 23 state-of-the-art drill rigs, allowing us to effeciently handle drilling operations for projects of all speacilizesand complexities. Our Advanced drilling equipment ensures that each foundation is solid, stable and capable of withstanding the test of time.
+                         S&amp;W Foundation Contractors maintains a fleet of 23 cutting-edge drill rigs, enabling us to adeptly manage limited access drilling operations across a wide range of project specifications and complexities. Our sophisticated drilling technology guarantees the creation of foundations that are robust, stable, and designed to endure over time.
                       </p>
                     </div>
                   </div>
@@ -79,18 +79,17 @@ function ArticleSection() {
   <div className={styles.articleSection}>
     <div className={styles.articleContainer}>
       <div className={styles.articleWrapper}>
-        <h3 className={lato.className}>We set the standard and innovate to overcome obstacles...</h3>
+        <h3 className={lato.className}>We use our expertise innovate to overcome obstacles...</h3>
         <div className={styles.contentContainer}>
           <article className={styles.articleContent}>
             <p className={lato.className}>
-              We are the leaders in Commercial Pier Drilling for good reason! We deliver comprehensive Pier Drilling Solutions for major construction
-              projects across the United States. Our project management approach utilizes advanced technologies to drive efficiency and productivty onsite.
-              We invest in state of the art hydraulic rotary drills, auger cast pile rigs, and excavator mounted equipment to execute pier installation rapidly
-              and accurately. Our crews apply innovative drilling techniques and sequences tailored for specific soil conditions and project needs. Customers turn 
-              to us because the know we will deliver robust pier foundations that provide the load-bearing capacity required, even in challeging ground conditions.
-              Our specialized expertise in caisson, pile, micropile and helix pier construction provides deep foundation solutions enginnered for safety and longevity.
-              Whether it&apos;s constructing a high-rise core on friction piles, securing a hillside on caisson secant walls, or anchoring a tank farm on helical piers, you can count 
-              on us to deliver. Contact us today to learn more about our comprehensive portfolio of Commercial Pier Drilling Services.
+              When it comes to Limited-Access Pier Drilling, S&amp;W Foundation Contractors is the industry leader. 
+              Our team of experts is equipped with the knowledge, experience, and cutting-edge equipment necessary 
+              to tackle even the most challenging drilling projects. We specialize in providing comprehensive drilling 
+              solutions for projects with limited access, ensuring that each foundation is solid, stable, and built to last. 
+              With a focus on safety, efficiency, and quality, we are committed to delivering exceptional results that meet and 
+              exceed our clients' expectations. Contact us today to learn more about our Limited-Access Pier Drilling services and 
+              how we can help you with your next project.
             </p>
           </article>
         </div>

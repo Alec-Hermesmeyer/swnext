@@ -247,7 +247,7 @@
         top: 15dvh;
         left: 0;
         width: 100%;
-        height: calc(100vh - 120px);
+        height: calc(100dvh - 120px);
         background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
         mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
         transition: all 0.8s ease-in-out;
@@ -255,6 +255,8 @@
       }
       .activeMoblie::after{
         z-index: 999;
+        overflow: hidden;
+       
       }
     .activeMobile ul{
         list-style: none;

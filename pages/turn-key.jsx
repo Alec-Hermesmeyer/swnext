@@ -46,10 +46,13 @@ function InfoSection() {
                   <div className={styles.infoTopLeft}>
                     <div className={styles.infoTopLeftContainer}>
                       <h2 className={lato.className}>
-                       State of the Art Equipment
+                      Turn-Key Drilling Solutions
                       </h2>
                       <p className={lato.className}>
-                         S&amp;W Foundation Contractors operates a fleet of 23 state-of-the-art drill rigs, allowing us to effeciently handle drilling operations for projects of all speacilizesand complexities. Our Advanced drilling equipment ensures that each foundation is solid, stable and capable of withstanding the test of time.
+                         S&amp;W Foundation Contractors offers comprehensive Turn-Key Drilling Solutions for commercial construction projects across the United States. 
+                         Our turn-key approach to drilling services ensures that we handle every aspect of the project from start to finish. We provide a full suite of drilling services, 
+                         including pier drilling, limited-access drilling, and crane services. Our team of experts will work with you to develop a customized drilling plan that meets your project&apos;s unique requirements. 
+                         Contact us today to learn more about our turn-key drilling solutions.
                       </p>
                     </div>
                   </div>
@@ -79,18 +82,14 @@ function ArticleSection() {
   <div className={styles.articleSection}>
     <div className={styles.articleContainer}>
       <div className={styles.articleWrapper}>
-        <h3 className={lato.className}>We set the standard and innovate to overcome obstacles...</h3>
+        <h3 className={lato.className}>Innovative Solutions For All Your Project Needs...</h3>
         <div className={styles.contentContainer}>
           <article className={styles.articleContent}>
             <p className={lato.className}>
-              We are the leaders in Commercial Pier Drilling for good reason! We deliver comprehensive Pier Drilling Solutions for major construction
-              projects across the United States. Our project management approach utilizes advanced technologies to drive efficiency and productivty onsite.
-              We invest in state of the art hydraulic rotary drills, auger cast pile rigs, and excavator mounted equipment to execute pier installation rapidly
-              and accurately. Our crews apply innovative drilling techniques and sequences tailored for specific soil conditions and project needs. Customers turn 
-              to us because the know we will deliver robust pier foundations that provide the load-bearing capacity required, even in challeging ground conditions.
-              Our specialized expertise in caisson, pile, micropile and helix pier construction provides deep foundation solutions enginnered for safety and longevity.
-              Whether it&apos;s constructing a high-rise core on friction piles, securing a hillside on caisson secant walls, or anchoring a tank farm on helical piers, you can count 
-              on us to deliver. Contact us today to learn more about our comprehensive portfolio of Commercial Pier Drilling Services.
+            S&amp;W Foundation Contractors is a forward-looking contractor with the capabilty to handle projects through various contracting models.
+            As our finacial strength has expanded, we have embraced Turn-Key contracts for select clients. Through this approach, we have effectively managed multiple projects from start to finish with great success.
+            This contracting method offers a streamlined experience, serving as a single point of contact to ensure the safety, budget adherence, and timely completion of your project.
+            Should you have a speficic project in mind, please contact us to discuss how we can help you achieve your goals.
             </p>
           </article>
         </div>

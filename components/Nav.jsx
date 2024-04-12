@@ -26,6 +26,10 @@ const data = [
         link: '/contact',
     },
     {
+        name: "Careers",
+        link: '/careers",',
+    },
+    {
         name: "Gallery",
         link: '/gallery',
     },

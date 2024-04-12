@@ -78,7 +78,7 @@ function OfficeContacts() {
                 <h2 className={lato.className}>{contact.name}</h2>
                 <p className={lato.className}>{contact.job_title}<br></br>
                 <br></br><Link className={styles.email} href={`mailto:${contact.email}`}>{contact.email}</Link> <br></br>
-                <br></br><Link href={`tel:${contact.phone}`}>{contact.phone}</Link></p>
+                <br></br><Link className={styles.contactNumber} href={`tel:${contact.phone}`}>{contact.phone}</Link></p>
             </div>
         ))}
     </div>
@@ -118,7 +118,7 @@ function Form() {
   return (
     <>
     <form onSubmit={handleSubmit} className={styles.form}>
-    <h1 className={lato.className}>Contact Us Today!</h1>
+    <h1 className={lato.className}>Contact Us Today</h1>
         <div className={styles.formContainer}>
           <div className={styles.formWrapper}>
             <div className={styles.formTop}>

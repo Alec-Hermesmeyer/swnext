@@ -221,16 +221,19 @@
     flex: 1;
     height: 100%;
     width: 90%;
+    gap: 2%;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
+   
 }
 
 .formCenter{
     flex: .5;
     height: 100%;
     width: 90%;
+    gap: 2%;
     display: flex;
     align-items: center;
     flex-direction: row;
@@ -252,10 +255,12 @@
     cursor: pointer;
     text-align: center;
     margin-right: 2px;
-    border: none;
-    border-bottom: 1px solid #ccc; /* Add a bottom border */
+    /* border: none;
+    border-bottom: 1px solid #ccc; Add a bottom border */
     padding: 10px 0;
-    filter: drop-shadow(13px 22px 5px rgba(0, 0, 0, 0.23));
+    filter: drop-shadow(13px 22px 5px rgba(0, 0, 0, 0.13));
+    border: 1px solid #10275E;
+    border-radius: var(--border-radius);
 }
 
 
@@ -269,7 +274,9 @@
     border: none;
     border-bottom: 1px solid #ccc; /* Add a bottom border */
     padding: 10px 0;
-    filter: drop-shadow(13px 22px 5px rgba(0, 0, 0, 0.23));
+    filter: drop-shadow(13px 22px 5px rgba(0, 0, 0, 0.13));
+    border: 1px solid #10275E;
+    border-radius: var(--border-radius);
 }
 .formSubmit{
     width: 30%;
@@ -319,22 +326,33 @@
     padding-bottom: 2%;
   }
   .form h1{
-    margin-bottom: 8%;
-    font-size: large;
+    margin-bottom: 7%;
+    font-size: x-large;
+    margin-top: 2%;
   }
   .formInput{
     margin-bottom: 2%;
+    /* border: 1px solid black;
+    border-radius: var(--border-radius); */
   }
   .formTop{
-    margin-bottom: 2%;
+    margin-bottom: 3%;
+    /* gap: 2%; */
+    width: 95%;
+  }
+  .formCenter{
+    /* gap: 2%; */
+    width: 95%;
   }
   .formSubmit{
     width: 70%;
     margin-top: 2%;
   }
   .contactMessage{
-    width: 90%;
+    width: 95%;
     height: 10dvh;
+    /* border: 1px solid black;
+    border-radius: var(--border-radius); */
   }
   .spacer{
     height: 10vh;
@@ -345,7 +363,7 @@
     width: 85%;
   }
   .card{
-    padding-bottom: 2%;
+    padding-bottom: 4%;
   }
   .card h2{ 
     font-size: x-large;
@@ -356,8 +374,9 @@
     font-size: medium;
   }
   .email{
-    font-size: small;
+    font-size: medium;
   }
+  
   .officeContacts{
     height: auto;
     margin-top: -5%;
