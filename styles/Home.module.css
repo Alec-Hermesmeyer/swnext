@@ -1570,7 +1570,7 @@
     font-size: xx-large;
   }
 }
-@media (orientation: landscape) and (min-width: 800px) {
+@media (orientation: landscape) and (max-width: 900px) {
   /* CSS styles for landscape mode with a viewport width of at least 800px */
   .main{ 
     min-height: auto;
