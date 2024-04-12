@@ -1336,10 +1336,10 @@
   .services{
     height: auto;
     width: 100dvw;
-    padding-bottom: 2px;
+    padding-bottom: 2dvh;
   }
   .servicesSection{
-    height: 90dvh;
+    height: 100dvh;
     margin-bottom: 0;
   }
   .servicesContainer{
