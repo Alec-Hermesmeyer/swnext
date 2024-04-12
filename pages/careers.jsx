@@ -162,7 +162,7 @@ function JobPostings() {
           <FadeIn>
         <details className={styles.jobPostInfo}>
         <summary className={lato.className}>{jobPosting.jobTitle}</summary>
-        <p className={lato.className}>{jobPosting.jobDesc}</p>
+        {/* <p className={lato.className}>{jobPosting.jobDesc}</p> */}
         <span className={styles.jobBtns}><Link className={styles.infoBtn3} href='/contact#jobForm'><p className={lato.className}>Apply Today</p></Link></span>
       </details>
       </FadeIn>
