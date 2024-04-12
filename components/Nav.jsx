@@ -27,7 +27,7 @@ const data = [
     },
     {
         name: "Careers",
-        link: '/careers",',
+        link: '/careers',
     },
     {
         name: "Gallery",
