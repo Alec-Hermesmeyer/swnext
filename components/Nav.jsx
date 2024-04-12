@@ -68,6 +68,9 @@ export default function Nav () {
               <Link href='/contact'>Contact</Link>
             </li>
             <li className={lato.className}>
+              <Link href='/careers'>Careers</Link>
+            </li>
+            <li className={lato.className}>
               <Link href='/gallery'>Gallery</Link>
             </li> 
             

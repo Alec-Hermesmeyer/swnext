@@ -36,6 +36,9 @@ const Footer = () => {
                     <Link style={{ color: 'white' }} href='/contact'>Contact</Link>
                   </li>
                   <li className={lato.className}>
+                    <Link style={{ color: 'white' }} href='/careers'>Careers</Link>
+                  </li>
+                  <li className={lato.className}>
                     <Link style={{ color: 'white' }} href='/gallery'>Gallery</Link>
                   </li>
                   
