@@ -152,10 +152,12 @@ function JobPostings() {
   if (isLoading) {
     return <div>Loading....</div>;
   }
+  // Filter the jobPostings to only include those where isOpen is true
+  const openJobPostings = jobPostings.filter(jobPosting => jobPosting.is_Open);
   return (
     <div className={styles.jobPostingsSection}>
       <div className={styles.grid}>
-      {jobPostings.map((jobPosting, index) => (
+      {openJobPostings.map((jobPosting, index) => (
         <div className={styles.card} key={index}>
           <FadeIn>
         <details className={styles.jobPostInfo}>
