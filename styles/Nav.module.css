@@ -247,7 +247,7 @@
         top: 120px;
         left: 0;
         width: 100%;
-        height: calc(100dvh - 90px);
+        height: calc(100dvh - 14dvh);
         background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
         mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
         transition: all 0.8s ease-in-out;
