@@ -122,4 +122,12 @@
       object-fit: cover;
     }
   }
-  
+  @media (orientation: landscape) and (max-width: 900px) {
+    .grid {
+      grid-template-columns: repeat(2, 50%);
+      height: 80vh;
+    }
+    .img{
+      object-fit: cover;
+    }
+  }

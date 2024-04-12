@@ -37,3 +37,8 @@
   }
   
 }
+@media (orientation: landscape) and (max-width: 900px) {
+  .main{
+    margin-bottom: -5.3%;
+  }
+}
