@@ -108,7 +108,7 @@ const Safety = () => {
     <meta property="og:title" content="Services | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX" />
     <meta property="og:description" content="Discover S&amp;W Foundation&apos;s range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.swfoundation.com/services/" />
+    <meta property="og:url" content="https://www.swfoundation.com/safety/" />
     <meta property="og:image" content="https://www.swfoundation.com/images/galleryImages/gal18.jpeg" />
     <meta property='og:site_name' content='S&amp;W Commercial Construction Support' />
     <link rel="canonical" href="https://www.swfoundation.com/safety" />
