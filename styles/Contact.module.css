@@ -359,6 +359,7 @@
   }
   .card{
     padding-bottom: 4%;
+    margin-bottom: 40px;
   }
   .card h2{ 
     font-size: x-large;
