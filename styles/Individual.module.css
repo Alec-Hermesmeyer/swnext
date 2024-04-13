@@ -577,6 +577,7 @@
             .jobPostingsSection{
               margin-top: 5%;
               height: 100%;
+              padding-bottom: 20px;
             }
             .grid{
               grid-template-columns: repeat(1, minmax(25%, auto));
@@ -584,14 +585,14 @@
             }
             .card{
               padding-bottom: 2%;
-              min-height: 200px;
+              min-height: 150px;
               height: auto;
             }
             .jobPostInfo summary{
               font-size: large;
               margin-top: 5%;
               padding-bottom: 5%;
-                /* padding-top: 12%; */
+              
             }
             .jobPostInfo p{
               font-size: medium;
