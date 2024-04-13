@@ -572,7 +572,7 @@
               margin-bottom: 10%;
             }
             .jobPostings{
-              height: 100%;
+              height: auto;
             }
             .jobPostingsSection{
               margin-top: 5%;
@@ -586,6 +586,7 @@
             .card{
               padding-bottom: 2%;
               min-height: 150px;
+              max-height: 150px;
               height: auto;
             }
             .jobPostInfo summary{
