@@ -600,7 +600,7 @@ export default function Home({ data }) {
         <link rel="canonical" href="https://www.swfoundation.com/" />
         <link
           rel="icon"
-          href="../public/android-chrome-512x512.png"
+          href="/android-chrome-512x512.png"
           type="image/x-icon"
         />
         <script
