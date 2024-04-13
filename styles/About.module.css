@@ -388,6 +388,7 @@
   }
   .infoTopLeftC{
     margin-left: 0;
+    margin-right: 0;
     width: 100dvw;
   }
   .infoTopLeftC h2{
@@ -409,6 +410,7 @@
   .infoTopRightC{
     width: 100dvw;
     margin-left: 0;
+    margin-right: 0;
   }
   .infoBottom{
     padding-left: 0;
