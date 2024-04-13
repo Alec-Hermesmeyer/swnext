@@ -607,7 +607,7 @@ export default function Home({ data }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }}
         />
       </Head>
-      {/* <Script
+       <Script
         id="google-tag-manager"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
@@ -636,7 +636,7 @@ export default function Home({ data }) {
           gtag('js', new Date());
           gtag('config', 'G-BXEC44GZQV');
         `}
-      </Script> */}
+      </Script> 
 
       <div className={styles.main}>
         <section className={styles.hero}>
