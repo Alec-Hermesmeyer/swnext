@@ -573,7 +573,6 @@
             }
             .jobPostings{
               height: auto;
-              padding-bottom: 20px;
             }
             .jobPostingsSection{
               margin-top: 5%;
@@ -586,7 +585,7 @@
             }
             .card{
               padding-bottom: 2%;
-              min-height: 150px;
+              min-height: auto;
               max-height: 150px;
               height: auto;
             }
