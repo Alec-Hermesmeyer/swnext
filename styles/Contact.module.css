@@ -454,7 +454,7 @@
     margin-top: 2%;
   }
 }
-@media (orientation: landscape) and (max-width: 900px) {
+@media (orientation: landscape) and (min-width: 600px) and (max-width: 900px) {
   .contact{
     min-height: auto;
     margin-bottom: -25dvh;
