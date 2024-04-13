@@ -571,30 +571,27 @@
               width: 120px;
               margin-bottom: 10%;
             }
-             .jobPostings{
+            .jobPostings{
               height: 100%;
             }
             .jobPostingsSection{
               margin-top: 5%;
               height: 100%;
-              padding-bottom: 20px;
             }
-            
             .grid{
               grid-template-columns: repeat(1, minmax(25%, auto));
               width: 85%;
             }
             .card{
               padding-bottom: 2%;
-              min-height: auto;
-              max-height: 150px;
+              min-height: 200px;
               height: auto;
             }
             .jobPostInfo summary{
               font-size: large;
               margin-top: 5%;
               padding-bottom: 5%;
-              
+                /* padding-top: 12%; */
             }
             .jobPostInfo p{
               font-size: medium;
