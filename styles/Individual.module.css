@@ -572,11 +572,11 @@
               margin-bottom: 10%;
             }
             .jobPostings{
-              height: auto;
+              height: 100%;
             }
             .jobPostingsSection{
               margin-top: 5%;
-              height: auto;
+              height: 100%;
               padding-bottom: 20px;
             }
             .grid{
