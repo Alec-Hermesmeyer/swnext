@@ -374,6 +374,7 @@
   .officeContacts{
     height: auto;
     margin-top: -5%;
+    padding-bottom: 20px;
   }
 }
 @media screen and (max-width: 300px){
