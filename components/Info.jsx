@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Inter } from '@next/font/google'
+import { Inter } from "next/font/google"
 import { BsBookHalf, BsFillCompassFill } from 'react-icons/bs'
 import { SiYourtraveldottv } from 'react-icons/si'
 

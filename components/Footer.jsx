@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { FaLinkedin, FaFacebookSquare, FaLocationArrow } from 'react-icons/fa'
 import { BsFillTelephoneFill } from 'react-icons/bs'
 import styles from '../styles/Footers.module.css'
+import { Lato } from "next/font/google";
+
+const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
 const Footer = () => {
   return (
@@ -18,21 +21,24 @@ const Footer = () => {
               </div>
               <div className={styles.center}>
                 <ul>
-                  <li>
+                  <li className={lato.className}>
                     <Link href='/'>
                       Home
                     </Link>
                   </li>
-                  <li>
+                  <li className={lato.className}>
                     <Link style={{ color: 'white' }} href='/about'>About</Link>
                   </li>
-                  <li>
-                    <Link style={{ color: 'white' }} href='/contact'>Contact</Link>
-                  </li>
-                  <li>
+                  <li className={lato.className}>
                     <Link style={{ color: 'white' }} href='/services'>Services</Link>
                   </li>
-                  <li>
+                  <li className={lato.className}>
+                    <Link style={{ color: 'white' }} href='/contact'>Contact</Link>
+                  </li>
+                  <li className={lato.className}>
+                    <Link style={{ color: 'white' }} href='/careers'>Careers</Link>
+                  </li>
+                  <li className={lato.className}>
                     <Link style={{ color: 'white' }} href='/gallery'>Gallery</Link>
                   </li>
                   

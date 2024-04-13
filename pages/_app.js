@@ -15,7 +15,9 @@ export default function App({ Component, pageProps }) {
     <Layout>
       <Component {...pageProps} />
       <Analytics />
-    <SpeedInsights />
+
+      <SpeedInsights />
+
     </Layout>
   )
 }

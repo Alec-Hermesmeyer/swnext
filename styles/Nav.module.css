@@ -1,21 +1,20 @@
 .nav{
     
-    height: 90px;
+    height: 15dvh;
     background-color: white;
     font-size: 14px;
     color: black;
     display: flex;
     align-items: center;
-   justify-content: center;
+    justify-content: center;
     width: 100vw;
     position: fixed;
     z-index: 99;
-    /* border-bottom: 1px solid black; 
-    box-shadow: 5px 15px 25px; */
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43); 
 }
 .container{
     height: 100%;
-    width: 100%;
+    width: 95%;
     
 }
 .wrapper{
@@ -24,19 +23,18 @@
     justify-content: space-evenly;
     height: 100%;
     width: 100%;
-    flex: 4;
+    flex: 5;
 }
 .left{
     flex: 1;
-    height: 100%;
-    width: 100%;
+    /* margin-top: 18px; */
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    margin-left: -7%;
+    /* margin-left: -7%; */
 }
 .center{
-    flex: 2;
+    flex: 3;
     height: 100%;
     width: 70%;
     display: flex;
@@ -56,11 +54,19 @@
     cursor: pointer;
     font-weight: bold;
     color: black;
-    
-    
+    height: 40px;
+    width: 140px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    }
+    .center li:hover{
+        /* border-bottom: 2px solid rgb(255, 101, 47); */
+        color: rgb(255, 0, 0);
+        transition: all 0.5s ease-in-out;
     }
 .right{
-    flex: 1;
+    flex: 1.2;
     height: 100%;
     width: 100%;
     display: flex;
@@ -68,6 +74,7 @@
     justify-content: flex-end;
 }
 .socialIcons{
+    margin-top: 10px;
     display: flex;
     align-items: center; 
     justify-content: space-evenly;
@@ -155,7 +162,7 @@
 
  @media (max-width: 700px), (min-width: 389px) and (max-width: 421px) {
     .left{
-        margin-top: 25px;
+        margin-top: 4%;
         
     }
     .center{
@@ -237,28 +244,32 @@
     }
     .activeMobile {
         position: fixed;
-        top: 90px;
+        top: 15dvh;
         left: 0;
         width: 100%;
-        height: calc(100vh - 90px);
-        background: black;
-        transition: all 0.5s ease-in-out;
-        transform: translateX(40%);
-        border-radius: var(--border-radius);
+        height: calc(100dvh - 120px);
+        background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+        mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+        transition: all 0.8s ease-in-out;
         display: flex;
+      }
+      .activeMoblie::after{
+        z-index: 999;
+        overflow: hidden;
+       
       }
     .activeMobile ul{
         list-style: none;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-evenly;
         flex-direction: column;
         height: 100%;
-        margin-left: 100px;
+        width: 100%;
     }
     .mobileLink{
-        margin-left: 20%;
-        color: white;
+        color: black;
+        text-shadow: 2px 2px 2px white;
         text-align: center;
         font-size: 20px;
         font-weight: bold;
@@ -269,9 +280,15 @@
     }
    
 }
-@media screen and (max-width:281px){
-    .activeMobile ul{
-        margin-left: 55px;
+@media (orientation: landscape) and (max-width: 900px) {
+    .nav {
+        height: 25dvh;
+    
     }
+}
+@media screen and (max-width:281px){
+    /* .activeMobile ul{
+        margin-left: 55px;
+    } */
 }
 
