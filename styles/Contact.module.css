@@ -374,6 +374,7 @@
   
   .officeContacts{
     height: auto;
+    min-height: 130dvh;
     margin-top: -5%;
     padding-bottom: 20px;
   }
