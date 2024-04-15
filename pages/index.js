@@ -2,6 +2,7 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
+import Script from "next/script";
 import styles from "@/styles/Home.module.css";
 import { GridPattern } from "@/components/GridPattern";
 import { Container } from "@/components/Container";
@@ -600,7 +601,7 @@ export default function Home({ data }) {
         <link rel="canonical" href="https://www.swfoundation.com/" />
         <link
           rel="icon"
-          href="Images/public//android-chrome-512x512.png"
+          href="/android-chrome-512x512.png"
           type="image/x-icon"
         />
         <script
@@ -608,7 +609,7 @@ export default function Home({ data }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }}
         />
       </Head>
-       {/* <Script
+       <Script
         id="google-tag-manager"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
@@ -637,7 +638,7 @@ export default function Home({ data }) {
           gtag('js', new Date());
           gtag('config', 'G-BXEC44GZQV');
         `}
-      </Script>  */}
+      </Script> 
 
       <div className={styles.main}>
         <section className={styles.hero}>

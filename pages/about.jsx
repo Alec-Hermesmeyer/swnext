@@ -10,10 +10,12 @@ import { Lato } from "next/font/google";
 import { FadeIn } from "@/components/FadeIn";
 
 
+
 const inter = Inter({ subsets: ["latin"] });
 const oswald = Oswald({ subsets: ["latin"] });
 const montserrat = Montserrat({ subsets: ["latin"] });
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+
 
 function Hero() {
   return (

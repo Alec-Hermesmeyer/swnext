@@ -205,7 +205,7 @@
   box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
 }
 .infoTopLeftContainer p{
-  font-size: large;
+  font-size: 16px;
   font-weight: 700;
   text-align: center;
   width: 90%;
@@ -213,7 +213,7 @@
   line-height: 1.4em;
 }
 .infoTopLeftContainerC p{
-  font-size: large;
+  font-size: 16px;
   font-weight: 700;
   text-align: center;
   width: 90%;
@@ -387,8 +387,9 @@
     width: 100dvw;
   }
   .infoTopLeftC{
-    margin-left: 0;
-    width: 100dvw;
+    margin-left: -5px;
+    margin-right: 0;
+    width: 105dvw;
   }
   .infoTopLeftC h2{
     margin-bottom: 4%;
@@ -408,7 +409,6 @@
   }
   .infoTopRightC{
     width: 100dvw;
-    margin-left: 0;
   }
   .infoBottom{
     padding-left: 0;

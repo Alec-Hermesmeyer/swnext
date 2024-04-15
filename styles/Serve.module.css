@@ -386,8 +386,14 @@
     width: 100dvw;
   }
   .infoTopLeftC{
+<<<<<<< HEAD
     margin-left: 0;
     width: 100dvw;
+=======
+    margin-left: -5px;
+    margin-right: 0;
+    width: 105dvw;
+>>>>>>> 7593bed5c67464983520d109aaac6faca3bde96f
   }
   .infoTopLeftC h2{
     margin-bottom: 4%;
@@ -406,8 +412,14 @@
     margin-bottom: 4%;
   }
   .infoTopRightC{
+<<<<<<< HEAD
     width: 100dvw;
     margin-left: 0;
+=======
+    width: 105dvw;
+    margin-left: -5px;
+    margin-right: 0;
+>>>>>>> 7593bed5c67464983520d109aaac6faca3bde96f
   }
   .infoBottom{
     padding-left: 0;
