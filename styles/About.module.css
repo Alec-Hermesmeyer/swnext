@@ -387,9 +387,9 @@
     width: 100dvw;
   }
   .infoTopLeftC{
-    margin-left: 0;
+    margin-left: -5px;
     margin-right: 0;
-    width: 100dvw;
+    width: 105dvw;
   }
   .infoTopLeftC h2{
     margin-bottom: 4%;
@@ -408,8 +408,8 @@
     margin-bottom: 4%;
   }
   .infoTopRightC{
-    width: 100dvw;
-    margin-left: 0;
+    width: 105dvw;
+    margin-left: -5px;
     margin-right: 0;
   }
   .infoBottom{
