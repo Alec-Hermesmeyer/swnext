@@ -79,7 +79,7 @@ function ArticleSection() {
   <div className={styles.articleSection}>
     <div className={styles.articleContainer}>
       <div className={styles.articleWrapper}>
-        <h3 className={lato.className}>We use our expertise innovate to overcome obstacles...</h3>
+        <h3 className={lato.className}>We use our expertise to overcome obstacles...</h3>
         <div className={styles.contentContainer}>
           <article className={styles.articleContent}>
             <p className={lato.className}>
