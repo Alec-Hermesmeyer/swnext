@@ -588,6 +588,7 @@
             }
             .jobPostings{
               height: auto;
+              padding-bottom: 2%;
             }
             .jobPostingsSection{
               margin-top: 5%;
