@@ -108,7 +108,7 @@ const PierDrilling = () => {
   return (
     <>
     <Head>
-    <title>Services | S&amp;W Foundation - Comprehensive Pier Drilling &amp; Construction Support in Dallas, TX</title>
+    <title>Pier Drilling | S&amp;W Foundation - Comprehensive Pier Drilling, Auger Cast, Caisson &amp; Slurry Piers in Dallas, TX</title>
     <meta name="description" content="S&amp;W Foundation offers a suite of specialized Pier Drilling services in Dallas, TX: pier drilling, limited-access pier drilling, turnkey solutions, crane, and trucking services. Leveraging years of experience and cutting-edge equipment, we&apos;re your trusted partner in commercial construction support." />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="keywords" content="pier drilling, limited-access pier drilling, crane services, trucking services, turnkey solutions, caisson, slurry" />
@@ -116,8 +116,8 @@ const PierDrilling = () => {
     <meta property="og:description" content="Discover S&amp;W Foundation&apos;s range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.swfoundation.com/pier-drilling/" />
-    <meta property="og:image" content="https://www.swfoundation.com/images/galleryImages/gal18.jpeg" />
-    <meta property='og:site_name' content='S&amp;W Commercial Construction Support' />
+    <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8084.webp" />
+    <meta property='og:site_name' content='S&amp;W Commercial Pier Drilling Contractors'/>
     <link rel="canonical" href="https://www.swfoundation.com/pier-drilling" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
 </Head>

@@ -184,8 +184,9 @@ const Careers = () => {
     <>
       <Head>
         <title>
-          Careers | S&amp;W Foundation - Comprehensive Pier Drilling &amp;
-          Construction Support in Dallas, TX
+          Careers | S&amp;W Foundation - Kick start your career in the commercial Pier Drilling 
+          industry. Join our team in Dallas, TX today!
+          
         </title>
         <meta
           name="description"
@@ -211,7 +212,7 @@ const Careers = () => {
         />
         <meta
           property="og:image"
-          content="https://www.swfoundation.com/images/galleryImages/gal18.jpeg"
+          content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/galleryImages/gal18.webp?t=2024-04-16T20%3A33%3A07.478Z"
         />
         <meta
           property="og:site_name"
