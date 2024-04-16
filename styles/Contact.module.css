@@ -355,11 +355,9 @@
   .grid{
     grid-template-columns: repeat(1, minmax(25%, auto));
     width: 85%;
-    margin-bottom: 20px;
   }
   .card{
     padding-bottom: 4%;
-    margin-bottom: 40px;
   }
   .card h2{ 
     font-size: x-large;
@@ -375,7 +373,6 @@
   
   .officeContacts{
     height: auto;
-    min-height: 130dvh;
     margin-top: -5%;
     padding-bottom: 20px;
   }
