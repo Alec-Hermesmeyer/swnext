@@ -603,6 +603,7 @@
               padding-bottom: 2%;
               min-height: 150px;
               height: auto;
+              max-height: 200px;
             }
             .jobPostInfo summary{
               font-size: large;
