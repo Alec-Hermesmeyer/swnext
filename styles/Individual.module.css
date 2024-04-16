@@ -595,12 +595,12 @@
             .jobPostingsSection{
               margin-top: 5%;
               height: auto;
-              min-height: auto;
+              min-height: 60dvh;
               max-height: fit-content;
               margin-bottom: 5%;
               display: flex;
               align-items: center;
-              justify-content: space-around;
+              justify-content: center;
             }
             .grid{
               grid-template-columns: repeat(1, minmax(10%, auto));
@@ -609,8 +609,9 @@
             .card{
               padding-bottom: 2%;
               min-height: 150px;
-              /* height: auto; */
+              height: auto;
               max-height: 150px;
+              margin-bottom: 2%;
             }
             .jobPostInfo summary{
               font-size: large;
