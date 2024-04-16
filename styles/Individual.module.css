@@ -389,7 +389,7 @@
             align-items: center;
             justify-content: center;
             margin-top: 5%;
-            /* margin-bottom: 3%;   */
+            margin-bottom: 3%;  
           }
           .jobPostingsSection{
             width: 100%;
@@ -446,6 +446,21 @@
             text-align: center;
             width: 100%;
             color: white;
+            
+          }
+          .spacer{
+            height: 20vh;
+            width: 100vw;
+            z-index: -200;
+            margin-bottom: -2%;
+          }
+          .gridPattern{
+            height: 20vh;
+            width: 100vw;
+            /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
+            color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
+            background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+            mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
             
           }
 
@@ -598,6 +613,10 @@
               font-size: medium;
               padding-bottom: 5%;
             
+            }
+            .spacer{
+              height: 10vh;
+             
             }
         }
         @media (min-width: 701px) and (max-width: 1350px) {

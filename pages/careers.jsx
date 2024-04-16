@@ -9,6 +9,7 @@ import { Montserrat } from "next/font/google";
 import { Lato } from "next/font/google";
 import { FadeIn } from "@/components/FadeIn";
 import { createClient } from "@supabase/supabase-js";
+import { GridPattern } from "@/components/GridPattern";
 
 const supabaseUrl = "https://edycymyofrowahspzzpg.supabase.co";
 const supabaseKey =
@@ -20,6 +21,11 @@ const inter = Inter({ subsets: ["latin"] });
 const oswald = Oswald({ subsets: ["latin"] });
 const montserrat = Montserrat({ subsets: ["latin"] });
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+function Spacer() {
+  return (
+    <GridPattern />
+  )
+}
 
 function Hero() {
   return (
@@ -232,6 +238,9 @@ const Careers = () => {
         <section id='jobPostings' className={styles.jobPostings}>
           <JobPostings />
         </section>
+        <div className={styles.spacer}>
+          <GridPattern className={styles.gridPattern} yOffset={10} interactive />
+          </div>
       </div>
     </>
   );
