@@ -593,21 +593,20 @@
             .jobPostingsSection{
               margin-top: 5%;
               height: auto;
-              margin-bottom: 20px;
+              margin-bottom: 2%;
               display: flex;
               align-items: center;
-              justify-content: center;
-              gap: 12px;
+              justify-content: space-evenly;
             }
             .grid{
-              grid-template-columns: repeat(1, minmax(25%, 100%));
+              grid-template-columns: repeat(1, minmax(10%, auto));
               width: 85%;
             }
             .card{
               padding-bottom: 2%;
               min-height: 150px;
               /* height: auto; */
-              max-height: 200px;
+              max-height: 150px;
             }
             .jobPostInfo summary{
               font-size: large;
