@@ -600,7 +600,7 @@
               gap: 12px;
             }
             .grid{
-              grid-template-columns: repeat(1, minmax(25%, auto));
+              grid-template-columns: repeat(1, minmax(25%, 100%));
               width: 85%;
             }
             .card{
