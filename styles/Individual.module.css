@@ -587,16 +587,20 @@
               margin-bottom: 10%;
             }
             .jobPostings{
-              height: fit-content;
+              height: auto;
+              min-height: 60dvh;
+              max-height: fit-content;
               padding-bottom: 2%;
             }
             .jobPostingsSection{
               margin-top: 5%;
               height: auto;
-              margin-bottom: 2%;
+              min-height: auto;
+              max-height: fit-content;
+              margin-bottom: 5%;
               display: flex;
               align-items: center;
-              justify-content: space-evenly;
+              justify-content: space-around;
             }
             .grid{
               grid-template-columns: repeat(1, minmax(10%, auto));
