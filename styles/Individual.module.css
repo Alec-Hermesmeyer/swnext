@@ -364,7 +364,7 @@
         grid-gap: 1dvw;
         width: 92%;
         max-width: 95%;
-        height: 100%;
+        height: auto;
         }
         
         .card {
@@ -396,7 +396,7 @@
             height: auto;
             display: flex;
             align-items: center;
-            justify-content: space-evenly;
+            justify-content: center;
             flex-direction: column;
             color: white;
           }
@@ -452,7 +452,7 @@
             height: 20vh;
             width: 100vw;
             z-index: -200;
-            margin-bottom: -2%;
+            margin-bottom: -5%;
           }
           .gridPattern{
             height: 20vh;
@@ -603,14 +603,17 @@
               justify-content: center;
             }
             .grid{
-              grid-template-columns: repeat(1, minmax(10%, auto));
+              grid-template-columns: repeat(1, minmax(25%, auto));
               width: 85%;
+              height: auto;
+              min-height: 60dvh;
+              max-height: fit-content;
             }
             .card{
               padding-bottom: 2%;
               min-height: 150px;
               height: auto;
-              max-height: 150px;
+              max-height: 200px;
               margin-bottom: 2%;
             }
             .jobPostInfo summary{
