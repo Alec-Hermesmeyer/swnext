@@ -309,7 +309,7 @@ export default function Contact({ contacts}) {
     <meta property="og:description" content="Looking for top-tier commercial pier drilling services in the US? Get in touch with S&W Foundation today for a comprehensive quote and experience our commitment to excellence." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.swfoundation.com/contact/" />
-    <meta property="og:image" content="https://www.swfoundation.com/images/form.png" />
+    <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/AFDB03DE-805D-45B2-9A37-1EAFA841A828.webp" />
     <meta property='og:site_name' content='S&W Commercial Pier Drilling' />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
 </Head>

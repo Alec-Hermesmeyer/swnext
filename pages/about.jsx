@@ -239,7 +239,7 @@ export default function About() {
         <meta property="og:url" content="https://www.swfoundation.com/about/" />
         <meta
           property="og:image"
-          content="https://www.swfoundation.com/images/home.jpeg"
+          content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7297.webp"
         />
         <meta property="og:site_name" content="S&W Commercial Pier Drilling" />
         <link rel="canonical" href="https://www.swfoundation.com/about" />
