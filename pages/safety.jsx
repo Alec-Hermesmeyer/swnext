@@ -110,7 +110,7 @@ const Safety = () => {
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.swfoundation.com/safety/" />
     <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_6437.webp" />
-    <meta property='og:site_name' content='S&amp;W Commercial Construction Support' />
+    <meta property='og:site_name' content='S&amp;W Commercial Pier Drilling Contractors' />
     <link rel="canonical" href="https://www.swfoundation.com/safety" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
 </Head>
