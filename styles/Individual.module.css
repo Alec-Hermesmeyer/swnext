@@ -587,7 +587,7 @@
               margin-bottom: 10%;
             }
             .jobPostings{
-              height: auto;
+              height: fit-content;
               padding-bottom: 2%;
             }
             .jobPostingsSection{
@@ -617,6 +617,7 @@
             }
             .spacer{
               height: 10vh;
+              margin-top: 5px;
              
             }
         }
