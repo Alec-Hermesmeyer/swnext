@@ -593,7 +593,7 @@
             .jobPostingsSection{
               margin-top: 5%;
               height: 100%;
-              padding-bottom: 20px;
+              /* padding-bottom: 20px; */
             }
             .grid{
               grid-template-columns: repeat(1, minmax(25%, auto));
