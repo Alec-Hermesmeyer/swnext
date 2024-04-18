@@ -17,7 +17,7 @@ const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
 function Hero() {
   return (
-    <div className={styles.heroSectionPD}>
+    <div className={styles.heroSectionCV}>
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
           <h1 className={lato.className}>Core Values</h1>
