@@ -27,8 +27,8 @@ function Hero() {
             <Link className={styles.heroLink} href="/contact">
               Contact Us
             </Link>
-            <Link className={styles.heroLink} href="/services">
-              Services
+            <Link className={styles.heroLink} href="/core-values">
+              Our Culture
             </Link>
           </span>
         </div>
