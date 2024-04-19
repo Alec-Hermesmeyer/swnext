@@ -419,15 +419,8 @@
   .infoTopLeftContainer p{
     font-size: large;
   }
-  .infoSection{
-    height: auto;
-    width: 100dvw;
-  }
-  .info{
-    height: auto;
-    width: auto;
-    margin-bottom: -2dvh;
-  }
+  
+  
 
 }
 
