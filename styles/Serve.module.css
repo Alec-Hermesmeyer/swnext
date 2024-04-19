@@ -327,8 +327,71 @@
   cursor: pointer;
 }
 /* MEDIA QUERIES */
+@media only screen and (min-width:1341px) {
+  .about{ 
+    min-height: auto;
+  }
+  .hero{
+    margin-top: -2%;
+    height: 70dvh;
+  }
+  
+  .heroWrapper h1{
+    margin-left: -40px;
+  }
+  .heroLink{
+    font-size: x-large;
+    width: 40%;
+  }
+  .infoTopLeft{
+    margin-right: -3%;
+  }
+  .infoTopLeftC{
+    margin-right: 1%;
+  }
+  
+  .infoTopLeftContainer{
+    border-top: 45px solid red;
+    width: 70dvw;
+  }
+  .infoTopLeftContainerC{
+    border-top: 45px solid red;
+    width: 69dvw;
+  }
+  .infoTopWrapper{
+    margin-left: -4%;
+  }
+  
+  .infoTopLeftContainer h2{
+    margin-top: -4%;
+    margin-bottom: -4%;
+  }
+  .infoTopLeftContainerC h2{
+    margin-top: -4%;
+    margin-bottom: -4%;
+  }
+  .infoTopLeftContainer p{
+    font-size: large;
+  }
+  .infoTopLeftContainer p{
+    font-size: large;
+  }
+  
+  .info{
+    height: auto;
+    width: auto;
+    margin-top: -4dvh;
+    padding-bottom: 2dvh;
+  }
+  .infoSection{
+    min-height: 220dvh;
+    height: 100%;
+    width: 100dvw;
+  }
+
+}
 /* Larger Desktop */
-@media only screen and (min-width: 1441px) {
+@media only screen and (min-width: 1741px) {
   /* Add your styles here */
   .heroWrapper h1{
     margin-left: -40px;
