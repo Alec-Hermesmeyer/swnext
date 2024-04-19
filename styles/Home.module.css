@@ -739,7 +739,7 @@
   } 
  
   .infoTopContainer{
-    height: 50dvh;
+    height: 45dvh;
     justify-content: space-evenly;
   }
   .infoTop{
@@ -749,10 +749,7 @@
     height: 100%;
     border-top: 35px solid red;
   }
-  .infoWrapper p{
-    line-height: 1.8rem;
-    font-size: 1.2rem;
-  }
+  
   .infoTopLeftC{
     height: 100%;
     border-top: 35px solid rgb(16, 39, 94);
