@@ -730,15 +730,15 @@
     min-height: fit-content;
     height: auto;
   }
-  /* .infoSection{
+  .infoSection{
     height: auto;
-  } */
+  }
   .services{
     margin-bottom: 2px;
   } 
  
   .infoTopContainer{
-    height: auto;
+    height: 430px;
     justify-content: space-evenly;
   }
   .infoTop{
