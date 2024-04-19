@@ -378,12 +378,7 @@
   .hero{
     margin-top: -2%;
   }
-  .info{
-    height: auto;
-  }
-  .infoSection{
-    height: auto;
-  }
+  
   .heroWrapper h1{
     margin-left: -40px;
   }
@@ -400,11 +395,11 @@
   
   .infoTopLeftContainer{
     border-top: 45px solid red;
-    width: 75dvw;
+    width: 70dvw;
   }
   .infoTopLeftContainerC{
     border-top: 45px solid red;
-    width: 74dvw;
+    width: 69dvw;
   }
   .infoTopWrapper{
     margin-left: -4%;
