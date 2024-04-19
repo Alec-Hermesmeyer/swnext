@@ -741,13 +741,18 @@
   .infoTopContainer{
     height: 50dvh;
     justify-content: space-evenly;
+   
   }
-  .infoTop{
+  /* .infoTop{
     padding-top: 15px;
-  }
+    padding-bottom: 20px;
+  } */
   .infoTopLeft{
     height: 100%;
     border-top: 35px solid red;
+  }
+  .infoTopLeft h2 {
+    padding-top: 10px;
   }
   
   .infoTopLeftC{
