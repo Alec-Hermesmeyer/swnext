@@ -56,7 +56,7 @@ function InfoSection() {
               <div className={styles.infoTopContainer}>
                 <div className={styles.infoTopWrapper}>
                   <div className={styles.infoTopLeft}>
-                    <div className={styles.infoTopLeftContainer}>
+                    <div className={styles.infoTopLeftContainerCareer}>
                       <h2 className={lato.className}>Join the Family!</h2>
                       <p className={lato.className}>
                         S&amp;W Foundation Contractors is always looking to

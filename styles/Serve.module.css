@@ -148,16 +148,9 @@
   align-items: center;
   justify-content: center;
   flex: 3;
-}
-.infoTopWrapperC{
-  width: 100%;
-  height: 100%;
-  display: flex;
   flex-direction: row-reverse;
-  align-items: center;
-  justify-content: center;
-  flex: 3;
 }
+
 .infoTopLeft{
   flex: 2;
   height: 100%;
@@ -245,6 +238,7 @@
   z-index: 2;
   
 }
+
 .infoCenter{
   flex: 1;
   height: 100%;
@@ -336,21 +330,35 @@
 /* Larger Desktop */
 @media only screen and (min-width: 1441px) {
   /* Add your styles here */
-  .infoTopLeft{
-    margin-right: -2%;
+  .heroWrapper h1{
+    margin-left: -40px;
   }
+  .heroLink{
+    font-size: x-large;
+    width: 40%;
+  }
+  .infoTopLeft{
+    margin-right: -3%;
+  }
+  .infoTopLeftC{
+    margin-right: 1%;
+  }
+  
   .infoTopLeftContainer{
     border-top: 45px solid red;
     width: 75dvw;
   }
   .infoTopLeftContainerC{
     border-top: 45px solid red;
-    width: 75dvw;
+    width: 74dvw;
   }
   .infoTopWrapper{
-    margin-left: -3%;
+    margin-left: -4%;
   }
-  
+  .infoImage{
+    height: 450px;
+    width: 470px;
+  }
 }
 
 
