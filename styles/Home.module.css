@@ -726,6 +726,7 @@
     height: auto;
   }
   .info{
+    margin-top: 20px;
     min-height: fit-content;
     height: auto;
   }
