@@ -422,7 +422,9 @@
   }
   
   .info{
-    height: auto;
+    height: fit-content;
+    margin-top: 2%;
+    padding-bottom: 2%;
     
   }
   
