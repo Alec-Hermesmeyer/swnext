@@ -328,11 +328,12 @@
 }
 /* MEDIA QUERIES */
 @media only screen and (min-width:1341px) {
-  .about{ 
-    min-height: auto;
+  .service{ 
+    min-height: fit-content;
+    margin-top: -2%;
   }
   .hero{
-    margin-top: -2%;
+   
     height: 70dvh;
   }
   
@@ -380,7 +381,6 @@
   .info{
     height: auto;
     width: auto;
-    margin-top: -4dvh;
     padding-bottom: 2dvh;
   }
   

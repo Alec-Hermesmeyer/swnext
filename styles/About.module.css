@@ -373,7 +373,7 @@
 }
 @media only screen and (min-width:1341px) {
   .about{ 
-    height: auto;
+    height: fit-content;
     margin-top: -2%;
   }
   .hero{
@@ -423,9 +423,7 @@
   
   .info{
     height: auto;
-    width: auto;
-    margin-top: -4dvh;
-    padding-bottom: 2dvh;
+    
   }
   
 
