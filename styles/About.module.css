@@ -377,6 +377,7 @@
   }
   .hero{
     margin-top: -2%;
+    height: 70dvh;
   }
   
   .heroWrapper h1{
@@ -420,7 +421,12 @@
     font-size: large;
   }
   
-  
+  .info{
+    height: auto;
+    width: auto;
+    margin-top: -4dvh;
+    padding-bottom: 2dvh;
+  }
 
 }
 
