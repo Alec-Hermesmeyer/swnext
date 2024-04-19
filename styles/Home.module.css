@@ -717,7 +717,7 @@
   box-shadow: 5px 5px 5px rgb(0, 0, 0); 
   cursor: pointer;
 }
-@media only screen and (min-width:1441px) {
+@media only screen and (min-width:1341px) {
   .main { 
     min-height: auto;
   }
@@ -727,6 +727,9 @@
   }
   .info{
     min-height: fit-content;
+    height: auto;
+  }
+  .infoSection{
     height: auto;
   }
   .services{
