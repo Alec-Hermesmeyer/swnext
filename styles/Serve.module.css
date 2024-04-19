@@ -333,7 +333,6 @@
     margin-top: -2%;
   }
   .hero{
-   
     height: 70dvh;
   }
   
@@ -379,8 +378,8 @@
   }
   
   .info{
-    height: auto;
-    padding-bottom: 2dvh;
+    height: 240dvh;
+    margin-top: 3%;
   }
   
 
