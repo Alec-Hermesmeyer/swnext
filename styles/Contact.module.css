@@ -289,7 +289,12 @@
     
     
 }
+@media screen and (min-width: 1441px) {
+  .contact {
+    margin-top: -2%;
+  }
 
+}
 
 @media screen and (max-width: 600px) {
   .contact{

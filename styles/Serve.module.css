@@ -327,6 +327,53 @@
   cursor: pointer;
 }
 /* MEDIA QUERIES */
+@media only screen and (min-width:1441px) {
+  .service{ 
+    min-height: fit-content;
+    margin-top: -2%;
+  }
+  .hero{
+    height: 70dvh;
+  }
+  
+  /* .heroWrapper h1{
+    margin-right: -80px;
+  } */
+  .infoTopLeft{
+    margin-right: -3%;
+  }
+  .infoTopLeftC{
+    margin-right: 1%;
+  }
+  
+  .infoTopLeftContainer{
+    border-top: 35px solid red;
+    width: 70dvw;
+  }
+  .infoTopLeftContainerC{
+    border-top: 35px solid red;
+    width: 69dvw;
+  }
+  .infoTopWrapper{
+    margin-left: -4%;
+  }
+  
+  /* .infoTopLeftContainer h2{
+    margin-top: -2%;
+    margin-bottom: -4%;
+  }
+  .infoTopLeftContainerC h2{
+    margin-top: -4%;
+    margin-bottom: -4%;
+  } */
+  .info{
+    height: 215dvh;
+    margin-top: 5%;
+    padding-bottom: 2%;
+  }
+  
+
+}
 /* Larger Desktop */
 @media only screen and (min-width: 1741px) {
   /* Add your styles here */
@@ -338,7 +385,7 @@
     width: 40%;
   }
   .infoTopLeft{
-    margin-right: -3%;
+    margin-right: -2%;
   }
   .infoTopLeftC{
     margin-right: 1%;
@@ -355,10 +402,13 @@
   .infoTopWrapper{
     margin-left: -4%;
   }
-  .infoImage{
-    height: 450px;
-    width: 470px;
+  .infoTopLeftContainer p{
+    font-size: large;
   }
+  .infoTopLeftContainer p{
+    font-size: large;
+  }
+  
 }
 
 
