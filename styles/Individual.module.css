@@ -499,14 +499,24 @@
             
           }
           @media only screen and (min-width:1341px) {
-            .hero{
+            .page{
               margin-top: -2%;
+            }
+            .hero{
+              height: 50dvh;
+              margin-bottom: 2%;
             }
             .info{
               height: auto;
             }
             .article{
               height: auto;
+            }
+            .infoTopLeft{
+              margin-right: -2%;
+            }
+            .infoTopLeftC{
+              margin-right: 1%;
             }
           }
 

@@ -377,7 +377,7 @@
   }
   .hero{
     margin-top: -2%;
-    height: 70dvh;
+    height: 50dvh;
   }
   
   .heroWrapper h1{
@@ -426,6 +426,10 @@
     width: auto;
     margin-top: -4dvh;
     padding-bottom: 2dvh;
+  }
+  .infoSection{
+    min-height: 200dvh;
+    height: auto;
   }
 
 }
