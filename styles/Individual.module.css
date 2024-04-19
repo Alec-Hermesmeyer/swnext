@@ -692,7 +692,6 @@
             }
             .jobPostingsSection{
               margin-top: 5%;
-<<<<<<< Updated upstream
               height: auto;
               min-height: 60dvh;
               max-height: fit-content;
@@ -700,9 +699,6 @@
               display: flex;
               align-items: center;
               justify-content: center;
-=======
-              height: 100%;
->>>>>>> Stashed changes
             }
             .grid{
               grid-template-columns: repeat(1, minmax(25%, auto));
