@@ -498,7 +498,7 @@
             mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
             
           }
-          @media only screen and (min-width:1341px) {
+          @media only screen and (min-width:1441px) {
             .page{
               margin-top: -2%;
             }

@@ -717,7 +717,7 @@
   box-shadow: 5px 5px 5px rgb(0, 0, 0); 
   cursor: pointer;
 }
-@media only screen and (min-width:1341px) {
+@media only screen and (min-width:1441px) {
   .main { 
     min-height: auto;
   }
@@ -746,7 +746,7 @@
   }
   .infoTopLeft{
     height: 100%;
-    border-top: 45px solid red;
+    border-top: 35px solid red;
   }
   .infoWrapper p{
     line-height: 1.8rem;
@@ -754,7 +754,7 @@
   }
   .infoTopLeftC{
     height: 100%;
-    border-top: 45px solid rgb(16, 39, 94);
+    border-top: 35px solid rgb(16, 39, 94);
   }
   .infoContainer{
     padding-bottom: 0px;

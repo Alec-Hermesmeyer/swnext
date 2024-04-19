@@ -371,7 +371,7 @@
     font-size: large;
   }
 }
-@media only screen and (min-width:1341px) {
+@media only screen and (min-width:1441px) {
   .about{ 
     height: fit-content;
     margin-top: -2%;
@@ -383,10 +383,7 @@
   .heroWrapper h1{
     margin-left: -40px;
   }
-  .heroLink{
-    font-size: x-large;
-    width: 40%;
-  }
+  
   .infoTopLeft{
     margin-right: -3%;
   }
@@ -395,11 +392,11 @@
   }
   
   .infoTopLeftContainer{
-    border-top: 45px solid red;
+    border-top: 35px solid red;
     width: 70dvw;
   }
   .infoTopLeftContainerC{
-    border-top: 45px solid red;
+    border-top: 35px solid red;
     width: 69dvw;
   }
   .infoTopWrapper{
@@ -413,12 +410,6 @@
   .infoTopLeftContainerC h2{
     margin-top: -4%;
     margin-bottom: -4%;
-  }
-  .infoTopLeftContainer p{
-    font-size: large;
-  }
-  .infoTopLeftContainer p{
-    font-size: large;
   }
   
   .info{
