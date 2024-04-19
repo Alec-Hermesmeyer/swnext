@@ -420,11 +420,11 @@
     font-size: large;
   }
   .infoSection{
-    height: 100%;
+    height: auto;
     width: 100dvw;
   }
   .info{
-    height: 100%;
+    height: auto;
     width: auto;
     margin-bottom: -2dvh;
   }
