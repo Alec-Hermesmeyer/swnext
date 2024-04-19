@@ -759,6 +759,10 @@
   .infoContainer{
     padding-bottom: 0px;
   }
+  .imgContainer{
+    height: 100%;
+    width: 100%;
+  }
   
   .infoImage{
     height: 430px;
