@@ -422,8 +422,8 @@
   }
   
   .info{
-    height: fit-content;
-    margin-top: 2%;
+    height: 240dvh;
+    margin-top: 3%;
     padding-bottom: 2%;
     
   }
