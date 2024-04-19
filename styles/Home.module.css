@@ -717,7 +717,16 @@
   box-shadow: 5px 5px 5px rgb(0, 0, 0); 
   cursor: pointer;
 }
+@media only screen and (min-width:1441px) {
+  .main {
+    padding: 6rem;
+  }
+  .hero{
+    border: 2px solid red;
 
+  }
+  
+}
 /* MEDIA QUERIES */
 /* Larger Desktop */
 @media only screen and (min-width: 1741px) {
