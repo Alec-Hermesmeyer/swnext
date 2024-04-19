@@ -17,7 +17,7 @@ const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
 function Hero() {
   return (
-    <div className={styles.heroSectionPD}>
+    <div className={styles.heroSectionCV}>
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
           <h1 className={lato.className}>Core Values</h1>
@@ -110,10 +110,10 @@ const CoreValues = () => {
     <meta property="og:title" content="Services | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX" />
     <meta property="og:description" content="Discover S&amp;W Foundation&apos;s range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.swfoundation.com/pier-drilling/" />
+    <meta property="og:url" content="https://www.swfoundation.com/core-values/" />
     <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/coreValue.webp" />
     <meta property='og:site_name' content='S&amp;W Commercial Pier Drilling Contractors'/>
-    <link rel="canonical" href="https://www.swfoundation.com/pier-drilling" />
+    <link rel="canonical" href="https://www.swfoundation.com/core-values" />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
 </Head>
 
