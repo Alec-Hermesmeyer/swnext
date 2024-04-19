@@ -725,17 +725,16 @@
     margin-bottom: -3.3%;
     height: auto;
   }
-  /* .info{
-    margin-bottom: -4.3%;
-  } */
+  .info{
+    min-height: fit-content;
+    height: auto;
+  }
   .services{
     margin-bottom: 2px;
   } 
- /* .heroSection{
-    height: 75dvh;
-  } */
+ 
   .infoTopContainer{
-    height: 45dvh;
+    height: auto;
     justify-content: space-evenly;
   }
   .infoTop{
