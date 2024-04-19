@@ -373,10 +373,10 @@
 }
 @media only screen and (min-width:1341px) {
   .about{ 
-    min-height: auto;
+    height: auto;
+    margin-top: -2%;
   }
   .hero{
-    margin-top: -2%;
     height: 70dvh;
   }
   
