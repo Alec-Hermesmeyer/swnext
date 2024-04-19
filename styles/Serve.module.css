@@ -336,9 +336,9 @@
     height: 70dvh;
   }
   
-  .heroWrapper h1{
-    margin-left: -40px;
-  }
+  /* .heroWrapper h1{
+    margin-right: -80px;
+  } */
   .infoTopLeft{
     margin-right: -3%;
   }
@@ -367,7 +367,7 @@
     margin-bottom: -4%;
   }
   .info{
-    height: 210dvh;
+    height: 215dvh;
     margin-top: 3%;
   }
   

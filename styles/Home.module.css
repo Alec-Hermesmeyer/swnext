@@ -725,6 +725,7 @@
     margin-bottom: -3.3%;
     height: auto;
   }
+  
   .info{
     margin-top: 20px;
     min-height: fit-content;
@@ -738,7 +739,7 @@
   } 
  
   .infoTopContainer{
-    height: 45dvh;
+    height: 50dvh;
     justify-content: space-evenly;
   }
   .infoTop{

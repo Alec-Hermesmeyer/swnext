@@ -379,10 +379,10 @@
   .hero{
     height: 70dvh;
   }
-  
+/*   
   .heroWrapper h1{
-    margin-left: -40px;
-  }
+    margin-right: -80px;
+  } */
   
   .infoTopLeft{
     margin-right: -3%;
@@ -413,8 +413,9 @@
   }
   
   .info{
-    height: 210dvh;
-    margin-top: 3%;
+    height: 215dvh;
+    margin-top: 5%;
+    padding-bottom: 2%;
   }
   
 
