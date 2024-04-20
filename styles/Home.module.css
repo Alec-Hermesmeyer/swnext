@@ -751,6 +751,9 @@
   .infoTopLeft h2 {
     padding-top: 10px;
   }
+  .infoWrapper p{
+    font-size: 16px;
+  }
   
   .infoTopLeftC{
     height: 100%;
@@ -772,7 +775,9 @@
   
 /* MEDIA QUERIES */
 /* Larger Desktop */
+
 @media only screen and (min-width: 1741px) {
+ main
   .main { 
     min-height: auto;
   }
@@ -822,6 +827,7 @@
     background-color: black;
   }
 }
+
 /* Tablet */
 @media screen and (min-width: 701px) and (max-width: 1350px){
   .main{ 
