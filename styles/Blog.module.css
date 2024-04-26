@@ -1,0 +1,224 @@
+.post{
+  width: 100vw;  
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3rem;
+  min-height: 100dvh;
+  height: auto;
+  margin-top: 3%;
+}
+.intro{
+    height: auto;
+    width: 100dvw;
+    margin-bottom: 2%;
+}
+.introSection{
+    height: 100%;
+    width: 100dvw;
+    
+}
+.introContainer{
+    height: 100%;
+    width: 100%;
+}
+.introWrapper{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: auto;
+}
+.introContent{
+    height: auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.introContentContainer{
+    height: auto;
+    width: 100%;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.introContentWrapper{
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    flex: 3;
+    width: 95%;
+    height: auto;
+    
+}
+.introContentleft{
+    flex: 1;
+    height: auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.introLeftContact{
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 8px solid white;
+    border-radius: var(--border-radius);
+    margin-top: 15%;
+    width: 100%;
+    box-shadow: -15px -10px 45px rgba(0, 0, 0, 0.43); 
+    
+}
+.introleftBottomCard{
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 8px solid white;
+    border-radius: var(--border-radius);
+    margin-top: 15%;
+    width: 100%;
+    box-shadow: -15px -10px 45px rgba(0, 0, 0, 0.43); 
+    
+}
+.rightCard{
+    height: auto;
+    width: 100%;
+    background-color:rgb(16, 39, 94);
+    border-radius: 1%;
+    border-top: 28px solid red;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 2%;
+    padding-bottom: 4%;
+  }
+  .cardWrapper{
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+  
+  }
+  .cardContent{
+    height: auto;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: column;
+  }
+  .cardContent h3{
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-align: left;
+    padding-bottom: 2%;
+    margin-top: 1%;
+    margin-left: -30px;
+  }
+  .cardContent ul{
+    list-style: none;
+    padding-left: 0;
+    padding-bottom: 4%;
+  }
+  .cardContent li{
+    color: white;
+    font-size: 1rem;
+    line-height: 2em;
+    font-weight: 400;
+    text-align: left;
+    list-style: none;
+    padding-left: 0;
+    padding-bottom: 1%;
+  }
+  .cardContent span{
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 100%;
+  }
+  .cardContent button{
+    height: 40px;
+    width: 120px;
+    border-radius: 5px;
+    border: none;
+    background-color: red;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-weight: 900;
+  }
+.imageContainer{
+    height: auto;
+    width: auto;
+   
+}
+.blogImg{
+    z-index: 5;
+    box-shadow: -10px 10px 25px rgba(0, 0, 0, 0.43);
+    margin-top: -90%;
+   
+}
+.introContentRight{
+    flex: 2;
+    height: auto;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   border: 10px solid white;
+   margin-left: -2%;
+   padding-top: 2%;
+   padding-bottom: 4%;
+   background-color: rgb(16, 39, 94);
+   z-index: -4;
+   box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43);
+}
+.introContentRight h1{
+    color: white;
+    text-align: center;
+    padding-bottom: 2%;
+    width: 100%;
+}
+.introContentRight p{
+    width: 80%;
+    color: #fff;
+    line-height: 2.8cap;
+}
+
+.blogArticle{
+    margin-top: 3%;
+    height: auto;
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+   
+}
+.blogArticle h2{
+    margin-bottom: 2%;
+    color: #fff;
+    text-align: left;
+}
+.blogArticle p{
+    width: 100%;
+    margin-bottom: 2%;
+}
+@media only screen and (min-width:1641px){
+    .blogImg{
+        margin-top: -40%;
+    }
+}
