@@ -121,7 +121,7 @@ function Intro() {
                     </p>
                     <h2 className={lato.className}>Why Dallas Trusts Us</h2>
                     <p className={lato.className}>
-                      S&amp;W Foundation's reputation as a reliable commercial pier
+                      S&amp;W Foundation&apos;s reputation as a reliable commercial pier
                       drilling company in Dallas stems from our dedication to
                       quality, punctuality, and customer satisfaction. With
                       every project, S&W Foundationstrive to exceed the
