@@ -66,11 +66,12 @@ function HeroSection() {
                     We Provide Nation-Wide Service
                   </h3>
                   <ul>
-                    <Link>
                       <li className={lato.className}>
+                      <Link>
                         <a href="tel:2147030484">Call: (214)-703-0484</a>
+                        </Link>
                       </li>
-                    </Link>
+                 
                     <li>Address: 2806 Singleton St. Rowlett, TX 75088</li>
                   </ul>
                   <span>
