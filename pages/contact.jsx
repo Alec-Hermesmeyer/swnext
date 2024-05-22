@@ -76,9 +76,9 @@ function OfficeContacts() {
         {contacts.map((contact, index) => (
             <div className={styles.card} key={index}>
                 <h2 className={lato.className}>{contact.name}</h2>
-                <p className={lato.className}>{contact.job_title}<br></br>
+                <p className={lato.className}>{contact.job_title}</p><br></br>
                 <br></br><Link className={styles.email} href={`mailto:${contact.email}`}>{contact.email}</Link> <br></br>
-                <br></br><Link className={styles.contactNumber}><a href={`tel:${contact.phone}`}>{contact.phone}</a></Link></p>
+                <br></br><Link className={styles.contactNumber}><a href={`tel:${contact.phone}`}>{contact.phone}</a></Link>
             </div>
         ))}
     </div>
