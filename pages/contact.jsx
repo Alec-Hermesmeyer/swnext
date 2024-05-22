@@ -28,8 +28,8 @@ function Hero() {
         <div className={styles.heroWrapper}>
           <h1 className={lato.className}>Contact</h1>
           <span>
-            <Link className={styles.heroLink} href="tel:2147030484">
-              Give Us A Call
+            <Link className={styles.heroLink}>
+              <a href="tel:2147030484">Give Us A Call</a>
             </Link>
             <Link className={styles.heroLink} href='#officeContacts'>
               Company Contacts
