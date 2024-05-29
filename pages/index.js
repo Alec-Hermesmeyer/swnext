@@ -71,9 +71,6 @@ function HeroSection() {
                     </Link>
                     <li>Address: 2806 Singleton St. Rowlett, TX 75088</li>
                   </ul>
-                 </Link>
-                    <li>Address: 2806 Singleton St. Rowlett, TX 75088</li>
-                  </ul>
                   <span>
                     <Link href="/contact">
                       <button className={lato.className}>Contact Us</button>
