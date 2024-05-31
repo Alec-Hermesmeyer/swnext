@@ -743,10 +743,7 @@
     justify-content: space-evenly;
    
   }
-  /* .infoTop{
-    padding-top: 15px;
-    padding-bottom: 20px;
-  } */
+  /*  */
   .infoTopLeft{
     height: 100%;
     border-top: 35px solid red;
@@ -779,7 +776,7 @@
 /* MEDIA QUERIES */
 /* Larger Desktop */
 
-@media only screen and (min-width: 1741px)) {
+@media only screen and (min-width: 1741px) {
  main
   .main { 
     min-height: auto;
