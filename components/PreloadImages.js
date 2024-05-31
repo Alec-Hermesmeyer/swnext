@@ -1,5 +1,6 @@
 // components/PreloadImages.js
 import { useEffect } from 'react';
+const supabaseUrl = "https://edycymyofrowahspzzpg.supabase.co";
 
 const PreloadImages = () => {
   useEffect(() => {
@@ -9,7 +10,7 @@ const PreloadImages = () => {
 
       images.forEach(image => {
         const img = new Image();
-        img.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/Images/public/${image.folder}/${image.name}`;
+        img.src = `${supabaseUrl}/storage/v1/object/public/Images/public/${image.folder}/${image.name}`;
         console.log(`Preloading image: ${img.src}`);
       });
     };
