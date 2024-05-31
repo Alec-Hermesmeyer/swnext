@@ -27,6 +27,7 @@ function Spacer() {
 function Intro() {
   return (
     <div className={styles.introSection}>
+       <GridPattern className={styles.gridPattern} yOffset={10} interactive />
       <div className={styles.introContainer}>
         <div className={styles.introWrapper}>
           <div className={styles.introContent}>
@@ -36,7 +37,7 @@ function Intro() {
                   <span className={styles.imageContainer}>
                     <Image
                       className={styles.blogImg}
-                      src="Images/public/newimages/AFDB03DE-805D-45B2-9A37-1EAFA841A828.webp"
+                      src="Images/public/newimages/IMG_8084.webp"
                       height={470}
                       width={550}
                       alt="Pier Drilling Rigs drilling out foundation piers"
@@ -76,7 +77,6 @@ function Intro() {
                       </div>
                     </div>
                   </div>
-                
                 </div>
                 <div className={styles.introContentRight}>
                   <h1 className={lato.className}>
