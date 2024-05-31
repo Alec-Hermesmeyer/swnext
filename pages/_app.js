@@ -1,7 +1,6 @@
 import Layout from '@/components/Layout'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import PreloadImages from '@/components/PreloadImages'
 import '@/styles/globals.css'
 
 
@@ -14,7 +13,6 @@ export default function App({ Component, pageProps }) {
   }
   return (
     <Layout>
-      <PreloadImages />
       <Component {...pageProps} />
       <Analytics />
 

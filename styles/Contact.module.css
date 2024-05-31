@@ -11,7 +11,7 @@
 }
 .spacer{
   height: 20vh;
-  width: 100dvw;
+  width: 100vw;
   z-index: -200;
 }
 .gridPattern{
