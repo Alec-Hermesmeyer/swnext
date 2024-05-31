@@ -11,7 +11,7 @@
 }
 .spacer{
   height: 20vh;
-  width: 100vw;
+  width: 100dvw;
   z-index: -200;
 }
 .gridPattern{
@@ -289,7 +289,12 @@
     
     
 }
+@media screen and (min-width: 1441px) {
+  .contact {
+    margin-top: -2%;
+  }
 
+}
 
 @media screen and (max-width: 600px) {
   .contact{

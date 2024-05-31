@@ -717,10 +717,67 @@
   box-shadow: 5px 5px 5px rgb(0, 0, 0); 
   cursor: pointer;
 }
-
+@media only screen and (min-width:1441px) {
+  .main { 
+    min-height: auto;
+  }
+  .hero{
+    margin-bottom: -3.3%;
+    height: auto;
+  }
+  
+  .info{
+    margin-top: 20px;
+    min-height: fit-content;
+    height: auto;
+  }
+  .infoSection{
+    height: auto;
+  }
+  .services{
+    margin-bottom: 2px;
+  } 
+ 
+  .infoTopContainer{
+    height: 50dvh;
+    justify-content: space-evenly;
+   
+  }
+  /*  */
+  .infoTopLeft{
+    height: 100%;
+    border-top: 35px solid red;
+  }
+  .infoTopLeft h2 {
+    padding-top: 10px;
+  }
+  .infoWrapper p{
+    font-size: 16px;
+  }
+  
+  .infoTopLeftC{
+    height: 100%;
+    border-top: 35px solid rgb(16, 39, 94);
+  }
+  .infoContainer{
+    padding-bottom: 0px;
+  }
+  .infoImage{
+    height: 100%;
+    width: 100%;
+  }
+  .contact{
+    height: auto;
+    /* margin-top: 2.5%; */
+    background-color: black;
+  }
+}
+  
 /* MEDIA QUERIES */
 /* Larger Desktop */
-@media only screen and (min-width: 1741px)) {
+
+@media only screen and (min-width: 1741px) {
+ main
   .main { 
     min-height: auto;
   }
@@ -770,56 +827,7 @@
     background-color: black;
   }
 }
-@media only screen and (min-width: 1441px) {
-  .main { 
-    min-height: auto;
-  }
-  .hero{
-    margin-bottom: -3.3%;
-    height: auto;
-  }
-  .info{
-   height: auto;
-  }
-  .services{
-    margin-bottom: 2px;
-    height: auto;
-  } 
- 
-  .infoTopContainer{
-    height: 45dvh;
-    justify-content: space-evenly;
-  }
-  .infoTop{
-    padding-top: 15px;
-  }
-  .infoTopLeft{
-    height: 100%;
-    border-top: 45px solid red;
-  }
-  .infoWrapper p{
-    line-height: 1.8rem;
-    font-size: 1.2rem;
-  }
-  .infoTopLeftC{
-    height: 100%;
-    border-top: 45px solid rgb(16, 39, 94);
-  }
-  .infoContainer{
-    padding-bottom: 0px;
-  }
-  
-  .infoImage{
-    height: 100%;
-    width: 100%;
-  }
-  .contact{
-    height: auto;
-    /* margin-top: 2.5%; */
-    background-color: black;
-  }
 
-}
 /* Tablet */
 @media screen and (min-width: 701px) and (max-width: 1350px){
   .main{ 

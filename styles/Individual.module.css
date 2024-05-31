@@ -498,6 +498,27 @@
             mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
             
           }
+          @media only screen and (min-width:1441px) {
+            .page{
+              margin-top: -2%;
+            }
+            .hero{
+              height: 70dvh;
+              margin-bottom: 2%;
+            }
+            .info{
+              height: auto;
+            }
+            .article{
+              height: auto;
+            }
+            .infoTopLeft{
+              margin-right: -4%;
+            }
+            .infoTopLeftC{
+              margin-right: 1%;
+            }
+          }
 
           @media only screen and (min-width: 1741px) {
             /* Add your styles here */
