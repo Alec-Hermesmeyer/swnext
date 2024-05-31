@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     console.log('Serving images from cache');
     return res.status(200).json(cachedImages);
   }
-
+  console.log('Fetching images from Supabase');
   const folders = ['newimages', 'galleryImages']; // Subfolders inside 'public'
   let images = [];
 
