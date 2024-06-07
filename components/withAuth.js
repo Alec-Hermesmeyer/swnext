@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 const withAuth = (WrappedComponent) => {
-  return (props) => {
+  const Wrapper = (props) => {
     const { user, loading } = useAuth();
     const router = useRouter();
 
@@ -23,6 +23,10 @@ const withAuth = (WrappedComponent) => {
 
     return <WrappedComponent {...props} />;
   };
+
+  Wrapper.displayName = `withAuth(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+
+  return Wrapper;
 };
 
 export default withAuth;
