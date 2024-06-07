@@ -473,7 +473,9 @@
     margin-bottom: 4%;
   }
   .infoTopRightC{
-    width: 100dvw;
+    width: 105dvw;
+    margin-left: -5px;
+    margin-right: 0;
   }
   .infoBottom{
     padding-left: 0;
@@ -506,6 +508,10 @@
     width: 300px;
     font-size: xx-large;
   }
+  .infoBtn{
+    margin-bottom: 4%;
+    font-size: large;
+   }
   
 }
 @media screen and (max-width: 300px){
@@ -527,6 +533,9 @@
     height: 20%;
     width: 100%;
    }
+   .infoBtn{
+    margin-bottom: 4%;
+   }
    .contact{  
      height: 80vh;
      margin-bottom: -11dvh;
@@ -546,7 +555,7 @@
 /* Tablet and Smaller Desktop */
 @media (min-width: 701px) and (max-width: 1350px) {
   /* Add your styles here */
-  .about{ 
+  .service{ 
     min-height: auto;
   }
   .hero{
@@ -561,6 +570,9 @@
     width: auto;
     margin-bottom: -2dvh;
   }
+  .infoBtn{
+    margin-bottom: 4%;
+   }
   .infoSection{
     height: 100%;
     width: 100dvw;
