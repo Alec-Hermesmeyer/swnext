@@ -17,21 +17,27 @@ export function AuthProvider({ children }) {
   const router = useRouter();
 
   useEffect(() => {
+    // Function to fetch the current user session
     const fetchUser = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      setLoading(false);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error fetching session:', error);
+      } else {
+        setUser(session?.user || null);
+        setLoading(false);
+      }
     };
 
+    // Fetch the user session on mount
     fetchUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-      setLoading(false);
-      if (!session?.user) {
-        router.push('/login');
-      }
-    });
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+        setUser(session?.user || null);
+        setLoading(false);
+        if (!session?.user) {
+          router.push('/login');
+        }
+      });
 
     return () => {
         authListener.data?.unsubscribe();
