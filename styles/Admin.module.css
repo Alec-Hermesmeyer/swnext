@@ -1,0 +1,183 @@
+.admin{
+    width: 100vw;  
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3rem;
+    min-height: 100vh;
+    margin-bottom: -5.2%;
+}
+.spacer{
+    height: 20vh;
+    width: 100dvw;
+    z-index: -200;
+  }
+  .gridPattern{
+    height: 20vh;
+    width: 100vw;
+    /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
+    color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
+    background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+    mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+    
+  }
+  .contactWidget{
+    background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 1200px;
+  overflow-x: auto;
+    margin-top: 40px;
+    margin-bottom: 40px;
+  }
+  .contactSubContainer{
+    height: 90%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 3;
+    align-items: center;
+    justify-content: space-evenly;
+    padding-bottom: 2%;
+  }
+  .contactSubTable{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    height: 100%;
+  }
+.tableRow{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-direction: row;
+    margin-left: -4.1%;
+    /* border-radius: var(--border-radius); */
+}
+.thread th {
+    padding: 20px;
+    width: 250px;
+    border: 1px solid #10275E;
+    text-align: center;
+    margin-top: -5%;
+   
+}
+.tableRow2 {
+    height: 50px;
+    max-height: 50px;
+    overflow: hidden;
+}
+.tableBody{
+    width: calc(100% - 40px);
+    height: 100%;
+    margin-left: -6%;
+}
+.tableRow2 td {
+    color: #555;
+    padding: 2px;
+    text-align: center;
+    width: 200px;
+    gap: 2%;
+    padding-left: 05px;
+    padding-right: 10px;
+    
+}
+.thread{
+    width: calc(100% - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    margin-left: -8.9%;
+   
+    /* border-radius: var(--border-radius); */
+}
+.deleteBtn{
+    background-color: #991b1b;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    /* margin-right: -55px; */
+}
+.deleteBtnContainer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2%;
+    margin-top: 5%;
+    margin-right: -180px;
+}
+
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    width: 80%;
+  }
+.pagination button {
+    background-color: #0070f3;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .pagination button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .pagination span {
+    font-size: 16px;
+    color: #333;
+  }
+  .contactSubTable td .tooltip {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .contactSubTable td .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%; 
+    left: 50%;
+    margin-left: -100px; 
+    opacity: 0;
+    transition: opacity 0.3s;
+    height: fit-content;
+    padding-top: 5%;
+    padding-bottom: 5%;
+  }
+  
+  .contactSubTable td .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }

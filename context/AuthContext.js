@@ -44,8 +44,14 @@ export function AuthProvider({ children }) {
     };
   }, [router]);
 
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push('/login');
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

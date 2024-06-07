@@ -106,9 +106,42 @@ a {
   color: inherit;
   text-decoration: none;
 }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+table, th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+  height: 50px;
+}
+td {
+  color: #555;
+}
+
+th {
+  background-color: #f4f4f4;
+  color: #333;
+}
+tr:hover {
+  background-color: #f9f9f9;
+}
 
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
+  }
+}
+@media (max-width: 768px) {
+  table th, .table td {
+    padding: 8px;
   }
 }
