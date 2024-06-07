@@ -108,7 +108,7 @@ function ContactSubmissions() {
                 </div>
               </td>
               <td>{submission.company}</td>
-              <span className={styles.deleteBtnContainer}>
+              <span className={styles.deleteBtnContainerT}>
               <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
             </span>
             </tr>
@@ -259,7 +259,7 @@ function DeleteUser() {
 function Logout() {
   const { logout } = useAuth();
   return (
-    <button onClick={logout}>Logout</button>
+    <button className={styles.logoutBtn} onClick={logout}>Logout</button>
   );
 
 }
@@ -275,6 +275,7 @@ const Admin = () => {
       <section className={styles.contactWidget}>
         <JobApplicants />
       </section>
+      <Logout className={styles.lowerBtn}/>
       <Spacer className={styles.spacer} />
     </div>
   )
