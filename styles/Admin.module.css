@@ -1,21 +1,19 @@
 .admin{
-    width: 100vw;  
+    width: auto;  
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     padding: 3rem;
-    min-height: 100vh;
-    margin-bottom: -5.2%;
 }
 .spacer{
-    height: 20vh;
+    height: 20dvh;
     width: 100dvw;
     z-index: -200;
   }
   .gridPattern{
-    height: 20vh;
-    width: 100vw;
+    height: 20dvh;
+    width: 100dvw;
     /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
     color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
     background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
@@ -27,7 +25,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
   margin: 20px auto;
-  max-width: 1200px;
+  max-width: 1150px;
   overflow-x: auto;
     margin-top: 40px;
     margin-bottom: 40px;
@@ -55,7 +53,7 @@
     /* padding-bottom: 2%; */
   }
 .tableRow{
-    width: 70%;
+    width: 85%;
     display: flex;
     align-items: center;
     justify-content: space-evenly;
@@ -63,8 +61,8 @@
     margin-top: -5%;
 }
 .thread th {
-    padding: 20px;
-    width: 250px;
+    padding: 15px;
+    width: 215px;
     border: 1px solid #10275E;
     text-align: center;
     /* margin-top: -5%; */
@@ -72,22 +70,30 @@
 }
 .tableRow2 {
     height: auto;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-direction: row;
     
 
 }
 .tableBody{
-    width: calc(100% - 125px);
-    height: auto;
-    /* margin-top: 2%; */
-    /* margin-bottom: 2%; */
+  width: 95%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
 }
 .tableRow2 td {
     color: #555;
-    padding: 2px;
     text-align: center;
-    min-width: 180px;
-    width: auto;
-    gap: 2%;
+    min-width: 185px;
+    gap: 5%;
+    font-size: 15px;
+    padding-left: 2%;
+    padding-bottom: 5%;
+    margin-bottom: 2%;
     
     
 }
@@ -128,8 +134,6 @@
 
 }
 .details:open  summary{
-    /* padding-bottom: 5%;
-    padding-top: 5%; */
     height: auto;
 
 }
@@ -178,7 +182,6 @@
     justify-content: center;
     gap: 2%;
     margin-top: 5%;
-    margin-right: -150px;
 }
 .deleteBtnContainerT{
     display: flex;
@@ -187,17 +190,17 @@
     gap: 2%;
     height: 100%;
     width: 100%;
-    padding-left: 15%;
-    padding-bottom: 10%;
+     padding-left: 2%;
+   padding-bottom: 2%;
 }
 
 
 .pagination {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     align-items: center;
     margin-top: 20px;
-    width: 60%;
+    width: 100%;
     padding-top: 2%;
     flex: 1;
   }
@@ -223,6 +226,10 @@
   .pagination span {
     font-size: 16px;
     color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: -3.5%;
   }
   .contactSubTable td .tooltip {
     display: inline-block;

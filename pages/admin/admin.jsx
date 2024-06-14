@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styles from "../styles/Admin.module.css";
+import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
 import { truncateText } from "@/utils/truncateText";
 import { GridPattern } from "@/components/GridPattern";
@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@supabase/supabase-js";
 import { Inter } from "next/font/google";
 import { Lato } from "next/font/google";
+import AdminLayout from "@/components/AdminLayout";
 
 const supabaseUrl = "https://edycymyofrowahspzzpg.supabase.co";
 const supabaseKey =
@@ -26,7 +27,7 @@ function ContactSubmissions() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 10; // Number of submissions per page
+  const pageSize = 5; // Number of submissions per page
 
   useEffect(() => {
     const fetchTotalCount = async () => {
@@ -88,47 +89,6 @@ function ContactSubmissions() {
   }
 
   return (
-    // <div className={styles.contactSubContainer}>
-      // <table className={styles.contactSubTable}>
-      //   <thread className={styles.thread}>
-      //   <tr className={styles.tableRow}>
-      //       <th>Name</th>
-      //       <th>Email</th>
-      //       <th>Number</th>
-      //       <th>Message</th>
-      //       <th>Company</th>
-      //     </tr>
-      //   </thread>
-      //   <tbody className={styles.tableBody}>
-      //     {contactSubmission.map((submission) => (
-      //       <tr className={styles.tableRow2} key={submission.id}>
-      //         <td>{submission.name}</td>
-      //         <td>{submission.email}</td>
-      //         <td>{submission.number}</td>
-      //         <td title={submission.message}>
-      //         <div className={styles.tooltip}>
-      //             {truncateText(submission.message, 5)}
-      //             <span className={styles.tooltiptext}>{submission.message}</span>
-      //           </div>
-      //         </td>
-      //         <td>{submission.company}</td>
-      //         <span className={styles.deleteBtnContainerT}>
-      //         <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
-      //       </span>
-      //       </tr>
-      //     ))}
-      //   </tbody>
-      // </table>
-    //   <div className={styles.pagination}>
-    //     <button onClick={handlePreviousPage} disabled={page === 0}>
-    //       Previous
-    //     </button>
-    //     <span>Page {page + 1} of {totalPages}</span>
-    //     <button onClick={handleNextPage} disabled={page >= totalPages - 1}>
-    //       Next
-    //     </button>
-    //   </div>
-    // </div>
     <div className={styles.contactSubContainer}>
       <h1>Contact Submissions</h1>
       <div className={styles.contactSubWrapper}>
@@ -330,8 +290,9 @@ function Logout() {
   );
 }
 const Admin = () => {
-  const { logout } = useAuth();
+  // const { logout } = useAuth();
   return (
+   
     <div className={styles.admin}>
       <Spacer className={styles.spacer} />
       <Logout />
@@ -341,9 +302,9 @@ const Admin = () => {
       <section className={styles.contactWidget}>
         <JobApplicants />
       </section>
-      <Logout className={styles.lowerBtn} />
       <Spacer className={styles.spacer} />
     </div>
+    
   );
 };
 
