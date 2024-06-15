@@ -39,7 +39,7 @@ function Form() {
       if (error) {
         setError(error.message);
       } else {
-        router.push("/admin");
+        router.push("/admin/admin");
       }
     } catch (error) {
       setError(error.message);
