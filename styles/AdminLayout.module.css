@@ -96,6 +96,27 @@
     display: flex;
     flex-direction: column;
     border: 4px solid #333;
-    margin-left: 14%;
+    /* margin-left: 14%; */
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex: 4;
 
+  }
+  .left{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 25%;
+    flex: 1;
+  }
+  .right{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 75%;
+    flex: 3;
   }

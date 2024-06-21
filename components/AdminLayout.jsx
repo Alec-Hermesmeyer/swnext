@@ -60,8 +60,12 @@ const AdminLayout = ({ children }) => {
       </Head>
       <header className={styles.header}>Admin Header</header>
       {/* <aside className={styles.sidebar}>Admin Sidebar</aside> */}
-      <Sidebar />
-      <main className={styles.main}>{children}</main>
+      
+      <main className={styles.main}>
+        <div className={styles.left}><Sidebar /></div>
+        <div className= {styles.right}>{children}</div>
+      
+      </main>
       <footer className={styles.footer}>Admin Footer</footer>
     </div>
   );

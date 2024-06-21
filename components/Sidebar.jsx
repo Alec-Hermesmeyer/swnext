@@ -32,24 +32,11 @@ function Sidebar() {
                   <Link href="/admin/contact">Contact Submissions</Link>
                 </li>
                 <li className={styles.navItem}>
-                  <Link href="/admin/contact">Contact Submissions</Link>
+                  <Link href="/admin/company-contacts">Company Contacts</Link>
                 </li>
                 <li className={styles.navItem}>
-                  <Link href="/admin/contact">Contact Submissions</Link>
+                  <Link href="/admin/job-openings">Job Openings</Link>
                 </li>
-                <li className={styles.navItem}>
-                  <Link href="/admin/contact">Contact Submissions</Link>
-                </li>
-                {/* <li className={styles.navItem}>
-                  <Link href="/admin/careers">
-                    <a className={styles.navLink}>Careers</a>
-                  </Link>
-                </li>
-                <li className={styles.navItem}>
-                  <Link href="/admin/logout">
-                    <a className={styles.navLink}>Logout</a>
-                  </Link>
-                </li> */}
               </ul>
             </nav>
             </div>
