@@ -1,4 +1,4 @@
-const projectId = 'edycymyofrowahspzzpg' // Your Supabase project ID
+const projectId = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID;
 
 
 
