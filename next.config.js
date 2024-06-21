@@ -52,11 +52,17 @@
   
 // }
 const nextConfig = {
+  webpack: (config, { isServer }) => {
+    // Disable cache only for development environment
+    if (process.env.NODE_ENV === 'development') {
+      config.cache = false;
+    }
+    return config;
+  },
   images: {
     loader: 'custom',
     loaderFile: './supabase-image-loader.js',
   },
 }
 module.exports = nextConfig;
-
 
