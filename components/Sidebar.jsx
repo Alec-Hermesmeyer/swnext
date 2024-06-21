@@ -26,7 +26,7 @@ function Sidebar() {
             <nav className={styles.nav}>
               <ul className={styles.navMenu}>
                 <li className={styles.navItem}>
-                <Link href="/admin">Dashboard</Link>
+                <Link href="/admin/admin">Dashboard</Link>
                 </li>
                 <li className={styles.navItem}>
                   <Link href="/admin/contact">Contact Submissions</Link>
