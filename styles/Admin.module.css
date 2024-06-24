@@ -62,11 +62,28 @@
     flex-direction: row;
     margin-top: -5%;
 }
+.thread{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    margin-left: -5%;
+    /* border: 1px solid #10275E; */
+    /* border-radius: var(--border-radius);
+    padding: 10px;
+    margin-top: 5%; */
+
+}
 .thread th {
     padding: 15px;
     width: 215px;
     border: 1px solid #10275E;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
     /* margin-top: -5%; */
    
 }
@@ -75,13 +92,13 @@
     width: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-evenly;
+    justify-content: center;
     flex-direction: row;
     
 
 }
 .tableBody{
-  width: 95%;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,11 +108,11 @@
     color: #555;
     text-align: center;
     min-width: 185px;
-    gap: 5%;
-    font-size: 15px;
-    padding-left: 2%;
+    font-size: 12px;
+    padding-left: 6.5%;
     padding-bottom: 5%;
     margin-bottom: 2%;
+    overflow: auto;
     
     
 }
@@ -472,6 +489,95 @@
           box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.43); 
         }
         /* ManageJobPostings.module.css */
+  
+.manageJobPostings{
+    width: 100%;  
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    height: auto;
+}
+.manageJobPostings form{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    flex: 2;
+    padding: 20px;
+}
+.manageJobPostings form button{
+    height: 40px;
+    width: 120px;
+    margin-bottom: 5%;
+    font-size: large;
+    background-color: #10275E;
+    color: white;
+    border-radius: var(--border-radius);
+}
+.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 20px;
+    flex: 1;
+}
+.bottom{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 20px;
+    flex: 1;
+}
+.manageJobPostings h2{
+    font-size: 2rem;
+    color: #10275E;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.manageJobPostings h3{
+    font-size: 1.5rem;
+    color: #10275E;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.top label{
+    font-size: 1.5rem;
+    color: #10275E;
+    text-align: center;
+    padding-left: 5px;
+
+}
+.bottom label{
+    font-size: 1.5rem;
+    color: #10275E;
+    text-align: center;
+
+}
+.top input{
+    width: 50%;
+    height: 2rem;
+    margin-bottom: 1rem;
+    margin-left: 7%;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid #10275E;
+}
+.bottom textarea{
+    width: 50%;
+    margin-left: 5%;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid #10275E;
+}
 
 .switch {
   position: relative;
@@ -496,6 +602,7 @@
   background-color: #ccc;
   transition: 0.4s;
   border-radius: 34px;
+  margin-left: 60%;
 }
 
 .slider:before {
@@ -516,6 +623,44 @@ input:checked + .slider {
 
 input:checked + .slider:before {
   transform: translateX(26px);
+}
+.currentList{
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2%;
+    height: auto;
+    margin-top: 20px;
+}
+.currentList li{
+    list-style-type: none;
+    font-size: 1.5rem;
+    color: #10275E;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+
+}
+.currentList label{
+    font-size: 1.5rem;
+    color: #10275E;
+    text-align: right;
+    align-items: flex-start;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: left;
+}
+.currentList span{
+    font-size: 1.5rem;
+    color: #10275E;
+    text-align: right;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 

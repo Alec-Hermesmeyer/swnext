@@ -148,7 +148,7 @@ function JobApplicants() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 10; // Number of submissions per page
+  const pageSize = 5; // Number of submissions per page
 
   useEffect(() => {
     const fetchTotalCount = async () => {

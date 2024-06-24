@@ -125,7 +125,7 @@ function ManageJobPostings() {
     <div className={styles.manageJobPostings}>
     <h2>Manage Job Postings</h2>
     <form onSubmit={handleAddJob}>
-      <div>
+      <div className= {styles.top}>
         <label>
           Job Title:
           <input
@@ -136,7 +136,7 @@ function ManageJobPostings() {
           />
         </label>
       </div>
-      <div>
+      <div className={styles.bottom}>
         <label>
           Job Description:
           <textarea
@@ -150,7 +150,7 @@ function ManageJobPostings() {
     </form>
 
     <h3>Current Job Postings</h3>
-    <ul>
+    <ul className={styles.currentList}>
       {jobPostings.map((job) => (
         <li key={job.id}>
           {job.jobTitle} - {job.is_Open ? 'Open' : 'Closed'}
