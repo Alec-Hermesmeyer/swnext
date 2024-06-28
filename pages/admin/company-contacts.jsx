@@ -3,7 +3,6 @@ import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
 import { truncateText } from "@/utils/truncateText";
 import { GridPattern } from "@/components/GridPattern";
-import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@supabase/supabase-js";
 import { Inter } from "next/font/google";
 import { Lato } from "next/font/google";
@@ -56,7 +55,7 @@ function OfficeContacts() {
       <div className={styles.officeContactsContainer}>
         <div className={styles.gridOC}>
           {contacts.map((contact, index) => (
-            <div className={styles.card} key={index}>
+            <div className={styles.officeContactCard} key={index}>
               <h2 className={lato.className}>{contact.name}</h2>
               <p className={lato.className}>{contact.job_title}<br />
                 <br /><Link className={styles.email} href={`mailto:${contact.email}`}>{contact.email}</Link> <br />
@@ -217,21 +216,11 @@ function DeleteContact() {
     </div>
   );
 }
-function Logout() {
-  const { logout } = useAuth();
-  return (
-    <button className={styles.logoutBtn} onClick={logout}>
-      Logout
-    </button>
-  );
-}
 const Admin = () => {
-  const { logout } = useAuth();
   return (
    
     <div className={styles.admin}>
       <Spacer className={styles.spacer} />
-      <Logout />
       <section className={styles.contactWidgetOffice}>
         <OfficeContacts />
       </section>

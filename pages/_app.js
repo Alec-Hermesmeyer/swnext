@@ -9,35 +9,31 @@ import '@/styles/globals.css'
 
 
 export default function App({ Component, pageProps, router }) {
-  if(typeof window !== 'undefined' && 'serviceWorker' in window.navigator){
+  if (typeof window !== 'undefined' && 'serviceWorker' in window.navigator) {
     window.addEventListener('load', () => {
       window.navigator.serviceWorker.register('/service-worker.js');
     });
   }
+
   const getLayout = Component.getLayout || ((page) => page);
 
   if (router.pathname.startsWith('/admin')) {
     const AdminLayout = require('../components/AdminLayout').default;
     return (
-      <AdminLayout>
-        <AuthProvider>
-        <Component {...pageProps} />
-        </AuthProvider>
-      </AdminLayout>
+      <AuthProvider>
+        <AdminLayout>
+          {getLayout(<Component {...pageProps} />)}
+        </AdminLayout>
+      </AuthProvider>
     );
   } else {
     return (
       <Layout>
         <PreloadImages />
-        <AuthProvider>
-        <Component {...pageProps} />
-        </AuthProvider>
+        {getLayout(<Component {...pageProps} />)}
         <Analytics />
-  
         <SpeedInsights />
-  
       </Layout>
-    )
+    );
   }
-  
 }

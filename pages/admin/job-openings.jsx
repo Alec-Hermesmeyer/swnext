@@ -3,7 +3,6 @@ import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
 import { truncateText } from "@/utils/truncateText";
 import { GridPattern } from "@/components/GridPattern";
-import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@supabase/supabase-js";
 import { Inter } from "next/font/google";
 import { Lato } from "next/font/google";
@@ -170,21 +169,12 @@ function ManageJobPostings() {
 }
 
 
-function Logout() {
-  const { logout } = useAuth();
-  return (
-    <button className={styles.logoutBtn} onClick={logout}>
-      Logout
-    </button>
-  );
-}
+
 const Admin = () => {
-  const { logout } = useAuth();
   return (
    
     <div className={styles.admin}>
       <Spacer className={styles.spacer} />
-      <Logout />
       <section className={styles.contactWidgetOffice}>
        <JobPostings />
       </section>

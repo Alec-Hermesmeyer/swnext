@@ -1,49 +1,47 @@
+// Sidebar.jsx
 import React from 'react';
 import styles from '../styles/AdminLayout.module.css';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
+import Logout from './Logout';
+import { Lato } from "next/font/google";
 
 
-// function Logout() {
-//     const { logout } = useAuth();
-//     return (
-//       <button className={styles.logoutBtn} onClick={logout}>
-//         Logout
-//       </button>
-//     );
-  
-// }
+const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
 function Sidebar() {
-    // const { logout } = useAuth();
-    return (
-      <aside className={styles.sidebar}>
-        <div className={styles.sidebarContainer}>
-          <div className={styles.sidebarWrapper}>
+  return (
+    <aside className={styles.sidebar}>
+      <div className={styles.sidebarContainer}>
+        <div className={styles.sidebarWrapper}>
           <div className={styles.sidebarTop}>
-              
+          
           </div>
           <div className={styles.sidebarCenter}>
             <nav className={styles.nav}>
               <ul className={styles.navMenu}>
                 <li className={styles.navItem}>
-                <Link href="/admin/admin">Dashboard</Link>
+                  <Link className={lato.className} href="/admin/dashboard">Dashboard</Link>
                 </li>
                 <li className={styles.navItem}>
-                  <Link href="/admin/contact">Contact Submissions</Link>
+                  <Link className={lato.className} href="/admin/contact">Contact Forms</Link>
                 </li>
                 <li className={styles.navItem}>
-                  <Link href="/admin/company-contacts">Company Contacts</Link>
+                  <Link className={lato.className} href="/admin/company-contacts">Company Contacts</Link>
                 </li>
                 <li className={styles.navItem}>
-                  <Link href="/admin/job-openings">Job Openings</Link>
+                  <Link className={lato.className} href="/admin/job-openings">Job Openings</Link>
                 </li>
               </ul>
             </nav>
-            </div>
-            <div className={styles.sidebarBottom}></div>
+          </div>
+          <div className={styles.sidebarBottom}>
+          <Logout />
           </div>
         </div>
-      </aside>
-    );
-  }
-  export default Sidebar;
+      </div>
+    </aside>
+  );
+}
+
+export default Sidebar;

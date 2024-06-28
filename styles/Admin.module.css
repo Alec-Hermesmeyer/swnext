@@ -4,10 +4,11 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 3rem;
-   
-    
+    height: auto;
+    overflow: hidden;
+    margin-bottom: -3.5%;
 }
+
 .spacer{
     height: 20dvh;
     width: 100dvw;
@@ -16,224 +17,152 @@
   .gridPattern{
     height: 20dvh;
     width: 100dvw;
-    /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
     color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
-    background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
-    mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+    background-image: linear-gradient(to right, red, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+    mask-image: linear-gradient(to right, red, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+    
     
   }
   .contactWidget{
-    background-color: #fff;
+  background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
   margin: 20px auto;
   overflow-x: auto;
   margin-top: 40px;
   margin-bottom: 40px;
-  width: 75dvw;
+  width: 85%;
   height: auto;
-  margin-left: -10%;
   }
-  .contactSubContainer{
-    height: 90%;
-    width: 100%;
+  .contactSubContainer {
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin: 1rem 0;
+  }
+  
+  .contactSubContainer h1 {
+    color: #333;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .contactSubWrapper {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-evenly;
-    padding-bottom: 2%;
-  }
-  .contactSubTable{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
     gap: 1rem;
-    height: 100%;
-    padding-top: 5%;
-    /* padding-bottom: 2%; */
   }
-.tableRow{
-    width: 85%;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    flex-direction: row;
-    margin-top: -5%;
-}
-.thread{
+  
+  .contactSubCard {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  
+  .details {
     width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
-    margin-left: -5%;
-    /* border: 1px solid #10275E; */
-    /* border-radius: var(--border-radius);
-    padding: 10px;
-    margin-top: 5%; */
-
-}
-.thread th {
-    padding: 15px;
-    width: 215px;
-    border: 1px solid #10275E;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    /* margin-top: -5%; */
-   
-}
-.tableRow2 {
-    height: auto;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
-    
-
-}
-.tableBody{
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: row;
-}
-.tableRow2 td {
-    color: #555;
-    text-align: center;
-    min-width: 185px;
-    font-size: 12px;
-    padding-left: 6.5%;
-    padding-bottom: 5%;
-    margin-bottom: 2%;
-    overflow: auto;
-    
-    
-}
-.contactSubWrapper{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-    align-items: center;
-    gap: 2%;
-    padding: 2%;
-    border-radius: 4px;
-    height: 100%;
-    flex: 3;
-
-}
-.contactSubCard{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 2%;
-    padding: 2%;
-    border-radius: 4px;
-    height: 80%;
-    /* overflow: scroll; */
-    flex: 2;
-}
-.details{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 2%;
-    height: auto;
-
-}
-.details:open  summary{
-    height: auto;
-
-}
-.details summary {
-    padding: 10px;
-    width: 100%;
-    border: 1px solid #10275E;
-    text-align: center;
+  }
+  
+  .details summary {
     cursor: pointer;
-    outline: none;
-    background-color: #10275E;
-    color: white;
-    border-radius: 4px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 0.5rem;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    height: auto;
-    /* padding-bottom: 5%;
-    padding-top: 5%; */
-}
-.thread{
-    width: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
-   
-    /* border-radius: var(--border-radius); */
-}
-.deleteBtn{
-    background-color: #991b1b;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
+  }
+  .details[open] .deleteBtn {
     display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    border-radius: 4px;
-    cursor: pointer;
-    /* margin-right: -55px; */
-}
-.deleteBtnContainer{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2%;
-    margin-top: 5%;
-}
-.deleteBtnContainerT{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2%;
-    height: 100%;
-    width: 100%;
-     padding-left: 2%;
-   padding-bottom: 2%;
-}
-
-
-.pagination {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    margin-top: 20px;
-    width: 100%;
-    padding-top: 2%;
-    flex: 1;
   }
-.pagination button {
-    background-color: #0070f3;
+  
+  .deleteBtn {
+    padding: 0.5rem 1rem;
     border: none;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
     border-radius: 4px;
+    background-color: #dc3545;
+    color: white;
+    font-size: 0.875rem;
+    cursor: pointer;
+    margin-left: 1rem;
+    display: none;
+  }
+  
+  .deleteBtn:hover {
+    background-color: #c82333;
+  }
+  
+  .contactSubTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+  }
+  
+  .contactSubTable th,
+  .contactSubTable td {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+  
+  .contactSubTable th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+  }
+  
+  .contactSubTable td {
+    background-color: #fff;
+  }
+  
+  .tableRow:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+  }
+  
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%; /* Position above the element */
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  
+  .pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+  }
+  
+  .pagination button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    font-size: 1rem;
     cursor: pointer;
   }
   
@@ -242,63 +171,10 @@
     cursor: not-allowed;
   }
   
-  .pagination span {
-    font-size: 16px;
-    color: #333;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: -3.5%;
-  }
-  .contactSubTable td .tooltip {
-    display: inline-block;
-    position: relative;
-    cursor: pointer;
+  .pagination button:hover:enabled {
+    background-color: #0056b3;
   }
   
-  .contactSubTable td .tooltip .tooltiptext {
-    visibility: hidden;
-    width: 200px;
-    background-color: #555;
-    color: #fff;
-    text-align: center;
-    border-radius: 5px;
-    padding: 5px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%; 
-    left: 50%;
-    margin-left: -100px; 
-    opacity: 0;
-    transition: opacity 0.3s;
-    height: max-content;
-    min-height: auto;
-    padding-top: 5%;
-    padding-bottom: 5%;
-  }
-  
-  .contactSubTable td .tooltip:hover .tooltiptext {
-    visibility: visible;
-    opacity: 1;
-  }
-  .logoutBtn{
-    background-color: #991b1b;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 20px;
-    margin-left: -10%;
-  }
-  .lowerBtn{
-    margin-bottom: 20%;
-  }
-
   .contactWidgetOffice{
     background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -309,12 +185,88 @@
   margin-bottom: 40px;
   width: 80dvw;
   height: auto;
-  margin-left: -16%;
   border-radius: var(--border-radius);
   }
-  .manageContacts{
-    height: 100%;
-    width: 100%;
+  .manageContacts {
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin: 1rem 0;
+  }
+  
+  .manageContacts h2, .manageContacts h3 {
+    color: #333;
+    margin-bottom: 1rem;
+  }
+  
+  .manageContacts form {
+    display: grid;
+    gap: 1rem;
+  }
+  
+  .manageContacts label {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .manageContacts input {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+  
+  .manageContacts button[type="submit"] {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 2%;
+  }
+  
+  .manageContacts button[type="submit"]:hover {
+    background-color: #0056b3;
+  }
+  
+  .manageContacts ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .manageContacts li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    background-color: #fff;
+  }
+  
+  .manageContacts li button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #dc3545;
+    color: white;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  
+  .manageContacts li button:hover {
+    background-color: #c82333;
+  }
+  
+  .manageContacts p {
+    margin-top: 1rem;
+    color: #555;
   }
 
   .gridOC {
@@ -326,7 +278,7 @@
     height: 100%;
     }
     
-    .card {
+    .officeContactCard {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -340,17 +292,17 @@
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
-    padding: 10px;
+    padding: 15%;
     }
-    .card h2{
+    .officeContactCard h2{
     text-align: center;
     width: 97%;
     color: white;
-    margin-bottom: -15%;
+    margin-bottom: 5%;
     font-size: Large;
     text-shadow: 2px 2px 2px black;
     }
-    .card p{
+    .officeContactCard p{
     font-size: medium;
     width: 85%;
     text-align: center;
@@ -379,8 +331,8 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(25%, auto));
       grid-gap: 1dvw;
-      width: 92%;
-      max-width: 95%;
+      width: 100%;
+      max-width: 100%;
       height: auto;
       }
       
@@ -390,7 +342,7 @@
       align-items: center;
       justify-content: space-evenly;
       width: 100%;
-      height: 300px;
+      height: 100%;
       border: 1px solid black;
       background-color: rgb(16, 39, 94);
       border-radius: var(--border-radius);
@@ -398,9 +350,10 @@
       background-repeat: no-repeat;
       background-size: cover;
       background-position: center;
+      padding: 20%;
       }
       .jobPostings{
-          width: 100dvw;
+          width: auto;
           height: auto;
           display: flex;
           align-items: center;
@@ -419,13 +372,19 @@
         }
         .jobPostInfo{
           width: 100%;
-          height: auto;
+          height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-direction: column;
           color: white;
           
+        }
+        .jobPostInfo[open] summary {
+          display: flex;
+          align-items: center;
+          justify-content: space-evenly;
+          height: 60%;
         }
         .jobPostInfo summary{
           font-size: large;
@@ -437,6 +396,7 @@
           text-shadow: 2px 2px 2px black;
           margin-top: 5%;
           letter-spacing: .5px;
+          height: 100%;
         }
         .jobPostInfo p{
           font-size: large;
@@ -490,179 +450,127 @@
         }
         /* ManageJobPostings.module.css */
   
-.manageJobPostings{
-    width: 100%;  
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 3rem;
-    height: auto;
-}
-.manageJobPostings form{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: auto;
-    flex: 2;
-    padding: 20px;
-}
-.manageJobPostings form button{
-    height: 40px;
-    width: 120px;
-    margin-bottom: 5%;
-    font-size: large;
-    background-color: #10275E;
-    color: white;
-    border-radius: var(--border-radius);
-}
-.top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin-bottom: 20px;
-    flex: 1;
-}
-.bottom{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin-bottom: 20px;
-    flex: 1;
-}
-.manageJobPostings h2{
-    font-size: 2rem;
-    color: #10275E;
-    text-align: center;
-    margin-bottom: 20px;
-}
-.manageJobPostings h3{
-    font-size: 1.5rem;
-    color: #10275E;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.top label{
-    font-size: 1.5rem;
-    color: #10275E;
-    text-align: center;
-    padding-left: 5px;
-
-}
-.bottom label{
-    font-size: 1.5rem;
-    color: #10275E;
-    text-align: center;
-
-}
-.top input{
-    width: 50%;
-    height: 2rem;
-    margin-bottom: 1rem;
-    margin-left: 7%;
-    padding: 0.5rem;
-    border-radius: 5px;
-    border: 1px solid #10275E;
-}
-.bottom textarea{
-    width: 50%;
-    margin-left: 5%;
-    padding: 0.5rem;
-    border-radius: 5px;
-    border: 1px solid #10275E;
-}
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: 0.4s;
-  border-radius: 34px;
-  margin-left: 60%;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: 0.4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #2196F3;
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-.currentList{
-    width: 80%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 2%;
-    height: auto;
-    margin-top: 20px;
-}
-.currentList li{
-    list-style-type: none;
-    font-size: 1.5rem;
-    color: #10275E;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: left;
-
-}
-.currentList label{
-    font-size: 1.5rem;
-    color: #10275E;
-    text-align: right;
-    align-items: flex-start;
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: left;
-}
-.currentList span{
-    font-size: 1.5rem;
-    color: #10275E;
-    text-align: right;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
+        .manageJobPostings {
+          padding: 1rem;
+          background-color: #f9f9f9;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          margin: 1rem 0;
+        }
+        
+        .manageJobPostings h2, .manageJobPostings h3 {
+          color: #333;
+          margin-bottom: 2rem;
+          text-align: center;
+        }
+        
+        .manageJobPostings form {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        
+        .manageJobPostings label {
+          display: flex;
+          flex-direction: column;
+          font-weight: bold;
+          color: #555;
+        }
+        
+        .manageJobPostings input,
+        .manageJobPostings textarea {
+          padding: 0.5rem;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          margin-top: 0.5rem;
+        }
+        
+        .manageJobPostings textarea {
+          resize: vertical;
+          min-height: 100px;
+        }
+        
+        .manageJobPostings button[type="submit"] {
+          padding: 0.75rem 1.5rem;
+          border: none;
+          border-radius: 4px;
+          background-color: #007bff;
+          color: white;
+          font-size: 1rem;
+          cursor: pointer;
+          margin-top: 1rem;
+          margin-bottom: 5%;
+        }
+        
+        .manageJobPostings button[type="submit"]:hover {
+          background-color: #0056b3;
+        }
+        
+        .manageJobPostings ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+        
+        .manageJobPostings li {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.75rem;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          margin-top: 0.5rem;
+          background-color: #fff;
+        }
+        
+        .manageJobPostings li label {
+          margin-left: 1rem;
+        }
+        
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 34px;
+          height: 20px;
+        }
+        
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          transition: .4s;
+          border-radius: 20px;
+        }
+        
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 14px;
+          width: 14px;
+          left: 3px;
+          bottom: 3px;
+          background-color: white;
+          transition: .4s;
+          border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+          background-color: #007bff;
+        }
+        
+        input:checked + .slider:before {
+          transform: translateX(14px);
+        }
 
 @media screen and (max-width: 699px) {
   .infoBtn3{

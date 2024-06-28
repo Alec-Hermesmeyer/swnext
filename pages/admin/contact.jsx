@@ -3,7 +3,6 @@ import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
 import { truncateText } from "@/utils/truncateText";
 import { GridPattern } from "@/components/GridPattern";
-import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@supabase/supabase-js";
 import { Inter } from "next/font/google";
 import { Lato } from "next/font/google";
@@ -95,35 +94,35 @@ function ContactSubmissions() {
         {contactSubmission.map((submission) => (
           <div className={styles.contactSubCard} key={submission.id}>
             <details className={styles.details}>
-              <summary className={lato.className}> {submission.name}</summary>
+            <summary className={lato.className}>
+                <span>{submission.name}</span>
+                <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
+              </summary>              
               <table className={styles.contactSubTable}>
-        <thread className={styles.thread}>
-        <tr className={styles.tableRow}>
-            <th className={lato.className}>Name</th>
-            <th className={lato.className}>Email</th>
-            <th className={lato.className}>Number</th>
-            <th className={lato.className}>Message</th>
-            <th className={lato.className}>Company</th>
-          </tr>
-        </thread>
-        <tbody className={styles.tableBody}>
-            <tr className={styles.tableRow2}>
-              <td className={lato.className}>{submission.name}</td>
-              <td className={lato.className}>{submission.email}</td>
-              <td className={lato.className}>{submission.number}</td>
-              <td className={lato.className} title={submission.message}>
-              <div className={styles.tooltip}>
-                  {truncateText(submission.message, 5)}
-                  <span className={styles.tooltiptext}>{submission.message}</span>
-                </div>
-              </td>
-              <td className={lato.className}>{submission.company}</td>
-              <span className={styles.deleteBtnContainerT}>
-              <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
-            </span>
-            </tr>
-        </tbody>
-      </table>
+                <thead className={styles.thread}>
+                  <tr className={styles.tableRow}>
+                    <th className={lato.className}>Name</th>
+                    <th className={lato.className}>Email</th>
+                    <th className={lato.className}>Number</th>
+                    <th className={lato.className}>Message</th>
+                    <th className={lato.className}>Company</th>
+                  </tr>
+                </thead>
+                <tbody className={styles.tableBody}>
+                  <tr className={styles.tableRow2}>
+                    <td className={lato.className}>{submission.name}</td>
+                    <td className={lato.className}>{submission.email}</td>
+                    <td className={lato.className}>{submission.number}</td>
+                    <td className={lato.className} title={submission.message}>
+                      <div className={styles.tooltip}>
+                        {truncateText(submission.message, 5)}
+                        <span className={styles.tooltiptext}>{submission.message}</span>
+                      </div>
+                    </td>
+                    <td className={lato.className}>{submission.company}</td>
+                  </tr>
+                </tbody>
+              </table>
             </details>
           </div>
         ))}
@@ -216,35 +215,35 @@ function JobApplicants() {
         {jobSubmission.map((submission) => (
           <div className={styles.contactSubCard} key={submission.id}>
             <details className={styles.details}>
-              <summary className={lato.className}> {submission.name}</summary>
-              <table className={styles.contactSubTable}>
-        <thread className={styles.thread}>
-        <tr className={styles.tableRow}>
-            <th className={lato.className}>Name</th>
-            <th className={lato.className}>Email</th>
-            <th className={lato.className}>Number</th>
-            <th className={lato.className}>Message</th>
-            <th className={lato.className}>Position</th>
-          </tr>
-        </thread>
-        <tbody className={styles.tableBody}>
-            <tr className={styles.tableRow2}>
-              <td className={lato.className}>{submission.name}</td>
-              <td className={lato.className}>{submission.email}</td>
-              <td className={lato.className}>{submission.number}</td>
-              <td className={lato.className} title={submission.message}>
-              <div className={styles.tooltip}>
-                  {truncateText(submission.message, 5)}
-                  <span className={styles.tooltiptext}>{submission.message}</span>
-                </div>
-              </td>
-              <td className={lato.className}>{submission.position}</td>
-              <span className={styles.deleteBtnContainerT}>
-              <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
-            </span>
-            </tr>
-        </tbody>
-      </table>
+            <summary className={lato.className}>
+                <span>{submission.name}</span>
+                <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
+              </summary>
+                <table className={styles.contactSubTable}>
+                <thead className={styles.thread}>
+                  <tr className={styles.tableRow}>
+                    <th className={lato.className}>Name</th>
+                    <th className={lato.className}>Email</th>
+                    <th className={lato.className}>Number</th>
+                    <th className={lato.className}>Message</th>
+                    <th className={lato.className}>Position</th>
+                  </tr>
+                </thead>
+                <tbody className={styles.tableBody}>
+                  <tr className={styles.tableRow2}>
+                    <td className={lato.className}>{submission.name}</td>
+                    <td className={lato.className}>{submission.email}</td>
+                    <td className={lato.className}>{submission.number}</td>
+                    <td className={lato.className} title={submission.message}>
+                      <div className={styles.tooltip}>
+                        {truncateText(submission.message, 5)}
+                        <span className={styles.tooltiptext}>{submission.message}</span>
+                      </div>
+                    </td>
+                    <td className={lato.className}>{submission.position}</td>
+                  </tr>
+                </tbody>
+              </table>
             </details>
           </div>
         ))}
@@ -281,21 +280,12 @@ function DeleteUser() {
     </div>
   );
 }
-function Logout() {
-  const { logout } = useAuth();
-  return (
-    <button className={styles.logoutBtn} onClick={logout}>
-      Logout
-    </button>
-  );
-}
+
+
 const Admin = () => {
-  const { logout } = useAuth();
   return (
-   
     <div className={styles.admin}>
       <Spacer className={styles.spacer} />
-      <Logout />
       <section className={styles.contactWidget}>
         <ContactSubmissions />
       </section>
