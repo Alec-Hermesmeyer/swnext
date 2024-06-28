@@ -8,6 +8,65 @@
     overflow: hidden;
     margin-bottom: -3.5%;
 }
+.dashboardContainer {
+  padding: 2rem;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  min-height: 45dvh;
+  height: auto;
+}
+.dashboardContainer h1 {
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: xx-large;
+  margin-right: 5%;
+  margin-left: 5%;
+}
+
+.dashboardTitle {
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.cardsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.db_Card {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 250px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.db_Card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.db_Card h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: #007bff;
+}
+
+.db_Card a {
+  color: #555;
+  cursor: pointer;
+}
 
 .spacer{
     height: 20dvh;

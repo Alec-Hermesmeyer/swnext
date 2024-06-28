@@ -289,7 +289,7 @@ const Admin = () => {
       <section className={styles.contactWidget}>
         <ContactSubmissions />
       </section>
-      <section className={styles.contactWidget}>
+      <section id="applicants" className={styles.contactWidget}>
         <JobApplicants />
       </section>
       <Spacer className={styles.spacer} />
