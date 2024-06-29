@@ -27,7 +27,6 @@ function Spacer() {
 function Dashboard() {
   return (
     <div className={styles.dashboardContainer}>
-    <h1 className={styles.dashboardTitle}>Dashboard</h1>
     <div className={styles.cardsContainer}>
       <div className={styles.db_Card}>
         <h2>Contact Forms</h2>
