@@ -32,7 +32,7 @@
 }
 
 .heroSection{
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7297.webp);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7297.webp?version=1);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: bottom;

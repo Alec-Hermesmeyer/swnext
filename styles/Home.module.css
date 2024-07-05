@@ -62,7 +62,7 @@
 /* HERO SECTION */
 
 .heroSection{
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/trucks2.webp);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/trucks2.webp?version=1);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;

@@ -54,11 +54,11 @@ const Admin = () => {
   return (
    
     <div className={styles.admin}>
-      <Spacer />
-      <section className={styles.contactWidgetOffice}>
+      {/* <Spacer /> */}
+      <section className={styles.dashboardWidget}>
        <Dashboard />
       </section>
-      <Spacer />
+      {/* <Spacer /> */}
     </div>
     
   );
