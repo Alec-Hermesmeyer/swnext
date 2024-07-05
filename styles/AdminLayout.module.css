@@ -215,23 +215,22 @@
       grid-template-columns: 1fr; /* Single column layout for small screens */
       grid-template-areas:
         "header"
+        "sidebar"
         "main"
         "footer";
     }
   
     .sidebar {
-      width: 100%; /* Full width sidebar on small screens */
-      position: relative; /* Remove fixed position */
-      top: 0;
-      bottom: 0;
-      height: auto; /* Allow sidebar to expand vertically */
-      padding-bottom: 120px; /* Adjusted to include space for footer */
-      transition: none; /* No transition for small screen sidebar */
+      display: flex; 
+      flex-direction: row;
+      justify-content: space-evenly;
+      align-items: center;
+      width: 100%;
     }
   
     .main {
       max-width: 100%; /* Full width main content on small screens */
-      margin-left: 0; /* Reset margin for full width */
+      margin-left: -20px; /* Reset margin for full width */
+      width: 100%;
     }
   }
-  

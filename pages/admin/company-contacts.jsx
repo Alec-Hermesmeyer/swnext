@@ -227,7 +227,7 @@ const Admin = () => {
       <section className={styles.contactWidgetOffice}>
         <ManageContacts />
       </section>
-     
+      <Spacer className={styles.spacer} />
     </div>
     
   );

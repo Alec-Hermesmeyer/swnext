@@ -6,6 +6,7 @@ import { GridPattern } from "@/components/GridPattern";
 import { createClient } from "@supabase/supabase-js";
 import { Inter } from "next/font/google";
 import { Lato } from "next/font/google";
+import Link from "next/link";
 import AdminLayout from "@/components/AdminLayout";
 
 const supabaseUrl = "https://edycymyofrowahspzzpg.supabase.co";
@@ -111,8 +112,8 @@ function ContactSubmissions() {
                 <tbody className={styles.tableBody}>
                   <tr className={styles.tableRow2}>
                     <td className={lato.className}>{submission.name}</td>
-                    <td className={lato.className}>{submission.email}</td>
-                    <td className={lato.className}>{submission.number}</td>
+                    <td className={lato.className}><Link href={`mailto:${submission.email}`}>{submission.email}</Link></td>
+                    <td className={lato.className}><Link href={`tel:${submission.number}`}>{submission.number}</Link></td>
                     <td className={lato.className} title={submission.message}>
                       <div className={styles.tooltip}>
                         {truncateText(submission.message, 5)}
@@ -232,8 +233,8 @@ function JobApplicants() {
                 <tbody className={styles.tableBody}>
                   <tr className={styles.tableRow2}>
                     <td className={lato.className}>{submission.name}</td>
-                    <td className={lato.className}>{submission.email}</td>
-                    <td className={lato.className}>{submission.number}</td>
+                    <td className={lato.className}><Link href={`mailto:${submission.email}`}>{submission.email}</Link></td>
+                    <td className={lato.className}><Link href={`tel:${submission.number}`}>{submission.number}</Link></td>
                     <td className={lato.className} title={submission.message}>
                       <div className={styles.tooltip}>
                         {truncateText(submission.message, 5)}

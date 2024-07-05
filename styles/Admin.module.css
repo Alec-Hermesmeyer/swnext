@@ -668,6 +668,80 @@ input:checked + .slider:before {
 }
 
 @media screen and (max-width: 699px) {
+  .admin {
+    height: auto;
+    width: 100dvw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .spacer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  .dashboardContainer,
+  .contactWidget {
+    width: 95%; /* Adjust width for smaller screens */
+     /* Adjust padding for smaller screens */
+  }
+  .contactSubContainer {
+     /* Adjust padding for smaller screens */
+    width: 95%;
+  }
+  .contactSubTable {
+    display: flex; /* Enable block layout for smaller screens */
+    overflow-x: auto; /* Enable horizontal scrolling */
+    width: 100%; /* Full width */
+    height: auto; /* Auto height */
+  }
+
+  .contactSubTable thead,
+  .contactSubTable tbody,
+  .contactSubTable th,
+  .contactSubTable td,
+  .contactSubTable tr {
+    display: flex; /* Display table elements as block */
+    flex-wrap: nowrap; /* Wrap table elements */
+    flex-direction: column; /* Column layout */
+    width: 100%; /* Full width */
+    align-items: center;
+    justify-content: center;
+  }
+
+  .contactSubTable tr {
+    margin-bottom: 0.625rem; /* Add space between rows */
+  }
+
+  .contactSubTable td,
+  .contactSubTable th {
+    text-align: left; 
+  }
+
+  .contactSubTable td:before,
+  .contactSubTable th:before {
+    content: attr(data-label); /* Add data-label attribute for responsive headings */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50%; /* Width for the label */
+    padding-left: 0.75rem; /* Padding for label */
+    font-weight: bold; /* Bold text for label */
+    text-align: left; /* Left align label text */
+    
+  }
+
+
+  .cardsContainer {
+    grid-template-columns: 1fr; /* Single column layout for cards */
+    gap: 1rem; /* Adjust gap for smaller screens */
+  }
+
+  .db_Card {
+    padding: 40px; /* Adjust padding for smaller screens */
+  }
   .infoBtn3 {
     height: 40px;
     width: 120px;
@@ -752,5 +826,32 @@ input:checked + .slider:before {
   .jobPostInfo p {
     font-size: large;
     padding-bottom: 5%;
+  }
+  .grid{
+    grid-template-columns: repeat(2, minmax(25%, auto));
+    width: 85%;
+  }
+  .gridOC{
+    grid-template-columns: repeat(2, minmax(25%, auto));
+    width: 85%;
+  }
+  .card{
+    padding-bottom: 2%;
+  }
+  .card h2{ 
+    font-size: x-large;
+    margin-bottom: 3%;
+    margin-top: 4%;
+  }
+  .card p{
+    font-size: medium;
+  }
+  .email{
+    font-size: small;
+  }
+  .officeContacts{
+    height: auto;
+    margin-top: -5%;
+    padding-bottom: 20px;
   }
 }
