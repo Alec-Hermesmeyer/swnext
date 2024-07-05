@@ -8,6 +8,7 @@
     "footer footer";
   min-height: 100vh; /* Fixed typo in 100dvh */
   width: 100vw; /* Fixed typo in 100dvw */
+  
 }
 
 .header {
@@ -23,6 +24,7 @@
   display: flex;
   justify-content: flex-end; /* Align button to the right */
 }
+
 
 .footer {
   grid-area: footer;
@@ -150,13 +152,25 @@
   
   .main {
     grid-area: main;
-    min-height: calc(100vh - 80px); /* Adjusted to fit full viewport height minus header */
-    max-width: 85%;
-    margin-left: auto; /* Adjusted to push main content away from sidebar */
-    padding-right: 1rem; /* Added padding for content spacing */
+    flex: 1;
+    min-height: 100dvh; /* Adjusted to fit full viewport height minus header */
+    margin-left: 6%;
+    padding: 1rem;
+    transition: margin-left 0.3s ease; /* Added transition for smooth margin change */
+    padding-top: 2%;
+    padding-bottom: 2%;
+    height: auto;
+    width: auto;
+  }
+  .content {
+    display: flex;
+    flex: 1;
   }
   
-  
+  .fullWidth .main {
+    width: 100%;
+    margin-left: -2.15%;
+  }
   .left {
     display: flex;
     flex-direction: column;

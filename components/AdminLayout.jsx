@@ -22,15 +22,16 @@ const AdminLayout = ({ children }) => {
           {isSidebarCollapsed ? 'Show Sidebar' : 'Hide Sidebar'}
         </button>
       </header>
-      {!isSidebarCollapsed && (
-        <aside className={styles.sidebar}>
-          <Sidebar />
-        </aside>
-      )}
-      <main className={styles.main}>{children}</main>
+      <div className={`${styles.content} ${isSidebarCollapsed ? styles.fullWidth : ''}`}>
+        {!isSidebarCollapsed && (
+          <aside className={styles.sidebar}>
+            <Sidebar />
+          </aside>
+        )}
+        <main className={styles.main}>{children}</main>
+      </div>
       <footer className={styles.footer}></footer>
     </div>
   );
 };
-
 export default AdminLayout;
