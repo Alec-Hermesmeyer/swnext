@@ -1,0 +1,236 @@
+.container {
+  display: grid;
+  grid-template-rows: 80px auto 120px;
+  grid-template-columns: auto 1fr; /* Adjusted main area width */
+  grid-template-areas:
+    "header header"
+    "sidebar main"
+    "footer footer";
+  min-height: 100vh; /* Fixed typo in 100dvh */
+  width: 100vw; /* Fixed typo in 100dvw */
+  
+}
+
+.header {
+  grid-area: header;
+  background: rgb(16, 39, 94);
+  color: #fff;
+  padding: 1rem;
+  height: 80px;
+  z-index: 10;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  display: flex;
+  justify-content: flex-end; /* Align button to the right */
+}
+
+
+.footer {
+  grid-area: footer;
+  background: rgb(16, 39, 94);
+  color: #fff;
+  padding: 1rem;
+  height: 80px;
+  z-index: 10;
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+}
+
+
+.toggleSidebarBtn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: red;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bolder;
+  border-radius: var(--border-radius);
+}
+
+.toggleSidebarBtn:hover {
+  text-decoration: none;
+  background-color: rgb(7, 17, 41);
+  transition: ease-in-out 0.3s;
+  border: 2px solid red;
+}
+
+
+.sidebar {
+  grid-area: sidebar;
+  background: red;
+  color: #fff;
+  padding: 1rem;
+  height: calc(100vh - 160px); /* Adjusted to calc height */
+  z-index: 1;
+  position: fixed;
+  top: 80px;
+  bottom: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 15%;
+  z-index: 9;
+  transition: width 0.3s ease; /* Added transition for smooth width change */
+}
+  .sidebarContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+    width: 100%;
+  }
+  
+  .sidebarWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .sidebarTop,
+  .sidebarCenter,
+  .sidebarBottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 100%;
+  }
+  
+  .sidebarTop {
+    height: 05%;
+  }
+  
+  .sidebarCenter {
+    height: 85%;
+  }
+  
+  .sidebarBottom {
+    height: 10%;
+    margin-bottom: 10%;
+  }
+  
+  .nav {
+    width: 100%;
+  }
+  
+  .navMenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+  }
+  
+  .navItem {
+    width: 100%;
+  }
+  
+  .navItem a {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+    background: rgb(16, 39, 94);
+    border-bottom: 1px solid  #c82333;
+    transition: background 0.3s;
+    border-radius: var(--border-radius);
+    margin-bottom: 10%;
+  }
+  
+  .navItem a:hover {
+    background: #c82333;
+    border: 2px solid rgb(16, 39, 94);
+    transition: ease-in-out 0.3s;
+  }
+  
+  .main {
+    grid-area: main;
+    flex: 1;
+    min-height: 100dvh; /* Adjusted to fit full viewport height minus header */
+    margin-left: 6%;
+    padding: 1rem;
+    transition: margin-left 0.3s ease; /* Added transition for smooth margin change */
+    padding-top: 2%;
+    padding-bottom: 2%;
+    height: auto;
+    width: auto;
+  }
+  .content {
+    display: flex;
+    flex: 1;
+  }
+  
+  .fullWidth .main {
+    width: 100%;
+    margin-left: -2.15%;
+  }
+  .left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 25%;
+    flex: 1;
+  }
+  
+  .right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 75%;
+    min-height: fit-content;
+    height: auto;
+    flex: 3;
+  }
+  .logoutBtn {
+    padding: 1rem 4rem;
+    border: none;
+    border-radius: 4px;
+    background-color:  rgb(16, 39, 94);
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 1rem;
+    border-radius: var(--border-radius);
+  }
+  
+  .logoutBtn:hover {
+    background-color: #c82333;
+    border: 2px solid rgb(16, 39, 94);
+    transition: ease-in-out 0.3s;
+  }
+  
+
+  /* Media query for smaller screens */
+  @media (max-width: 768px) {
+    .container {
+      grid-template-columns: 1fr; /* Single column layout for small screens */
+      grid-template-areas:
+        "header"
+        "sidebar"
+        "main"
+        "footer";
+    }
+  
+    .sidebar {
+      display: flex; 
+      flex-direction: row;
+      justify-content: space-evenly;
+      align-items: center;
+      width: 100%;
+    }
+  
+    .main {
+      max-width: 100%; /* Full width main content on small screens */
+      margin-left: -20px; /* Reset margin for full width */
+      width: 100%;
+    }
+  }

@@ -1,209 +1,857 @@
-.admin{
-    width: 100vw;  
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    padding: 3rem;
-    min-height: 100vh;
-    margin-bottom: -5.2%;
+.admin {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+  overflow: hidden;
+  /* margin-bottom: -3.5%; */ /* Consider removing this line */
 }
-.spacer{
-    height: 20vh;
-    width: 100dvw;
-    z-index: -200;
-  }
-  .gridPattern{
-    height: 20vh;
-    width: 100vw;
-    /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
-    color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
-    background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
-    mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
-    
-  }
-  .contactWidget{
-    background-color: #fff;
+
+.dashboardContainer {
+  min-height: 45dvh;
+  height: auto;
+  width: 80%;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  padding: 60px;
+  margin: 20px auto;
+  overflow-x: auto;
+}
+.dashboardWidget {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100dvw;
+  height: auto;
+  margin-top: 3%;
+  margin-bottom: 5%;
+}
+.dashboardContainer h1 {
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: xx-large;
+  margin-right: 5%;
+  margin-left: 5%;
+}
+
+.dashboardTitle {
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.cardsContainer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(25%, auto));
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.db_Card {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: auto;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  padding: 80px;
+}
+
+.db_Card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.db_Card h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: #007bff;
+}
+
+.db_Card a {
+  color: #555;
+  cursor: pointer;
+}
+
+.spacer {
+  height: 20dvh;
+  width: 100dvw;
+  z-index: -20;
+  margin-top: -2%;
+  
+}
+.gridPattern {
+  height: 20dvh;
+  width: 100dvw;
+  color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
+  background-image: linear-gradient(
+    to right,
+    red,
+    white,
+    #10275e
+  ); /* from-red-700, via-white, to-neutral-50 */
+  mask-image: linear-gradient(
+    to right,
+    red,
+    white,
+    #10275e
+  ); /* from-red-700, via-white, to-neutral-50 */
+}
+.contactWidget {
+  background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
   margin: 20px auto;
-  max-width: 1200px;
   overflow-x: auto;
-    margin-top: 40px;
-    margin-bottom: 40px;
-  }
-  .contactSubContainer{
-    height: 90%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    flex: 3;
-    align-items: center;
-    justify-content: space-evenly;
-    padding-bottom: 2%;
-  }
-  .contactSubTable{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    height: 100%;
-  }
-.tableRow{
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    flex-direction: row;
-    margin-left: -4.1%;
-    /* border-radius: var(--border-radius); */
-}
-.thread th {
-    padding: 20px;
-    width: 250px;
-    border: 1px solid #10275E;
-    text-align: center;
-    margin-top: -5%;
-   
-}
-.tableRow2 {
-    height: 50px;
-    max-height: 50px;
-    overflow: hidden;
-}
-.tableBody{
-    width: calc(100% - 40px);
-    height: 100%;
-    margin-left: -6%;
-}
-.tableRow2 td {
-    color: #555;
-    padding: 2px;
-    text-align: center;
-    width: 200px;
-    gap: 2%;
-    padding-left: 05px;
-    padding-right: 10px;
-    
-}
-.thread{
-    width: calc(100% - 80px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
-    margin-left: -8.9%;
-   
-    /* border-radius: var(--border-radius); */
-}
-.deleteBtn{
-    background-color: #991b1b;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    border-radius: 4px;
-    cursor: pointer;
-    /* margin-right: -55px; */
-}
-.deleteBtnContainer{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2%;
-    margin-top: 5%;
-    margin-right: -150px;
-}
-.deleteBtnContainerT{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2%;
-    margin-top: 5%;
-    margin-right: -70px;
-    padding-left: 40px;
+  margin-top: 40px;
+  margin-bottom: 40px;
+  width: 70%;
+  height: auto;
+  min-height: 45dvh;
 }
 
+.contactSubContainer {
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.contactSubContainer h1 {
+  color: #333;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.contactSubWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.contactSubCard {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.details {
+  width: 100%;
+}
+
+.details summary {
+  cursor: pointer;
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.details[open] .deleteBtn {
+  display: inline-block;
+}
+
+.deleteBtn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #dc3545;
+  color: white;
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-left: 1rem;
+  display: none;
+}
+
+.deleteBtn:hover {
+  background-color: #c82333;
+}
+
+.contactSubTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.contactSubTable th,
+.contactSubTable td {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.contactSubTable th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+.contactSubTable td {
+  background-color: #fff;
+}
+
+.tableRow:hover {
+  background-color: #f1f1f1;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 200px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 15px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%; /* Position above the element */
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
 
 .pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-    width: 80%;
-  }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
 .pagination button {
-    background-color: #0070f3;
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    border-radius: 4px;
-    cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination button:hover:enabled {
+  background-color: #0056b3;
+}
+
+.contactWidgetOffice {
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  margin: 20px auto;
+  overflow-x: auto;
+  margin-top: 40px;
+  margin-bottom: 40px;
+  width: 80dvw;
+  height: auto;
+  border-radius: var(--border-radius);
+}
+.manageContacts {
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.manageContacts h2,
+.manageContacts h3 {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.manageContacts form {
+  display: grid;
+  gap: 1rem;
+}
+
+.manageContacts label {
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+  color: #555;
+}
+
+.manageContacts input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.manageContacts button[type="submit"] {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 2%;
+}
+
+.manageContacts button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+.manageContacts ul {
+  list-style: none;
+  padding: 0;
+}
+
+.manageContacts li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  background-color: #fff;
+}
+
+.manageContacts li button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #dc3545;
+  color: white;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.manageContacts li button:hover {
+  background-color: #c82333;
+}
+
+.manageContacts p {
+  margin-top: 1rem;
+  color: #555;
+}
+
+.gridOC {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(25%, auto));
+  grid-gap: 1.5rem;
+  width: 95%;
+  max-width: 100%;
+  height: 100%;
+}
+
+.officeContactCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 100%;
+  height: 100%;
+  border: 1px solid black;
+  background-color: rgb(16, 39, 94);
+  border-radius: var(--border-radius);
+  background-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.73),
+      rgba(0, 0, 0, 0.23)
+    ),
+    url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  padding: 15%;
+}
+.officeContactCard h2 {
+  text-align: center;
+  width: 97%;
+  color: white;
+  margin-bottom: 5%;
+  font-size: Large;
+  text-shadow: 2px 2px 2px black;
+}
+.officeContactCard p {
+  font-size: medium;
+  width: 85%;
+  text-align: center;
+  font-weight: bold;
+  color: white;
+  text-shadow: 2px 2px 2px black;
+}
+.officeContacts {
+  width: 100vw;
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -5%;
+  margin-bottom: -3%;
+}
+.officeContactsContainer {
+  width: 100%;
+  height: 95%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  flex-direction: column;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(25%, auto));
+  grid-gap: 1dvw;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 100%;
+  height: 100%;
+  border: 1px solid black;
+  background-color: rgb(16, 39, 94);
+  border-radius: var(--border-radius);
+  background-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.73),
+      rgba(0, 0, 0, 0.23)
+    ),
+    url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  padding: 20%;
+}
+.jobPostings {
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 5%;
+  margin-bottom: 3%;
+}
+.jobPostingsSection {
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: white;
+}
+.jobPostInfo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: white;
+}
+.jobPostInfo[open] summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 60%;
+}
+.jobPostInfo summary {
+  font-size: large;
+  font-weight: 900;
+  text-align: center;
+  width: 100%;
+  margin-bottom: 2%;
+  cursor: pointer;
+  text-shadow: 2px 2px 2px black;
+  margin-top: 5%;
+  letter-spacing: 0.5px;
+  height: 100%;
+}
+.jobPostInfo p {
+  font-size: large;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  padding-left: 5%;
+  padding-right: 5%;
+  margin-bottom: 2%;
+  text-shadow: 2px 2px 2px black;
+}
+.jobBtns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.jobBtns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.infoBtn3 p {
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  width: 100%;
+  color: white;
+}
+.infoBtn3 {
+  height: 40px;
+  width: 200px;
+  border-radius: 5px;
+  border: none;
+  background-color: red;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-weight: 900;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.43);
+}
+/* ManageJobPostings.module.css */
+
+.manageJobPostings {
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.manageJobPostings h2,
+.manageJobPostings h3 {
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.manageJobPostings form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.manageJobPostings label {
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+  color: #555;
+}
+
+.manageJobPostings input,
+.manageJobPostings textarea {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.manageJobPostings textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.manageJobPostings button[type="submit"] {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  margin-bottom: 5%;
+}
+
+.manageJobPostings button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+.manageJobPostings ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.manageJobPostings li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  background-color: #fff;
+}
+
+.manageJobPostings li label {
+  margin-left: 1rem;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #007bff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(14px);
+}
+
+@media screen and (max-width: 699px) {
+  .admin {
+    height: auto;
+    width: 100dvw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
   }
-  
-  .pagination button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+  .spacer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
   }
-  
-  .pagination span {
-    font-size: 16px;
-    color: #333;
+  .dashboardContainer,
+  .contactWidget {
+    width: 95%; /* Adjust width for smaller screens */
+     /* Adjust padding for smaller screens */
   }
-  .contactSubTable td .tooltip {
-    display: inline-block;
-    position: relative;
-    cursor: pointer;
+  .contactSubContainer {
+     /* Adjust padding for smaller screens */
+    width: 95%;
   }
-  
-  .contactSubTable td .tooltip .tooltiptext {
-    visibility: hidden;
-    width: 200px;
-    background-color: #555;
-    color: #fff;
-    text-align: center;
-    border-radius: 5px;
-    padding: 5px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%; 
-    left: 50%;
-    margin-left: -100px; 
-    opacity: 0;
-    transition: opacity 0.3s;
-    height: fit-content;
-    padding-top: 5%;
+  .contactSubTable {
+    display: flex; /* Enable block layout for smaller screens */
+    overflow-x: auto; /* Enable horizontal scrolling */
+    width: 100%; /* Full width */
+    height: auto; /* Auto height */
+  }
+
+  .contactSubTable thead,
+  .contactSubTable tbody,
+  .contactSubTable th,
+  .contactSubTable td,
+  .contactSubTable tr {
+    display: flex; /* Display table elements as block */
+    flex-wrap: nowrap; /* Wrap table elements */
+    flex-direction: column; /* Column layout */
+    width: 100%; /* Full width */
+    align-items: center;
+    justify-content: center;
+  }
+
+  .contactSubTable tr {
+    margin-bottom: 0.625rem; /* Add space between rows */
+  }
+
+  .contactSubTable td,
+  .contactSubTable th {
+    text-align: left; 
+  }
+
+  .contactSubTable td:before,
+  .contactSubTable th:before {
+    content: attr(data-label); /* Add data-label attribute for responsive headings */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50%; /* Width for the label */
+    padding-left: 0.75rem; /* Padding for label */
+    font-weight: bold; /* Bold text for label */
+    text-align: left; /* Left align label text */
+    
+  }
+
+
+  .cardsContainer {
+    grid-template-columns: 1fr; /* Single column layout for cards */
+    gap: 1rem; /* Adjust gap for smaller screens */
+  }
+
+  .db_Card {
+    padding: 40px; /* Adjust padding for smaller screens */
+  }
+  .infoBtn3 {
+    height: 40px;
+    width: 120px;
+    margin-bottom: 10%;
+    font-size: large;
+  }
+  .jobPostings {
+    height: auto;
+    min-height: 60dvh;
+    max-height: fit-content;
+    padding-bottom: 2%;
+  }
+  .jobPostingsSection {
+    margin-top: 5%;
+    height: auto;
+    min-height: 60dvh;
+    max-height: fit-content;
+    margin-bottom: 5%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .grid {
+    grid-template-columns: repeat(1, minmax(25%, auto));
+    width: 85%;
+    height: auto;
+    min-height: 60dvh;
+    max-height: fit-content;
+  }
+  .card {
+    padding-bottom: 2%;
+    min-height: 200px;
+    height: auto;
+    max-height: 200px;
+    margin-bottom: 2%;
+  }
+  .jobPostInfo summary {
+    font-size: large;
+    margin-top: 5%;
+    padding-bottom: 5%;
+    /* padding-top: 12%; */
+  }
+  .jobPostInfo p {
+    font-size: medium;
     padding-bottom: 5%;
   }
-  
-  .contactSubTable td .tooltip:hover .tooltiptext {
-    visibility: visible;
-    opacity: 1;
+  .gridOC {
+    grid-template-columns: repeat(1, minmax(25%, auto));
+    width: 85%;
   }
-  .logoutBtn{
-    background-color: #991b1b;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 20px;
-    margin-right: 20px;
+  .card {
+    padding-bottom: 4%;
   }
-  .lowerBtn{
-    margin-bottom: 20%;
+  .card h2 {
+    font-size: x-large;
+    margin-bottom: 3%;
+    margin-top: 4%;
   }
+  .card p {
+    font-size: medium;
+  }
+  .email {
+    font-size: medium;
+  }
+
+  .officeContacts {
+    height: auto;
+    margin-top: -5%;
+    padding-bottom: 20px;
+  }
+}
+@media (min-width: 701px) and (max-width: 1350px) {
+  .btns {
+    margin-top: 5%;
+  }
+  .jobPostInfo summary {
+    font-size: large;
+    margin-top: 5%;
+    padding-bottom: 5%;
+    width: auto;
+  }
+  .jobPostInfo p {
+    font-size: large;
+    padding-bottom: 5%;
+  }
+  .grid{
+    grid-template-columns: repeat(2, minmax(25%, auto));
+    width: 85%;
+  }
+  .gridOC{
+    grid-template-columns: repeat(2, minmax(25%, auto));
+    width: 85%;
+  }
+  .card{
+    padding-bottom: 2%;
+  }
+  .card h2{ 
+    font-size: x-large;
+    margin-bottom: 3%;
+    margin-top: 4%;
+  }
+  .card p{
+    font-size: medium;
+  }
+  .email{
+    font-size: small;
+  }
+  .officeContacts{
+    height: auto;
+    margin-top: -5%;
+    padding-bottom: 20px;
+  }
+}

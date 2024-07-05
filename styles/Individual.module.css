@@ -30,7 +30,7 @@
   }
   
   .heroSection{
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_5171.webp);
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_5171.webp?version=1);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: bottom;
@@ -39,7 +39,7 @@
     box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43); 
   }
   .heroSectionPD{
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8900.webp);
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8900.webp?version=1);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
@@ -48,7 +48,7 @@
     box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43); 
   }
   .heroSectionLD{
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/Pratt2.webp);
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/Pratt2.webp?version=1);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: bottom;
@@ -57,7 +57,7 @@
     box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43); 
   }
   .heroSectionTD{
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8084.webp);
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8084.webp?version=1);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: bottom;
@@ -66,7 +66,7 @@
     box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43); 
   }
   .heroSectionCD{
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_7118.webp);
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_7118.webp?version=1);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: bottom;
@@ -75,7 +75,7 @@
     box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43); 
   }
   .heroSectionSD{
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8878.webp);
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8878.webp?version=1);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: calc(50% - 0dvw) 70%;
@@ -84,7 +84,7 @@
     box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43); 
   }
 .heroSectionCV{
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7297.webp);
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.53), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7297.webp?version=1);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: calc(50% - 0dvw) 70%;
