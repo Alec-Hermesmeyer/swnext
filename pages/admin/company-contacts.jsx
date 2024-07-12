@@ -189,7 +189,7 @@ function OfficeContacts() {
                 <ul>
                   {contacts.map((contact) => (
                     <li key={contact.id}>
-                      {contact.name} - {contact.job_title} - {contact.email} - {contact.phone}{' '}
+                      {contact.name} | {contact.job_title} | {contact.email} | {contact.phone}{' '}
                       <button onClick={() => handleDeleteContact(contact.id)}>Delete</button>
                     </li>
                   ))}

@@ -18,7 +18,7 @@ const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
 function Spacer() {
   return (
-    <GridPattern className={styles.gridPattern} yOffset={10} interactive />
+    <GridPattern className={styles.gridPattern} yOffset={10} interactive={true} />
   );
 }
 function ContactSubmissions() {

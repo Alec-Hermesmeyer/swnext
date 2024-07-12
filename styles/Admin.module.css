@@ -670,26 +670,38 @@ input:checked + .slider:before {
 @media screen and (max-width: 699px) {
   .admin {
     height: auto;
-    width: 100dvw;
+    width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    margin-left: -5px;  /* Adjust margin for smaller screens */
+    overflow: hidden;
   }
   .spacer{
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    padding: 10%;
   }
-  .dashboardContainer,
+  .gridPattern{
+    width: 110dvw;
+    overflow: hidden;
+  }
+  .dashboardContainer {
+    width: 95%; /* Full width */
+    margin-right: 20px;
+    margin-left: -20px;
+  }
   .contactWidget {
-    width: 95%; /* Adjust width for smaller screens */
+    width: 90%; /* Adjust width for smaller screens */
      /* Adjust padding for smaller screens */
+     margin-right: 20px;
+     margin-left: -20px;
   }
   .contactSubContainer {
      /* Adjust padding for smaller screens */
-    width: 95%;
+    width: 100%;
   }
   .contactSubTable {
     display: flex; /* Enable block layout for smaller screens */
@@ -737,10 +749,16 @@ input:checked + .slider:before {
   .cardsContainer {
     grid-template-columns: 1fr; /* Single column layout for cards */
     gap: 1rem; /* Adjust gap for smaller screens */
+    width: 100%;
   }
 
   .db_Card {
-    padding: 40px; /* Adjust padding for smaller screens */
+    padding: 40px 120px; /* Adjust padding for smaller screens */
+    width: 100%; /* Full width */
+  }
+  .db_Card h2 {
+    font-size: 1.5rem; /* Adjust font size for smaller screens */
+    
   }
   .infoBtn3 {
     height: 40px;
@@ -763,6 +781,7 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     justify-content: center;
+
   }
   .grid {
     grid-template-columns: repeat(1, minmax(25%, auto));
@@ -777,12 +796,14 @@ input:checked + .slider:before {
     height: auto;
     max-height: 200px;
     margin-bottom: 2%;
+    width: 100%;
   }
   .jobPostInfo summary {
-    font-size: large;
-    margin-top: 5%;
-    padding-bottom: 5%;
+    font-size: medium;
+    
+    padding-bottom: 35%;
     /* padding-top: 12%; */
+    width: 100%;
   }
   .jobPostInfo p {
     font-size: medium;
@@ -811,6 +832,30 @@ input:checked + .slider:before {
     height: auto;
     margin-top: -5%;
     padding-bottom: 20px;
+  }
+  .contactWidgetOffice {
+    width: 95svw;
+    height: auto;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    padding: 10px;
+    margin-right: 20px;
+    margin-left: -20px;
+  }
+  .manageContacts ul{
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+   
+  }
+  .manageContacts li{
+    width: 100%;
+  
+  }
+  .manageContacts li button{
+    font-size: 16px;
+    font-weight: bold;
+    margin-left: 3%;
   }
 }
 @media (min-width: 701px) and (max-width: 1350px) {
