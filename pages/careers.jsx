@@ -8,14 +8,8 @@ import { Oswald } from "next/font/google";
 import { Montserrat } from "next/font/google";
 import { Lato } from "next/font/google";
 import { FadeIn } from "@/components/FadeIn";
-import { createClient } from "@supabase/supabase-js";
 import { GridPattern } from "@/components/GridPattern";
-
-const supabaseUrl = "https://edycymyofrowahspzzpg.supabase.co";
-const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkeWN5bXlvZnJvd2Foc3B6enBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzcyNTExMzAsImV4cCI6MTk5MjgyNzEzMH0.vJ8DvHPikZp2wQRXEbQ2h7JNgyJyDs0smEcJYjrjcVg";
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import supabase from "@/components/Supabase";
 
 const inter = Inter({ subsets: ["latin"] });
 const oswald = Oswald({ subsets: ["latin"] });
