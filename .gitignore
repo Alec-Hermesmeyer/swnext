@@ -35,3 +35,9 @@ yarn-error.log*
 
 
 .env*.local
+
+
+swnext/pages/api/preload-images.js
+swnext/context/AuthContext.js
+swnext/supabase-image-loader.js
+swnext/components/Supabase.js

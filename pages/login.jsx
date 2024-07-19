@@ -4,7 +4,6 @@ import { GridPattern } from "@/components/GridPattern";
 import { FadeIn } from "@/components/FadeIn";
 import { Inter } from "next/font/google";
 import styles from "../styles/Login.module.css";
-import { createClient } from "@supabase/supabase-js";
 import supabase from "@/components/Supabase";
 
 
