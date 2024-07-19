@@ -4,21 +4,16 @@ import withAuth from "@/components/withAuth";
 import { truncateText } from "@/utils/truncateText";
 import { GridPattern } from "@/components/GridPattern";
 import { useAuth } from "@/context/AuthContext";
-import { createClient } from "@supabase/supabase-js";
+import supabase from "@/components/Supabase";
 import { Inter } from "next/font/google";
 import { Lato } from "next/font/google";
 import AdminLayout from "@/components/AdminLayout";
 
-const supabaseUrl = "https://edycymyofrowahspzzpg.supabase.co";
-const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkeWN5bXlvZnJvd2Foc3B6enBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzcyNTExMzAsImV4cCI6MTk5MjgyNzEzMH0.vJ8DvHPikZp2wQRXEbQ2h7JNgyJyDs0smEcJYjrjcVg";
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
 function Spacer() {
   return (
-    <GridPattern className={styles.gridPattern} yOffset={10} interactive />
+    <GridPattern className={styles.gridPattern} yOffset={10} interactive={true} />
   );
 }
 function ContactSubmissions() {
