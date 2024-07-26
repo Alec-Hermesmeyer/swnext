@@ -1,6 +1,7 @@
 // components/PreloadImages.js
 import { useEffect } from 'react';
-const supabaseUrl = "https://edycymyofrowahspzzpg.supabase.co";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
 
 const PreloadImages = () => {
   useEffect(() => {

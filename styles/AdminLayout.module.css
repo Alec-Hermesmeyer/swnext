@@ -227,6 +227,9 @@
       align-items: center;
       width: 100%;
     }
+    .sidebarBottom{
+      margin-top: -2%;
+    }
   
     .main {
       max-width: 100%; /* Full width main content on small screens */
