@@ -62,7 +62,7 @@
   background: red;
   color: #fff;
   padding: 1rem;
-  height: calc(100vh - 160px); /* Adjusted to calc height */
+  height: calc(100dvh - 160px); /* Adjusted to calc height */
   z-index: 1;
   position: fixed;
   top: 80px;
@@ -226,13 +226,9 @@
       justify-content: space-evenly;
       align-items: center;
       width: 100%;
+      height: calc(100dvh - 120px);
     }
-    .sideBarCenter{
-      margin-top: -5%;
-    }
-    .sidebarBottom{
-      margin-top: -7%;
-    }
+    
   
     .main {
       max-width: 100%; /* Full width main content on small screens */
