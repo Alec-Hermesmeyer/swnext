@@ -1,7 +1,7 @@
 // components/PreloadImages.js
 import { useEffect } from 'react';
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const PreloadImages = () => {
   useEffect(() => {
     const preloadImages = async () => {

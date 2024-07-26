@@ -608,6 +608,7 @@ export default function Home({ data }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }}
         />
       </Head>
+
      <Script
         id="google-tag-manager"
         strategy="afterInteractive"

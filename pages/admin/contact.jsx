@@ -25,6 +25,7 @@ function ContactSubmissions() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const pageSize = 5; // Number of submissions per page
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchTotalCount = async () => {
@@ -69,6 +70,31 @@ function ContactSubmissions() {
       setPage(page + 1);
     }
   };
+  const handleCopy = (submission) => {
+    const text = `
+      Name: ${submission.name}
+      Email: ${submission.email}
+      Number: ${submission.number}
+      Message: ${submission.message}
+      Position: ${submission.position}
+    `;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleEmail = (submission) => {
+    const subject = `Job Application from ${submission.name}`;
+    const body = `
+      Name: ${submission.name}%0D%0A
+      Email: ${submission.email}%0D%0A
+      Number: ${submission.number}%0D%0A
+      Message: ${submission.message}%0D%0A
+      Position: ${submission.position}
+    `;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
 
   const handleDelete = async (id) => {
     const { error } = await supabase.from("contact_form").delete().eq("id", id);
@@ -95,6 +121,8 @@ function ContactSubmissions() {
             <summary className={lato.className}>
                 <span>{submission.name}</span>
                 <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
+                <button className={styles.deleteBtn} onClick={() => handleCopy(submission)}>Copy</button>
+                <button className={styles.deleteBtn} onClick={() => handleEmail(submission)}>Email</button>
               </summary>              
               <table className={styles.contactSubTable}>
                 <thead className={styles.thread}>
@@ -139,6 +167,8 @@ function ContactSubmissions() {
     </div>
   );
 }
+// const JobApplicants = ({ jobSubmission, handleDelete, handlePreviousPage, handleNextPage, page, totalPages }) => {
+
 function JobApplicants() {
   //this function will display job applicants from the supabase database, allowing admin to view and delete them
   const [jobSubmission, setJobSubmission] = useState([]);
@@ -146,6 +176,9 @@ function JobApplicants() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const pageSize = 5; // Number of submissions per page
+  const [copied, setCopied] = useState(false);
+
+  
 
   useEffect(() => {
     const fetchTotalCount = async () => {
@@ -190,6 +223,31 @@ function JobApplicants() {
       setPage(page + 1);
     }
   };
+  const handleCopy = (submission) => {
+    const text = `
+      Name: ${submission.name}
+      Email: ${submission.email}
+      Number: ${submission.number}
+      Message: ${submission.message}
+      Position: ${submission.position}
+    `;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleEmail = (submission) => {
+    const subject = `Job Application from ${submission.name}`;
+    const body = `
+      Name: ${submission.name}%0D%0A
+      Email: ${submission.email}%0D%0A
+      Number: ${submission.number}%0D%0A
+      Message: ${submission.message}%0D%0A
+      Position: ${submission.position}
+    `;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
 
   const handleDelete = async (id) => {
     const { error } = await supabase.from("job_form").delete().eq("id", id);
@@ -205,6 +263,7 @@ function JobApplicants() {
   if (loading) {
     return <p>Loading...</p>;
   }
+  
 
   return (
     <div className={styles.contactSubContainer}>
@@ -216,6 +275,8 @@ function JobApplicants() {
             <summary className={lato.className}>
                 <span>{submission.name}</span>
                 <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
+                <button className={styles.deleteBtn} onClick={() => handleCopy(submission)}>Copy</button>
+                <button className={styles.deleteBtn} onClick={() => handleEmail(submission)}>Email</button>
               </summary>
                 <table className={styles.contactSubTable}>
                 <thead className={styles.thread}>

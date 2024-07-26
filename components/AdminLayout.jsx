@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import styles from '../styles/AdminLayout.module.css';
 import Link from 'next/link';
@@ -10,6 +10,23 @@ const AdminLayout = ({ children }) => {
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
+
+  const handleResize = () => {
+    if (window.innerWidth <= 768) { // Adjust the breakpoint as needed
+      setIsSidebarCollapsed(true);
+    } else {
+      setIsSidebarCollapsed(false);
+    }
+  };
+
+  useEffect(() => {
+    handleResize(); // Set the initial state based on the current viewport size
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
 
   return (
     <div className={styles.container}>
