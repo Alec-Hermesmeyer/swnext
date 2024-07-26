@@ -227,8 +227,11 @@
       align-items: center;
       width: 100%;
     }
+    .sideBarCenter{
+      margin-top: -5%;
+    }
     .sidebarBottom{
-      margin-top: -20%;
+      margin-top: -7%;
     }
   
     .main {
