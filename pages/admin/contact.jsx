@@ -87,10 +87,10 @@ function ContactSubmissions() {
   const handleEmail = (submission) => {
     const subject = `Job Application from ${submission.name}`;
     const body = `
-      Name: ${submission.name}%0D%0A
-      Email: ${submission.email}%0D%0A
-      Number: ${submission.number}%0D%0A
-      Message: ${submission.message}%0D%0A
+      Name: ${submission.name}
+      Email: ${submission.email}
+      Number: ${submission.number}
+      Message: ${submission.message}
       Position: ${submission.position}
     `;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -240,10 +240,10 @@ function JobApplicants() {
   const handleEmail = (submission) => {
     const subject = `Job Application from ${submission.name}`;
     const body = `
-      Name: ${submission.name}%0D%0A
-      Email: ${submission.email}%0D%0A
-      Number: ${submission.number}%0D%0A
-      Message: ${submission.message}%0D%0A
+      Name: ${submission.name}
+      Email: ${submission.email}
+      Number: ${submission.number}
+      Message: ${submission.message}
       Position: ${submission.position}
     `;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
