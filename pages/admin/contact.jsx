@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import {useEffect, useState} from "react";
 import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
 import { truncateText } from "@/utils/truncateText";
@@ -9,7 +10,6 @@ import { Lato } from "next/font/google";
 import Link from "next/link";
 import AdminLayout from "@/components/AdminLayout";
 import supabase from "@/components/Supabase";
-
 
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 

@@ -228,8 +228,7 @@
       width: 100%;
       height: calc(100dvh - 120px);
     }
-    
-  
+
     .main {
       max-width: 100%; /* Full width main content on small screens */
       margin-left: -20px; /* Reset margin for full width */
