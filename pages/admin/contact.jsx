@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import {useEffect, useState} from "react";
 import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
 import { truncateText } from "@/utils/truncateText";
@@ -9,7 +10,6 @@ import { Lato } from "next/font/google";
 import Link from "next/link";
 import AdminLayout from "@/components/AdminLayout";
 import supabase from "@/components/Supabase";
-
 
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
@@ -87,10 +87,10 @@ function ContactSubmissions() {
   const handleEmail = (submission) => {
     const subject = `Job Application from ${submission.name}`;
     const body = `
-      Name: ${submission.name}%0D%0A
-      Email: ${submission.email}%0D%0A
-      Number: ${submission.number}%0D%0A
-      Message: ${submission.message}%0D%0A
+      Name: ${submission.name}
+      Email: ${submission.email}
+      Number: ${submission.number}
+      Message: ${submission.message}
       Position: ${submission.position}
     `;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -240,10 +240,10 @@ function JobApplicants() {
   const handleEmail = (submission) => {
     const subject = `Job Application from ${submission.name}`;
     const body = `
-      Name: ${submission.name}%0D%0A
-      Email: ${submission.email}%0D%0A
-      Number: ${submission.number}%0D%0A
-      Message: ${submission.message}%0D%0A
+      Name: ${submission.name}
+      Email: ${submission.email}
+      Number: ${submission.number}
+      Message: ${submission.message}
       Position: ${submission.position}
     `;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;

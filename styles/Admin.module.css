@@ -98,6 +98,12 @@
     white,
     #10275e
   ); /* from-red-700, via-white, to-neutral-50 */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    red,
+    white,
+    #10275e
+  ); /* from-red-700, via-white, to-neutral-50 */
   mask-image: linear-gradient(
     to right,
     red,
