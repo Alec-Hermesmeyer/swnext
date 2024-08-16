@@ -647,7 +647,7 @@ export default function Home({ data }) {
     `,
   }}
 />
-      <Script
+      {/* <Script
         src="https://www.googletagmanager.com/gtag/js?id=G-BXEC44GZQV"
         strategy="afterInteractive"
         async
@@ -659,7 +659,7 @@ export default function Home({ data }) {
           gtag('js', new Date());
           gtag('config', 'G-BXEC44GZQV');
         `}
-      </Script>    
+      </Script>     */}
 
       <div className={styles.main}>
         <section className={styles.hero}>
