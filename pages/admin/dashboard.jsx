@@ -40,6 +40,10 @@ function Dashboard() {
         <h2>Company Contacts</h2>
         <Link className={lato.className} href="/admin/company-contacts">Manage, create and review company contact</Link>
       </div>
+      <div className={styles.db_Card}>
+        <h2>Sales</h2>
+        <Link className={lato.className} href="/admin/sales">Stay up to date with company Sales Data</Link>
+      </div>
     </div>
     </div>
   );

@@ -135,6 +135,19 @@ th {
 tr:hover {
   background-color: #f9f9f9;
 }
+#sales table {
+  table-layout: fixed; /* Makes sure the table layout is fixed */
+  width: 100%; /* Full width */
+}
+
+#sales th td {
+  padding: 10px;
+  text-align: left; /* Left align text */
+}
+
+#sales thead th {
+  width: 14.28%; /* Divide by 7 columns */
+}
 
 @media (prefers-color-scheme: dark) {
   html {

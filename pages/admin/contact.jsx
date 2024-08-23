@@ -75,8 +75,9 @@ function ContactSubmissions() {
       Name: ${submission.name}
       Email: ${submission.email}
       Number: ${submission.number}
+      Company: ${submission.company}
       Message: ${submission.message}
-      Position: ${submission.position}
+     
     `;
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -85,13 +86,14 @@ function ContactSubmissions() {
   };
 
   const handleEmail = (submission) => {
-    const subject = `Job Application from ${submission.name}`;
+    const subject = `Contact Application from ${submission.name}`;
     const body = `
       Name: ${submission.name}
       Email: ${submission.email}
       Number: ${submission.number}
+      Company: ${submission.company}
       Message: ${submission.message}
-      Position: ${submission.position}
+     
     `;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
