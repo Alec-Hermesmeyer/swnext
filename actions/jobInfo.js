@@ -1,4 +1,4 @@
-import React from 'react';
+
 import supabase from "@/components/Supabase";
 
 export async function fetchSalesData(page = 0, pageSize = 5, filters = {}) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
-import { getSalesData } from "@/pages/admin/actions/jobInfo";
+import { getSalesData } from "@/actions/jobInfo";
 import { GridPattern } from "@/components/GridPattern";
 
 import supabase from "@/components/Supabase";
