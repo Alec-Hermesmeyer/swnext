@@ -672,8 +672,57 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(14px);
 }
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* Spacing between inputs */
+  margin-bottom: 20px; /* Space below the filter area */
+  width: 100%;
+  justify-content: space-evenly; /* Center the filters */
+  align-items: center;
+}
+
+.filters input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 180px; /* Set a fixed width for each input */
+  transition: border-color 0.3s ease; /* Smooth transition for border color */
+}
+
+.filters input:focus {
+  border-color: #0070f3; /* Change border color when focused */
+  outline: none; /* Remove default outline */
+}
+#company-header, 
+#job-name-header, 
+#amount-header, 
+#scope-header, 
+#day-sold-header, 
+#month-sold-header, 
+#estimator-header {
+  width: auto; /* Let the browser decide the width */
+  flex: 1; /* Equal width distribution */
+}
+
+
+
+@media (max-width: 768px) {
+  .filters input {
+    width: 100%; /* Make inputs full width on smaller screens */
+    text-align: center;
+
+  }
+  #salesTD{
+    text-align: center;
+  }
+}
 
 @media screen and (max-width: 699px) {
+  #salesTD{
+    text-align: center;
+  }
   .admin {
     height: auto;
     width: 100%;

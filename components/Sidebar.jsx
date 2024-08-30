@@ -32,6 +32,9 @@ function Sidebar() {
                 <li className={styles.navItem}>
                   <Link className={lato.className} href="/admin/job-openings">Job Openings</Link>
                 </li>
+                <li className={styles.navItem}>
+                  <Link className={lato.className} href="/admin/sales">Sales</Link>
+                </li>
               </ul>
             </nav>
           </div>
