@@ -28,7 +28,7 @@ const LogoImage = () => (
     height={300}
     width={300}
     alt="S&amp;W Foundations Logo"
-    loading="lazy"
+    priority
     quality={80}
   />
 );
@@ -136,7 +136,7 @@ function InfoSection() {
                           height={400}
                           width={320}
                           alt="S&W Foundations"
-                          loading="lazy"
+                          priority
                           quality={80}
                         />
                         
@@ -191,7 +191,7 @@ function InfoSection() {
                             height={400}
                             width={320}
                             alt="S&W Foundations"
-                            loading="lazy"
+                            priority
                             quality={80}
                           />
                         </div>
@@ -251,7 +251,7 @@ function InfoSection() {
                             height={400}
                             width={320}
                             alt="S&W Foundations"
-                            loading="lazy"
+                            priority
                             quality={80}
                           />
                         </div>
@@ -309,7 +309,7 @@ function InfoSectionMobile() {
                           height={300}
                           width={320}
                           alt="S&W Foundations"
-                          loading="lazy"
+                          priority
                           quality={80}
                         />
                 </div>
@@ -354,7 +354,7 @@ function InfoSectionMobile() {
                             height={300}
                             width={320}
                             alt="S&W Foundations"
-                            loading="lazy"
+                            priority
                             quality={80}
                           />
                 </div>
@@ -406,7 +406,7 @@ function InfoSectionMobile() {
                             height={300}
                             width={320}
                             alt="S&W Foundations"
-                            loading="lazy"
+                            priority
                             quality={80}
                           />
                 </div>
@@ -647,7 +647,7 @@ export default function Home({ data }) {
     `,
   }}
 />
-      {/* <Script
+      <Script
         src="https://www.googletagmanager.com/gtag/js?id=G-BXEC44GZQV"
         strategy="afterInteractive"
         async
@@ -659,7 +659,7 @@ export default function Home({ data }) {
           gtag('js', new Date());
           gtag('config', 'G-BXEC44GZQV');
         `}
-      </Script>     */}
+      </Script>    
 
       <div className={styles.main}>
         <section className={styles.hero}>

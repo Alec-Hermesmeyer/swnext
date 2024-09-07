@@ -129,6 +129,11 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
+"@kurkle/color@^0.3.0":
+  version "0.3.2"
+  resolved "https://registry.npmjs.org/@kurkle/color/-/color-0.3.2.tgz"
+  integrity sha512-fuscdXJ9G1qb7W8VdHi+IwRqij3lBkosAm4ydQtEmbY58OzHXqQhvlxqEkoz0yssNVn38bcpRWgA9PP+OGoisw==
+
 "@neondatabase/serverless@0.7.2":
   version "0.7.2"
   resolved "https://registry.npmjs.org/@neondatabase/serverless/-/serverless-0.7.2.tgz"
@@ -1407,6 +1412,13 @@ chalk@^4.0.0, chalk@^4.1.0:
   dependencies:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
+
+chart.js@^4.4.4:
+  version "4.4.4"
+  resolved "https://registry.npmjs.org/chart.js/-/chart.js-4.4.4.tgz"
+  integrity sha512-emICKGBABnxhMjUjlYRR12PmOXhJ2eJjEHL2/dZlWjxRAZT1D8xplLFq5M0tMQK8ja+wBS/tuVEJB5C6r7VxJA==
+  dependencies:
+    "@kurkle/color" "^0.3.0"
 
 chokidar@^2.1.8:
   version "2.1.8"

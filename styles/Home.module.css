@@ -52,7 +52,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.63), rgba(0, 0, 0, 0.13)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7753.webp);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.63), rgba(0, 0, 0, 0.13)),url(../public/homeHero.webp);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: bottom;
