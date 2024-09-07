@@ -185,7 +185,7 @@ const Careers = () => {
         </title>
         <meta
           name="description"
-          content="S&amp;W Foundation offers a suite of specialized services in Dallas, TX: pier drilling, limited-access pier drilling, turnkey solutions, crane, and trucking services. Leveraging years of experience and cutting-edge equipment, we're your trusted partner in commercial construction support."
+          content="Explore exciting career opportunities at S&amp;W Foundation. Join our team in Dallas, TX, and be part of a leading company in commercial pier drilling and construction support."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta

@@ -104,9 +104,9 @@ const CoreValues = () => {
     <>
     <Head>
     <title>Core Values | S&amp;W Foundation - Comprehensive Pier Drilling, Auger Cast, Caisson &amp; Slurry Piers in Dallas, TX</title>
-    <meta name="description" content="S&amp;W Foundation offers a suite of specialized Pier Drilling services in Dallas, TX: pier drilling, limited-access pier drilling, turnkey solutions, crane, and trucking services. Leveraging years of experience and cutting-edge equipment, we&apos;re your trusted partner in commercial construction support." />
+    <meta name="description" content="At S&amp;W Foundation, our core values of Dedication, Resilience, Impact, Learning, and Leadership guide our commitment to excellence in drilling services." />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="keywords" content="pier drilling, limited-access pier drilling, crane services, trucking services, turnkey solutions, caisson, slurry" />
+    <meta name="keywords" content="core values, dedication, resilience, impact, learning, leadership, drilling services" />
     <meta property="og:title" content="Services | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX" />
     <meta property="og:description" content="Discover S&amp;W Foundation&apos;s range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
     <meta property="og:type" content="website" />
