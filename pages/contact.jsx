@@ -316,11 +316,11 @@ export default function Contact() {
         <meta property="og:title" content="Contact S&W Foundation | Commercial Pier Drilling Specialists in Dallas, TX" />
         <meta property="og:description" content="Looking for top-tier commercial pier drilling services in the US? Get in touch with S&W Foundation today for a comprehensive quote and experience our commitment to excellence." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.swfoundation.com/contact/" />
+        <meta property="og:url" content="https://www.swfoundation.com/contact" />
         <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/AFDB03DE-805D-45B2-9A37-1EAFA841A828.webp" />
         <meta property='og:site_name' content='S&W Commercial Pier Drilling' />
         <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon' />
-        <link rel="canonical" href="https://www.swfoundation.com/contact/" />
+        <link rel="canonical" href="https://www.swfoundation.com/contact" />
       </Head>
       <div className={styles.contact}>
         <section className={styles.hero}>

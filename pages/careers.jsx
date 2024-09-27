@@ -157,7 +157,7 @@ const Careers = () => {
         <meta property="og:type" content="website" />
         <meta
           property="og:url"
-          content="https://www.swfoundation.com/careers/"
+          content="https://www.swfoundation.com/careers"
         />
         <meta
           property="og:image"
@@ -167,7 +167,7 @@ const Careers = () => {
           property="og:site_name"
           content="S&amp;W Commercial Construction Support"
         />
-        <link rel="canonical" href="https://www.swfoundation.com/careers/" />
+        <link rel="canonical" href="https://www.swfoundation.com/careers" />
         <link
           rel="icon"
           href="/android-chrome-512x512.png"

@@ -236,7 +236,7 @@ export default function About() {
           content="S&W Foundation offers premier commercial pier drilling services for various projects across the US. Discover our commitment to excellence and safety!"
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.swfoundation.com/about/" />
+        <meta property="og:url" content="https://www.swfoundation.com/about" />
         <meta
           property="og:image"
           content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7297.webp"
@@ -248,7 +248,7 @@ export default function About() {
           href="/android-chrome-512x512.png"
           type="image/x-icon"
         />
-         <link rel="canonical" href="https://www.swfoundation.com/about/" />
+         <link rel="canonical" href="https://www.swfoundation.com/about" />
       </Head>
       <div className={styles.about}>
         <section className={styles.hero}>
