@@ -248,6 +248,7 @@ export default function About() {
           href="/android-chrome-512x512.png"
           type="image/x-icon"
         />
+         <link rel="canonical" href="https://www.swfoundation.com/about/" />
       </Head>
       <div className={styles.about}>
         <section className={styles.hero}>

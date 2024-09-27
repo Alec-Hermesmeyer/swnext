@@ -320,6 +320,7 @@ export default function Contact() {
         <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/AFDB03DE-805D-45B2-9A37-1EAFA841A828.webp" />
         <meta property='og:site_name' content='S&W Commercial Pier Drilling' />
         <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon' />
+        <link rel="canonical" href="https://www.swfoundation.com/contact/" />
       </Head>
       <div className={styles.contact}>
         <section className={styles.hero}>
