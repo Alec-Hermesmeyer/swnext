@@ -4,7 +4,7 @@
   justify-content: space-evenly;
   align-items: center;
   padding: 6rem;
-  min-height: 100dvh;
+  min-height: initial; /* or set a specific value like min-height: 100vh; */
   height: auto;
   background-color: white;
   width: 100dvw;
@@ -114,7 +114,7 @@
 }
 .rightCard{
   height: 65%;
-  width: 85%;
+  width: 100%;
   background-color: rgb(16, 39, 94);
   border-top: 28px solid red;
   border-radius: var(--border-radius);
@@ -181,19 +181,20 @@
 
 .heroLeft h1{
   color: white;
-  font-size: xx-large;
-  font-weight: 900;
+  font-size: x-large;
+  font-weight: 700;
   color: white;
   letter-spacing: 2px;
-  line-height: 2.2em;
-  text-transform: uppercase;
+  line-height: 1.6em;
+ 
+  /* text-transform: uppercase; */
 }
 .heroLeft h2{
   color: white;
-  font-size: x-large;
-  font-weight: 700;
+  font-size: xx-large;
+  font-weight: 900;
   letter-spacing: 2px;
-  line-height: 1.6em;
+  line-height: 2.6em;
   padding-bottom: 10px;
 }
 .heroLeft h3{
@@ -201,7 +202,8 @@
   font-size: large; 
   font-weight: 900;
   letter-spacing: 2px;
-  line-height: 2.6em;
+  line-height: 1.6em;
+  padding-bottom: 10px;
 }
 .heroContent{
   display: flex;
@@ -642,7 +644,9 @@
   /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
   color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
   background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+  -webkit-mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
   mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+  
   
 }
 .infoContainer{
@@ -719,7 +723,7 @@
 }
 @media only screen and (min-width:1441px) {
   .main { 
-    min-height: auto;
+    min-height: initial; /* or set a specific value like min-height: 100vh; */
   }
   .hero{
     margin-bottom: -3.3%;
@@ -779,21 +783,17 @@
 @media only screen and (min-width: 1741px) {
  main
   .main { 
-    min-height: auto;
+    min-height: initial; /* or set a specific value like min-height: 100vh; */
   }
   .hero{
     margin-bottom: -3.3%;
     height: auto;
   }
-  /* .info{
-    margin-bottom: -4.3%;
-  } */
+  
   .services{
     margin-bottom: 2px;
   } 
- /* .heroSection{
-    height: 75dvh;
-  } */
+ 
   .infoTopContainer{
     height: 45dvh;
     justify-content: space-evenly;
@@ -823,7 +823,6 @@
   }
   .contact{
     height: auto;
-    /* margin-top: 2.5%; */
     background-color: black;
   }
 }
@@ -831,7 +830,7 @@
 /* Tablet */
 @media screen and (min-width: 701px) and (max-width: 1350px){
   .main{ 
-    min-height: auto;
+    min-height: initial; /* or set a specific value like min-height: 100vh; */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1048,7 +1047,7 @@
 /* MOBILE */
 @media screen and (min-width: 501px) and (max-width: 700px) {
   .main{ 
-    min-height: auto;
+    min-height: initial; /* or set a specific value like min-height: 100vh; */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1240,7 +1239,7 @@
 @media screen and (max-width: 699px) {
   /* Add your styles here */
   .main{ 
-    min-height: auto;
+    min-height: initial; /* or set a specific value like min-height: 100vh; */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1274,17 +1273,19 @@
   }
   .heroWrapper h1{
     font-size: medium;
-    font-weight: 900;
+    font-weight: 700;
     color: white;
     letter-spacing: 1px;
     width: 100%;
     margin-top: 5%;
+    margin-bottom: 10px;
   }
   .heroWrapper h2{
-    font-size: medium;
-    font-weight: 700;
+    font-size: large;
+    font-weight: 900;
     color: white;
     letter-spacing: 1px;
+    text-transform: uppercase;
   }
   .cardWrapper{
     width: 95dvw;
@@ -1460,7 +1461,7 @@
 @media screen and (max-width: 399px) {
 
   .main{ 
-    min-height: auto;
+    min-height: initial; /* or set a specific value like min-height: 100vh; */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1469,32 +1470,34 @@
   .hero{
     height: auto;
     margin-top: -5dvh;
-  }
+}
   .hero h1{
-    font-size: 22px;
-    font-weight: 900;
+    font-size: medium;
+    font-weight: 700;
     color: white;
     width: 98dvw;
     margin-top: 2%;
+    margin-bottom: 10px;
   }
   .hero h2{
     font-size: 18px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 1px;
+    width: 95dvw;
+    margin-bottom: 1%;
+  }
+  .heroContent h3{
+    font-size: medium;
     font-weight: 700;
     color: white;
     letter-spacing: 1px;
     width: 95dvw;
     margin-bottom: 2%;
   }
-  .heroContent h3{
-    font-size: 16px;
-    font-weight: 900;
-    color: white;
-    letter-spacing: 1px;
-    width: 95dvw;
-    margin-bottom: 2%;
-  }
   .rightCard{
-    width: 95dvw
+    width: 95dvw;
+    padding: 10px 0px;
   }
   .cardContent button{
     height: 30px;
@@ -1537,7 +1540,7 @@
 }
 @media screen and  (max-width: 300px){
   .main{ 
-    min-height: auto;
+    min-height: initial; /* or set a specific value like min-height: 100vh; */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1556,23 +1559,24 @@
     width: 90%;
   }
   .hero h1{
-    font-size: large;
-    font-weight: 900;
+    font-size: medium;
+    font-weight: 700;
     color: white;
     width: 100dvw;
     margin-top: 20px;
+    margin-bottom: 8px;
   }
   .hero h2{
-    font-size: medium;
-    font-weight: 700;
+    font-size: large;
+    font-weight: 900;
     color: white;
     letter-spacing: 1px;
     width: 95dvw;
     margin-bottom: 2%;
   }
   .heroContent h3{
-    font-size: 16px;
-    font-weight: 900;
+    font-size: medium;
+    font-weight: 700;
     color: white;
     letter-spacing: 1px;
     width: 95dvw;
@@ -1631,7 +1635,7 @@
 @media (orientation: landscape) and (max-width: 900px) {
   /* CSS styles for landscape mode with a viewport width of at least 800px */
   .main{ 
-    min-height: auto;
+    min-height: initial; /* or set a specific value like min-height: 100vh; */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1704,7 +1708,7 @@
 @media (orientation: landscape) and (max-width: 799px) {
   /* CSS styles for landscape mode with a viewport width of at least 800px */
   .main{ 
-    min-height: auto;
+    min-height: initial; /* or set a specific value like min-height: 100vh; */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
