@@ -41,15 +41,15 @@ function HeroSection() {
             <FadeIn>
               <div className={styles.heroContent}>
                 <h1 className={lato.className}>
-                  S&amp;W Foundation Contractors
+                   Commercial Pier Drilling - Dallas, Texas
                 </h1>
                 <h2 className={lato.className}>
-                  Commercial Pier Drilling Contractors - Dallas, Texas
+                S&amp;W Foundation Contractors 
                 </h2>
                 <h3 className={lato.className}>
                   <em>Drilling Beyond Limits</em>
                 </h3>
-                <span>
+                <span> 
                   <Link href="/services">
                     <button className={lato.className}>Our Services</button>
                   </Link>
