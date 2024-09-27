@@ -20,7 +20,7 @@ function Hero() {
     <div className={styles.heroSection}>
       <div className={styles.heroContainer}>
         <div className={styles.heroWrapper}>
-          <h1 className={lato.className}>Services</h1>
+          <h1 className={lato.className}>Commercial Pier Drilling Services</h1>
           <span>
             <Link className={styles.heroLink} href="/contact">
               Contact Us
