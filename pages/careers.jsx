@@ -167,6 +167,19 @@ const Careers = () => {
           property="og:site_name"
           content="S&amp;W Commercial Construction Support"
         />
+        <meta name="twitter:card" content="summary" />
+        <meta
+          name="twitter:title"
+          content="S&amp;W Foundation | Dallas, TX's Premier Commercial Construction Partner"
+        />
+        <meta
+          name="twitter:description"
+          content="Expertise in commercial pier drilling, crane &amp; trucking services, and more. See why businesses trust S&amp;W Foundation for their construction needs."
+        />
+        <meta
+          name="twitter:image"
+          content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp?t=2024-04-16T20%3A11%3A20.126Z"
+        />
         <link rel="canonical" href="https://www.swfoundation.com/careers" />
         <link
           rel="icon"
