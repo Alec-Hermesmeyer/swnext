@@ -15,11 +15,11 @@ export default function Gallery() {
     <meta property="og:title" content="Project Gallery | S&amp;W Foundation - Leading Pier Drilling Projects in Dallas, TX" />
     <meta property="og:description" content="Dive into S&amp;W Foundation&apos;s gallery, showcasing top-tier pier drilling projects across Dallas, TX and the wider US. Experience our dedication to quality firsthand." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.swfoundation.com/gallery/" />
+    <meta property="og:url" content="https://www.swfoundation.com/gallery" />
     <meta name="keywords" content="project gallery, S&amp;W Foundation, pier drilling specialists, Dallas, TX, commercial pier drilling, precision, safety, excellence, warehouses, hospitals, pier drilling projects, quality, dedication" />
     <meta property='og:site_name' content='S&amp;W Commercial Pier Drilling' />
     <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
-    <link rel="canonical" href="https://www.swfoundation.com/gallery/" />
+    <link rel="canonical" href="https://www.swfoundation.com/gallery" />
     
 </Head>
 
