@@ -102,7 +102,28 @@ function JobPostings() {
       setIsLoading(false);
     };
     fetchJobPostings();
-  }, []);
+    const subscription = supabase
+    .channel('public:jobs')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, (payload) => {
+      if (payload.eventType === 'INSERT') {
+        setJobPostings((currentJobs) => [...currentJobs, payload.new]);
+      } else if (payload.eventType === 'UPDATE') {
+        setJobPostings((currentJobs) =>
+          currentJobs.map((job) => (job.id === payload.new.id ? payload.new : job))
+        );
+      } else if (payload.eventType === 'DELETE') {
+        setJobPostings((currentJobs) =>
+          currentJobs.filter((job) => job.id !== payload.old.id)
+        );
+      }
+    })
+    .subscribe();
+
+  // Cleanup subscription on unmount
+  return () => {
+    supabase.removeChannel(subscription);
+  };
+}, []);
   if (isLoading) {
     return <div>Loading....</div>;
   }

@@ -11,8 +11,6 @@ import Link from "next/link";
 import AdminLayout from "@/components/AdminLayout";
 import supabase from "@/components/Supabase";
 
-
-
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
 function Spacer() {
@@ -20,10 +18,11 @@ function Spacer() {
     <GridPattern className={styles.gridPattern} yOffset={10} interactive />
   );
 }
-function JobPostings() {
+
+const Admin = () => {
   const [jobPostings, setJobPostings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  
   useEffect(() => {
     const fetchJobPostings = async () => {
       let { data, error } = await supabase.from("jobs").select("*");
@@ -36,11 +35,29 @@ function JobPostings() {
     };
     fetchJobPostings();
   }, []);
+
   if (isLoading) {
     return <div>Loading....</div>;
   }
+
+  return (
+    <div className={styles.admin}>
+      <Spacer className={styles.spacer} />
+      <section className={styles.contactWidgetOffice}>
+        <JobPostings jobPostings={jobPostings} />
+      </section>
+      <section className={styles.contactWidgetOffice}>
+        <ManageJobPostings jobPostings={jobPostings} setJobPostings={setJobPostings} />
+      </section>
+      <Spacer className={styles.spacer} />
+    </div>
+  );
+};
+
+function JobPostings({ jobPostings }) { // Destructure jobPostings from props
   // Filter the jobPostings to only include those where isOpen is true
   const openJobPostings = jobPostings.filter(jobPosting => jobPosting.is_Open);
+  
   return (
     <div className={styles.jobPostingsSection}>
       <div className={styles.grid}>
@@ -59,23 +76,9 @@ function JobPostings() {
     </div>
   );
 }
-function ManageJobPostings() {
-  const [jobPostings, setJobPostings] = useState([]);
-  const [newJob, setNewJob] = useState({ jobTitle: '', jobDesc: '', is_Open: true });
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchJobPostings = async () => {
-      let { data, error } = await supabase.from('jobs').select('*');
-      if (error) {
-        console.log(error);
-      } else {
-        setJobPostings(data);
-      }
-      setIsLoading(false);
-    };
-    fetchJobPostings();
-  }, []);
+function ManageJobPostings({ jobPostings = [], setJobPostings }) { // Provide a default value for jobPostings
+  const [newJob, setNewJob] = useState({ jobTitle: '', jobDesc: '', is_Open: true });
 
   const handleAddJob = async (e) => {
     e.preventDefault();
@@ -105,18 +108,15 @@ function ManageJobPostings() {
       if (error) {
         console.log('Error toggling job:', error);
       } else {
-        setJobPostings(
-          jobPostings.map((job) => (job.id === id ? { ...job, is_Open: !isOpen } : job))
+        // Update the jobPostings state to reflect the change
+        setJobPostings(prevJobPostings =>
+          prevJobPostings.map((job) => (job.id === id ? { ...job, is_Open: !isOpen } : job))
         );
       }
     } catch (error) {
       console.log('Unexpected error toggling job:', error);
     }
   };
-
-  if (isLoading) {
-    return <div>Loading....</div>;
-  }
 
   return (
     <div className={styles.manageJobPostings}>
@@ -148,41 +148,26 @@ function ManageJobPostings() {
 
     <h3>Current Job Postings</h3>
     <ul className={styles.currentList}>
-      {jobPostings.map((job) => (
-        <li key={job.id}>
-          {job.jobTitle} - {job.is_Open ? 'Open' : 'Closed'}
-          <label className={styles.switch}>
-            <input
-              type="checkbox"
-              checked={job.is_Open}
-              onChange={() => handleToggleJob(job.id, job.is_Open)}
-            />
-            <span className={styles.slider}></span>
-          </label>
-        </li>
-      ))}
+      {jobPostings.length > 0 ? ( // Check if jobPostings has items
+        jobPostings.map((job) => (
+          <li key={job.id}>
+            {job.jobTitle} - {job.is_Open ? 'Open' : 'Closed'}
+            <label className={styles.switch}>
+              <input
+                type="checkbox"
+                checked={job.is_Open}
+                onChange={() => handleToggleJob(job.id, job.is_Open)}
+              />
+              <span className={styles.slider}></span>
+            </label>
+          </li>
+        ))
+      ) : (
+        <li>No job postings available.</li> // Fallback message
+      )}
     </ul>
   </div>
   );
 }
-
-
-
-const Admin = () => {
-  return (
-   
-    <div className={styles.admin}>
-      <Spacer className={styles.spacer} />
-      <section className={styles.contactWidgetOffice}>
-       <JobPostings />
-      </section>
-      <section className={styles.contactWidgetOffice}>
-      <ManageJobPostings />
-      </section>
-      <Spacer className={styles.spacer} />
-    </div>
-    
-  );
-};
 
 export default withAuth(Admin);
