@@ -108,6 +108,23 @@ function Form() {
         console.error('Error submitting form:', error);
         return;
       }
+       // Send form contents via email
+       const emailResponse = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'mattm@swfoundation.com',
+          subject: 'New Form Submission',
+          text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nCompany: ${company}\nMessage: ${message}`,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        console.error('Error sending email:', emailResponse.statusText);
+        return;
+      }
 
       // Clear form inputs
       setName('');
@@ -198,6 +215,24 @@ function JobForm() {
 
       if (error) {
         console.error('Error submitting job form:', error);
+        return;
+      }
+
+      // Send form contents via email
+      const emailResponse = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'cliffw@swfoundation.com',
+          subject: 'New Job Application',
+          text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nPosition: ${position}\nMessage: ${message}`,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        console.error('Error sending email:', emailResponse.statusText);
         return;
       }
 

@@ -16,15 +16,18 @@ async function downloadAndCacheImage(url, filename) {
   const cachePath = path.join(CACHE_DIR, filename);
   
   if (fs.existsSync(cachePath)) {
+    const imageData = fs.readFileSync(cachePath);
+    cache.set(filename, imageData);
     return cachePath;
   }
 
   const response = await axios.get(url, { responseType: 'arraybuffer' });
   fs.writeFileSync(cachePath, response.data);
+  cache.set(filename, response.data);
   return cachePath;
 }
 
-export default async function handler(req, res) {
+export default async function handler(_, res) {
   const cachedImages = cache.get('images');
 
   if (cachedImages) {
@@ -43,17 +46,28 @@ export default async function handler(req, res) {
       .list(`public/${folder}`, { limit: 100 });
 
     if (error) {
+      console.error(`Error fetching images from folder ${folder}:`, error.message);
       return res.status(500).json({ error: error.message });
     }
 
+    console.log(`Fetched ${data.length} images from folder ${folder}`);
+
     for (const file of data) {
-      const publicUrl = supabase.storage.from('Images').getPublicUrl(`public/${folder}/${file.name}`).data.publicUrl;
-      const cachedPath = await downloadAndCacheImage(publicUrl, `${folder}_${file.name}`);
+      const { data: publicUrlData, error: publicUrlError } = supabase.storage.from('Images').getPublicUrl(`public/${folder}/${file.name}`);
+      
+      if (publicUrlError) {
+        console.error(`Error getting public URL for file ${file.name}:`, publicUrlError.message);
+        continue;
+      }
+
+      const publicUrl = publicUrlData.publicUrl;
+      console.log(`Processing image: ${publicUrl}`);
+
       
       images.push({
         ...file,
         folder,
-        url: `/api/cached-image?path=${encodeURIComponent(cachedPath)}`
+        url: publicUrl // Store the public URL instead of the cached path
       });
     }
   }
