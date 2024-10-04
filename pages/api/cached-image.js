@@ -2,7 +2,12 @@ import fs from 'fs';
 import path from 'path';
 
 export default function handler(req, res) {
-  const { path: imagePath } = req.query;
+  const { imagePath } = req.query;
+
+  if (!imagePath) {
+    return res.status(400).send('Image path is required');
+  }
+
   const fullPath = path.join(process.cwd(), imagePath);
 
   if (fs.existsSync(fullPath)) {
