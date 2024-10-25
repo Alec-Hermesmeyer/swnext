@@ -1,37 +1,17 @@
 import NodeCache from 'node-cache';
 import supabase from "@/components/Supabase";
-import fs from 'fs';
-import path from 'path';
-import axios from 'axios';
 
+// Initialize cache with a time-to-live (TTL) of 1 hour (3600 seconds)
 const cache = new NodeCache({ stdTTL: 3600 });
-const CACHE_DIR = path.join(process.cwd(), 'image-cache');
-
-// Ensure cache directory exists
-if (!fs.existsSync(CACHE_DIR)) {
-  fs.mkdirSync(CACHE_DIR, { recursive: true });
-}
-
-async function downloadAndCacheImage(url, filename) {
-  const cachePath = path.join(CACHE_DIR, filename);
-  
-  if (fs.existsSync(cachePath)) {
-    const imageData = fs.readFileSync(cachePath);
-    cache.set(filename, imageData);
-    return cachePath;
-  }
-
-  const response = await axios.get(url, { responseType: 'arraybuffer' });
-  fs.writeFileSync(cachePath, response.data);
-  cache.set(filename, response.data);
-  return cachePath;
-}
 
 export default async function handler(_, res) {
+  // Check if images are already cached
   const cachedImages = cache.get('images');
 
   if (cachedImages) {
     console.log('Serving images from cache');
+    // Set cache headers for CDN caching
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=59');
     return res.status(200).json(cachedImages);
   }
 
@@ -50,8 +30,6 @@ export default async function handler(_, res) {
       return res.status(500).json({ error: error.message });
     }
 
-    console.log(`Fetched ${data.length} images from folder ${folder}`);
-
     for (const file of data) {
       const { data: publicUrlData, error: publicUrlError } = supabase.storage.from('Images').getPublicUrl(`public/${folder}/${file.name}`);
       
@@ -60,19 +38,19 @@ export default async function handler(_, res) {
         continue;
       }
 
-      const publicUrl = publicUrlData.publicUrl;
-      console.log(`Processing image: ${publicUrl}`);
-
-      
       images.push({
         ...file,
         folder,
-        url: publicUrl // Store the public URL instead of the cached path
+        url: publicUrlData.publicUrl, // Just return the public URL
       });
     }
   }
 
+  // Cache the images in-memory using node-cache
   cache.set('images', images);
 
-  res.status(200).json(images);
+  // Set cache headers for CDN caching
+  res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=59');
+
+  return res.status(200).json(images);
 }

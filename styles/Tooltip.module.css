@@ -1,0 +1,100 @@
+/* Tooltip.module.css */
+
+.tooltip{
+    position: relative;
+    display: flex;
+    border-bottom: 1px dotted black;
+    gap: 16px;
+    height: 05rem;
+    align-items: center;
+  }
+  
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+  }
+  
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+
+.tooltipProvider {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    
+  }
+  
+  .tooltipTrigger {
+    cursor: pointer;
+  }
+  
+  .tooltipContent {
+    position: absolute;
+    padding: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.75); /* Dark background */
+    color: white;
+    border-radius: 0.25rem; /* 4px */
+    font-size: 0.875rem;
+    white-space: nowrap;
+    z-index: 100;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+  
+  .tooltipContent-show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  /* Side positioning classes */
+  .tooltipContent-top {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  
+  .tooltipContent-right {
+    top: 50%;
+    left: 100%;
+    transform: translateX(10px) translateY(-50%);
+  }
+  
+  .tooltipContent-bottom {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+  }
+  
+  .tooltipContent-left {
+    top: 50%;
+    right: 100%;
+    transform: translateX(-10px) translateY(-50%);
+  }
+  

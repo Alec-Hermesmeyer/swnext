@@ -67,35 +67,33 @@
   position: relative;
   transition: all 0.5s ease-in-out;
   background-color: rgba(255, 255, 255, 0.59);
+  border-radius: 10px;
 }
 .dropdownMenu {
-  display: none;
+  visibility: hidden;
+  opacity: 0;
   position: absolute;
-  top: 0%;
-  bottom: 100%;
+  top: 90%; /* Adjust to ensure it appears below the main menu item */
+  z-index: 1000;
   list-style-type: none;
   padding: 0;
   margin: 0;
-  transition: all 0.5s ease-in-out;
   background-color: rgba(255, 255, 255, 0.59);
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  border-radius: 10px;
 }
 .dropdownMenu li {
   width: 100%;
 }
 
 .dropdownMenu a {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-evenly;
+  display: block; /* Keep display: block to ensure Safari renders them correctly */
   width: 100%;
-  padding: 10px 0; /* Add padding to make it easier to hover */
+  padding: 10px 0;
   cursor: pointer;
   text-decoration: none;
   color: black;
-  transition: all 0.5s ease-in-out;
-  display: none;
-  
+  transition: color 0.1s ease-in-out;
 }
 
 .dropdown:hover .dropdownMenu {
@@ -103,11 +101,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-evenly;
-  position: absolute;
-  width: 200px;
+  width: 200px; /* Adjust as needed */
   top: 100%;
-  bottom: 0%;
+  z-index: 1000;
+  border-radius: 10px;
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease, visibility 0.1s ease;
 }
+
 .dropdownMenu.show {
   display: flex;
   flex-direction: column;
@@ -128,8 +130,9 @@
   width: 200px;
   cursor: pointer;
   background-color: rgba(255, 255, 255, 0.59);
+  border-radius: 10px;
   z-index: 999;
-  transition: all 0.5s ease-in-out;
+  transition: all 0.3s ease-in-out;
 }
 .dropdown:hover .dropdownMenu.aboutMenu {
   
@@ -139,7 +142,8 @@
   justify-content: space-evenly;
   width: 125px;
   background-color: rgba(255, 255, 255, 0.59);
-  transition: all 0.5s ease-in-out;
+  border-radius: 10px;
+  transition: all 0.1s ease-in-out;
 }
 .dropdownMenu.servicesMenu {
  
@@ -148,7 +152,8 @@
   align-items: center;
   justify-content: space-evenly;
   width: 200px;
-  transition: all 0.5s ease-in-out;
+  transition: all 0.3s ease-in-out;
+  border-radius: 10px;
 }
 
 .dropdown:hover .dropdownMenu.servicesMenu {
@@ -158,7 +163,8 @@
   align-items: center;
   justify-content: space-evenly;
   width: 250px;
-  transition: all 0.5s ease-in-out;
+  transition: all 0.1s ease-in-out;
+  border-radius: 10px;
 }
 .dropdown:hover .dropdownMenu.servicesMenu li {
   display: flex;
@@ -168,7 +174,8 @@
   height: auto;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.59);
-  transition: all 0.5s ease-in-out;
+  
+  transition: all 0.1s ease-in-out;
 }
 .dropdown:hover .dropdownMenu.aboutMenu li {
   display: flex;
@@ -178,6 +185,8 @@
   height: auto;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.59);
+  transition: all 0.1s ease-in-out;
+  
   
   
 }
@@ -388,13 +397,19 @@
       #991b1b,
       white,
       #10275e
-    ); /* from-red-700, via-white, to-neutral-50 */
+    ); 
+    -webkit-mask-image: linear-gradient(
+      to right,
+      #991b1b,
+      white,
+      #10275e
+    ); 
     mask-image: linear-gradient(
       to right,
       #991b1b,
       white,
       #10275e
-    ); /* from-red-700, via-white, to-neutral-50 */
+    ); 
     transition: all 0.8s ease-in-out;
     display: flex;
   }

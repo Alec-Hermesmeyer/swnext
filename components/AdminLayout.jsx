@@ -34,20 +34,20 @@ const AdminLayout = ({ children }) => {
         <title>Admin Dashboard</title>
         <meta name="description" content="Admin Dashboard" />
       </Head>
-      <header className={styles.header}>
-        <button className={styles.toggleSidebarBtn} onClick={toggleSidebar}>
-          {isSidebarCollapsed ? 'Show Sidebar' : 'Hide Sidebar'}
-        </button>
-      </header>
+      
+     
       <div className={`${styles.content} ${isSidebarCollapsed ? styles.fullWidth : ''}`}>
-        {!isSidebarCollapsed && (
+        {/* {!isSidebarCollapsed && (
           <aside className={styles.sidebar}>
             <Sidebar />
+
+        
           </aside>
-        )}
+          
+        )} */}
         <main className={styles.main}>{children}</main>
       </div>
-      <footer className={styles.footer}></footer>
+      
     </div>
   );
 };

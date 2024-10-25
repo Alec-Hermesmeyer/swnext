@@ -425,7 +425,7 @@
 @media screen and (max-width: 699px) {
   /* Add your styles here */
   .about{ 
-    min-height: auto;
+    min-height: initial;
   }
   .hero{
     height: 50dvh;
@@ -556,7 +556,7 @@
 @media (min-width: 701px) and (max-width: 1350px) {
   /* Add your styles here */
   .service{ 
-    min-height: auto;
+    min-height: initial;
   }
   .hero{
     height: 50dvh;
@@ -642,7 +642,7 @@
 }
 @media (orientation: landscape) and (max-width: 900px) {
   .about{ 
-    min-height: auto;
+    min-height: initial;
   }
   .hero{
     height: 120dvh;

@@ -1,0 +1,29 @@
+/* Breadcrumb.module.css */
+
+.breadcrumbNav {
+    display: flex;
+  }
+  
+  .breadcrumbList {
+    display: flex;
+    gap: 0.5rem; /* Space between breadcrumb items */
+  }
+  
+  .breadcrumbItem {
+    display: flex;
+    align-items: center;
+  }
+  
+  .breadcrumbSeparator {
+    margin: 0 0.5rem; /* Space on both sides of separator */
+  }
+  
+  .breadcrumbLink {
+    color: #2563eb; /* Blue color */
+    text-decoration: none;
+  }
+  
+  .breadcrumbLink:hover {
+    text-decoration: underline;
+  }
+  

@@ -10,6 +10,7 @@ import { Lato } from "next/font/google";
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
 function Sidebar() {
+  
   return (
     <aside className={styles.sidebar}>
       <div className={styles.sidebarContainer}>
