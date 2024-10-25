@@ -1,0 +1,71 @@
+.dashboard {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    min-width: 100dvw;
+    min-height: 120dvh;
+    height: auto;
+    width: auto;
+    margin: 0;
+    align-self: top;
+    background-color: #efebea;
+    padding: 40px 0px
+  }
+  
+  .aside {
+    grid-column: 1;
+    background-color: #f3f4f6; /* Light gray background for sidebar */
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+  }
+  
+  .nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: center;
+  }
+ .nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    color: #333;
+    text-decoration: none;
+    justify-content: space-evenly;
+  }
+  
+  .tooltipProvider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .iconSpan {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .section{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-bottom: 1px solid #e0e0e0;
+    height: auto;
+    width: 80rem;
+    
+  }
+  

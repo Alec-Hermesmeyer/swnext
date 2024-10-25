@@ -1,0 +1,88 @@
+.main {
+    width: 80%;
+    margin-top: -.5%;
+  }
+  
+  .cardGrid {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .taskCard {
+    width: 100%;
+    max-width: auto;
+    padding: 20px;  
+    background-color: #f8f9fa;
+    height: 17rem;
+    max-height: auto;
+  }
+  
+  .taskInputSection {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .taskInput {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .assignDropdown {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .addTaskButton {
+    padding: 10px 20px;
+  }
+  
+  .taskList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .taskItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+  }
+  
+  .taskText {
+    font-weight: bold;
+  }
+  
+  .taskDetails {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .taskDate, .taskAssignedTo {
+    font-size: 0.9em;
+    color: #666;
+  }
+  
+  .viewAllTasksButton {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .viewAllTasksButton:hover {
+    background-color: #0056b3;
+  }
+  

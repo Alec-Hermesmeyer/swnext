@@ -1,0 +1,42 @@
+/* Button.module.css */
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem; /* 6px */
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+    outline: none;
+    cursor: pointer;
+  }
+  
+  /* Variant Styles */
+  .solid {
+    background-color: black;
+    color: white;
+  }
+  
+  .solid:hover {
+    background-color: #2d2d2d; /* Darker gray for hover */
+  }
+  
+  .outline {
+    border: 1px solid #d1d5db; /* Light gray */
+    background-color: white;
+    color: #374151; /* Dark gray */
+  }
+  
+  .outline:hover {
+    background-color: #f3f4f6; /* Lighter gray */
+  }
+  
+  .primary {
+    background-color: #3b82f6; /* Blue */
+    color: white;
+  }
+  
+  .primary:hover {
+    background-color: #2563eb; /* Darker blue */
+  }
+  

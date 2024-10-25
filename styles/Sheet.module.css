@@ -1,0 +1,37 @@
+/* Sheet.module.css */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5); /* Black with 50% opacity */
+    z-index: 50;
+  }
+  
+  .sheet {
+    background-color: white;
+    border-radius: 0.5rem; /* 8px */
+    padding: 1rem; /* 16px */
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+  }
+  
+  .closeButton {
+    margin-top: 1rem;
+    background: none;
+    border: none;
+    color: #3b82f6; /* Blue */
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+  }
+  
+  .closeButton:hover {
+    background-color: #e0f2fe; /* Light blue */
+  }
+  

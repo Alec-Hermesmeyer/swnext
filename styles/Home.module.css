@@ -8,13 +8,14 @@
   height: auto;
   background-color: white;
   width: 100dvw;
+  margin-top: -5%;
 }
 /* SECTIONS */
 .hero{
   overflow: hidden;
   z-index: 2; 
   display: flex;
-  height: auto;
+  height: 100%;
   width: 100dvw;
   display: flex;
   flex-direction: column;
@@ -22,19 +23,18 @@
   justify-content: center;
   z-index: 6;
   box-shadow: 5px 10px 25px rgba(0, 0, 0, 0.53); 
-  margin-top: -5%;
-  margin-bottom: -4.3%;
-  
+  margin-bottom: 0; 
+ 
 }
 .info{
   width: 100dvw;
-  height: auto;
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
   justify-content: space-evenly;
-  padding-top: 30px;
+  padding-top: 0px;
   padding-bottom: 10px;
+  margin-top: 0px;
 }
 .services{
   height: auto;
@@ -240,7 +240,7 @@
   display: none;
 }
 .infoSection{
-  height: 145vh;
+  height: auto;
   width: 100vw;
   display: flex;
   align-items: center;
@@ -278,6 +278,7 @@
   flex-direction: column;
   padding-top: 15px;
   box-shadow: 5px 25px 25px rgba(0, 0, 0, 0.33);
+  
 }
 .infoTopContainer{
   height: 45dvh;
@@ -294,6 +295,7 @@
   align-items: center;
   justify-content: space-evenly;
   flex: 4;
+  
 }
 .infoTopWrapperC{
   height: 100%;
@@ -303,16 +305,18 @@
   align-items: center;
   justify-content: space-evenly;
   flex: 4;
+  
 }
 .infoTopLeft{
   flex: 3.2;
   height: 100%;
-  border-top: 25px solid red;
+  border-top: 40px solid red;
+  
 }
 .infoTopLeftC{
   flex: 3.2;
   height: 100%;
-  border-top: 25px solid rgb(16, 39, 94);
+  border-top: 40px solid rgb(16, 39, 94);
 }
 .infoTopRight{
   flex: .8;
@@ -334,13 +338,9 @@
 }
 .infoImage{
   object-fit: fill;
-  /* filter: grayscale(100%);
-   transition: ease 1s all; */
+  
 }
-/* .infoImage:hover{
-  filter: grayscale(0%);
-  transition: ease 1s all;
-} */
+
 .article{
   width: 100%;
   height: 100%;
@@ -349,6 +349,7 @@
   flex-direction: column;
   justify-content: center;
   color: black;
+  padding: 60px, 0px, 30px, 0px;
 }
 .infoCenterContainer{
   width: 100%;
@@ -363,6 +364,7 @@
   box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.43); 
   margin-bottom: 10px;
   border: 2px solid white;
+  
 }
 
 .infoCenterContainer h4{
@@ -837,7 +839,7 @@
     margin: 0;
   }
   .hero{
-    height: 70dvh;
+    height: auto;
     margin-top: -6svh;
   }
   .heroSection{
@@ -845,7 +847,7 @@
   }
   
   .heroWrapper{
-    height: 75%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     flex: 4;
@@ -853,13 +855,14 @@
   .heroLeft{
     flex: 2;
     height: 100%;
+    padding-top: 10%;
     
   }
   .heroRight{
     flex: 2;
     height: 100%;
     width: 100%;
-    padding-bottom: 20px;
+    padding-bottom: 80px;
   }
   .heroWrapper h1{
     font-size: xx-large;

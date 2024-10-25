@@ -1,66 +1,98 @@
-import React, { useState, useEffect } from "react";
-import styles from "@/styles/Admin.module.css";
-import withAuth from "@/components/withAuth";
-import { truncateText } from "@/utils/truncateText";
-import { GridPattern } from "@/components/GridPattern";
-import { createClient } from "@supabase/supabase-js";
-import { Inter } from "next/font/google";
-import { Lato } from "next/font/google";
-import AdminLayout from "@/components/AdminLayout";
-import { useRouter } from "next/router";
+import React from "react";
 import Link from "next/link";
-import supabase from "@/components/Supabase";
+import Tooltip from "@/components/Tooltip";
+import {
+  CalendarIcon,
+  CheckIcon,
+  LayoutGridIcon,
+  ClipboardIcon,
+  StickyNoteIcon,
+  SettingsIcon,
+  MenuIcon,
+  SearchIcon,
+} from "@/components/Icons";
+import Logout from "@/components/Logout";
+import withAuth from "@/components/withAuth";
+import styles from "@/styles/Dashboard.module.css";
+import TaskManager from "@/components/TaskManager";
+import EnhancedContent from "@/components/EnhancedContent";
 
+// Check to see if any components are undefined
 
-const lato = Lato({ weight: ["900"], subsets: ["latin"] });
-
-function Spacer() {
-  return (
-    <GridPattern className={styles.gridPattern} yOffset={10} interactive />
-  );
-}
 function Dashboard() {
   return (
-    <div className={styles.dashboardContainer}>
-    <div className={styles.cardsContainer}>
-      <div className={styles.db_Card}>
-        <h2>Contact Forms</h2>
-        <Link className={lato.className} href="/admin/contact">View and manage contact form submissions</Link>
-      </div>
-      <div className={styles.db_Card}>
-        <h2>Job Postings</h2>
-        <Link className={lato.className} href="/admin/job-openings">Manage, create and review job postings.</Link>
-        <p></p>
-      </div>
-      <div className={styles.db_Card}>
-        <h2>Applications</h2>
-        <Link className={lato.className} href="/admin/contact#applicants">Review job applications.</Link>
-      </div>
-      <div className={styles.db_Card}>
-        <h2>Company Contacts</h2>
-        <Link className={lato.className} href="/admin/company-contacts">Manage, create and review company contact</Link>
-      </div>
-      <div className={styles.db_Card}>
-        <h2>Sales</h2>
-        <Link className={lato.className} href="/admin/sales">Stay up to date with company Sales Data</Link>
-      </div>
-    </div>
+    <div className={styles.dashboard}>
+      <aside className={styles.aside}>
+        <nav className={styles.nav}>
+          <Tooltip.Provider>
+            <Link href="/" className={styles.tooltipProvider} prefetch={false}>
+              <LayoutGridIcon className={styles.icon} />
+              <span className={styles.iconSpan}>S&W Foundation</span>
+            </Link>
+            <Tooltip>
+              <Tooltip.Trigger asChild>
+                <Link
+                  href="/admin/sales"
+                  className={styles.tooltipProvider}
+                  prefetch={false}
+                >
+                  <CalendarIcon className={styles.icon} />
+                  <span className={styles.iconSpan}>Calendar</span>
+                </Link>
+              </Tooltip.Trigger>
+              <Tooltip.Content side="right">Sales</Tooltip.Content>
+            </Tooltip>
+            <Tooltip>
+              <Tooltip.Trigger asChild>
+                <Link
+                  href="/admin/contact"
+                  className={styles.tooltipProvider}
+                  prefetch={false}
+                >
+                  <ClipboardIcon className={styles.icon} />
+                  <span className={styles.iconSpan}>Contact Form</span>
+                </Link>
+              </Tooltip.Trigger>
+              <Tooltip.Content side="right">Contact Forms</Tooltip.Content>
+            </Tooltip>
+            <Tooltip>
+              <Tooltip.Trigger asChild>
+                <Link
+                  href="/admin/company-contacts"
+                  className={styles.tooltipProvider}
+                  prefetch={false}
+                >
+                  <StickyNoteIcon className={styles.icon} />
+                  <span className={styles.iconSpan}>Company Contacts</span>
+                </Link>
+              </Tooltip.Trigger>
+              <Tooltip.Content side="right">Company Contacts</Tooltip.Content>
+            </Tooltip>
+            <Tooltip>
+              <Tooltip.Trigger asChild>
+                <Link
+                  href="/admin/job-openings"
+                  className={styles.tooltipProvider}
+                  prefetch={false}
+                >
+                  <SettingsIcon className={styles.icon} />
+                  <span className={styles.iconSpan}>Job Openings</span>
+                </Link>
+              </Tooltip.Trigger>
+              <Tooltip.Content side="right">Job Openings</Tooltip.Content>
+            </Tooltip>
+          </Tooltip.Provider>
+          <Logout />
+        </nav>
+      </aside>
+      <section className={styles.section}>
+        <EnhancedContent />
+        <TaskManager />
+        </section>
+        
+      
     </div>
   );
 }
 
-const Admin = () => {
-  return (
-   
-    <div className={styles.admin}>
-      <Spacer />
-      <section className={styles.dashboardWidget}>
-       <Dashboard />
-      </section>
-      <Spacer />
-    </div>
-    
-  );
-};
-
-export default withAuth(Admin);
+export default withAuth(Dashboard);
