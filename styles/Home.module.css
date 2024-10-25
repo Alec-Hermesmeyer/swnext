@@ -743,7 +743,9 @@
   .services{
     margin-bottom: 2px;
   } 
- 
+  .infoSection{
+    margin-top: 5%;
+   }
   .infoTopContainer{
     height: 50dvh;
     justify-content: space-evenly;
@@ -794,8 +796,11 @@
   
   .services{
     margin-bottom: 2px;
+    
   } 
- 
+ .infoSection{
+  margin-top: 5%;
+ }
   .infoTopContainer{
     height: 45dvh;
     justify-content: space-evenly;
