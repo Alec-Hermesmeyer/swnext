@@ -99,31 +99,16 @@ function InfoSection() {
                     <div className={styles.infoTopLeft}>
                       <article className={styles.article}>
                         <h2 className={lato.className}>
-                          A Legacy of Excellence in Foundation Contracting
+                          Foundation Contracting Excellence Since 1986
                         </h2>
                         <p className={lato.className}>
-                          S&W Foundation Contractors is distinguished by its
-                          exceptional blend of customer service, vast
-                          experience, advanced equipment, and a strong
-                          commitment to safety. Our company&apos;s journey began
-                          in 1986 in Rowlett, Texas, rooted in family values,
-                          hard work, and a steadfast dedication to our craft. As
-                          a family-run business, we have evolved into a
-                          prominent name in the pier drilling sector, recognized
-                          nationwide for delivering dependable and
-                          superior-quality services. For more than three
-                          decades, our guiding principles of honesty, integrity,
-                          and excellence have been fundamental to our enduring
-                          success. Our business is equipped with cutting-edge
-                          technology and staffed by skilled professionals, all
-                          focused on fulfilling and surpassing the expectations
-                          of our clients. We take immense pride in both the
-                          quality of our work and the strong client
-                          relationships we&apos;ve fostered over the years. As
-                          we look to the future, S&W Foundation Contractors is
-                          excited to continue providing top-tier services to the
-                          construction industry for many more years.
+                          Based in Rowlett, Texas, S&W Foundation Contractors has been delivering reliable and high-quality pier drilling services for over three decades. Our foundation is rooted in family values, commitment to safety, and innovative technology, which have allowed us to become a nationally recognized name in the foundation construction industry.
                         </p>
+                        <ul className={styles.bulletPoints}>
+                          <li>Commercial and industrial foundation projects</li>
+                          <li>Advanced equipment and expert team</li>
+                          <li>Commitment to safety and integrity</li>
+                        </ul>
                       </article>
                     </div>
                     <div className={styles.infoTopRight}>
@@ -133,7 +118,7 @@ function InfoSection() {
                           src="Images/public/IMG_8061.webp"
                           height={400}
                           width={320}
-                          alt="S&W Foundations"
+                          alt="S&W Foundation Contractors"
                           priority
                           quality={80}
                         />
@@ -147,36 +132,20 @@ function InfoSection() {
               <FadeIn>
                 <div className={styles.infoTop}>
                   <div className={styles.infoTopContainer}>
-                    <div className={styles.infoTopWrapperC}>
+                    <div className={styles.infoTopWrapper}>
                       <div className={styles.infoTopLeftC}>
                         <article className={styles.article}>
                           <h2 className={lato.className}>
-                            Expert Pier Drilling Services Offered Nationwide
+                            Nationwide Pier Drilling and Foundation Services
                           </h2>
                           <p className={lato.className}>
-                            At S&W Foundation Contractors, we specialize in
-                            providing expert commercial pier drilling services
-                            that cater to a diverse range of projects, both
-                            locally in Dallas, Texas, and across the nation. Our
-                            roots in Dallas give us a unique understanding of
-                            the local terrain and construction needs, allowing
-                            us to offer specialized, region-specific solutions
-                            right at the heart of Texas. This local expertise,
-                            combined with our extensive experience, positions us
-                            perfectly to extend our services on a national
-                            scale. We harness the same dedication and precision
-                            that we apply in our local projects to serve clients
-                            across the United States. Our team is equipped to
-                            handle the logistical and technical demands of
-                            nationwide operations, ensuring the same high
-                            standards of quality and reliability, regardless of
-                            location. Whether it&apos;s a project in the
-                            bustling urban landscape of Dallas or a large-scale
-                            operation in another state, S&W Foundation
-                            Contractors is committed to delivering excellence in
-                            pier drilling, tailored to the unique needs of each
-                            project and location.
+                            S&W Foundation Contractors proudly serves Dallas, Texas, and extends our high-quality pier drilling and foundation services nationwide. With years of experience in diverse terrains and challenging environments, our team is equipped to provide region-specific solutions for various projects.
                           </p>
+                          <ul className={styles.bulletPoints}>
+                            <li>Specialized pier drilling for commercial projects</li>
+                            <li>Expertise in diverse terrains and soils</li>
+                            <li>Reliable results for projects nationwide</li>
+                          </ul>
                         </article>
                       </div>
                       <div className={styles.infoTopRight}>
@@ -186,7 +155,7 @@ function InfoSection() {
                             src="Images/public/IMG_7620.webp"
                             height={400}
                             width={320}
-                            alt="S&W Foundations"
+                            alt="S&W Foundation Contractors Nationwide Services"
                             priority
                             quality={80}
                           />
@@ -205,38 +174,16 @@ function InfoSection() {
                       <div className={styles.infoTopLeft}>
                         <article className={styles.article}>
                           <h2 className={lato.className}>
-                            Bringing Foundation Drilling Solutions to Dallas
+                            Comprehensive Foundation Solutions for Dallas and Beyond
                           </h2>
                           <p className={lato.className}>
-                            We&apos;re a full service pier drilling contractor
-                            with expertise in commercial and industrial
-                            foundation projects, large-scale residential
-                            developments, tilt-up pier construction,
-                            cast-in-place pier networks, and a full range of
-                            drilling-related specialties. Beyond these core
-                            services, we offer a comprehensive range of
-                            drilling-related specialties. This includes but is
-                            not limited to soil testing, site analysis, deep
-                            foundation drilling, and customized drilling
-                            solutions tailored to the specific geotechnical
-                            needs of each project. Our team is adept at
-                            navigating the intricacies of different soil types
-                            and environmental conditions, ensuring optimal
-                            foundation solutions irrespective of the
-                            project&apos;s complexity or scale. Our commitment
-                            to innovation and staying abreast of the latest
-                            industry advancements allows us to offer our clients
-                            cutting-edge solutions in pier drilling and
-                            foundation construction. Whether it&apos;s a
-                            challenging industrial project requiring precise and
-                            deep drilling, or a residential development seeking
-                            a reliable foundation, our goal is to provide
-                            top-tier service and results that not only meet but
-                            exceed expectations. With S&W Foundation
-                            Contractors, clients are assured of a partner that
-                            brings expertise, experience, and excellence to
-                            every project.
+                            Our services include not only pier drilling but also soil testing, deep foundation drilling, and site analysis, tailored to meet the specific needs of commercial, industrial, and residential projects. Our commitment to innovation ensures we provide the best foundation solutions.
                           </p>
+                          <ul className={styles.bulletPoints}>
+                            <li>Full-service foundation solutions</li>
+                            <li>Customized drilling based on geotechnical needs</li>
+                            <li>Innovative technology for quality assurance</li>
+                          </ul>
                         </article>
                       </div>
                       <div className={styles.infoTopRight}>
@@ -246,7 +193,7 @@ function InfoSection() {
                             src="Images/public/IMG_7653.webp"
                             height={400}
                             width={320}
-                            alt="S&W Foundations"
+                            alt="S&W Foundation Contractors in Dallas"
                             priority
                             quality={80}
                           />
@@ -262,8 +209,7 @@ function InfoSection() {
       </section>
     </Container>
   );
-}
-function InfoSectionMobile() {
+}function InfoSectionMobile() {
   return (
     <Container>
       <section className={styles.infoSectionMobile}>
