@@ -276,7 +276,7 @@
   align-items: center;
   justify-content: space-evenly;
   flex-direction: column;
-  padding-top: 15px;
+  padding-top: 10px;
   box-shadow: 5px 25px 25px rgba(0, 0, 0, 0.33);
   
 }
@@ -288,6 +288,21 @@
   justify-content: center;
   
 }
+.bulletPoints {
+  list-style-type: disc;
+  margin: 20px 0;
+  padding-left: 20px;
+  padding-bottom: 20px;
+}
+
+.bulletPoints li {
+  font-size: 16px;
+  line-height: 1.4;
+  color: #333;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
 .infoTopWrapper{
   height: 100%;
   width: 100%;
@@ -407,20 +422,22 @@
   flex-direction: column;
 }
 .infoWrapper h2{
-  font-size: 42px;
+  font-size: 36px;
   font-weight: 700;
   width: 100%;
-  margin-bottom: 10px;
+  margin-top: 5%;
+  padding-bottom: 15px;
   letter-spacing: 2px;
   line-height: 1.6em;
   text-align: center;
 }
 .infoWrapper p {
-  font-size: 1rem;
+  font-size: 18px;
   width: 80%;
-  padding-bottom: 20px;
+  padding-bottom: 5px;
   font-weight: 400;
   line-height: 1.4em;
+  text-align: center;
   
 }
 /*SERVICES SECTION */
@@ -779,6 +796,9 @@
     /* margin-top: 2.5%; */
     background-color: black;
   }
+  .bulletPoints li {
+    font-size: 20px;
+  }
 }
   
 /* MEDIA QUERIES */
@@ -799,7 +819,7 @@
     
   } 
  .infoSection{
-  margin-top: 5%;
+  margin-top: 2%;
  }
   .infoTopContainer{
     height: 45dvh;
@@ -814,7 +834,14 @@
   }
   .infoWrapper p{
     line-height: 1.8rem;
-    font-size: 1.2rem;
+    font-size: 24px;
+  }
+  .bulletPoints li {
+    font-size: 22px;
+  }
+  .infoWrapper h2{
+    font-size: 48px;
+    margin-top: 2%;
   }
   .infoTopLeftC{
     height: 100%;
