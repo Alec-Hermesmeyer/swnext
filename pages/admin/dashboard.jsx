@@ -85,12 +85,15 @@ function Dashboard() {
           <Logout />
         </nav>
       </aside>
-      <section className={styles.section}>
+      <div className={styles.header}>
         <EnhancedContent />
-        <TaskManager />
-        </section>
+      </div>
+      <div className={styles.main}>
+      <section className={styles.section}>
         
-      
+        <TaskManager />
+      </section>
+      </div>
     </div>
   );
 }

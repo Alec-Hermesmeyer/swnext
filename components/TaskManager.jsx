@@ -33,6 +33,7 @@ const TaskManager = () => {
     <main className={styles.main}>
       <div className={styles.cardGrid}>
         <Card className={styles.taskCard}>
+          <div className={styles.cardContent}>
           <Card.Header className={styles.cardHeader}>
             <Card.Title>Tasks</Card.Title>
             <Card.Description className={styles.cardDescription}>
@@ -81,6 +82,7 @@ const TaskManager = () => {
           <Card.Footer>
             <Button className={styles.viewAllTasksButton}>View All Tasks</Button>
           </Card.Footer>
+          </div>
         </Card>
         {/* Repeat for other cards */}
       </div>

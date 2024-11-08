@@ -22,9 +22,8 @@ const EnhancedContent = () => {
         {/* Sidebar Menu Sheet */}
         <Sheet>
           <Sheet.Trigger asChild>
-            <Button className={styles.menuButton}>
+            <Button variant='outline' className={styles.menuButton}>
               <MenuIcon className={styles.icon} />
-              <span className={styles.iconSpan}>Toggle Menu</span>
             </Button>
           </Sheet.Trigger>
           <Sheet.Content side="left" className={styles.sheetContent}>
