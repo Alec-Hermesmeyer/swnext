@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from "react";
 import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
@@ -5,7 +6,7 @@ import { getSalesData } from "@/actions/jobInfo";
 import { GridPattern } from "@/components/GridPattern";
 
 import supabase from "@/components/Supabase";
-
+import { SalesCharts } from "@/components/SalesChart";
 import { Lato } from "next/font/google";
 import { data } from "autoprefixer";
 
@@ -177,7 +178,7 @@ function Customers() {
   );
 }
 
-const Admin = () => {
+const Sales = () => {
     
     
       return (
@@ -185,17 +186,17 @@ const Admin = () => {
         <Spacer className={styles.spacer} />
         <section className={styles.contactWidgetOffice}>
         <div>
-          <h1>Sales Data</h1>
           
           <Customers data={data}/>
         </div>
       </section>
+      
     <Spacer className={styles.spacer} />
 
         </div>
 
     );
     }
-    export default withAuth(Admin);
+    export default withAuth(Sales);
 
     

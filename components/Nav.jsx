@@ -83,6 +83,11 @@ export default function Nav() {
                         Core Values
                       </Link>
                     </li>
+                    <li>
+                      <Link href="/blog">
+                        Blog
+                      </Link>
+                    </li>
                   </ul>
                 </li>
                 <li
