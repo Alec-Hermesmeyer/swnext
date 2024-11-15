@@ -98,19 +98,15 @@ export default function Blog({ posts }) {
       />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta
-        name="google-site-verification"
-        content="DOxscx8m8UxfwG_v4MKHOndXU19gJHMMVf5cvy5V46c"
-      />
-      <meta
         property="og:title"
-        content="S&amp;W Foundation | Expert Commercial Construction &amp; Pier Drilling in Dallas, TX"
+        content="S&amp;W Foundation Latest News | Expert Commercial Construction &amp; Pier Drilling in Dallas, TX"
       />
       <meta
         property="og:description"
         content="From commercial pier drilling to turnkey construction solutions, S&amp;W Foundation stands as the go-to choice for businesses across the US. Discover our legacy of excellence."
       />
       <meta property="og:type" content="website" />
-      <meta property="og:url" content="https://www.swfoundation.com/" />
+      <meta property="og:url" content="https://www.swfoundation.com/blog" />
       <meta
         property="og:image"
         content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp?t=2024-04-16T20%3A11%3A20.126Z"
@@ -132,7 +128,7 @@ export default function Blog({ posts }) {
         name="twitter:image"
         content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp?t=2024-04-16T20%3A11%3A20.126Z"
       />
-      <link rel="canonical" href="https://www.swfoundation.com/" />
+      <link rel="canonical" href="https://www.swfoundation.com/blog" />
       <link
         rel="icon"
         href="/android-chrome-512x512.png"
