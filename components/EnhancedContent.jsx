@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import Link from 'next/link';
 import styles from '@/styles/EnhancedContent.module.css';
 import Input from "@/components/Input";
@@ -15,6 +16,8 @@ const EnhancedContent = () => {
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
+  const { pathname } = useRouter();
+const paths = pathname.split('/').filter(Boolean);
 
   return (
     <div className={styles.content}>
@@ -22,9 +25,8 @@ const EnhancedContent = () => {
         {/* Sidebar Menu Sheet */}
         <Sheet>
           <Sheet.Trigger asChild>
-            <Button className={styles.menuButton}>
+            <Button variant='outline' className={styles.menuButton}>
               <MenuIcon className={styles.icon} />
-              <span className={styles.iconSpan}>Toggle Menu</span>
             </Button>
           </Sheet.Trigger>
           <Sheet.Content side="left" className={styles.sheetContent}>
@@ -40,13 +42,18 @@ const EnhancedContent = () => {
 
         {/* Breadcrumb Navigation */}
         <Breadcrumb className={styles.breadcrumb}>
-          <Breadcrumb.List>
-            <Breadcrumb.Item>
-              <Breadcrumb.Link href="/">Dashboard</Breadcrumb.Link>
-            </Breadcrumb.Item>
-            {/* Add dynamic breadcrumbs if needed */}
-          </Breadcrumb.List>
-        </Breadcrumb>
+    <Breadcrumb.List>
+      
+      {paths.map((path, index) => (
+        <Breadcrumb.Item  key={index}>
+          <Breadcrumb.Link href={`/${paths.slice(0, index + 1).join('/')}`}>
+            {path.charAt(0).toUpperCase() + path.slice(1)}
+          </Breadcrumb.Link>
+          <span className={styles.breadcrumbDivider}>/</span>
+        </Breadcrumb.Item>
+      ))}
+    </Breadcrumb.List>
+  </Breadcrumb>
 
         {/* Search Bar */}
         <div className={styles.searchContainer}>

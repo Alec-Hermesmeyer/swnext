@@ -73,4 +73,28 @@
         <changefreq>always</changefreq>
         <priority>0.5</priority>
     </url>
+    <url>
+        <loc>https://www.swfoundation.com/blog</loc>
+        <lastmod>2024-11-15</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
+        <loc>https://www.swfoundation.com/blog/the-silent-guardians</loc>
+        <lastmod>2024-11-15</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
+        <loc>https://www.swfoundation.com/blog/building-the-future</loc>
+        <lastmod>2024-11-15</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
+        <loc>https://www.swfoundation.com/blog/building-a-solid-foundation</loc>
+        <lastmod>2024-11-15</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+    </url>
 </urlset>

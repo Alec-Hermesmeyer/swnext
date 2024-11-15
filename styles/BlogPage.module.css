@@ -1,0 +1,329 @@
+.blogPage {
+    font-family: 'Lato', sans-serif;
+    margin: 60px 0px;
+    padding: 5rem;
+    background-color: #f3f2f2;
+    width: 100dvw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-bottom: -2%
+  }
+  .spacer{
+    height: 30dvh;
+    width: 100dvw;
+    z-index: -200;
+    margin-bottom: -2%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .gridPattern{
+    height: 30dvh;
+    width: 100dvw;
+    /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
+    color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
+    background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+    mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .blogPage h1 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .blogGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 20px 0px;
+  }
+  
+  .blogCard {
+    background: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+    z-index: 10;
+  }
+  
+  .blogCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .blogImage {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+  
+  .blogTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin: 1rem;
+  }
+  
+  .blogExcerpt {
+    font-size: 1rem;
+    color: #666;
+    margin: 0 1rem 1rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(25%, auto));
+    grid-gap: 1dvw;
+    width: 92%;
+    max-width: 95%;
+    height: auto;
+    }
+    
+    .card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 100%;
+    height: 300px;
+    border: 1px solid black;
+    background-color: rgb(16, 39, 94);
+    border-radius: var(--border-radius);
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.73), rgba(0, 0, 0, 0.23)),url(https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    }
+    .jobPostings{
+        width: 100dvw;
+        height: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 5%;
+        margin-bottom: 3%;  
+      }
+      .jobPostingsSection{
+        width: 100%;
+        height: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: white;
+        margin-top: 5%;
+      }
+      .jobPostingsSection h2{
+        font-size: 2rem;
+        font-weight: 900;
+        text-align: center;
+        width: 100%;
+        margin-bottom: 2%;
+        margin-top: 5%;
+        letter-spacing: .5px;
+        color: black;
+        
+      }
+      .jobPostInfo{
+        width: 100%;
+        height: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: white;
+        
+      }
+      .jobPostInfo summary{
+        font-size: x-large;
+        font-weight: 900;
+        text-align: center;
+        width: 100%;
+        margin-bottom: 2%;
+        cursor: pointer;
+        text-shadow: 2px 2px 2px black;
+        margin-top: 5%;
+        letter-spacing: .5px;
+      }
+      .jobPostInfo p{
+        font-size: large;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+        padding-left: 5%;
+        padding-right: 5%;
+        margin-bottom: 2%;
+        text-shadow: 2px 2px 2px black;
+      }
+      .jobBtns{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+      }
+      .infoBtn3 p{
+        font-size: 16px;
+        font-weight: 700;
+        text-align: center;
+        width: 100%;
+        color: white;
+        
+      }
+  @media (max-width: 1100px){
+    .blogPage {
+      padding: 2rem;
+      margin-bottom: -20px;
+      margin-top: 35px;
+    }
+    .blogGrid {
+      grid-template-columns: repeat(1, minmax(25%, auto));
+    }
+  
+    .blogPage h1 {
+      font-size: 2rem;
+      padding-top: 9rem;
+    }
+  
+    .blogTitle {
+      font-size: 1.25rem;
+    }
+  
+    .blogExcerpt {
+      font-size: 0.9rem;
+    }
+    .jobPostings{
+        height: auto;
+        min-height: 60dvh;
+        max-height: fit-content;
+        padding-bottom: 2%;
+      }
+      .jobPostingsSection{
+        margin-top: 5%;
+        height: auto;
+        min-height: 60dvh;
+        max-height: fit-content;
+        margin-bottom: 5%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .grid{
+        grid-template-columns: repeat(2, minmax(50%, auto));
+        width: 85%;
+        height: auto;
+        min-height: 60dvh;
+        max-height: fit-content;
+      }
+      .card{
+        padding-bottom: 2%;
+        min-height: 200px;
+        height: auto;
+        max-height: 200px;
+        margin-bottom: 2%;
+      }
+      .jobPostInfo summary{
+        font-size: large;
+        margin-top: 5%;
+        padding-bottom: 5%;
+      }
+      .jobPostInfo p{
+        font-size: medium;
+        padding-bottom: 5%;
+      
+      }
+      .spacer{
+        height: 10vh;
+        margin-top: -25%;
+        z-index: -500;
+        padding-bottom: 10px;
+       
+      }
+      .jobPostingsSection h2{
+        margin-top: 5rem;
+        margin-bottom: 15%;
+      }
+  }
+  @media (max-width: 767px) {
+    .blogPage {
+      padding: 1rem;
+      margin-bottom: -20px;
+      margin-top: 35px;
+    }
+  
+    .blogPage h1 {
+      font-size: large;
+      padding-top: 5rem;
+    }
+  
+    .blogTitle {
+      font-size: 1.25rem;
+    }
+  
+    .blogExcerpt {
+      font-size: 0.9rem;
+    }
+    .jobPostings{
+        height: auto;
+        min-height: 60dvh;
+        max-height: fit-content;
+        padding-bottom: 2%;
+      }
+      .jobPostingsSection{
+        margin-top: 5%;
+        height: auto;
+        min-height: 60dvh;
+        max-height: fit-content;
+        margin-bottom: 5%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .grid{
+        grid-template-columns: repeat(1, minmax(25%, auto));
+        width: 85%;
+        height: auto;
+        min-height: 60dvh;
+        max-height: fit-content;
+      }
+      .card{
+        padding-bottom: 2%;
+        min-height: 200px;
+        height: auto;
+        max-height: 200px;
+        margin-bottom: 2%;
+      }
+      .jobPostInfo summary{
+        font-size: large;
+        margin-top: 5%;
+        padding-bottom: 5%;
+      }
+      .jobPostInfo p{
+        font-size: medium;
+        padding-bottom: 5%;
+      
+      }
+      .spacer{
+        height: 10vh;
+        margin-top: -25%;
+        z-index: -500;
+        padding-bottom: 10px;
+       
+      }
+      .jobPostingsSection h2{
+        margin-top: 5rem;
+        margin-bottom: 15%;
+      }
+  }
+  

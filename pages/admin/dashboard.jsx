@@ -16,6 +16,8 @@ import withAuth from "@/components/withAuth";
 import styles from "@/styles/Dashboard.module.css";
 import TaskManager from "@/components/TaskManager";
 import EnhancedContent from "@/components/EnhancedContent";
+import Sales from "./sales";
+import SalesChart from "@/components/SalesChart";
 
 // Check to see if any components are undefined
 
@@ -85,12 +87,16 @@ function Dashboard() {
           <Logout />
         </nav>
       </aside>
-      <section className={styles.section}>
+      <div className={styles.header}>
         <EnhancedContent />
-        <TaskManager />
-        </section>
+      </div>
+      <div className={styles.main}>
+      <section className={styles.section}>
         
-      
+        <TaskManager />
+        <SalesChart />
+      </section>
+      </div>
     </div>
   );
 }

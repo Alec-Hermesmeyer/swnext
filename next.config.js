@@ -62,6 +62,7 @@ const nextConfig = {
   images: {
     loader: 'custom',
     loaderFile: './supabase-image-loader.js',
+    domains: ['edycymyofrowahspzzpg.supabase.co']
   },
 }
 module.exports = nextConfig;

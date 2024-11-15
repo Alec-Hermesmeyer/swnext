@@ -1,117 +1,114 @@
+/* Main Content */
 .content {
-    display: flex;
-    flex-direction: column;
-   padding: 10px;
-    margin-left: 8rem;
-   
-  }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background-color: #E2E8F0;
+ 
+  width: calc(100% - 20rem); /* Full width minus sidebar */
+  height: 60px; /* Navbar height */
+  position: fixed;
+  top: 0;
+  left: 20rem; /* Starts after the sidebar */
+  z-index: 10;
+}
+
+/* Header Content Inside Navbar */
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between; /* Spread sections evenly */
+  align-items: center;
+  width: 100%;
+  gap: 20px;
+  padding: 0% 10%;
   
-  .header {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e0e0e0;
-    height: auto;
-    border-radius: 8px;
-  }
-  
-  .menuButton {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    background-color: #007bff;
-    color: #fff;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-    width: 12rem;
-  }
-  
-  .icon {
-    margin-right: 8px;
-  }
-  
-  .iconSpan {
-    display: none;
-  }
-  
-  @media (min-width: 768px) {
-    .iconSpan {
-      display: inline;
-    }
-  }
-  
-  .sheetContent {
-    padding: 20px;
-    width: 250px;
-    background-color: #fff;
-    border-right: 1px solid #e0e0e0;
-  }
-  
-  .sheetNav {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .sheetLink {
-    display: flex;
-    align-items: center;
-    padding: 10px 0;
-    color: #333;
-    text-decoration: none;
-  }
-  
-  .breadcrumb {
-    margin-left: 20px;
-    flex: 1;
-  }
-  
-  .searchContainer {
-    display: flex;
-    align-items: center;
-    border: 1px solid #ccc;
-    padding: 5px;
-    border-radius: 4px;
-    background-color: #fff;
-    margin-top: .5rem;
-  }
-  
-  .searchIcon {
-    margin-right: 10px;
-    color: #666;
-  }
-  
-  .searchInput {
-    border: none;
-    outline: none;
-    flex: 1;
-  }
-  
-  .avatarButton {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 10px;
-    background-color: transparent;
-    color: #007bff;
-    cursor: pointer;
-    width: 4rem;
-  }
-  
-  .avatarButton:hover {
-    background-color: #e6f7ff;
-  }
-  
-  .dropdownMenuItem {
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  
-  .dropdownMenuItem:hover {
-    background-color: #f0f0f0;
-  }
-  
+}
+
+/* Menu Button */
+.menuButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #007bff;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 45px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.menuButton:hover {
+  background-color: #0056b3;
+}
+
+/* Breadcrumb Navigation */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #666;
+  justify-content: space-evenly;
+}
+
+/* Search Bar */
+.searchContainer {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  border-radius: 45px;
+  background-color: #f9f9f9;
+  width: 100%;
+  max-width: 350px;
+  transition: border-color 0.3s ease;
+}
+
+.searchContainer:focus-within {
+  border-color: #007bff;
+}
+
+.searchIcon {
+  margin-right: 8px;
+  color: #666;
+}
+
+.searchInput {
+  border: none!important;
+  outline: none;
+  flex: 1;
+  background-color: transparent;
+  font-size: 1rem;
+  color: #333;
+}
+
+/* Account Dropdown */
+.avatarButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: transparent;
+  color: #007bff;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.avatarButton:hover {
+  background-color: #e6f7ff;
+}
+
+/* Dropdown Menu Styling */
+.dropdownMenuItem {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #333;
+  transition: background-color 0.3s ease;
+}
+
+.dropdownMenuItem:hover {
+  background-color: #f0f0f0;
+}

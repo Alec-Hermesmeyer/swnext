@@ -4,26 +4,29 @@
     display: flex;
   }
   
-  .breadcrumbList {
-    display: flex;
-    gap: 0.5rem; /* Space between breadcrumb items */
-  }
-  
   .breadcrumbItem {
     display: flex;
     align-items: center;
-  }
-  
-  .breadcrumbSeparator {
-    margin: 0 0.5rem; /* Space on both sides of separator */
-  }
-  
-  .breadcrumbLink {
-    color: #2563eb; /* Blue color */
+    gap: 8px; /* Space between icon and text, if any */
+    color: #007bff;
     text-decoration: none;
   }
   
-  .breadcrumbLink:hover {
+  .breadcrumbItem:hover {
+    color: #0056b3; /* Hover effect */
     text-decoration: underline;
   }
   
+  /* Divider styling */
+   .breadcrumbSeparator {
+    margin: 0 8px; /* Spacing on either side of divider */
+    color: #ccc;
+    font-size: 0.9rem;
+  }
+  
+  /* Optional styling for last breadcrumb item */
+  .breadcrumbItem:last-child {
+    color: #333; /* Different color for the last item */
+    font-weight: bold;
+    pointer-events: none; /* Make the last breadcrumb item non-clickable */
+  }
