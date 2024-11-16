@@ -15,7 +15,9 @@ import { remark } from 'remark';
 import html from 'remark-html';
 import MarkdownBlogPost from '@/components/MarkdownBlogPost';
 
+
 export default function BlogPost({ frontmatter, content }) {
+  
   return <MarkdownBlogPost frontmatter={frontmatter} content={content} />;
 }
 
