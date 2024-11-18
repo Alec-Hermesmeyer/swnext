@@ -132,7 +132,7 @@ function InfoSection() {
               <FadeIn>
                 <div className={styles.infoTop}>
                   <div className={styles.infoTopContainer}>
-                    <div className={styles.infoTopWrapper}>
+                    <div className={styles.infoTopWrapperC}>
                       <div className={styles.infoTopLeftC}>
                         <article className={styles.article}>
                           <h2 className={lato.className}>
