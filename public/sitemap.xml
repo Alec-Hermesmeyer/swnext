@@ -68,6 +68,12 @@
         <priority>0.5</priority>
     </url>
     <url>
+        <loc>https://www.swfoundation.com/helical-piles</loc>
+        <lastmod>2024-11-22</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
         <loc>https://www.swfoundation.com/core-values</loc>
         <lastmod>2024-04-18</lastmod>
         <changefreq>always</changefreq>
