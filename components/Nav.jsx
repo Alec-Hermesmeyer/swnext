@@ -21,6 +21,22 @@ const data = [
     link: "/services",
   },
   {
+    name: "Pier Drilling",
+    link: "/pier-drilling",
+  },
+  {
+    name: "Limited Access Pier Drilling",
+    link: "/limited-access",
+  },
+  {
+    name: "Turn Key Drilling Solutions",
+    link: "/turn-key",
+  },
+  {
+    name: "Crane Services",
+    link: "/crane",
+  },
+  {
     name: "Contact",
     link: "/contact",
   },
@@ -32,6 +48,20 @@ const data = [
     name: "Gallery",
     link: "/gallery",
   },
+  
+  {
+    name: "Safety",
+    link: "/safety",
+  },
+  {
+    name: "Core Values",
+    link: "/core-values",
+  },
+  {
+    name: "Blog",
+    link: "/blog",
+  },
+  
 ];
 
 export default function Nav() {
