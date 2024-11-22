@@ -37,6 +37,10 @@ const data = [
     link: "/crane",
   },
   {
+    name: "Helical Piles",
+    link: "/helical-piles",
+  },
+  {
     name: "Contact",
     link: "/contact",
   },
@@ -146,6 +150,9 @@ export default function Nav() {
                     </li>
                     <li>
                       <Link href="/crane">Crane Services</Link>
+                    </li>
+                    <li>
+                      <Link href="/helical-piles">Helical Piles</Link>
                     </li>
                   </ul>
                 </li>

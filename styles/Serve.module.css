@@ -11,6 +11,7 @@
 .hero{
   width: 100vw;
   height: 35vw;
+  
 }
 .heroLink{
   height: 40px;
@@ -72,9 +73,9 @@
   line-height: 1.2em;
 }
 .info{
-  height: 100%;
+  height: auto;
   width: 100vw;
-  padding-top: 2%;
+  padding: 14% 0%;
 }
 .infoBtn{
   height: 40px;
@@ -247,6 +248,7 @@
   align-items: center;
   justify-content: center;
   padding-left: 1%;
+  padding-bottom: 2%;
   
 }
 .infoBottom{
@@ -357,9 +359,9 @@
   
   
   .info{
-    height: 215dvh;
-    margin-top: 5%;
-    padding-bottom: 2%;
+    height: auto;
+    padding: 2% 0%
+    
   }
   
 
@@ -422,7 +424,7 @@
   .info{
     height: 100%;
     width: auto;
-    margin-bottom: -2dvh;
+    padding: 2% 0%;
   }
   .infoSection{
     height: 100%;
@@ -556,7 +558,7 @@
   .info{
     height: 100%;
     width: auto;
-    margin-bottom: -2dvh;
+    padding: 2% 0%;
   }
   .infoBtn{
     margin-bottom: 4%;
