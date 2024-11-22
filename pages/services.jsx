@@ -179,6 +179,43 @@ function InfoSection() {
               </div>
             </div>
           </FadeIn>
+          <FadeIn>
+  <div className={styles.infoTop}>
+    <div className={styles.infoTopContainer}>
+      <div className={styles.infoTopWrapper}>
+        <div className={styles.infoTopLeft}>
+          <div className={styles.infoTopLeftContainer}>
+            <h2 className={lato.className}>
+              Helical Piles
+            </h2>
+            <p className={lato.className}>
+            Helical piles are a dependable foundation solution for commercial projects requiring 
+              high load-bearing capacity and adaptability in difficult soil conditions. At S&amp;W Foundation Contractors, 
+              we bring decades of expertise to every project, ensuring precise installation and long-lasting performance.
+              <br /><br />
+              Our team leverages advanced techniques and specialized equipment to meet the unique demands of each site. 
+              As a full-service subcontractor, we take pride in managing the entire process, from transporting our equipment 
+              to expertly installing the helical piles. When your project calls for innovation, reliability, and efficiency, 
+              you can trust S&amp;W to deliver results that exceed expectations.
+            </p>
+            <Link className={styles.infoBtn} href="/helical-piles">Learn More</Link>
+          </div>
+        </div>
+        <div className={styles.infoTopRight}>
+          <Image
+            className={styles.infoImage}
+            src="Images/public/Pratt3.webp"
+            height={380}
+            width={430}
+            alt="Helical Piles by S&W Foundations"
+            loading="lazy"
+            quality={80}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</FadeIn>
         </div>
       </div>
     </div>

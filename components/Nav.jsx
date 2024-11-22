@@ -21,6 +21,26 @@ const data = [
     link: "/services",
   },
   {
+    name: "Pier Drilling",
+    link: "/pier-drilling",
+  },
+  {
+    name: "Limited Access Pier Drilling",
+    link: "/limited-access",
+  },
+  {
+    name: "Turn Key Drilling Solutions",
+    link: "/turn-key",
+  },
+  {
+    name: "Crane Services",
+    link: "/crane",
+  },
+  {
+    name: "Helical Piles",
+    link: "/helical-piles",
+  },
+  {
     name: "Contact",
     link: "/contact",
   },
@@ -32,6 +52,20 @@ const data = [
     name: "Gallery",
     link: "/gallery",
   },
+  
+  {
+    name: "Safety",
+    link: "/safety",
+  },
+  {
+    name: "Core Values",
+    link: "/core-values",
+  },
+  {
+    name: "Blog",
+    link: "/blog",
+  },
+  
 ];
 
 export default function Nav() {
@@ -116,6 +150,9 @@ export default function Nav() {
                     </li>
                     <li>
                       <Link href="/crane">Crane Services</Link>
+                    </li>
+                    <li>
+                      <Link href="/helical-piles">Helical Piles</Link>
                     </li>
                   </ul>
                 </li>
