@@ -25,6 +25,7 @@
     /* background-color: #f5f5f4;  fill-blue-900, assuming blue-900 is #3b82f6 */
     color: #1e293b; /* stroke-neutral-950/5, assuming neutral-950 is #1e293b with 5% opacity */
     background-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
+    -webkit-mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
     mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700, via-white, to-neutral-50 */
     display: flex;
     justify-content: center;
@@ -63,7 +64,7 @@
   
   .blogImage {
     width: 100%;
-    height: auto;
+    height: 300px;
     object-fit: cover;
   }
   

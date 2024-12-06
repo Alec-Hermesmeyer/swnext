@@ -1,13 +1,3 @@
-// import React from 'react'
-
-// const page = () => {
-//   return (
-//     <div>page</div>
-//   )
-// }
-
-// export default page
-
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
@@ -18,7 +8,9 @@ import MarkdownBlogPost from '@/components/MarkdownBlogPost';
 
 export default function BlogPost({ frontmatter, content }) {
   
-  return <MarkdownBlogPost frontmatter={frontmatter} content={content} />;
+  return <MarkdownBlogPost frontmatter={frontmatter} content={content}
+    style={{ color: "white!important", }}
+  />;
 }
 
 export async function getStaticPaths() {
