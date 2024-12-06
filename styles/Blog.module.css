@@ -11,6 +11,12 @@
   z-index: -5;
   
 }
+.post h3{
+  color: white;
+}
+.post li{
+  color: white;
+}
 .postContainer{
   width: 100%;
   display: flex;
