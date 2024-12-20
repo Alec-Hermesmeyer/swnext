@@ -1,7 +1,7 @@
 ---
 title: "Unlocking the Power of Helical Pile Drilling with S&W Foundation Contractors"
 date: "2024-12-5" 
-excerpt: "A strong foundation is the cornerstone of any successful construction project. In Dallas, commercial pier drilling provides the ultimate solution for building stability." 
+excerpt: A strong foundation is the cornerstone of any successful construction project. In Dallas, helical pile drilling solutions from full-service commercial pier drilling specialists like S&W Foundation Contractors provide the ultimate combination of stability, efficiency, and environmental responsibility—ensuring that every structure stands strong from the ground up." 
 imageId: "Pratt3" 
 contact: 
     phone: "(214) 703-0484" 

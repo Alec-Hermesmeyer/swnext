@@ -112,3 +112,16 @@
 .dropdownMenuItem:hover {
   background-color: #f0f0f0;
 }
+.sheetContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  width: 100%;
+}
+.sheetNav {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+}

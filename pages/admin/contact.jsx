@@ -269,7 +269,7 @@ function JobApplicants() {
 
   return (
     <div className={styles.contactSubContainer}>
-      <h1 className={lato.className}>Job Applicants</h1>
+      <h1>Job Applicants</h1>
       <div className={styles.contactSubWrapper}>
         {jobSubmission.map((submission) => (
           <div className={styles.contactSubCard} key={submission.id}>
@@ -346,14 +346,12 @@ function DeleteUser() {
 const Admin = () => {
   return (
     <div className={styles.admin}>
-      <Spacer className={styles.spacer} />
       <section className={styles.contactWidget}>
         <ContactSubmissions />
       </section>
       <section id="applicants" className={styles.contactWidget}>
         <JobApplicants />
       </section>
-      <Spacer className={styles.spacer} />
     </div>
     
   );

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import styles from '../styles/AdminLayout.module.css';
-import Link from 'next/link';
 import Sidebar from './Sidebar';
+import EnhancedContent from "@/components/EnhancedContent";
 
 const AdminLayout = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -34,17 +34,19 @@ const AdminLayout = ({ children }) => {
         <title>Admin Dashboard</title>
         <meta name="description" content="Admin Dashboard" />
       </Head>
-      
+      <div className={styles.header}>
+        <EnhancedContent />
+      </div>
      
       <div className={`${styles.content} ${isSidebarCollapsed ? styles.fullWidth : ''}`}>
-        {/* {!isSidebarCollapsed && (
+        {!isSidebarCollapsed && (
           <aside className={styles.sidebar}>
             <Sidebar />
 
         
           </aside>
           
-        )} */}
+        )}
         <main className={styles.main}>{children}</main>
       </div>
       

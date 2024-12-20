@@ -1,9 +1,10 @@
 .admin {
-  width: 100%;
+  width: auto;
+  margin: auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-end;
+  align-items: flex-end;
   height: auto;
   overflow: hidden;
   /* margin-bottom: -3.5%; */ /* Consider removing this line */
@@ -198,16 +199,13 @@
   ); /* from-red-700, via-white, to-neutral-50 */
 }
 .contactWidget {
-  background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin: 20px auto;
   overflow-x: auto;
   margin-top: 40px;
   margin-bottom: 40px;
-  width: 70%;
+  width: calc(100dvw - 20rem);
   height: auto;
-  min-height: 45dvh;
+  border-radius: var(--border-radius);
+  padding: 10px 20px 10px 20px;
 }
 
 .contactSubContainer {
@@ -353,17 +351,17 @@
 }
 
 .contactWidgetOffice {
-  background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 40px;
-  margin: 20px auto;
+  /* background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
   overflow-x: auto;
   margin-top: 40px;
   margin-bottom: 40px;
-  width: 80dvw;
+  width: calc(100dvw - 20rem);
   height: auto;
   border-radius: var(--border-radius);
+  padding: 40px 20px 10px 20px;
 }
+
 .manageContacts {
   padding: 1rem;
   background-color: #f9f9f9;

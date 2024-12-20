@@ -1,0 +1,348 @@
+.jobsDashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 20px;
+  padding: 60px 20px;
+  margin-left: 12rem;
+  margin-top: 20px;
+  background-color: white;
+}
+.topSection {
+    margin-bottom: 20px;
+    height: 300px;
+    overflow: scroll;
+    border-radius: 10px;
+    padding: 0px 40px;
+    background-color: #f3f4f6ed;
+  }
+  
+  
+  .middleSection {
+    height: 300px;
+    overflow: scroll;
+    gap: 40px;
+    margin-bottom: 40px;
+    padding: 0px 40px;
+    border-radius: 10px;
+    padding: 10px 40px;
+    background-color: #f3f4f6ed;
+  }
+  
+  .column {
+    flex: 1;
+  }
+  
+  .buttonContainer {
+    text-align: right;
+  }
+  
+  .topSection h2,
+  .column h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+    color: #333;
+  }
+.dashboardContainer {
+    margin-top: 20px;
+    padding: 10px;
+  }
+  
+  .jobTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+  }
+  
+  .jobTable th, .jobTable td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+  }
+  
+  .jobTable th {
+    background-color: #eee;
+    font-weight: bold;
+  }
+  
+  .jobTable tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  
+  .openButton {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .openButton:hover {
+    background-color: #45a049;
+  }
+  .formContainer {
+    margin-top: 20px;
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 6px;
+    width: 300px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .formContainer h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+    color: #333;
+  }
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .formGroup {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .label {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: #444;
+  }
+  
+  .input {
+    padding: 8px;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .input:focus {
+    outline: none;
+    border-color: #4caf50;
+  }
+  
+  .buttonContainer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+  }
+  
+  .submitButton {
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .submitButton:hover {
+    background-color: #45a049;
+  }
+  
+  .cancelButton {
+    background-color: #ccc;
+    color: #333;
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .cancelButton:hover {
+    background-color: #b3b3b3;
+  }
+  .detailContainer {
+    margin-top: 20px;
+    background: #e2e1e128;
+    padding: 20px 40px 80px 40px;
+    border-radius: 6px;
+    width: auto;
+    font-family: Arial, sans-serif;
+    box-shadow: 0px 0px 10px 0px #0000001a;
+  }
+  
+  .heading {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.25rem;
+    color: #333;
+  }
+  
+  .projectInfo {
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    color: #555;
+  }
+  
+  .backButton {
+    background-color: #ccc;
+    color: #333;
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .backButton:hover {
+    background-color: #b3b3b3;
+  }
+  
+  .subHeading {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .docTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .docTable th,
+  .docTable td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .docTable th {
+    background-color: #eee;
+    font-weight: bold;
+  }
+  
+  .docTable tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .uploadForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+ /* Form Container */
+.formContainer {
+    width: 100%;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+  }
+  
+  /* Title */
+  .formContainer h2 {
+    font-size: 2rem;
+    text-align: center;
+    color: #333;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Form */
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .formGroup {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .label {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+  }
+  
+  .input,
+  .textarea {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+  }
+  
+  .textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .input:focus,
+  .textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    outline: none;
+  }
+  
+  /* Buttons */
+  .buttonContainer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  
+  .submitButton,
+  .cancelButton {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .submitButton {
+    background-color: #28a745;
+    color: #fff;
+  }
+  
+  .submitButton:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+  }
+  
+  .cancelButton {
+    background-color: #dc3545;
+    color: #fff;
+  }
+  
+  .cancelButton:hover {
+    background-color: #c82333;
+    transform: scale(1.05);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .buttonContainer {
+      flex-direction: column;
+    }
+  
+    .submitButton,
+    .cancelButton {
+      width: 100%;
+    }
+  }
+  
