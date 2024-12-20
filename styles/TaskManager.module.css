@@ -2,24 +2,27 @@
 
 .container {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
-  padding: 20px;
+  padding: 40px 10px;
+   /* Added a light background to distinguish the main area */
+  
   
 }
 
 .taskCard {
-  width: 100%;
-  max-width: 900px;
+  width: auto;
   background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  border-radius: none!important;
+  box-shadow: none!important;
 }
 
 .cardHeader {
   padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #ddd;
+  width: 100%;
+  border-radius: 12px 12px 0 0;
 }
 
 .cardTitle {
@@ -46,33 +49,33 @@
   margin-bottom: 20px;
 }
 
+.taskInput,
+.assignDropdown,
+.dateInput {
+  padding: 10px 14px;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fff;
+}
+
+.taskInput:focus,
+.assignDropdown:focus,
+.dateInput:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
 .taskInput {
   flex: 2;
-  padding: 10px 14px;
-  border: 1px solid #cccccc;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
 }
 
-.taskInput:focus {
-  border-color: #007bff;
-}
-
-.assignDropdown {
+.assignDropdown,
+.dateInput {
   flex: 1;
-  padding: 10px 14px;
-  border: 1px solid #cccccc;
-  border-radius: 8px;
-  font-size: 14px;
-  background-color: #ffffff;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.assignDropdown:focus {
-  border-color: #007bff;
+  min-width: 120px;
 }
 
 .addTaskButton {
@@ -83,11 +86,16 @@
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  outline: none;
 }
 
 .addTaskButton:hover {
   background-color: #218838;
+}
+
+.addTaskButton:focus {
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
 }
 
 .taskList {
@@ -102,12 +110,13 @@
   padding: 12px 16px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  background-color: #fafafa;
+  background-color: #ffffff;
   transition: background-color 0.2s, border-color 0.2s;
+  position: relative;
 }
 
 .taskItem:hover {
-  background-color: #f1f1f1;
+  background-color: #f9f9f9;
   border-color: #d0d0d0;
 }
 
@@ -131,6 +140,8 @@
 .taskText {
   font-size: 16px;
   color: #333333;
+  flex: 1;
+  word-break: break-word;
 }
 
 .completed .taskText {
@@ -145,24 +156,40 @@
   margin-top: 8px;
   font-size: 12px;
   color: #555555;
+  align-items: center;
 }
 
-.taskDate {
-  background-color: #e9ecef;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
+.taskDate,
 .taskAssignedTo {
   background-color: #e9ecef;
-  padding: 2px 6px;
+  padding: 4px 8px;
   border-radius: 4px;
+}
+
+.deleteTaskButton {
+  padding: 6px 10px;
+  background-color: #dc3545;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.deleteTaskButton:hover {
+  background-color: #c82333;
+}
+
+.deleteTaskButton:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
 }
 
 .cardFooter {
   padding: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #ddd;
   text-align: right;
+  border-radius: 0 0 12px 12px;
 }
 
 .viewAllTasksButton {
@@ -173,28 +200,35 @@
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
 
 .viewAllTasksButton:hover {
   background-color: #0069d9;
 }
 
-/* Responsive Design */
+.viewAllTasksButton:focus {
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
 
+/* Responsive Design */
 @media (max-width: 600px) {
   .taskInputSection {
     flex-direction: column;
+    gap: 10px;
   }
 
   .taskInput,
   .assignDropdown,
+  .dateInput,
   .addTaskButton {
     width: 100%;
+    flex: none;
   }
 
   .taskDetails {
     flex-direction: column;
     align-items: flex-start;
+    gap: 6px;
   }
 }

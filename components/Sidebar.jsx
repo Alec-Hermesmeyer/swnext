@@ -35,7 +35,7 @@ function Sidebar() {
                   prefetch={false}
                 >
                   <CalendarIcon className={styles.icon} />
-                  <span className={styles.iconSpan}>Calendar</span>
+                  <span className={styles.iconSpan}>Sales</span>
                 </Link>
               </Tooltip.Trigger>
               <Tooltip.Content side="right">Sales</Tooltip.Content>
