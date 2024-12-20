@@ -42,14 +42,14 @@ const Admin = () => {
 
   return (
     <div className={styles.admin}>
-      <Spacer className={styles.spacer} />
-      <section className={styles.contactWidgetOffice}>
+      
+      <section className={styles.contactWidgetOffice} id="jobPostings">
         <JobPostings jobPostings={jobPostings} />
       </section>
       <section className={styles.contactWidgetOffice}>
         <ManageJobPostings jobPostings={jobPostings} setJobPostings={setJobPostings} />
       </section>
-      <Spacer className={styles.spacer} />
+    
     </div>
   );
 };

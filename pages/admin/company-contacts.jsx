@@ -216,14 +216,14 @@ const Admin = () => {
   return (
    
     <div className={styles.admin}>
-      <Spacer className={styles.spacer} />
+      
       <section className={styles.contactWidgetOffice}>
         <OfficeContacts />
       </section>
       <section className={styles.contactWidgetOffice}>
         <ManageContacts />
       </section>
-      <Spacer className={styles.spacer} />
+     
     </div>
     
   );

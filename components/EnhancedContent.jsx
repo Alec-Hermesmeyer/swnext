@@ -8,24 +8,26 @@ import Button from "@/components/Button";
 import DropdownMenu from "@/components/Dropdown-menu";
 import Breadcrumb from "@/components/Breadcrumb";
 import Sheet from "@/components/Sheet";
-import { MenuIcon, LayoutGridIcon, SearchIcon } from '@/components/Icons'; // Assuming you have an icon set
+import { MenuIcon, LayoutGridIcon, SearchIcon } from '@/components/Icons';
 import { Globe } from 'lucide-react';
+
 const EnhancedContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { pathname } = useRouter();
+  const paths = pathname.split('/').filter(Boolean);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
-  const { pathname } = useRouter();
-const paths = pathname.split('/').filter(Boolean);
 
   return (
     <div className={styles.content}>
       <header className={styles.header}>
+        
         {/* Sidebar Menu Sheet */}
         <Sheet>
           <Sheet.Trigger asChild>
-            <Button variant='outline' className={styles.menuButton}>
+            <Button variant="outline" className={styles.menuButton}>
               <MenuIcon className={styles.icon} />
             </Button>
           </Sheet.Trigger>
@@ -33,27 +35,38 @@ const paths = pathname.split('/').filter(Boolean);
             <nav className={styles.sheetNav}>
               <Link href="/" className={styles.sheetLink} prefetch={false}>
                 <LayoutGridIcon className={styles.icon} />
-                <span className="sr-only">Acme Productivity</span>
+                <span className="sr-only"> Create Job</span>
               </Link>
-              {/* Repeat for other links */}
+              <Link href="/" className={styles.sheetLink} prefetch={false}>
+                <LayoutGridIcon className={styles.icon} />
+                <span className="sr-only"> Bids</span>
+              </Link>
+              <Link href="/" className={styles.sheetLink} prefetch={false}>
+                <LayoutGridIcon className={styles.icon} />
+                <span className="sr-only"> Create Task</span>
+              </Link>
+              <Link href="/" className={styles.sheetLink} prefetch={false}>
+                <LayoutGridIcon className={styles.icon} />
+                <span className="sr-only"> Acme Productivity</span>
+              </Link>
+              {/* Additional links can be added here */}
             </nav>
           </Sheet.Content>
         </Sheet>
 
         {/* Breadcrumb Navigation */}
         <Breadcrumb className={styles.breadcrumb}>
-    <Breadcrumb.List>
-      
-      {paths.map((path, index) => (
-        <Breadcrumb.Item  key={index}>
-          <Breadcrumb.Link href={`/${paths.slice(0, index + 1).join('/')}`}>
-            {path.charAt(0).toUpperCase() + path.slice(1)}
-          </Breadcrumb.Link>
-          <span className={styles.breadcrumbDivider}>/</span>
-        </Breadcrumb.Item>
-      ))}
-    </Breadcrumb.List>
-  </Breadcrumb>
+          <Breadcrumb.List>
+            {paths.map((path, index) => (
+              <Breadcrumb.Item key={index}>
+                <Breadcrumb.Link href={`/${paths.slice(0, index + 1).join('/')}`}>
+                  {path.charAt(0).toUpperCase() + path.slice(1)}
+                </Breadcrumb.Link>
+                <span className={styles.breadcrumbDivider}>/</span>
+              </Breadcrumb.Item>
+            ))}
+          </Breadcrumb.List>
+        </Breadcrumb>
 
         {/* Search Bar */}
         <div className={styles.searchContainer}>
@@ -74,20 +87,25 @@ const paths = pathname.split('/').filter(Boolean);
               <Globe className={styles.icon} />
             </Button>
           </DropdownMenu.Trigger>
+
           <DropdownMenu.Content align="end">
             <DropdownMenu.Label>My Account</DropdownMenu.Label>
+
             <DropdownMenu.Item onClick={() => alert('Profile clicked')}>
               Profile
             </DropdownMenu.Item>
             <DropdownMenu.Item onClick={() => alert('Settings clicked')}>
               Settings
             </DropdownMenu.Item>
+
             <DropdownMenu.Separator />
+
             <DropdownMenu.Item onClick={() => alert('Logout clicked')}>
               Logout
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu>
+
       </header>
     </div>
   );

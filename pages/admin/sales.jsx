@@ -4,7 +4,6 @@ import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
 import { getSalesData } from "@/actions/jobInfo";
 import { GridPattern } from "@/components/GridPattern";
-
 import supabase from "@/components/Supabase";
 import { SalesCharts } from "@/components/SalesChart";
 import { Lato } from "next/font/google";
@@ -100,7 +99,7 @@ function Customers() {
   return (
     
     <div className={styles.contactSubContainer}>
-      <h1>Sales</h1>
+      
       {/* Filter Inputs */}
       <div className={styles.filters}>
         <input
@@ -183,7 +182,7 @@ const Sales = () => {
     
       return (
         <div className={styles.admin}>    
-        <Spacer className={styles.spacer} />
+        
         <section className={styles.contactWidgetOffice}>
         <div>
           
@@ -191,7 +190,7 @@ const Sales = () => {
         </div>
       </section>
       
-    <Spacer className={styles.spacer} />
+    
 
         </div>
 

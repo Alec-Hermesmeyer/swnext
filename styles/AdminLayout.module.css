@@ -11,12 +11,6 @@
   
 }
 
-
-
-
-
-
-
 .toggleSidebarBtn {
   padding: 0.5rem 1rem;
   border: none;
@@ -37,97 +31,58 @@
 
 .sidebar {
   grid-area: sidebar;
-  background: red;
-  color: #fff;
-  padding: 1rem;
-  height: calc(100dvh - 160px); /* Adjusted to calc height */
-  z-index: 1;
-  position: fixed;
-  top: 80px;
-  bottom: 120px;
+  background-color: #f3f4f6; /* Light gray background for sidebar */
+  width: 20rem; /* Sidebar width */
+  display: flex;
+  padding: 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  position: fixed; /* Keeps sidebar fixed and flush with the left */
+  top: 0;
+  left: 0;
+  padding: 0; /* Remove padding to align flush with the page edge */
+}
+.nav {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 15%;
-  z-index: 9;
-  transition: width 0.3s ease; /* Added transition for smooth width change */
+  width: 95%;
 }
-  .sidebarContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    height: 100%;
-    width: 100%;
-  }
-  
-  .sidebarWrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    height: 100%;
-  }
-  
-  .sidebarTop,
-  .sidebarCenter,
-  .sidebarBottom {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-evenly;
-    width: 100%;
-  }
-  
-  .sidebarTop {
-    height: 05%;
-  }
-  
-  .sidebarCenter {
-    height: 85%;
-  }
-  
-  .sidebarBottom {
-    height: 10%;
-    margin-bottom: 10%;
-  }
-  
-  .nav {
-    width: 100%;
-  }
-  
-  .navMenu {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-  }
-  
-  .navItem {
-    width: 100%;
-  }
-  
-  .navItem a {
-    display: block;
-    width: 100%;
-    padding: 1rem;
-    color: #fff;
-    text-decoration: none;
-    text-align: center;
-    background: rgb(16, 39, 94);
-    border-bottom: 1px solid  #c82333;
-    transition: background 0.3s;
-    border-radius: var(--border-radius);
-    margin-bottom: 10%;
-  }
-  
-  .navItem a:hover {
-    background: #c82333;
-    border: 2px solid rgb(16, 39, 94);
-    transition: ease-in-out 0.3s;
-  }
-  
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: #333;
+  text-decoration: none;
+  border-radius: 4px; /* Rounded corners */
+  transition: background-color 0.3s ease, color 0.3s ease;
+  width: 100%; /* Full width for links */
+}
+
+.nav a:hover {
+  background-color: #e6f7ff; /* Light blue background on hover */
+  color: #007bff; /* Change text color on hover */
+}
+
+.tooltipProvider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+
+.iconSpan {
+  font-size: 14px;
+  color: #666;
+}
   .main {
     grid-area: main;
     flex: 1;

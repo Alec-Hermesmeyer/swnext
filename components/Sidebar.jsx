@@ -2,8 +2,16 @@
 import React from 'react';
 import styles from '../styles/AdminLayout.module.css';
 import Link from 'next/link';
+import Tooltip from "@/components/Tooltip";
+import {
+  CalendarIcon,
+  LayoutGridIcon,
+  ClipboardIcon,
+  StickyNoteIcon,
+  SettingsIcon,
+} from "@/components/Icons";
+import Logout from "@/components/Logout";
 import { useAuth } from '@/context/AuthContext';
-import Logout from './Logout';
 import { Lato } from "next/font/google";
 
 
@@ -13,38 +21,68 @@ function Sidebar() {
   
   return (
     <aside className={styles.sidebar}>
-      <div className={styles.sidebarContainer}>
-        <div className={styles.sidebarWrapper}>
-          <div className={styles.sidebarTop}>
-          
-          </div>
-          <div className={styles.sidebarCenter}>
-            <nav className={styles.nav}>
-              <ul className={styles.navMenu}>
-                <li className={styles.navItem}>
-                  <Link className={lato.className} href="/admin/dashboard">Dashboard</Link>
-                </li>
-                <li className={styles.navItem}>
-                  <Link className={lato.className} href="/admin/contact">Contact Forms</Link>
-                </li>
-                <li className={styles.navItem}>
-                  <Link className={lato.className} href="/admin/company-contacts">Company Contacts</Link>
-                </li>
-                <li className={styles.navItem}>
-                  <Link className={lato.className} href="/admin/job-openings">Job Openings</Link>
-                </li>
-                <li className={styles.navItem}>
-                  <Link className={lato.className} href="/admin/sales">Sales</Link>
-                </li>
-              </ul>
-            </nav>
-          </div>
-          <div className={styles.sidebarBottom}>
+      <nav className={styles.nav}>
+          <Tooltip.Provider>
+            <Link href="/admin/dashboard" className={styles.tooltipProvider} prefetch={false}>
+              <LayoutGridIcon className={styles.icon} />
+              <span className={styles.iconSpan}>S&W Foundation</span>
+            </Link>
+            <Tooltip>
+              <Tooltip.Trigger asChild>
+                <Link
+                  href="/admin/sales"
+                  className={styles.tooltipProvider}
+                  prefetch={false}
+                >
+                  <CalendarIcon className={styles.icon} />
+                  <span className={styles.iconSpan}>Calendar</span>
+                </Link>
+              </Tooltip.Trigger>
+              <Tooltip.Content side="right">Sales</Tooltip.Content>
+            </Tooltip>
+            <Tooltip>
+              <Tooltip.Trigger asChild>
+                <Link
+                  href="/admin/contact"
+                  className={styles.tooltipProvider}
+                  prefetch={false}
+                >
+                  <ClipboardIcon className={styles.icon} />
+                  <span className={styles.iconSpan}>Contact Form</span>
+                </Link>
+              </Tooltip.Trigger>
+              <Tooltip.Content side="right">Contact Forms</Tooltip.Content>
+            </Tooltip>
+            <Tooltip>
+              <Tooltip.Trigger asChild>
+                <Link
+                  href="/admin/company-contacts"
+                  className={styles.tooltipProvider}
+                  prefetch={false}
+                >
+                  <StickyNoteIcon className={styles.icon} />
+                  <span className={styles.iconSpan}>Company Contacts</span>
+                </Link>
+              </Tooltip.Trigger>
+              <Tooltip.Content side="right">Company Contacts</Tooltip.Content>
+            </Tooltip>
+            <Tooltip>
+              <Tooltip.Trigger asChild>
+                <Link
+                  href="/admin/jobs"
+                  className={styles.tooltipProvider}
+                  prefetch={false}
+                >
+                  <SettingsIcon className={styles.icon} />
+                  <span className={styles.iconSpan}>Jobs</span>
+                </Link>
+              </Tooltip.Trigger>
+              <Tooltip.Content side="right">Job Openings</Tooltip.Content>
+            </Tooltip>
+          </Tooltip.Provider>
           <Logout />
-          </div>
-        </div>
-      </div>
-    </aside>
+        </nav>
+      </aside>
   );
 }
 

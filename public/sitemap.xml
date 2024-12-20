@@ -103,4 +103,10 @@
         <changefreq>always</changefreq>
         <priority>0.5</priority>
     </url>
+    <url>
+        <loc>https://www.swfoundation.com/blog/unlocking-the-power</loc>
+        <lastmod>2024-11-15</lastmod>
+        <changefreq>always</changefreq>
+        <priority>0.5</priority>
+    </url>
 </urlset>
