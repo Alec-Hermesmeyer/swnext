@@ -225,7 +225,7 @@ function JobForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: 'cliffw@swfoundation.com',
+          to: 'cliffw@swfoundation.com, colinw@swfoundation.com',
           subject: 'New Job Application',
           text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nPosition: ${position}\nMessage: ${message}`,
         }),

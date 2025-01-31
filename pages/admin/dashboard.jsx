@@ -174,9 +174,9 @@ function Dashboard() {
             </Card.Header>
             <Card.Content>
               <ul className={styles.activityList}>
-                <li>New task "Redesign landing page" added by Alice.</li>
+                <li>New task &quot;Redesign landing page&quot; added by Alice.</li>
                 <li>Sale closed with ACME Corp for $5,000.</li>
-                <li>John completed the task "Follow up with supplier".</li>
+                <li>John completed the task &quot;Follow up with supplier&quot;.</li>
               </ul>
             </Card.Content>
           </Card>

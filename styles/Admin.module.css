@@ -789,6 +789,21 @@ input:checked + .slider:before {
   width: auto; /* Let the browser decide the width */
   flex: 1; /* Equal width distribution */
 }
+.filterContainer {
+  margin-bottom: 10px;
+}
+
+.filterContainer label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.filterContainer select {
+  padding: 5px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
 
 
 
