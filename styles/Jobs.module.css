@@ -1,395 +1,323 @@
-.jobsDashboard {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-gap: 20px;
-  padding: 60px 20px;
-  margin-left: 12rem;
-  margin-top: 20px;
-  background-color: white;
+/* Layout that accounts for the sidebar */
+.adminJobsContainer {
+  margin-left: 210px; 
+  padding: 20px;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  margin-top: 6%;
 }
-.topSection {
-    margin-bottom: 20px;
-    height: 300px;
-    overflow: scroll;
-    border-radius: 10px;
-    padding: 0px 40px;
-    background-color: #f3f4f6ed;
-  }
-  
-  
-  .middleSection {
-    height: 300px;
-    overflow: scroll;
-    gap: 40px;
-    margin-bottom: 40px;
-    padding: 0px 40px;
-    border-radius: 10px;
-    padding: 10px 40px;
-    background-color: #f3f4f6ed;
-  }
-  .bottomSection {
-    height: 300px;
-    overflow: scroll;
-    gap: 40px;
-    margin-bottom: 40px;
-    padding: 0px 40px;
-    border-radius: 10px;
-    padding: 10px 40px;
-    background-color: #f3f4f6ed;
-  }
-  
-  .column {
-    flex: 1;
-  }
-  
-  .buttonContainer {
-    text-align: right;
-  }
-  
-  .topSection h2,
-  .column h2 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.2rem;
-    color: #333;
-  }
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  background-color: white;
+  border-bottom: 2px solid #e1e1e1;
+}
+
+.header h2 {
+  font-size: 1.5rem;
+  color: #333;
+}
+
+/* Dashboard Styling */
 .dashboardContainer {
-    margin-top: 20px;
-    padding: 10px;
-  }
-  
-  .jobTable {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: Arial, sans-serif;
-  }
-  
-  .jobTable th, .jobTable td {
-    border: 1px solid #ccc;
-    padding: 10px;
-    text-align: left;
-  }
-  
-  .jobTable th {
-    background-color: #eee;
-    font-weight: bold;
-  }
-  
-  .jobTable tr:nth-child(even) {
-    background-color: #f2f2f2;
-  }
-  
-  .openButton {
-    background-color: #4caf50;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .openButton:hover {
-    background-color: #45a049;
-  }
-  .formContainer {
-    margin-top: 20px;
-    background: #fafafa;
-    padding: 20px;
-    border-radius: 6px;
-    width: 300px;
-    font-family: Arial, sans-serif;
-  }
-  
-  .formContainer h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.25rem;
-    color: #333;
-  }
-  
-  .form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  .formGroup {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .label {
-    margin-bottom: 5px;
-    font-size: 0.9rem;
-    color: #444;
-  }
-  
-  .input {
-    padding: 8px;
-    font-size: 0.9rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  .input:focus {
-    outline: none;
-    border-color: #4caf50;
-  }
-  
-  .buttonContainer {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-start;
-  }
-  
-  .submitButton {
-    background-color: #4caf50;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .submitButton:hover {
-    background-color: #45a049;
-  }
-  
-  .cancelButton {
-    background-color: #ccc;
-    color: #333;
-    border: none;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .cancelButton:hover {
-    background-color: #b3b3b3;
-  }
-  .detailContainer {
-    margin-top: 20px;
-    background: #e2e1e128;
-    padding: 20px 40px 80px 40px;
-    border-radius: 6px;
-    width: auto;
-    font-family: Arial, sans-serif;
-    box-shadow: 0px 0px 10px 0px #0000001a;
-  }
-  
-  .heading {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.25rem;
-    color: #333;
-  }
-  
-  .projectInfo {
-    margin-bottom: 20px;
-    font-size: 0.95rem;
-    color: #555;
-  }
-  .buttonRow {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-start;
-  }
-  
-  .backButton {
-    background-color: #ccc;
-    color: #333;
-    border: none;
-    padding: 6px 12px;
-    font-size: 0.9rem;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 20px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .backButton:hover {
-    background-color: #b3b3b3;
-  }
-.saveButton {
-    background-color: #ccc;
-    color: #333;
-    border: none;
-    padding: 6px 12px;
-    font-size: 0.9rem;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 20px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .saveButton:hover {
-    background-color: #b3b3b3;
-  }
-  
-  .subHeading {
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-    color: #333;
-  }
-  
-  .docTable {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-  }
-  
-  .docTable th,
-  .docTable td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: left;
-  }
-  
-  .docTable th {
-    background-color: #eee;
-    font-weight: bold;
-  }
-  
-  .docTable tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-  
-  .uploadForm {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  
- /* Form Container */
+  margin-top: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 5px;
+}
+
+.jobTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.jobTable th, .jobTable td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.viewBtn {
+  background-color: #3498db;
+  color: white;
+  padding: 6px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.viewBtn:hover {
+  background-color: #2980b9;
+}
+
+.deleteBtn {
+  background-color: #e74c3c;
+  color: white;
+  padding: 6px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.deleteBtn:hover {
+  background-color: #c0392b;
+}
+
+.noJobs {
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
+  color: #888;
+}
+/* General Form Styling */
 .formContainer {
-    width: 100%;
-    margin: 2rem auto;
-    padding: 2rem;
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    font-family: 'Arial', sans-serif;
-  }
-  
-  /* Title */
-  .formContainer {
-    max-width: 600px;
-    margin: 2rem auto;
-    background: #f9f9f9;
-    border-radius: 8px;
-    padding: 2rem;
-  }
-  
-  .formTitle {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    color: #333;
-  }
-  
-  .form {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .formGroup,
-  .formGroupInline {
-    margin-bottom: 1rem;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .formGroupInline {
-    flex-direction: row;
-    align-items: center;
-  }
-  
-  .label {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    color: #555;
-  }
-  
-  .labelCheckbox {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-  }
-  
-  .labelText {
-    margin-left: 0.5rem;
-  }
-  
-  .input,
-  .textarea {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 0.5rem;
-    font-size: 1rem;
-  }
-  
-  .textarea {
-    resize: vertical;
-  }
-  
-  .checkbox {
-    width: 1rem;
-    height: 1rem;
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 25px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+}
+
+.formTitle {
+  text-align: center;
+  font-size: 1.8rem;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Form Group */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Input Fields */
+.input, 
+.textarea, 
+.select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease-in-out;
+}
+
+.input:focus, 
+.textarea:focus, 
+.select:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Checkbox */
+.labelCheckbox {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+}
+
+/* Buttons */
+.buttonContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.submitButton, 
+.cancelButton {
+  padding: 12px 18px;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  font-weight: bold;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.submitButton {
+  background-color: #28a745;
+  color: white;
+}
+
+.submitButton:hover {
+  background-color: #218838;
+}
+
+.cancelButton {
+  background-color: #d9534f;
+  color: white;
+}
+
+.cancelButton:hover {
+  background-color: #c9302c;
+}
+
+/* Job Detail Container */
+.detailContainer {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.heading {
+  font-size: 1.5rem;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.jobInfoContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 25px;
+}
+
+.backButton, 
+.saveButton {
+  padding: 12px 16px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+.backButton {
+  background-color: #d9534f;
+  color: white;
+}
+
+.backButton:hover {
+  background-color: #c9302c;
+}
+
+.saveButton {
+  background-color: #007bff;
+  color: white;
+}
+
+.saveButton:hover {
+  background-color: #0056b3;
+}
+
+/* Documents Section */
+.subHeading {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+  margin-top: 30px;
+}
+
+.docTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.docTable th, 
+.docTable td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.docTable th {
+  background-color: #f1f1f1;
+  font-weight: bold;
+}
+
+.uploadForm {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.uploadButton {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 5px;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.uploadButton:hover {
+  background-color: #218838;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .jobInfoContainer {
+    grid-template-columns: 1fr;
   }
   
   .buttonContainer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1.5rem;
+    flex-direction: column;
+    gap: 10px;
   }
-  
-  .submitButton,
-  .cancelButton {
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    cursor: pointer;
-    border-radius: 4px;
-    border: none;
+
+  .buttonRow {
+    flex-direction: column;
+    gap: 10px;
   }
-  
-  .submitButton {
-    background-color: #28a745;
-    color: #fff;
-  }
-  
-  .submitButton:hover {
-    background-color: #218838;
-  }
-  
-  .cancelButton {
-    background-color: #ccc;
-    color: #333;
-  }
-  
-  .cancelButton:hover {
-    background-color: #b5b5b5;
-  }
-  
-  
-  /* Responsive Design */
-  @media (max-width: 600px) {
-    .formCard {
-      padding: 24px;
-      border-radius: 8px;
-    }
-  
-    .form {
-      gap: 16px;
-    }
-  
-    .buttonContainer {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 8px;
-    }
-  }
+}
