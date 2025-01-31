@@ -115,7 +115,7 @@ function Form() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: 'mattm@swfoundation.com',
+          to: 'mattm@swfoundation.com, colinw@swfoundation.com',
           subject: 'New Form Submission',
           text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nCompany: ${company}\nMessage: ${message}`,
         }),
