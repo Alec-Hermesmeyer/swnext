@@ -1,121 +1,127 @@
 "use client"
-import React, { useState, useEffect } from "react";
-import withAuth from "@/components/withAuth";
-import styles from "@/styles/Dashboard.module.css";
-import TaskManager from "@/components/TaskManager";
-import SalesChart from "@/components/SalesChart";
-import Card from "@/components/Card";
-import { getSalesData } from "@/actions/jobInfo"; 
-import supabase from "@/components/Supabase";
+import React, { useState, useEffect } from "react"
+import styles from "@/styles/Admin.module.css"
+import withAuth from "@/components/withAuth"
+import supabase from "@/components/Supabase"
+import Link from "next/link"
 
-function Dashboard() {
-  const [chartData, setChartData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [totalPages, setTotalPages] = useState(0);
-  const [page, setPage] = useState(0);
-  const pageSize = 236;
-  const [monthSoldFilter, setMonthSoldFilter] = useState("");
-  const [estimatorFilter, setEstimatorFilter] = useState("");
+function ContactListPreview() {
+  const [contacts, setContacts] = useState([])
 
-  function aggregateSalesByMonth(data) {
-    // data: [{ monthSold: "January", amount: 20000 }, { monthSold: "January", amount: 5000 }, { monthSold: "February", ... }, ...]
-  
-    const monthMap = {};
-  
-    data.forEach(item => {
-      const month = item.monthSold;
-      const amount = item.amount;
-  
-      if (!monthMap[month]) {
-        monthMap[month] = 0;
-      }
-  
-      // Add the amount to the existing total for that month
-      monthMap[month] += amount;
-    });
-  
-    // Convert the monthMap into an array of { monthSold, amount }
-    const aggregatedData = Object.keys(monthMap).map(month => {
-      return { monthSold: month, amount: monthMap[month] };
-    });
-  
-    return aggregatedData;
-  }
-  
-
-  // Fetch total count on mount to initialize totalPages (optional)
   useEffect(() => {
-    const fetchTotalCount = async () => {
-      const { error, count } = await supabase
-        .from("Customer")
-        .select("*", { count: "exact", head: true });
-
-      if (error) {
-        console.error("Error fetching total count:", error);
-      } else if (count !== null) {
-        setTotalPages(Math.ceil(count / pageSize));
-      }
-    };
-
-    fetchTotalCount();
-  }, []);
-
-  // Fetch and set sales data whenever filters or page change
-  useEffect(() => {
-    const fetchAndSetSalesData = async () => {
-      setLoading(true);
-  
-      const { paginatedData, totalCount } = await getSalesData(page, pageSize, {
-        monthSold: monthSoldFilter,
-        estimator: estimatorFilter,
-      });
-  
-      if (paginatedData && Array.isArray(paginatedData)) {
-        // Convert currency strings to numbers
-        const cleanedData = paginatedData.map((item) => {
-          if (typeof item.amount === "string") {
-            const numericAmount = parseFloat(item.amount.replace(/[^0-9.-]+/g, ""));
-            return { ...item, amount: numericAmount };
-          }
-          return item;
-        });
-        console.log("Cleaned data before aggregation:", cleanedData);
-
-        // Now aggregate the data by month
-        const aggregatedData = aggregateSalesByMonth(cleanedData);
-  
-        setChartData(aggregatedData);
-        setTotalPages(Math.ceil(totalCount / pageSize));
-      } else {
-        console.log("No sales data received");
-        setChartData([]);
-      }
-  
-      setLoading(false);
-    };
-  
-    fetchAndSetSalesData();
-  }, [monthSoldFilter, estimatorFilter, page]);
-  
+    const fetchContacts = async () => {
+      let { data, error } = await supabase.from("company_contacts").select("*").limit(5)
+      if (!error) setContacts(data)
+    }
+    fetchContacts()
+  }, [])
 
   return (
-    <div className={styles.dashboard}>
-      <div className={styles.header}>
-        {/* <EnhancedContent /> */}
-      </div>
-      <div className={styles.main}>
-        <section className={styles.section}>
-        <TaskManager  />
-          
-         
-          
-        </section>
-        <section className={styles.sectionSC}>
-        {loading ? <div>Loading...</div> : <SalesChart data={chartData} />}
-        </section>
-      </div>
+    <div className={styles.previewList}>
+      {contacts.map((contact) => (
+        <div key={contact.id} className={styles.previewItem}>
+          <h3>{contact.name}</h3>
+          <p>{contact.job_title}</p>
+        </div>
+      ))}
+      <Link href="/admin/contacts" className={styles.viewMore}>View All Contacts →</Link>
     </div>
-  );
+  )
 }
 
-export default withAuth(Dashboard);
+
+function JobListPreview() {
+  const [jobs, setJobs] = useState([])
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      let { data, error } = await supabase.from("jobs").select("*").limit(5)
+      if (!error) setJobs(data)
+    }
+    fetchJobs()
+  }, [])
+
+  return (
+    <div className={styles.previewList}>
+      {jobs.map((job) => (
+        <div key={job.id} className={styles.previewItem}>
+          <h3>{job.jobTitle}</h3>
+          <p className={job.is_Open ? styles.openJob : styles.closedJob}>
+            {job.is_Open ? "Open" : "Closed"}
+          </p>
+        </div>
+      ))}
+      <Link href="/admin/jobs" className={styles.viewMore}>View All Jobs →</Link>
+    </div>
+  )
+}
+
+
+function Dashboard() {
+  const [jobCount, setJobCount] = useState(0)
+  const [contactCount, setContactCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const { count: jobCount, error: jobError } = await supabase
+          .from("jobs")
+          .select("*", { count: "exact", head: true })
+
+        const { count: contactCount, error: contactError } = await supabase
+          .from("company_contacts")
+          .select("*", { count: "exact", head: true })
+
+        if (!jobError) setJobCount(jobCount)
+        if (!contactError) setContactCount(contactCount)
+      } catch (error) {
+        console.error("Error fetching counts:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCounts()
+  }, [])
+
+  if (loading) return <p>Loading...</p>
+
+  return (
+    <div className={styles.adminDashboard}>
+      <h1 className={styles.dashboardTitle}>Admin Dashboard</h1>
+
+      {/* Overview Cards */}
+      <div className={styles.statsRow}>
+        <div className={styles.statCard}>
+          <h2>Job Postings</h2>
+          <p>{jobCount}</p>
+          <Link href="/admin/jobs" className={styles.manageLink}>
+            Manage Jobs →
+          </Link>
+        </div>
+        <div className={styles.statCard}>
+          <h2>Company Contacts</h2>
+          <p>{contactCount}</p>
+          <Link href="/admin/contacts" className={styles.manageLink}>
+            Manage Contacts →
+          </Link>
+        </div>
+      </div>
+
+      {/* Jobs Preview */}
+      <div className={styles.section}>
+        <h2>Recent Job Postings</h2>
+        <JobListPreview />
+      </div>
+
+      {/* Contacts Preview */}
+      <div className={styles.section}>
+        <h2>Company Contacts</h2>
+        <ContactListPreview />
+      </div>
+    </div>
+  )
+}
+
+export default withAuth(Dashboard)

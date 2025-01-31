@@ -25,7 +25,7 @@ function Sidebar() {
           <Tooltip.Provider>
             <Link href="/admin/dashboard" className={styles.tooltipProvider} prefetch={false}>
               <LayoutGridIcon className={styles.icon} />
-              <span className={styles.iconSpan}>S&W Foundation</span>
+              <span className={styles.iconSpan}>Dashboard</span>
             </Link>
             <Tooltip>
               <Tooltip.Trigger asChild>
@@ -35,7 +35,7 @@ function Sidebar() {
                   prefetch={false}
                 >
                   <CalendarIcon className={styles.icon} />
-                  <span className={styles.iconSpan}>Calendar</span>
+                  <span className={styles.iconSpan}>Sales</span>
                 </Link>
               </Tooltip.Trigger>
               <Tooltip.Content side="right">Sales</Tooltip.Content>
@@ -65,6 +65,19 @@ function Sidebar() {
                 </Link>
               </Tooltip.Trigger>
               <Tooltip.Content side="right">Company Contacts</Tooltip.Content>
+            </Tooltip>
+            <Tooltip>
+              <Tooltip.Trigger asChild>
+                <Link
+                  href="/admin/careers"
+                  className={styles.tooltipProvider}
+                  prefetch={false}
+                >
+                  <StickyNoteIcon className={styles.icon} />
+                  <span className={styles.iconSpan}>Careers</span>
+                </Link>
+              </Tooltip.Trigger>
+              <Tooltip.Content side="right">Careers</Tooltip.Content>
             </Tooltip>
             <Tooltip>
               <Tooltip.Trigger asChild>
