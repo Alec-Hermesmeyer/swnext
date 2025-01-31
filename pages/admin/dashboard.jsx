@@ -96,8 +96,8 @@ function Dashboard() {
         <div className={styles.statCard}>
           <h2>Job Postings</h2>
           <p>{jobCount}</p>
-          <Link href="/admin/jobs" className={styles.manageLink}>
-            Manage Jobs →
+          <Link href="/admin/careers" className={styles.manageLink}>
+            Manage Jobs Postings →
           </Link>
         </div>
         <div className={styles.statCard}>
