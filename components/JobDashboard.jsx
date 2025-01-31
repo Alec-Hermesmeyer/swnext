@@ -1,40 +1,48 @@
 import React from "react";
-import styles from '@/styles/Jobs.module.css';
+import styles from "@/styles/Jobs.module.css";
 
-function JobDashboard({ jobs, onSelectJob }) {
-  if (jobs.length === 0) {
-    return <div>No jobs to display</div>;
-  }
-
-  // Determine if we are dealing with bidding jobs or not
-  const isBidding = jobs[0].status === "Bidding";
-
+function JobDashboard({ jobs, onSelectJob, onDeleteJob }) {
   return (
     <div className={styles.dashboardContainer}>
       <table className={styles.jobTable}>
         <thead>
           <tr>
-            {/* If bidding jobs, show "Bid Date", else "Job Number" */}
-            <th>{isBidding ? "Bid Date" : "Job Number"}</th>
+            <th>Job #</th>
             <th>Company Name</th>
             <th>Project Name</th>
             <th>Status</th>
-            <th>Open</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {jobs.map(job => (
-            <tr key={job.id}>
-              {/* If bidding job, display bidDate, else jobNumber */}
-              <td>{isBidding ? job.bidDate : job.jobNumber}</td>
-              <td>{job.companyName}</td>
-              <td>{job.projectName}</td>
-              <td>{job.status}</td>
-              <td>
-                <button className={styles.openButton} onClick={() => onSelectJob(job)}>Open Folder</button>
-              </td>
+          {jobs.length === 0 ? (
+            <tr>
+              <td colSpan="5" className={styles.noJobs}>No jobs available</td>
             </tr>
-          ))}
+          ) : (
+            jobs.map((job) => (
+              <tr key={job.id}>
+                <td>{job.jobNumber}</td>
+                <td>{job.companyName}</td>
+                <td>{job.projectName}</td>
+                <td>{job.status}</td>
+                <td>
+                  <button 
+                    className={styles.viewBtn} 
+                    onClick={() => onSelectJob(job)}
+                  >
+                    View
+                  </button>
+                  <button 
+                    className={styles.deleteBtn} 
+                    onClick={() => onDeleteJob(job.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
