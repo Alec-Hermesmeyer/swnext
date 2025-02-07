@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useEffect, useState } from "react";
 import styles from "@/styles/AdminSubmissions.module.css";
 import withAuth from "@/components/withAuth";
@@ -11,7 +11,7 @@ function ContactSubmissions() {
 
   useEffect(() => {
     const fetchContactSubmissions = async () => {
-      const { data, error } = await supabase.from("contact_form").select("*");
+      const { data, error } = await supabase.from("contact_form").select("*, created_at");
       if (!error) {
         setContactSubmission(data);
       }
@@ -39,6 +39,7 @@ function ContactSubmissions() {
               <th>Phone</th>
               <th>Company</th>
               <th>Message</th>
+              <th>Submission Date</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -50,6 +51,7 @@ function ContactSubmissions() {
                 <td><Link href={`tel:${submission.number}`}>{submission.number}</Link></td>
                 <td>{submission.company}</td>
                 <td>{submission.message}</td>
+                <td>{new Date(submission.created_at).toLocaleDateString()}</td>
                 <td>
                   <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>🗑 Delete</button>
                 </td>
@@ -69,7 +71,11 @@ function JobApplicants() {
 
   useEffect(() => {
     const fetchJobSubmissions = async () => {
-      const { data, error } = await supabase.from("job_form").select("*");
+      const { data, error } = await supabase
+        .from("job_form")
+        .select("*, created_at")
+        .order("created_at", { ascending: false }); // Newest first
+
       if (!error) {
         setJobSubmission(data);
       }
@@ -109,30 +115,35 @@ function JobApplicants() {
               <th>Phone</th>
               <th>Message</th>
               <th>Position</th>
+              <th>Submission Date</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {jobSubmission.filter((submission) =>
-              selectedPosition ? submission.position === selectedPosition : true
-            ).map((submission) => (
-              <tr key={submission.id}>
-                <td>{submission.name}</td>
-                <td><Link href={`mailto:${submission.email}`}>{submission.email}</Link></td>
-                <td><Link href={`tel:${submission.number}`}>{submission.number}</Link></td>
-                <td>{submission.message}</td>
-                <td>{submission.position}</td>
-                <td>
-                  <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>🗑 Delete</button>
-                </td>
-              </tr>
-            ))}
+            {jobSubmission
+              .filter((submission) =>
+                selectedPosition ? submission.position === selectedPosition : true
+              )
+              .map((submission) => (
+                <tr key={submission.id}>
+                  <td>{submission.name}</td>
+                  <td><Link href={`mailto:${submission.email}`}>{submission.email}</Link></td>
+                  <td><Link href={`tel:${submission.number}`}>{submission.number}</Link></td>
+                  <td>{submission.message}</td>
+                  <td>{submission.position}</td>
+                  <td>{new Date(submission.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>🗑 Delete</button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
     </div>
   );
 }
+
 
 const AdminSubmissions = () => {
   return (
