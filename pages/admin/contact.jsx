@@ -1,9 +1,58 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import styles from "@/styles/AdminSubmissions.module.css";
 import withAuth from "@/components/withAuth";
 import supabase from "@/components/Supabase";
 import Link from "next/link";
+
+const SubmissionTable = ({ title, data, handleDelete, filterOptions, filterState }) => {
+  return (
+    <div className={styles.submissionsContainer}>
+      <h2>{title}</h2>
+      {filterOptions && (
+        <div className={styles.filterContainer}>
+          <label>Filter by Position:</label>
+          <select value={filterState.value} onChange={(e) => filterState.setValue(e.target.value)}>
+            <option value="">All Positions</option>
+            {Array.from(new Set(filterOptions)).map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+        </div>
+      )}
+      <div className={styles.tableWrapper}>
+        <table className={styles.submissionsTable}>
+          <thead>
+            <tr>
+              {Object.keys(data[0] || {}).map((key) => key !== "id" && <th key={key}>{key.replace("_", " ")}</th>)}
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((submission) => (
+              <tr key={submission.id}>
+                {Object.entries(submission).map(([key, value]) =>
+                  key !== "id" ? (
+                    <td key={key}>
+                      {key === "email" ? <Link href={`mailto:${value}`}>{value}</Link> :
+                       key === "number" ? <Link href={`tel:${value}`}>{value}</Link> :
+                       key === "created_at" ? new Date(value).toLocaleDateString() :
+                       value}
+                    </td>
+                  ) : null
+                )}
+                <td>
+                  <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>🗑 Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 function ContactSubmissions() {
   const [contactSubmission, setContactSubmission] = useState([]);
@@ -11,7 +60,7 @@ function ContactSubmissions() {
 
   useEffect(() => {
     const fetchContactSubmissions = async () => {
-      const { data, error } = await supabase.from("contact_form").select("*, created_at");
+      const { data, error } = await supabase.from("contact_form").select("*");
       if (!error) {
         setContactSubmission(data);
       }
@@ -27,41 +76,7 @@ function ContactSubmissions() {
 
   if (loading) return <p className={styles.loading}>Loading...</p>;
 
-  return (
-    <div className={styles.submissionsContainer}>
-      <h2>Contact Submissions</h2>
-      <div className={styles.tableWrapper}>
-        <table className={styles.submissionsTable}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Company</th>
-              <th>Message</th>
-              <th>Submission Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contactSubmission.map((submission) => (
-              <tr key={submission.id}>
-                <td>{submission.name}</td>
-                <td><Link href={`mailto:${submission.email}`}>{submission.email}</Link></td>
-                <td><Link href={`tel:${submission.number}`}>{submission.number}</Link></td>
-                <td>{submission.company}</td>
-                <td>{submission.message}</td>
-                <td>{new Date(submission.created_at).toLocaleDateString()}</td>
-                <td>
-                  <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>🗑 Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+  return <SubmissionTable title="Contact Submissions" data={contactSubmission} handleDelete={handleDelete} />;
 }
 
 function JobApplicants() {
@@ -71,11 +86,7 @@ function JobApplicants() {
 
   useEffect(() => {
     const fetchJobSubmissions = async () => {
-      const { data, error } = await supabase
-        .from("job_form")
-        .select("*, created_at")
-        .order("created_at", { ascending: false }); // Newest first
-
+      const { data, error } = await supabase.from("job_form").select("*").order("created_at", { ascending: false });
       if (!error) {
         setJobSubmission(data);
       }
@@ -92,58 +103,15 @@ function JobApplicants() {
   if (loading) return <p className={styles.loading}>Loading...</p>;
 
   return (
-    <div className={styles.submissionsContainer}>
-      <h2>Job Applicants</h2>
-
-      {/* Filter by Position */}
-      <div className={styles.filterContainer}>
-        <label>Filter by Position:</label>
-        <select value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)}>
-          <option value="">All Positions</option>
-          {Array.from(new Set(jobSubmission.map((job) => job.position))).map((position) => (
-            <option key={position} value={position}>{position}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className={styles.tableWrapper}>
-        <table className={styles.submissionsTable}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Message</th>
-              <th>Position</th>
-              <th>Submission Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {jobSubmission
-              .filter((submission) =>
-                selectedPosition ? submission.position === selectedPosition : true
-              )
-              .map((submission) => (
-                <tr key={submission.id}>
-                  <td>{submission.name}</td>
-                  <td><Link href={`mailto:${submission.email}`}>{submission.email}</Link></td>
-                  <td><Link href={`tel:${submission.number}`}>{submission.number}</Link></td>
-                  <td>{submission.message}</td>
-                  <td>{submission.position}</td>
-                  <td>{new Date(submission.created_at).toLocaleDateString()}</td>
-                  <td>
-                    <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>🗑 Delete</button>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <SubmissionTable
+      title="Job Applicants"
+      data={jobSubmission.filter((job) => (selectedPosition ? job.position === selectedPosition : true))}
+      handleDelete={handleDelete}
+      filterOptions={jobSubmission.map((job) => job.position)}
+      filterState={{ value: selectedPosition, setValue: setSelectedPosition }}
+    />
   );
 }
-
 
 const AdminSubmissions = () => {
   return (
