@@ -10,12 +10,104 @@ import { Oswald } from "next/font/google";
 import { Montserrat } from "next/font/google";
 import { Lato } from "next/font/google";
 import supabase from "@/components/Supabase";
+ 
 
 
 const inter = Inter({ subsets: ["latin"] });
 const oswald = Oswald({ subsets: ["latin"] });
 const montserrat = Montserrat({ subsets: ["latin"] });
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+
+// Featured bios and headshots
+const featuredProfilesData = {
+  "Luke Wardell": {
+    image: "/Luke W Final Headshot.png",
+    bio:
+      "As Vice President of Pre-Construction at S&W Foundation Contractors, Inc., Luke Wardell leads the front end of the project lifecycle, overseeing estimating, budgeting, and bid strategy. A graduate of the University of Arkansas, he brings a sharp analytical perspective to cost planning and scope development. Luke’s ability to align client goals with constructible, value-driven solutions has made him a key contributor to the company’s continued growth in both public and private sectors. His proactive approach ensures clarity and confidence before construction ever begins.",
+  },
+  "Sean Macalik": {
+    image: "/Sean M Final Headshot.png",
+    bio:
+      "In his role as Vice President of Construction, Sean Macalik directs all on-site operations for S&W Foundation Contractors, managing field teams and coordinating large-scale drilling and foundation efforts. With deep experience in heavy civil construction, Sean is known for driving jobsite efficiency while upholding the highest standards of safety and execution. He takes pride in delivering technically demanding projects under tight timelines and works closely with clients, engineers, and foremen to maintain momentum from start to finish.",
+  },
+  "Cesar Urrutia": {
+    image: "/Cesar U Final Headshot.png",
+    bio:
+      "Cesar Urrutia serves as Vice President of Operations at S&W Foundation Contractors, where he oversees staffing, resource allocation, and field readiness across all active projects. With a background rooted in hands-on fieldwork, Cesar ensures every crew is equipped, trained, and prepared to meet the unique demands of each site. He’s instrumental in shaping the company’s operational culture—emphasizing accountability, craftsmanship, and continuous improvement. Cesar’s leadership keeps projects moving seamlessly, from mobilization to closeout.",
+  },
+};
+
+function FeaturedProfiles() {
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('company_contacts')
+          .select('*');
+        if (error) {
+          console.error('Error fetching featured contacts:', error);
+        } else {
+          setContacts(data || []);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching featured contacts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContacts();
+  }, []);
+
+  if (loading) return null;
+
+  const order = ["Luke Wardell", "Sean Macalik", "Cesar Urrutia"];
+
+  return (
+    <section className={styles.featuredProfilesSection}>
+      {order.map((name, index) => {
+        const dbContact = contacts.find((c) => c.name === name);
+        const featured = featuredProfilesData[name];
+        if (!featured) return null;
+        const info = (
+          <div className={styles.profileInfo}>
+            <img
+              className={styles.profileImage}
+              src={featured.image}
+              alt={`${name} headshot`}
+              decoding="async"
+              loading={index === 0 ? 'eager' : 'lazy'}
+            />
+            <h3 className={`${lato.className} ${styles.profileName}`}>{name}</h3>
+            {dbContact && (
+              <>
+                <p className={`${lato.className} ${styles.profileTitle}`}>{dbContact.job_title}</p>
+                <p className={styles.profileContacts}>
+                  <Link className={styles.email} href={`mailto:${dbContact.email}`}>{dbContact.email}</Link>
+                  <span className={styles.profileDivider}> • </span>
+                  <Link className={styles.contactNumber} href={`tel:${dbContact.phone}`}>{dbContact.phone}</Link>
+                </p>
+              </>
+            )}
+          </div>
+        );
+        const bio = (
+          <div className={styles.profileBioCol}>
+            <p className={styles.profileBio}>{featured.bio}</p>
+          </div>
+        );
+        return (
+          <div key={name} className={styles.profileRow}>
+            {info}
+            {bio}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
 
 function Hero() {
   return (
@@ -368,6 +460,12 @@ export default function Contact() {
           <section className={styles.formSection} id='jobForm'>
             <FormSection />
           </section>
+        </FadeIn>
+        <div className={styles.spacer}>
+          <GridPattern className={styles.gridPattern} yOffset={0} interactive />
+        </div>
+        <FadeIn>
+            <FeaturedProfiles />
         </FadeIn>
         <div className={styles.spacer}>
           <GridPattern className={styles.gridPattern} yOffset={0} interactive />

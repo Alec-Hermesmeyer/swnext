@@ -97,6 +97,124 @@ mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700,
   height: 100%;
   }
 
+/* Featured contacts block at top to keep heights consistent */
+/* Featured profiles section - full-width rows */
+.featuredProfilesSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  margin: 1rem 0 2rem 0;
+  
+}
+.otherContactsSection {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+}
+.profileRow {
+  width: 92%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr; /* left image, right info, bio */
+  align-items: center;
+  gap: 1.25rem;
+}
+.profileRow.reverse {
+  grid-template-columns: 2fr 1fr 1fr; /* bio, image, info */
+}
+.profileColLeft,
+.profileColRight,
+.profileBioCol {
+  display: flex;
+  flex-direction: column;
+}
+.profileColLeft,
+.profileColRight {
+  
+  /* border: 1px solid #e5e7eb; */
+  /* border-radius: var(--border-radius);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08); */
+  padding: 1.25rem;
+}
+.profileBioCol {
+  
+  /* border: 1px solid #e5e7eb;
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08); */
+  padding: 1.25rem;
+  width: 100%;
+}
+.profileImage {
+  width: 240px;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 4px solid #10275E;
+  align-self: center;
+}
+.featuredProfilesSection{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+}
+.profileName {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #10275E;
+}
+.profileTitle {
+  margin-top: 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+}
+.profileContacts {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.profileDivider {
+  color: #6b7280;
+}
+.profileBio {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #111827;
+}
+
+/* Featured profiles refined layout (override older defs) */
+.featuredProfilesSection{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+  
+}
+
+.profileRow{
+  width: 92%;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: 1fr 1.75fr;
+  gap: 1.5rem;
+  align-items: center;
+}
+.profileInfo{ 
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
   .card {
   display: flex;
   flex-direction: column;
@@ -111,6 +229,7 @@ mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700,
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
+  padding: 40px 0px
   }
   .card h2{
   text-align: center;
@@ -119,6 +238,7 @@ mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700,
   margin-bottom: -2%;
   font-size: 1.9rem;
   text-shadow: 2px 2px 2px black;
+  padding: 15px 0px;
   }
   .card p{
   font-size: 18px;
@@ -128,9 +248,57 @@ mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700,
   color: white;
   text-shadow: 2px 2px 2px black;
   }
+  /* Featured contact cards with headshot + bio */
+  .featuredCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #10275E;
+    background-color: #ffffff;
+    border-radius: var(--border-radius);
+    box-shadow: 5px 15px 25px rgba(0, 0, 0, 0.23);
+    padding-bottom: 1rem;
+  }
+  .featuredCard h2 {
+    color: #10275E;
+    text-shadow: none;
+  }
+  .featuredCard p {
+    color: #111827;
+    text-shadow: none;
+    font-weight: 500;
+  }
+  .profileHeader {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 1rem;
+  }
+  .headshot {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 999px;
+    border: 2px solid #10275E;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    background: #fff;
+  }
+  .bio {
+    color: #111827;
+    padding: 0 1rem 1rem 1rem;
+    text-align: left;
+    line-height: 1.5;
+    font-size: 0.95rem;
+    max-width: 95%;
+  }
   .officeContacts{
     width: 100vw;
-    height: 60vh;
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -361,6 +529,14 @@ mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700,
     grid-template-columns: repeat(1, minmax(25%, auto));
     width: 85%;
   }
+  .profileRow,
+  .profileRow.reverse {
+    grid-template-columns: 1fr;
+  }
+  .profileImage {
+    width: 160px;
+    height: 160px;
+  }
   .card{
     padding-bottom: 4%;
   }
@@ -420,6 +596,12 @@ mask-image: linear-gradient(to right, #991b1b, white, #10275E); /* from-red-700,
   .grid{
     grid-template-columns: repeat(2, minmax(25%, auto));
     width: 85%;
+  }
+  .profileRow {
+    grid-template-columns: 1fr 1fr;
+  }
+  .profileRow.reverse {
+    grid-template-columns: 1fr 1fr;
   }
   .card{
     padding-bottom: 2%;
