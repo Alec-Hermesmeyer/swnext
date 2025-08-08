@@ -8,21 +8,152 @@ import supabase from "@/components/Supabase";
 import { Inter } from "next/font/google";
 import { Lato } from "next/font/google";
 import AdminLayout from "@/components/AdminLayout";
+import { 
+  UserIcon, 
+  ClipboardIcon, 
+  TrashIcon, 
+  SettingsIcon,
+  CheckIcon,
+  CalendarIcon,
+  LayoutGridIcon
+} from "@/components/Icons";
 
-const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+const lato = Lato({ weight: ["700", "900"], subsets: ["latin"] });
+const inter = Inter({ weight: ["400", "600", "700"], subsets: ["latin"] });
 
-function Spacer() {
+function IndustrialPattern() {
   return (
-    <GridPattern className={styles.gridPattern} yOffset={10} interactive={true} />
+    <div className={styles.industrialPattern}>
+      <div className={styles.blueprintGrid}></div>
+      <div className={styles.constructionOverlay}></div>
+    </div>
   );
 }
+
+function AdminHeader() {
+  return (
+    <div className={styles.industrialHeader}>
+      <div className={styles.headerPlate}>
+        <div className={styles.headerContent}>
+          <div className={styles.titleSection}>
+            <div className={styles.industrialBadge}>
+              <span className={styles.badgeText}>S&W ADMIN</span>
+              <span className={styles.badgeCode}>SYS-001</span>
+            </div>
+            <h1 className={`${lato.className} ${styles.industrialTitle}`}>
+              CONSTRUCTION CONTROL CENTER
+            </h1>
+            <div className={styles.specLine}>
+              <span className={styles.spec}>FOUNDATION CONTRACTORS</span>
+              <span className={styles.separator}>|</span>
+              <span className={styles.spec}>ADMIN DASHBOARD v2.1</span>
+              <span className={styles.separator}>|</span>
+              <span className={styles.spec}>OPERATIONAL STATUS: ACTIVE</span>
+            </div>
+          </div>
+          <div className={styles.safetyStripe}></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IndustrialStats() {
+  const [stats, setStats] = useState({
+    contactSubmissions: 0,
+    jobApplications: 0,
+    totalSubmissions: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [contactResult, jobResult] = await Promise.all([
+          supabase.from("contact_form").select("*", { count: "exact", head: true }),
+          supabase.from("job_form").select("*", { count: "exact", head: true })
+        ]);
+
+        setStats({
+          contactSubmissions: contactResult.count || 0,
+          jobApplications: jobResult.count || 0,
+          totalSubmissions: (contactResult.count || 0) + (jobResult.count || 0)
+        });
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return (
+    <div className={styles.industrialStatsGrid}>
+      <div className={styles.statPanel}>
+        <div className={styles.panelHeader}>
+          <span className={styles.panelCode}>CNT-001</span>
+          <div className={styles.statusIndicator}></div>
+        </div>
+        <div className={styles.panelContent}>
+          <div className={styles.statIcon}>
+            <ClipboardIcon />
+          </div>
+          <div className={styles.statData}>
+            <span className={`${inter.className} ${styles.statLabel}`}>CONTACT FORMS</span>
+            <span className={`${lato.className} ${styles.statValue}`}>{stats.contactSubmissions.toString().padStart(3, '0')}</span>
+          </div>
+        </div>
+        <div className={styles.panelFooter}>
+          <span className={styles.panelStatus}>OPERATIONAL</span>
+        </div>
+      </div>
+
+      <div className={styles.statPanel}>
+        <div className={styles.panelHeader}>
+          <span className={styles.panelCode}>JOB-002</span>
+          <div className={styles.statusIndicator}></div>
+        </div>
+        <div className={styles.panelContent}>
+          <div className={styles.statIcon}>
+            <UserIcon />
+          </div>
+          <div className={styles.statData}>
+            <span className={`${inter.className} ${styles.statLabel}`}>JOB APPLICATIONS</span>
+            <span className={`${lato.className} ${styles.statValue}`}>{stats.jobApplications.toString().padStart(3, '0')}</span>
+          </div>
+        </div>
+        <div className={styles.panelFooter}>
+          <span className={styles.panelStatus}>OPERATIONAL</span>
+        </div>
+      </div>
+
+      <div className={styles.statPanel}>
+        <div className={styles.panelHeader}>
+          <span className={styles.panelCode}>TOT-003</span>
+          <div className={styles.statusIndicator}></div>
+        </div>
+        <div className={styles.panelContent}>
+          <div className={styles.statIcon}>
+            <CheckIcon />
+          </div>
+          <div className={styles.statData}>
+            <span className={`${inter.className} ${styles.statLabel}`}>TOTAL SUBMISSIONS</span>
+            <span className={`${lato.className} ${styles.statValue}`}>{stats.totalSubmissions.toString().padStart(3, '0')}</span>
+          </div>
+        </div>
+        <div className={styles.panelFooter}>
+          <span className={styles.panelStatus}>OPERATIONAL</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ContactSubmissions() {
-  //this function will display contact submissions from the supabase database, allowing admin to view and delete them
   const [contactSubmission, setContactSubmission] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 5; // Number of submissions per page
+  const pageSize = 4;
 
   useEffect(() => {
     const fetchTotalCount = async () => {
@@ -45,7 +176,8 @@ function ContactSubmissions() {
       let { data, error } = await supabase
         .from("contact_form")
         .select("*")
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+        .range(page * pageSize, (page + 1) * pageSize - 1)
+        .order('created_at', { ascending: false });
       if (error) {
         console.log(error);
       } else {
@@ -80,70 +212,140 @@ function ContactSubmissions() {
   };
 
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <div className={styles.industrialLoading}>
+        <div className={styles.loadingFrame}>
+          <div className={styles.industrialSpinner}></div>
+          <span className={`${inter.className} ${styles.loadingText}`}>
+            LOADING CONTACT DATA...
+          </span>
+          <div className={styles.loadingProgress}></div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className={styles.contactSubContainer}>
-      <h1>Contact Submissions</h1>
-      <div className={styles.contactSubWrapper}>
-        {contactSubmission.map((submission) => (
-          <div className={styles.contactSubCard} key={submission.id}>
-            <details className={styles.details}>
-              <summary className={lato.className}> {submission.name}</summary>
-              <table className={styles.contactSubTable}>
-        <thread className={styles.thread}>
-        <tr className={styles.tableRow}>
-            <th className={lato.className}>Name</th>
-            <th className={lato.className}>Email</th>
-            <th className={lato.className}>Number</th>
-            <th className={lato.className}>Message</th>
-            <th className={lato.className}>Company</th>
-          </tr>
-        </thread>
-        <tbody className={styles.tableBody}>
-            <tr className={styles.tableRow2}>
-              <td className={lato.className}>{submission.name}</td>
-              <td className={lato.className}>{submission.email}</td>
-              <td className={lato.className}>{submission.number}</td>
-              <td className={lato.className} title={submission.message}>
-              <div className={styles.tooltip}>
-                  {truncateText(submission.message, 5)}
-                  <span className={styles.tooltiptext}>{submission.message}</span>
-                </div>
-              </td>
-              <td className={lato.className}>{submission.company}</td>
-              <span className={styles.deleteBtnContainerT}>
-              <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
-            </span>
-            </tr>
-        </tbody>
-      </table>
-            </details>
+    <div className={styles.industrialSection}>
+      <div className={styles.sectionFrame}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionBadge}>
+            <ClipboardIcon className={styles.sectionIcon} />
+            <div className={styles.sectionInfo}>
+              <h2 className={`${lato.className} ${styles.sectionTitle}`}>
+                CONTACT SUBMISSIONS
+              </h2>
+              <span className={styles.sectionCode}>MODULE: CNT-FORMS</span>
+            </div>
           </div>
-        ))}
-        <div className={styles.pagination}>
-          <button onClick={handlePreviousPage} disabled={page === 0}>
-            Previous
+          <div className={styles.sectionMeta}>
+            <span className={styles.recordCount}>{contactSubmission.length} RECORDS</span>
+            <div className={styles.statusBar}>
+              <span className={styles.statusDot}></span>
+              <span className={styles.statusText}>LIVE</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className={styles.industrialGrid}>
+          {contactSubmission.map((submission, index) => (
+            <div className={styles.industrialCard} key={submission.id}>
+              <div className={styles.cardFrame}>
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardBadge}>
+                    <span className={styles.cardCode}>CNT-{(page * pageSize + index + 1).toString().padStart(3, '0')}</span>
+                    <div className={styles.cardStatus}></div>
+                  </div>
+                  <button 
+                    className={styles.industrialDeleteBtn}
+                    onClick={() => handleDelete(submission.id)}
+                    title="Remove Record"
+                  >
+                    <TrashIcon />
+                    <span>DELETE</span>
+                  </button>
+                </div>
+                
+                <div className={styles.cardContent}>
+                  <div className={styles.primaryInfo}>
+                    <h3 className={`${lato.className} ${styles.cardTitle}`}>
+                      {submission.name.toUpperCase()}
+                    </h3>
+                  </div>
+                  
+                  <div className={styles.specGrid}>
+                    <div className={styles.specItem}>
+                      <span className={styles.specLabel}>EMAIL</span>
+                      <span className={`${inter.className} ${styles.specValue}`}>
+                        {submission.email}
+                      </span>
+                    </div>
+                    <div className={styles.specItem}>
+                      <span className={styles.specLabel}>PHONE</span>
+                      <span className={`${inter.className} ${styles.specValue}`}>
+                        {submission.number}
+                      </span>
+                    </div>
+                    <div className={styles.specItem}>
+                      <span className={styles.specLabel}>COMPANY</span>
+                      <span className={`${inter.className} ${styles.specValue}`}>
+                        {submission.company || 'NOT SPECIFIED'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.messageSection}>
+                    <span className={styles.specLabel}>MESSAGE CONTENT</span>
+                    <div className={`${inter.className} ${styles.messageBox}`}>
+                      {submission.message}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className={styles.cardFooter}>
+                  <div className={styles.timestamps}>
+                    <span className={styles.timestamp}>
+                      RECEIVED: {new Date(submission.created_at).toLocaleDateString('en-US').replace(/\//g, '.')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className={styles.industrialPagination}>
+          <button 
+            className={styles.industrialBtn}
+            onClick={handlePreviousPage} 
+            disabled={page === 0}
+          >
+            ◀ PREV
           </button>
-          <span>
-            Page {page + 1} of {totalPages}
-          </span>
-          <button onClick={handleNextPage} disabled={page >= totalPages - 1}>
-            Next
+          <div className={styles.pageDisplay}>
+            <span className={`${inter.className} ${styles.pageInfo}`}>
+              PAGE {(page + 1).toString().padStart(2, '0')} / {totalPages.toString().padStart(2, '0')}
+            </span>
+          </div>
+          <button 
+            className={styles.industrialBtn}
+            onClick={handleNextPage} 
+            disabled={page >= totalPages - 1}
+          >
+            NEXT ▶
           </button>
         </div>
       </div>
     </div>
   );
 }
+
 function JobApplicants() {
-  //this function will display job applicants from the supabase database, allowing admin to view and delete them
   const [jobSubmission, setJobSubmission] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 10; // Number of submissions per page
+  const pageSize = 4;
 
   useEffect(() => {
     const fetchTotalCount = async () => {
@@ -166,7 +368,8 @@ function JobApplicants() {
       let { data, error } = await supabase
         .from("job_form")
         .select("*")
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+        .range(page * pageSize, (page + 1) * pageSize - 1)
+        .order('created_at', { ascending: false });
       if (error) {
         console.log(error);
       } else {
@@ -192,7 +395,7 @@ function JobApplicants() {
   const handleDelete = async (id) => {
     const { error } = await supabase.from("job_form").delete().eq("id", id);
     if (error) {
-      console.error("Error deleting contact submission:", error);
+      console.error("Error deleting job submission:", error);
     } else {
       setJobSubmission(
         jobSubmission.filter((submission) => submission.id !== id)
@@ -201,105 +404,165 @@ function JobApplicants() {
   };
 
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <div className={styles.industrialLoading}>
+        <div className={styles.loadingFrame}>
+          <div className={styles.industrialSpinner}></div>
+          <span className={`${inter.className} ${styles.loadingText}`}>
+            LOADING PERSONNEL DATA...
+          </span>
+          <div className={styles.loadingProgress}></div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className={styles.contactSubContainer}>
-      <h1 className={lato.className}>Job Applicants</h1>
-      <div className={styles.contactSubWrapper}>
-        {jobSubmission.map((submission) => (
-          <div className={styles.contactSubCard} key={submission.id}>
-            <details className={styles.details}>
-              <summary className={lato.className}> {submission.name}</summary>
-              <table className={styles.contactSubTable}>
-        <thread className={styles.thread}>
-        <tr className={styles.tableRow}>
-            <th className={lato.className}>Name</th>
-            <th className={lato.className}>Email</th>
-            <th className={lato.className}>Number</th>
-            <th className={lato.className}>Message</th>
-            <th className={lato.className}>Position</th>
-          </tr>
-        </thread>
-        <tbody className={styles.tableBody}>
-            <tr className={styles.tableRow2}>
-              <td className={lato.className}>{submission.name}</td>
-              <td className={lato.className}>{submission.email}</td>
-              <td className={lato.className}>{submission.number}</td>
-              <td className={lato.className} title={submission.message}>
-              <div className={styles.tooltip}>
-                  {truncateText(submission.message, 5)}
-                  <span className={styles.tooltiptext}>{submission.message}</span>
-                </div>
-              </td>
-              <td className={lato.className}>{submission.position}</td>
-              <span className={styles.deleteBtnContainerT}>
-              <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>Delete</button>
-            </span>
-            </tr>
-        </tbody>
-      </table>
-            </details>
+    <div className={styles.industrialSection}>
+      <div className={styles.sectionFrame}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionBadge}>
+            <UserIcon className={styles.sectionIcon} />
+            <div className={styles.sectionInfo}>
+              <h2 className={`${lato.className} ${styles.sectionTitle}`}>
+                PERSONNEL APPLICATIONS
+              </h2>
+              <span className={styles.sectionCode}>MODULE: JOB-APPLICATIONS</span>
+            </div>
           </div>
-        ))}
-        <div className={styles.pagination}>
-          <button onClick={handlePreviousPage} disabled={page === 0}>
-            Previous
+          <div className={styles.sectionMeta}>
+            <span className={styles.recordCount}>{jobSubmission.length} RECORDS</span>
+            <div className={styles.statusBar}>
+              <span className={styles.statusDot}></span>
+              <span className={styles.statusText}>LIVE</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className={styles.industrialGrid}>
+          {jobSubmission.map((submission, index) => (
+            <div className={styles.industrialCard} key={submission.id}>
+              <div className={styles.cardFrame}>
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardBadge}>
+                    <span className={styles.cardCode}>JOB-{(page * pageSize + index + 1).toString().padStart(3, '0')}</span>
+                    <div className={styles.cardStatus}></div>
+                  </div>
+                  <button 
+                    className={styles.industrialDeleteBtn}
+                    onClick={() => handleDelete(submission.id)}
+                    title="Remove Record"
+                  >
+                    <TrashIcon />
+                    <span>DELETE</span>
+                  </button>
+                </div>
+                
+                <div className={styles.cardContent}>
+                  <div className={styles.primaryInfo}>
+                    <h3 className={`${lato.className} ${styles.cardTitle}`}>
+                      {submission.name.toUpperCase()}
+                    </h3>
+                  </div>
+                  
+                  <div className={styles.specGrid}>
+                    <div className={styles.specItem}>
+                      <span className={styles.specLabel}>EMAIL</span>
+                      <span className={`${inter.className} ${styles.specValue}`}>
+                        {submission.email}
+                      </span>
+                    </div>
+                    <div className={styles.specItem}>
+                      <span className={styles.specLabel}>PHONE</span>
+                      <span className={`${inter.className} ${styles.specValue}`}>
+                        {submission.number}
+                      </span>
+                    </div>
+                    <div className={styles.specItem}>
+                      <span className={styles.specLabel}>POSITION</span>
+                      <span className={`${inter.className} ${styles.specValue} ${styles.positionTag}`}>
+                        {submission.position}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.messageSection}>
+                    <span className={styles.specLabel}>COVER LETTER</span>
+                    <div className={`${inter.className} ${styles.messageBox}`}>
+                      {submission.message || 'NO COVER LETTER SUBMITTED'}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className={styles.cardFooter}>
+                  <div className={styles.timestamps}>
+                    <span className={styles.timestamp}>
+                      RECEIVED: {new Date(submission.created_at).toLocaleDateString('en-US').replace(/\//g, '.')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className={styles.industrialPagination}>
+          <button 
+            className={styles.industrialBtn}
+            onClick={handlePreviousPage} 
+            disabled={page === 0}
+          >
+            ◀ PREV
           </button>
-          <span>
-            Page {page + 1} of {totalPages}
-          </span>
-          <button onClick={handleNextPage} disabled={page >= totalPages - 1}>
-            Next
+          <div className={styles.pageDisplay}>
+            <span className={`${inter.className} ${styles.pageInfo}`}>
+              PAGE {(page + 1).toString().padStart(2, '0')} / {totalPages.toString().padStart(2, '0')}
+            </span>
+          </div>
+          <button 
+            className={styles.industrialBtn}
+            onClick={handleNextPage} 
+            disabled={page >= totalPages - 1}
+          >
+            NEXT ▶
           </button>
         </div>
       </div>
     </div>
   );
-
-}
-function AddUser() {
-  //this function will allow admin to add a new user to the supabase database
-  return (
-    <div>
-      <h1>Add User</h1>
-    </div>
-  );
 }
 
-function DeleteUser() {
-  //this function will allow admin to delete a user from the supabase database
-  return (
-    <div>
-      <h1>Delete User</h1>
-    </div>
-  );
-}
-function Logout() {
+function IndustrialLogout() {
   const { logout } = useAuth();
   return (
-    <button className={styles.logoutBtn} onClick={logout}>
-      Logout
-    </button>
+    <div className={styles.logoutPanel}>
+      <button className={styles.emergencyLogout} onClick={logout}>
+        <div className={styles.logoutIcon}>
+          <SettingsIcon />
+        </div>
+        <div className={styles.logoutText}>
+          <span className={styles.logoutLabel}>EMERGENCY</span>
+          <span className={styles.logoutAction}>SYSTEM LOGOUT</span>
+        </div>
+      </button>
+    </div>
   );
 }
+
 const Admin = () => {
-  // const { logout } = useAuth();
   return (
-   
-    <div className={styles.admin}>
-      <Spacer className={styles.spacer} />
-      <Logout />
-      <section className={styles.contactWidget}>
-        <ContactSubmissions />
-      </section>
-      <section className={styles.contactWidget}>
-        <JobApplicants />
-      </section>
-      <Spacer className={styles.spacer} />
+    <div className={styles.industrialAdmin}>
+      <IndustrialPattern />
+      
+      <div className={styles.constructionContainer}>
+        <IndustrialStats />
+        
+        <div className={styles.workArea}>
+          <ContactSubmissions />
+          <JobApplicants />
+        </div>
+      </div>
     </div>
-    
   );
 };
 
