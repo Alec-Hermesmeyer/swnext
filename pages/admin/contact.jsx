@@ -1,19 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styles from "@/styles/AdminSubmissions.module.css";
+import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
+import AdminLayout from "@/components/AdminLayout";
 import supabase from "@/components/Supabase";
 import Link from "next/link";
 
 const SubmissionTable = ({ title, data, handleDelete, filterOptions, filterState }) => {
   return (
-    <div className={styles.submissionsContainer}>
-      <h2>{title}</h2>
+    <section className={styles.tablePanel}>
+      <div className={styles.tableHeader}>{title}</div>
       {filterOptions && (
-        <div className={styles.filterContainer}>
-          <label>Filter by Position:</label>
-          <select value={filterState.value} onChange={(e) => filterState.setValue(e.target.value)}>
+        <div className={styles.listPanelBody}>
+          <label className={styles.label} style={{ marginRight: 8 }}>Filter by Position:</label>
+          <select className={styles.select} value={filterState.value} onChange={(e) => filterState.setValue(e.target.value)}>
             <option value="">All Positions</option>
             {Array.from(new Set(filterOptions)).map((option) => (
               <option key={option} value={option}>{option}</option>
@@ -21,36 +22,34 @@ const SubmissionTable = ({ title, data, handleDelete, filterOptions, filterState
           </select>
         </div>
       )}
-      <div className={styles.tableWrapper}>
-        <table className={styles.submissionsTable}>
-          <thead>
-            <tr>
-              {Object.keys(data[0] || {}).map((key) => key !== "id" && <th key={key}>{key.replace("_", " ")}</th>)}
-              <th>Actions</th>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            {Object.keys(data[0] || {}).map((key) => key !== "id" && <th key={key}>{key.replace("_", " ")}</th>)}
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((submission) => (
+            <tr key={submission.id}>
+              {Object.entries(submission).map(([key, value]) =>
+                key !== "id" ? (
+                  <td key={key}>
+                    {key === "email" ? <Link href={`mailto:${value}`}>{value}</Link> :
+                     key === "number" ? <Link href={`tel:${value}`}>{value}</Link> :
+                     key === "created_at" ? new Date(value).toLocaleDateString() :
+                     value}
+                  </td>
+                ) : null
+              )}
+              <td className={styles.tableActions}>
+                <button className={styles.btnDanger} onClick={() => handleDelete(submission.id)}>Delete</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {data.map((submission) => (
-              <tr key={submission.id}>
-                {Object.entries(submission).map(([key, value]) =>
-                  key !== "id" ? (
-                    <td key={key}>
-                      {key === "email" ? <Link href={`mailto:${value}`}>{value}</Link> :
-                       key === "number" ? <Link href={`tel:${value}`}>{value}</Link> :
-                       key === "created_at" ? new Date(value).toLocaleDateString() :
-                       value}
-                    </td>
-                  ) : null
-                )}
-                <td>
-                  <button className={styles.deleteBtn} onClick={() => handleDelete(submission.id)}>🗑 Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 };
 
@@ -115,14 +114,13 @@ function JobApplicants() {
 
 const AdminSubmissions = () => {
   return (
-    <div className={styles.adminContainer}>
-      <section className={styles.submissionSection}>
+    <AdminLayout>
+      <div className={styles.page}>
+        <div className={styles.pageHeader}><div className={styles.pageTitle}>Submissions</div></div>
         <ContactSubmissions />
-      </section>
-      <section className={styles.submissionSection}>
         <JobApplicants />
-      </section>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

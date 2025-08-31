@@ -2,60 +2,58 @@
 import React, { useState, useEffect } from "react"
 import styles from "@/styles/Admin.module.css"
 import withAuth from "@/components/withAuth"
+import AdminLayout from "@/components/AdminLayout"
 import supabase from "@/components/Supabase"
 import Link from "next/link"
 
-function ContactListPreview() {
-  const [contacts, setContacts] = useState([])
-
-  useEffect(() => {
-    const fetchContacts = async () => {
-      let { data, error } = await supabase.from("company_contacts").select("*").limit(5)
-      if (!error) setContacts(data)
-    }
-    fetchContacts()
-  }, [])
-
-  return (
-    <div className={styles.previewList}>
-      {contacts.map((contact) => (
-        <div key={contact.id} className={styles.previewItem}>
-          <h3>{contact.name}</h3>
-          <p>{contact.job_title}</p>
-        </div>
-      ))}
-      <Link href="/admin/contacts" className={styles.viewMore}>View All Contacts →</Link>
-    </div>
-  )
-}
-
-
 function JobListPreview() {
   const [jobs, setJobs] = useState([])
-
   useEffect(() => {
     const fetchJobs = async () => {
-      let { data, error } = await supabase.from("jobs").select("*").limit(5)
-      if (!error) setJobs(data)
+      let { data, error } = await supabase.from("jobs").select("*").order('created_at', { ascending: false }).limit(5)
+      if (!error) setJobs(data || [])
     }
     fetchJobs()
   }, [])
-
   return (
-    <div className={styles.previewList}>
+    <div className={styles.listPanelBody}>
       {jobs.map((job) => (
-        <div key={job.id} className={styles.previewItem}>
-          <h3>{job.jobTitle}</h3>
-          <p className={job.is_Open ? styles.openJob : styles.closedJob}>
-            {job.is_Open ? "Open" : "Closed"}
-          </p>
+        <div key={job.id} className={styles.listItem}>
+          <div>
+            <div className={styles.itemTitle}>{job.jobTitle}</div>
+            <div className={job.is_Open ? styles.badgeOpen : styles.badgeClosed}>{job.is_Open ? "Open" : "Closed"}</div>
+          </div>
         </div>
       ))}
-      <Link href="/admin/jobs" className={styles.viewMore}>View All Jobs →</Link>
+      <div className={styles.panelFooterRow}><Link href="/admin/jobs">View all jobs →</Link></div>
     </div>
   )
 }
 
+function ContactListPreview() {
+  const [contacts, setContacts] = useState([])
+  useEffect(() => {
+    const fetchContacts = async () => {
+      let { data, error } = await supabase.from("company_contacts").select("*").order('id', { ascending: false }).limit(6)
+      if (!error) setContacts(data || [])
+    }
+    fetchContacts()
+  }, [])
+  return (
+    <div className={styles.listPanelBody}>
+      {contacts.map((c) => (
+        <div key={c.id} className={styles.listItem}>
+          <div>
+            <div className={styles.itemTitle}>{c.name}</div>
+            <div className={styles.itemSub}>{c.job_title}</div>
+          </div>
+          <div className={styles.itemMeta}>{c.email}</div>
+        </div>
+      ))}
+      <div className={styles.panelFooterRow}><Link href="/admin/company-contacts">View all contacts →</Link></div>
+    </div>
+  )
+}
 
 function Dashboard() {
   const [jobCount, setJobCount] = useState(0)
@@ -65,62 +63,50 @@ function Dashboard() {
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        const { count: jobCount, error: jobError } = await supabase
-          .from("jobs")
-          .select("*", { count: "exact", head: true })
-
-        const { count: contactCount, error: contactError } = await supabase
-          .from("company_contacts")
-          .select("*", { count: "exact", head: true })
-
-        if (!jobError) setJobCount(jobCount)
-        if (!contactError) setContactCount(contactCount)
-      } catch (error) {
-        console.error("Error fetching counts:", error)
+        const { count: jobCount } = await supabase.from("jobs").select("*", { count: "exact", head: true })
+        const { count: contactCount } = await supabase.from("company_contacts").select("*", { count: "exact", head: true })
+        setJobCount(jobCount || 0)
+        setContactCount(contactCount || 0)
       } finally {
         setLoading(false)
       }
     }
-
     fetchCounts()
   }, [])
 
-  if (loading) return <p>Loading...</p>
-
   return (
-    <div className={styles.adminDashboard}>
-      <h1 className={styles.dashboardTitle}>Admin Dashboard</h1>
-
-      {/* Overview Cards */}
-      <div className={styles.statsRow}>
-        <div className={styles.statCard}>
-          <h2>Job Postings</h2>
-          <p>{jobCount}</p>
-          <Link href="/admin/careers" className={styles.manageLink}>
-            Manage Jobs Postings →
-          </Link>
+    <AdminLayout>
+      <div className={styles.dashContainer}>
+        <div className={styles.cardsRow}>
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiLabel}>Job Postings</div>
+            <div className={styles.kpiValue}>{loading ? '—' : jobCount}</div>
+            <Link href="/admin/careers" className={styles.kpiLink}>Manage postings</Link>
+          </div>
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiLabel}>Company Contacts</div>
+            <div className={styles.kpiValue}>{loading ? '—' : contactCount}</div>
+            <Link href="/admin/company-contacts" className={styles.kpiLink}>Manage contacts</Link>
+          </div>
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiLabel}>Total Records</div>
+            <div className={styles.kpiValue}>{loading ? '—' : (jobCount + contactCount)}</div>
+            <Link href="/admin/contact" className={styles.kpiLink}>View submissions</Link>
+          </div>
         </div>
-        <div className={styles.statCard}>
-          <h2>Company Contacts</h2>
-          <p>{contactCount}</p>
-          <Link href="/admin/contacts" className={styles.manageLink}>
-            Manage Contacts →
-          </Link>
+
+        <div className={styles.panelsGrid}>
+          <section className={styles.listPanel}>
+            <div className={styles.listPanelHeader}>Recent Job Postings</div>
+            <JobListPreview />
+          </section>
+          <section className={styles.listPanel}>
+            <div className={styles.listPanelHeader}>Company Contacts</div>
+            <ContactListPreview />
+          </section>
         </div>
       </div>
-
-      {/* Jobs Preview */}
-      <div className={styles.section}>
-        <h2>Recent Job Postings</h2>
-        <JobListPreview />
-      </div>
-
-      {/* Contacts Preview */}
-      <div className={styles.section}>
-        <h2>Company Contacts</h2>
-        <ContactListPreview />
-      </div>
-    </div>
+    </AdminLayout>
   )
 }
 

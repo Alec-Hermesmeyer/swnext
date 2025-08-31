@@ -27,6 +27,11 @@ export default function App({ Component, pageProps, router }) {
       </AuthProvider>
     );
   } else {
+    // If the page provides its own layout (e.g., /tw), use it exclusively
+    if (Component.getLayout) {
+      return getLayout(<Component {...pageProps} />);
+    }
+    // Otherwise, wrap with the site's default Layout
     return (
       <Layout>
         <PreloadImages />

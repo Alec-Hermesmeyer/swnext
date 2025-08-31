@@ -1,145 +1,85 @@
 import React, { useState, useEffect } from "react";
 import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
+import AdminLayout from "@/components/AdminLayout";
 import supabase from "@/components/Supabase";
 
-function JobPostingsAdmin() {
+function CareersPage() {
   const [jobs, setJobs] = useState([]);
-  const [newJob, setNewJob] = useState({ jobTitle: "", jobDesc: "", is_Open: true });
   const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ jobTitle: '', jobDesc: '', is_Open: true });
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        let { data, error } = await supabase.from("jobs").select("*");
-        if (error) {
-          console.error("Error fetching jobs:", error);
-        } else {
-          setJobs(data);
-        }
-      } catch (error) {
-        console.error("Unexpected error fetching jobs:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const load = async () => {
+    const { data } = await supabase.from('jobs').select('*').order('id', { ascending: false });
+    setJobs(data || []); setLoading(false);
+  }
+  useEffect(()=>{ load(); },[]);
 
-    fetchJobs();
-  }, []);
-
-  const handleAddJob = async (e) => {
+  const add = async (e) => {
     e.preventDefault();
-    try {
-      let { data, error } = await supabase.from("jobs").insert([newJob]);
-      if (error) {
-        console.error("Error adding job:", error);
-      } else {
-        setJobs([...jobs, ...data]);
-        setNewJob({ jobTitle: "", jobDesc: "", is_Open: true });
-      }
-    } catch (error) {
-      console.error("Unexpected error adding job:", error);
-    }
-  };
-
-  const handleDeleteJob = async (id) => {
-    try {
-      let { error } = await supabase.from("jobs").delete().eq("id", id);
-      if (error) {
-        console.error("Error deleting job:", error);
-      } else {
-        setJobs(jobs.filter((job) => job.id !== id));
-      }
-    } catch (error) {
-      console.error("Unexpected error deleting job:", error);
-    }
-  };
-
-  const handleToggleJob = async (id, is_Open) => {
-    try {
-      let { error } = await supabase.from("jobs").update({ is_Open }).eq("id", id);
-      if (error) {
-        console.error("Error updating job status:", error);
-      } else {
-        setJobs(jobs.map((job) => (job.id === id ? { ...job, is_Open } : job)));
-      }
-    } catch (error) {
-      console.error("Unexpected error updating job status:", error);
-    }
-  };
+    const { data, error } = await supabase.from('jobs').insert([form]).select('*');
+    if (!error && data) { setJobs([data[0], ...jobs]); setForm({ jobTitle:'', jobDesc:'', is_Open:true }); }
+  }
+  const toggleOpen = async (id, isOpen) => {
+    const { error } = await supabase.from('jobs').update({ is_Open: !isOpen }).eq('id', id);
+    if (!error) setJobs(jobs.map(j=> j.id===id? { ...j, is_Open: !isOpen }: j));
+  }
+  const remove = async (id) => {
+    await supabase.from('jobs').delete().eq('id', id);
+    setJobs(jobs.filter(j=> j.id!==id));
+  }
 
   return (
-    <div className={styles.manageJobs}>
-      <h2>Manage Job Postings</h2>
-      <form onSubmit={handleAddJob} className={styles.jobForm}>
-        <div>
-          <label>
-            Job Title:
-            <input
-              type="text"
-              value={newJob.jobTitle}
-              onChange={(e) => setNewJob({ ...newJob, jobTitle: e.target.value })}
-              required
-            />
-          </label>
-        </div>
-        <div>
-          <label>
-            Job Description:
-            <textarea
-              value={newJob.jobDesc}
-              onChange={(e) => setNewJob({ ...newJob, jobDesc: e.target.value })}
-              required
-            />
-          </label>
-        </div>
-        <div>
-          <label>
-            Open Position:
-            <input
-              type="checkbox"
-              checked={newJob.is_Open}
-              onChange={(e) => setNewJob({ ...newJob, is_Open: e.target.checked })}
-            />
-          </label>
-        </div>
-        <button type="submit">Add Job</button>
-      </form>
+    <AdminLayout>
+      <div className={styles.page}>
+        <div className={styles.pageHeader}><div className={styles.pageTitle}>Careers</div></div>
 
-      <h3>Current Job Postings</h3>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <ul className={styles.jobList}>
-          {jobs.map((job) => (
-            <li key={job.id} className={styles.jobItem}>
-              <h4>{job.jobTitle}</h4>
-              <p>{job.jobDesc}</p>
-              <p className={job.is_Open ? styles.openJob : styles.closedJob}>
-                {job.is_Open ? "Open" : "Closed"}
-              </p>
-              <div className={styles.jobActions}>
-                <button onClick={() => handleToggleJob(job.id, !job.is_Open)}>
-                  {job.is_Open ? "Close" : "Open"}
-                </button>
-                <button onClick={() => handleDeleteJob(job.id)}>Delete</button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+        <section className={styles.formPanel}>
+          <form onSubmit={add} className={styles.formGrid}>
+            <div className={styles.field}>
+              <label className={styles.label}>Job Title</label>
+              <input className={styles.input} value={form.jobTitle} onChange={e=>setForm({ ...form, jobTitle: e.target.value })} required />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Job Description</label>
+              <textarea className={styles.textarea} value={form.jobDesc} onChange={e=>setForm({ ...form, jobDesc: e.target.value })} required />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Open</label>
+              <select className={styles.select} value={form.is_Open ? 'open' : 'closed'} onChange={e=>setForm({ ...form, is_Open: e.target.value==='open' })}>
+                <option value='open'>Open</option>
+                <option value='closed'>Closed</option>
+              </select>
+            </div>
+            <div className={styles.actionsRow}><button className={styles.btn}>Add Job</button></div>
+          </form>
+        </section>
+
+        <section className={styles.tablePanel}>
+          <div className={styles.tableHeader}>Job Postings</div>
+          {loading ? (
+            <div className={styles.listPanelBody}>Loading...</div>
+          ) : (
+            <table className={styles.table}>
+              <thead><tr><th>Title</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                {jobs.map(j => (
+                  <tr key={j.id}>
+                    <td>{j.jobTitle}</td>
+                    <td>{j.is_Open ? 'Open' : 'Closed'}</td>
+                    <td className={styles.tableActions}>
+                      <button className={styles.btnSecondary} onClick={()=>toggleOpen(j.id, j.is_Open)}>{j.is_Open ? 'Close' : 'Open'}</button>
+                      <button className={styles.btnDanger} onClick={()=>remove(j.id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </div>
+    </AdminLayout>
+  )
 }
 
-const AdminJobs = () => {
-  return (
-    <div className={styles.admin}>
-      <section className={styles.contactWidgetOffice}>
-        <JobPostingsAdmin />
-      </section>
-    </div>
-  );
-};
-
-export default withAuth(AdminJobs);
+export default withAuth(CareersPage);
