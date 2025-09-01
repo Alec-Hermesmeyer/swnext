@@ -1,151 +1,68 @@
-import React from 'react';
-import styles from '../styles/Individual.module.css'
-import Link from "next/link";
-import Image from "next/image";
 import Head from "next/head";
-import { Inter } from "next/font/google";
-import { Oswald } from "next/font/google";
-import { Montserrat } from "next/font/google";
+import Image from "next/image";
+import Link from "next/link";
+import TWLayout from "@/components/TWLayout";
 import { Lato } from "next/font/google";
-import { FadeIn } from "@/components/FadeIn";
 
-
-const inter = Inter({ subsets: ["latin"] });
-const oswald = Oswald({ subsets: ["latin"] });
-const montserrat = Montserrat({ subsets: ["latin"] });
-const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 function Hero() {
   return (
-    <div className={styles.heroSectionCD}>
-      <div className={styles.heroContainer}>
-        <div className={styles.heroWrapper}>
-          <h1 className={lato.className}>Crane Services</h1>
-          <span>
-            <Link className={styles.heroLink} href="/contact">
-              Contact Us
-            </Link>
-            <Link className={styles.heroLink} href="/careers">
-              Careers
-            </Link>
-          </span>
-        </div>
+    <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[40vh] md:min-h-[50vh] flex items-center">
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_7118.webp')", backgroundPosition: "center" }} />
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="relative mx-auto w-full px-0 py-20 text-center">
+        <h1 className={`${lato.className} text-4xl md:text-5xl font-extrabold`}>Crane Services</h1>
       </div>
-    </div>
+    </section>
   );
 }
-function InfoSection() {
+
+export default function CraneTW() {
   return (
-    <div className={styles.infoSection}>
-      <div className={styles.infoContainer}>
-        <div className={styles.infoWrapper}>
-          <FadeIn>
-            <div className={styles.infoTop}>
-              <div className={styles.infoTopContainer}>
-                <div className={styles.infoTopWrapper}>
-                  <div className={styles.infoTopLeft}>
-                    <div className={styles.infoTopLeftContainer}>
-                      <h2 className={lato.className}>
-                      Crane Services
-                      </h2>
-                      <p className={lato.className}>
-                         S&amp;W Foundation Contractors owns and operates a fleet of 6 state of the art crane rigs, and has been leading the way for crane services and construction needs across Texas. We stress the importance of safety and high-quality work to ensure
-                         that evert project is completed to the best of our ability, while mitigating risks involved with this line of work. Working with heavy equipment can often present many dangers and challenges,
-                         but our years of professional experience make us the best choice for your crane service needs. Contact us today to learn more about our comprehensive portfolio of Crane Services.
-                      </p>
-                    </div>
-                  </div>
-                  <div className={styles.infoTopRight}>
-                    <Image
-                      className={styles.infoImage}
-                      src="Images/public/newimages/IMG_6825.webp"
-                      height={380}
-                      width={410}
-                      alt="S&W Foundations"
-                      loading="lazy"
-                      quality={80}
-                    />
-                  </div>
+    <>
+      <Head>
+        <title>Crane Services | Tailwind Version</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <main className="flex w-full flex-col">
+        <Hero />
+        <section className="mx-auto w-full max-w-[1600px] px-6 py-10">
+          <div className="relative overflow-hidden rounded-2xl bg-[#0b2a5a] text-white shadow-2xl ring-1 ring-black/10">
+            <div className="absolute left-0 top-0 h-2 md:h-3 w-full bg-red-600" />
+            <div className="grid grid-cols-1 items-center gap-6 p-6 md:grid-cols-2 md:p-12">
+              <div>
+                <h2 className={`${lato.className} text-2xl md:text-3xl font-extrabold`}>Modern fleet</h2>
+                <p className="mt-4 leading-relaxed text-white/90">Experienced operators and well-maintained equipment keep your project on schedule.</p>
+              </div>
+              <div className="flex items-center justify-end">
+                <div className="relative aspect-[4/3] w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/10 md:-mr-8">
+                  <Image src={`https://${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_6825.webp`} alt="Crane" fill sizes="(min-width: 768px) 600px, 90vw" className="object-cover" unoptimized loader={({src})=>src} />
                 </div>
               </div>
             </div>
-          </FadeIn>
-        </div>
-      </div>
-    </div>
-  );
-}
+          </div>
+        </section>
 
-function ArticleSection() {
-  return (
-  <div className={styles.articleSection}>
-    <div className={styles.articleContainer}>
-      <div className={styles.articleWrapper}>
-        <h3 className={lato.className}>If You Need A Lift, We Have Got You Covered...</h3>
-        <div className={styles.contentContainer}>
-          <article className={styles.articleContent}>
-            <p className={lato.className}>
-              Clients entrust us for our proven ability to provide robust lifting solutions, regardless of complexity. Our specialized
-              expertise spans a wide range, from heavy machinery to construction materials. Our crane services are designed to meet the expecations of the job at hand.
-              Our Commitment to Safety is paramount, and we ensure that all of our operators are trained and certified to operate our equipment. Contact us today to explore the comprehensive array of lifting solutions we offer, designed to elevate your 
-              projects to new heights while keeping safety and effeciency at the forefront of our operations.
-            </p>
-          </article>
-        </div>
-        <span className={styles.btns}>
-        <Link  className={styles.infoBtn1} href="/turn-key">Turn-Key</Link>
-        <Link className={styles.infoBtn2} href="/helical-piles">Helical Piles</Link>
-          </span>
-      </div>
-    </div>
-  </div>
-    );
-}
+        {/* Article content */}
+        <section className="mx-auto w-full max-w-[1200px] px-6 py-6">
+          <h3 className={`${lato.className} text-2xl md:text-3xl font-extrabold text-[#0b2a5a]`}>If You Need A Lift, We Have Got You Covered...</h3>
+          <p className="mt-4 leading-relaxed text-neutral-800">Clients entrust us for our proven ability to provide robust lifting solutions, regardless of complexity. Our specialized expertise spans a wide range, from heavy machinery to construction materials. Our crane services are designed to meet the expectations of the job at hand. Safety is paramount, and we ensure that all of our operators are trained and certified to operate our equipment. Contact us today to explore the comprehensive array of lifting solutions we offer—designed to elevate your projects to new heights while keeping safety and efficiency at the forefront.</p>
+        </section>
 
-const Crane = () => {
-  return (
-    <>
-    <Head>
-    <title>Crane Services | S&amp;W Foundation - Comprehensive Pier Drilling &amp; Construction Support in Dallas, TX</title>
-    <meta name="description" content="S&amp;W Foundation offers a suite of specialized Crane services in Dallas, TX: pier drilling, limited-access pier drilling, turnkey solutions, crane, and trucking services. Leveraging years of experience and cutting-edge equipment, we&apos;re your trusted partner in commercial construction support." />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="keywords" content="pier drilling, limited-access pier drilling, crane services, trucking services, turnkey solutions, caisson, slurry" />
-    <meta property="og:title" content="Crane Services | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX" />
-    <meta property="og:description" content="Discover S&amp;W Foundation&apos;s range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.swfoundation.com/crane" />
-    <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_4838.webp" />
-    <meta property='og:site_name' content='S&amp;W Commercial Pier Drilling Contractors' />
-    <meta name="twitter:card" content="summary" />
-        <meta
-          name="twitter:title"
-          content="S&amp;W Foundation | Dallas, TX's Premier Commercial Construction Partner"
-        />
-        <meta
-          name="twitter:description"
-          content="Expertise in commercial pier drilling, crane &amp; trucking services, and more. See why businesses trust S&amp;W Foundation for their construction needs."
-        />
-        <meta
-          name="twitter:image"
-          content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp?t=2024-04-16T20%3A11%3A20.126Z"
-        />
-    <link rel="canonical" href="https://www.swfoundation.com/crane" />
-    <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
-</Head>
-
-    <div className={styles.page}>
-      <section className={styles.hero}>
-        <Hero />
-      </section>
-      <section className={styles.info}>
-          <InfoSection />
-      </section>
-      <section className={styles.article}>
-          <ArticleSection />
-      </section>
-    </div>
+        <section className="mx-auto w-full max-w-[1200px] px-6 pb-14">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/tw/services" className="inline-flex items-center rounded-md bg-red-600 px-5 py-3 font-bold text-white shadow hover:bg-red-700">All Services</Link>
+            <Link href="/tw/turn-key" className="inline-flex items-center rounded-md bg-[#0b2a5a] px-5 py-3 font-bold text-white shadow hover:brightness-110">Turn-Key</Link>
+          </div>
+        </section>
+      </main>
     </>
   );
+}
+
+CraneTW.getLayout = function getLayout(page) {
+  return <TWLayout>{page}</TWLayout>;
 };
 
-export default Crane;
+

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import styles from "@/styles/Admin.module.css";
 import withAuth from "@/components/withAuth";
 import { truncateText } from "@/utils/truncateText";
 import { GridPattern } from "@/components/GridPattern";

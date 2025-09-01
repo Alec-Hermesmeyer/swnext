@@ -4,7 +4,6 @@ import JobDashboard from "@/components/JobDashboard";
 import NewJobForm from "@/components/NewJobForm";
 import JobDetail from "@/components/JobDetail";
 import withAuth from "@/components/withAuth";
-import styles from "@/styles/Jobs.module.css";
 import supabase from "@/components/Supabase";
 import Button from "@/components/Button";
 

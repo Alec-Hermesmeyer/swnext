@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import supabase from "@/components/Supabase";
-import styles from "../styles/Blog.module.css";
 import { Lato } from "next/font/google";
 import Link from "next/link";
 import ContactCard from "@/components/ContactCard";
@@ -43,20 +42,20 @@ export default function MarkdownBlogPost({ frontmatter, content }) {
   const imageSrc = imageUrl || supabaseUrl;
 
   return (
-    <div className={styles.post}>
-      <div className={styles.postContainer}>
-        <div className={styles.postWrapper}>
-          <div className={styles.introSection}>
-            <div className={styles.introContainer}>
-              <div className={styles.introWrapper}>
-                <div className={styles.introContent}>
-                  <div className={styles.introContentContainer}>
-                    <div className={styles.introContentWrapper}>
-                      <div className={styles.introContentLeft}>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-8">
+            <div className="space-y-8">
+              <div className="">
+                <div className="">
+                  <div className="">
+                    <div className="">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {imageSrc && (
-                          <span className={styles.imageContainer}>
+                          <span className="relative aspect-video rounded-lg overflow-hidden">
                             <Image
-                              className={styles.blogImg}
+                              className="object-cover w-full h-full"
                               src={imageSrc}
                               height={470}
                               width={520}
@@ -72,10 +71,10 @@ export default function MarkdownBlogPost({ frontmatter, content }) {
                           <ContactCard />
                         
                       </div>
-                      <div className={styles.introContentRight}>
+                      <div className="space-y-6">
                         <h1 className={lato.className}>{frontmatter.title}</h1>
                         <article
-                          className={styles.blogArticle}
+                          className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: content }}
                         ></article>
                       </div>

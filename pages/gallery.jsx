@@ -1,47 +1,59 @@
-import React from 'react'
-import styles from '@/styles/Gallery.module.css'
-import Head from 'next/head'
-import GalleryGrid from '@/components/GalleryGrid'
+import Head from "next/head";
+import Image from "next/image";
+import TWLayout from "@/components/TWLayout";
+import { Lato } from "next/font/google";
 
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-export default function Gallery() {
-    return (
-        <>
-<Head>
-    
-    <title>Project Gallery | S&amp;W Foundation - Dallas, TX&apos;s Premier Pier Drilling Specialists</title>
-    <meta name="description" content="Explore S&amp;W Foundation&apos;s project gallery to witness our expertise in commercial pier drilling. From warehouses to hospitals, our Dallas, TX-based team delivers precision, safety, and excellence in every project." />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta property="og:title" content="Project Gallery | S&amp;W Foundation - Leading Pier Drilling Projects in Dallas, TX" />
-    <meta property="og:description" content="Dive into S&amp;W Foundation&apos;s gallery, showcasing top-tier pier drilling projects across Dallas, TX and the wider US. Experience our dedication to quality firsthand." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.swfoundation.com/gallery" />
-    <meta name="keywords" content="project gallery, S&amp;W Foundation, pier drilling specialists, Dallas, TX, commercial pier drilling, precision, safety, excellence, warehouses, hospitals, pier drilling projects, quality, dedication" />
-    <meta property='og:site_name' content='S&amp;W Commercial Pier Drilling' />
-    <meta name="twitter:card" content="summary" />
-        <meta
-          name="twitter:title"
-          content="S&amp;W Foundation | Dallas, TX's Premier Commercial Construction Partner"
-        />
-        <meta
-          name="twitter:description"
-          content="Expertise in commercial pier drilling, crane &amp; trucking services, and more. See why businesses trust S&amp;W Foundation for their construction needs."
-        />
-        <meta
-          name="twitter:image"
-          content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp?t=2024-04-16T20%3A11%3A20.126Z"
-        />
-    <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
-    <link rel="canonical" href="https://www.swfoundation.com/gallery" />
-    
-</Head>
+const galleryImages = [
+  "gal1.jpeg","gal2.jpeg","gal3.jpeg","gal4.jpeg","gal5.jpeg","gal6.jpeg","gal7.jpeg","gal8.jpeg","gal9.jpeg","gal10.jpeg","gal11.jpeg","gal12.jpeg","gal13.jpeg","gal14.jpeg","gal15.jpeg","gal16.jpeg","gal17.jpeg","gal18.jpeg","gal19.jpeg","gal20.jpeg","gal21.jpeg","gal22.jpeg","gal23.jpeg","gal24.jpeg","gal25.jpeg","gal26.jpeg","gal27.jpeg","gal28.jpeg","gal29.jpeg","gal30.jpeg","gal31.jpeg","gal32.jpeg","gal33.jpeg","gal34.jpeg","gal35.jpeg","gal36.jpeg","gal37.jpeg","gal38.jpeg","gal39.jpeg","gal40.jpeg","gal41.jpeg","gal42.jpeg"
+];
 
-
-      <div className={styles.main}>
-        <GalleryGrid />
-       
+function Hero() {
+  return (
+    <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[35vh] md:min-h-[45vh] flex items-center">
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/homeHero.webp')" }} />
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="relative mx-auto w-full px-0 py-14 text-center">
+        <h1 className={`${lato.className} text-4xl md:text-5xl font-extrabold`}>Project Gallery</h1>
       </div>
-    </>
-  )
+    </section>
+  );
 }
-   
+
+export default function GalleryTW() {
+  return (
+    <>
+      <Head>
+        <title>Gallery | Tailwind</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <main className="flex w-full flex-col">
+        <Hero />
+        <section className="mx-auto w-full max-w-[1300px] px-6 py-10">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {galleryImages.map((file) => (
+              <div key={file} className="group relative overflow-hidden rounded-lg bg-neutral-100 shadow">
+                <Image
+                  src={`/galleryImages/${file}`}
+                  alt={file}
+                  width={600}
+                  height={600}
+                  className="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105 md:h-44"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                  priority={file === "gal1.jpeg"}
+                  unoptimized
+                  loader={({ src }) => src}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </>
+  );
+}
+
+GalleryTW.getLayout = function getLayout(page) {
+  return <TWLayout>{page}</TWLayout>;
+};

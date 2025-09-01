@@ -1,6 +1,5 @@
 // Sidebar.jsx
 import React from 'react';
-import styles from '../styles/AdminLayout.module.css';
 import Link from 'next/link';
 import Tooltip from "@/components/Tooltip";
 import {
@@ -20,22 +19,22 @@ const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 function Sidebar() {
   
   return (
-    <aside className={styles.sidebar}>
-      <nav className={styles.nav}>
+    <aside className="w-full h-full bg-gray-50 border-r border-gray-200">
+      <nav className="p-4 space-y-2">
           <Tooltip.Provider>
-            <Link href="/admin/dashboard" className={styles.tooltipProvider} prefetch={false}>
-              <LayoutGridIcon className={styles.icon} />
-              <span className={styles.iconSpan}>Dashboard</span>
+            <Link href="/admin/dashboard" className="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-gray-100 text-gray-700 hover:text-gray-900" prefetch={false}>
+              <LayoutGridIcon className="h-5 w-5" />
+              <span className="text-sm font-medium">Dashboard</span>
             </Link>
             <Tooltip>
               <Tooltip.Trigger asChild>
                 <Link
                   href="/admin/sales"
-                  className={styles.tooltipProvider}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-gray-100 text-gray-700 hover:text-gray-900"
                   prefetch={false}
                 >
-                  <CalendarIcon className={styles.icon} />
-                  <span className={styles.iconSpan}>Sales</span>
+                  <CalendarIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Sales</span>
                 </Link>
               </Tooltip.Trigger>
               <Tooltip.Content side="right">Sales</Tooltip.Content>
@@ -44,11 +43,11 @@ function Sidebar() {
               <Tooltip.Trigger asChild>
                 <Link
                   href="/admin/contact"
-                  className={styles.tooltipProvider}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-gray-100 text-gray-700 hover:text-gray-900"
                   prefetch={false}
                 >
-                  <ClipboardIcon className={styles.icon} />
-                  <span className={styles.iconSpan}>Contact Form</span>
+                  <ClipboardIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Contact Form</span>
                 </Link>
               </Tooltip.Trigger>
               <Tooltip.Content side="right">Contact Forms</Tooltip.Content>
@@ -57,11 +56,11 @@ function Sidebar() {
               <Tooltip.Trigger asChild>
                 <Link
                   href="/admin/company-contacts"
-                  className={styles.tooltipProvider}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-gray-100 text-gray-700 hover:text-gray-900"
                   prefetch={false}
                 >
-                  <StickyNoteIcon className={styles.icon} />
-                  <span className={styles.iconSpan}>Company Contacts</span>
+                  <StickyNoteIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Company Contacts</span>
                 </Link>
               </Tooltip.Trigger>
               <Tooltip.Content side="right">Company Contacts</Tooltip.Content>
@@ -70,11 +69,11 @@ function Sidebar() {
               <Tooltip.Trigger asChild>
                 <Link
                   href="/admin/careers"
-                  className={styles.tooltipProvider}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-gray-100 text-gray-700 hover:text-gray-900"
                   prefetch={false}
                 >
-                  <StickyNoteIcon className={styles.icon} />
-                  <span className={styles.iconSpan}>Careers</span>
+                  <StickyNoteIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Careers</span>
                 </Link>
               </Tooltip.Trigger>
               <Tooltip.Content side="right">Careers</Tooltip.Content>
@@ -83,11 +82,11 @@ function Sidebar() {
               <Tooltip.Trigger asChild>
                 <Link
                   href="/admin/jobs"
-                  className={styles.tooltipProvider}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-gray-100 text-gray-700 hover:text-gray-900"
                   prefetch={false}
                 >
-                  <SettingsIcon className={styles.icon} />
-                  <span className={styles.iconSpan}>Jobs</span>
+                  <SettingsIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Jobs</span>
                 </Link>
               </Tooltip.Trigger>
               <Tooltip.Content side="right">Job Openings</Tooltip.Content>

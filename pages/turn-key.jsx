@@ -1,152 +1,54 @@
-import React from 'react';
-import styles from '../styles/Individual.module.css'
-import Link from "next/link";
-import Image from "next/image";
 import Head from "next/head";
-import { Inter } from "next/font/google";
-import { Oswald } from "next/font/google";
-import { Montserrat } from "next/font/google";
+import Image from "next/image";
+import Link from "next/link";
+import TWLayout from "@/components/TWLayout";
 import { Lato } from "next/font/google";
-import { FadeIn } from "@/components/FadeIn";
 
-
-const inter = Inter({ subsets: ["latin"] });
-const oswald = Oswald({ subsets: ["latin"] });
-const montserrat = Montserrat({ subsets: ["latin"] });
-const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 function Hero() {
   return (
-    <div className={styles.heroSectionTD}>
-      <div className={styles.heroContainer}>
-        <div className={styles.heroWrapper}>
-          <h1 className={lato.className}>Turn Key Drilling Solutions</h1>
-          <span>
-            <Link className={styles.heroLink} href="/contact">
-              Contact Us
-            </Link>
-            <Link className={styles.heroLink} href="/careers">
-              Careers
-            </Link>
-          </span>
-        </div>
+    <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[40vh] md:min-h-[50vh] flex items-center">
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8084.webp')", backgroundPosition: "center" }} />
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="relative mx-auto w-full px-0 py-20 text-center">
+        <h1 className={`${lato.className} text-4xl md:text-5xl font-extrabold`}>Turn-Key Drilling Solutions</h1>
       </div>
-    </div>
-  );
-}
-function InfoSection() {
-  return (
-    <div className={styles.infoSection}>
-      <div className={styles.infoContainer}>
-        <div className={styles.infoWrapper}>
-          <FadeIn>
-            <div className={styles.infoTop}>
-              <div className={styles.infoTopContainer}>
-                <div className={styles.infoTopWrapper}>
-                  <div className={styles.infoTopLeft}>
-                    <div className={styles.infoTopLeftContainer}>
-                      <h2 className={lato.className}>
-                      Turn-Key Drilling Solutions
-                      </h2>
-                      <p className={lato.className}>
-                         S&amp;W Foundation Contractors offers comprehensive Turn-Key Drilling Solutions for commercial construction projects across the United States. 
-                         Our turn-key approach to drilling services ensures that we handle every aspect of the project from start to finish. We provide a full suite of drilling services, 
-                         including pier drilling, limited-access drilling, and crane services. Our team of experts will work with you to develop a customized drilling plan that meets your project&apos;s unique requirements. 
-                         Contact us today to learn more about our turn-key drilling solutions.
-                      </p>
-                    </div>
-                  </div>
-                  <div className={styles.infoTopRight}>
-                    <Image
-                      className={styles.infoImage}
-                      src="Images/public/rigcraneposing.webp"
-                      height={380}
-                      width={430}
-                      alt="S&W Foundations"
-                      loading="lazy"
-                      quality={80}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </FadeIn>
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }
 
-function ArticleSection() {
-  return (
-  <div className={styles.articleSection}>
-    <div className={styles.articleContainer}>
-      <div className={styles.articleWrapper}>
-        <h3 className={lato.className}>Innovative Solutions For All Your Project Needs...</h3>
-        <div className={styles.contentContainer}>
-          <article className={styles.articleContent}>
-            <p className={lato.className}>
-            S&amp;W Foundation Contractors is a forward-looking contractor with the capabilty to handle projects through various contracting models.
-            As our finacial strength has expanded, we have embraced Turn-Key contracts for select clients. Through this approach, we have effectively managed multiple projects from start to finish with great success.
-            This contracting method offers a streamlined experience, serving as a single point of contact to ensure the safety, budget adherence, and timely completion of your project.
-            Should you have a speficic project in mind, please contact us to discuss how we can help you achieve your goals.
-            </p>
-          </article>
-        </div>
-        <span className={styles.btns}>
-            <Link className={styles.infoBtn1}href="/limited-access">Limited-Access</Link>
-            <Link  className={styles.infoBtn2} href="/crane">Crane Services</Link>
-          </span>
-      </div>
-    </div>
-  </div>
-    );
-}
-
-const TurnKey = () => {
+export default function TurnKeyTW() {
   return (
     <>
-    <Head>
-    <title>Turn-Key Services | S&amp;W Foundation - Comprehensive Pier Drilling &amp; Turn-Key Services in Dallas, TX</title>
-    <meta name="description" content="S&amp;W Foundation offers a suite of specialized Turn-Key Drilling services in Dallas, TX: pier drilling, limited-access pier drilling, turnkey solutions, crane, and trucking services. Leveraging years of experience and cutting-edge equipment, we&apos;re your trusted partner in commercial construction support." />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="keywords" content="pier drilling, limited-access pier drilling, crane services, trucking services, turnkey solutions, caisson, slurry" />
-    <meta property="og:title" content="Turn-Key Services | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX" />
-    <meta property="og:description" content="Discover S&amp;W Foundation&apos;s range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.swfoundation.com/turn-key" />
-    <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8084.webp" />
-    <meta property='og:site_name' content='S&amp;W Commercial Pier Drilling Contractors' />
-    <meta name="twitter:card" content="summary" />
-        <meta
-          name="twitter:title"
-          content="S&amp;W Foundation | Dallas, TX's Premier Commercial Construction Partner"
-        />
-        <meta
-          name="twitter:description"
-          content="Expertise in commercial pier drilling, crane &amp; trucking services, and more. See why businesses trust S&amp;W Foundation for their construction needs."
-        />
-        <meta
-          name="twitter:image"
-          content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp?t=2024-04-16T20%3A11%3A20.126Z"
-        />
-    <link rel="canonical" href="https://www.swfoundation.com/turn-key" />
-    <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
-</Head>
-
-    <div className={styles.page}>
-      <section className={styles.hero}>
+      <Head>
+        <title>Turn-Key | Tailwind Version</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <main className="flex w-full flex-col">
         <Hero />
-      </section>
-      <section className={styles.info}>
-          <InfoSection />
-      </section>
-      <section className={styles.article}>
-          <ArticleSection />
-      </section>
-    </div>
+        <section className="mx-auto w-full max-w-[1200px] px-6 py-10">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="rounded-2xl bg-[#0b2a5a] p-6 text-white shadow ring-1 ring-white/10">
+              <h2 className={`${lato.className} text-2xl font-extrabold`}>We own the scope</h2>
+              <p className="mt-3 leading-relaxed text-white/90">From estimating and precon to mobilization and closeout, our team delivers a streamlined experience with accountability and craftsmanship.</p>
+              <div className="mt-6 flex gap-3">
+                <Link href="/tw/limited-access" className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 font-bold text-white shadow hover:bg-red-700">Limited-Access</Link>
+                <Link href="/tw/crane" className="inline-flex items-center rounded-md bg-white/10 px-4 py-2 font-bold text-white ring-1 ring-white/30 hover:bg-white/20">Crane Services</Link>
+              </div>
+            </div>
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+              <Image src="/rig112211.jpeg" alt="Turn-Key" fill sizes="(min-width: 768px) 600px, 90vw" className="object-cover" unoptimized loader={({src})=>src} />
+            </div>
+          </div>
+        </section>
+      </main>
     </>
   );
+}
+
+TurnKeyTW.getLayout = function getLayout(page) {
+  return <TWLayout>{page}</TWLayout>;
 };
 
-export default TurnKey;
+

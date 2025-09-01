@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import supabase from "@/components/Supabase";
-import styles from "@/styles/Jobs.module.css";
 
 function JobDetail({ job, onBack }) {
   // Local state for the job record fetched from DB
@@ -175,20 +174,20 @@ function JobDetail({ job, onBack }) {
   }
 
   return (
-    <div className={styles.detailContainer}>
-      <h2 className={styles.heading}>
+    <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">
         {jobData.customer || "Company"} - {jobData.job_Name || "Project"}
       </h2>
 
       {/* Editable fields */}
-      <div className={styles.jobInfoContainer}>
-        <div className={styles.formGroup}>
-          <label htmlFor="status" className={styles.label}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="space-y-2">
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700">
             Status:
           </label>
           <select
             id="status"
-            className={styles.select}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
@@ -199,13 +198,13 @@ function JobDetail({ job, onBack }) {
           </select>
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="amount" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
             Amount:
           </label>
           <input
             id="amount"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             type="number"
             step="0.01"
             value={amount}
@@ -213,89 +212,89 @@ function JobDetail({ job, onBack }) {
           />
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="contacts" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="contacts" className="block text-sm font-medium text-gray-700">
             Contacts:
           </label>
           <input
             id="contacts"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             value={contacts}
             onChange={(e) => setContacts(e.target.value)}
           />
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="scope" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="scope" className="block text-sm font-medium text-gray-700">
             Scope:
           </label>
           <textarea
             id="scope"
-            className={styles.textarea}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             rows={2}
             value={scope}
             onChange={(e) => setScope(e.target.value)}
           />
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="startDate" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
             Start Date:
           </label>
           <input
             id="startDate"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="endDate" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
             End Date:
           </label>
           <input
             id="endDate"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
           />
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="monthSold" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="monthSold" className="block text-sm font-medium text-gray-700">
             Month Sold:
           </label>
           <input
             id="monthSold"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             type="month"
             value={monthSold}
             onChange={(e) => setMonthSold(e.target.value)}
           />
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="estimator" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="estimator" className="block text-sm font-medium text-gray-700">
             Estimator:
           </label>
           <input
             id="estimator"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             value={estimator}
             onChange={(e) => setEstimator(e.target.value)}
           />
         </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="address" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="address" className="block text-sm font-medium text-gray-700">
             Address:
           </label>
           <textarea
             id="address"
-            className={styles.textarea}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             rows={2}
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -304,18 +303,18 @@ function JobDetail({ job, onBack }) {
       </div>
 
       {/* Save / Back Buttons */}
-      <div className={styles.buttonRow}>
-        <button className={styles.saveButton} onClick={handleSave}>
+      <div className="flex space-x-4 mb-8">
+        <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md font-medium" onClick={handleSave}>
           Save
         </button>
-        <button className={styles.backButton} onClick={onBack}>
+        <button className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md font-medium" onClick={onBack}>
           Back to Dashboard
         </button>
       </div>
 
       {/* Existing Documents Section */}
-      <h3 className={styles.subHeading}>Documents</h3>
-      <table className={styles.docTable}>
+      <h3 className="text-xl font-semibold text-gray-900 mb-4">Documents</h3>
+      <table className="min-w-full divide-y divide-gray-200 mb-6">
         <thead>
           <tr>
             <th>Document Name</th>
@@ -335,27 +334,27 @@ function JobDetail({ job, onBack }) {
       </table>
 
       {/* Document Upload Form */}
-      <h3 className={styles.subHeading}>Upload New Document</h3>
-      <form onSubmit={handleUpload} className={styles.uploadForm}>
-        <div className={styles.formGroup}>
-          <label htmlFor="docName" className={styles.label}>
+      <h3 className="text-xl font-semibold text-gray-900 mb-4">Upload New Document</h3>
+      <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div className="space-y-2">
+          <label htmlFor="docName" className="block text-sm font-medium text-gray-700">
             Document Name:
           </label>
           <input
             id="docName"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             value={docName}
             onChange={(e) => setDocName(e.target.value)}
             required
           />
         </div>
-        <div className={styles.formGroup}>
-          <label htmlFor="docType" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="docType" className="block text-sm font-medium text-gray-700">
             Document Type:
           </label>
           <select
             id="docType"
-            className={styles.select}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             value={docType}
             onChange={(e) => setDocType(e.target.value)}
             required
@@ -367,7 +366,7 @@ function JobDetail({ job, onBack }) {
             <option value="Change Order">Change Order</option>
           </select>
         </div>
-        <button type="submit" className={styles.uploadButton}>
+        <button type="submit" className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium">
           Upload
         </button>
       </form>

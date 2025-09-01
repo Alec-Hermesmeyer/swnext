@@ -1,148 +1,68 @@
-import React from 'react';
-import styles from '../styles/Individual.module.css'
-import Link from "next/link";
-import Image from "next/image";
 import Head from "next/head";
-import { Inter } from "next/font/google";
-import { Oswald } from "next/font/google";
-import { Montserrat } from "next/font/google";
+import Image from "next/image";
+import Link from "next/link";
+import TWLayout from "@/components/TWLayout";
 import { Lato } from "next/font/google";
-import { FadeIn } from "@/components/FadeIn";
 
-
-const inter = Inter({ subsets: ["latin"] });
-const oswald = Oswald({ subsets: ["latin"] });
-const montserrat = Montserrat({ subsets: ["latin"] });
-const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 function Hero() {
   return (
-    <div className={styles.heroSectionCV}>
-      <div className={styles.heroContainer}>
-        <div className={styles.heroWrapper}>
-          <h1 className={lato.className}>Core Values</h1>
-          <span>
-            <Link className={styles.heroLink} href="/contact">
-              Contact Us
-            </Link>
-            <Link className={styles.heroLink} href="/careers">
-              Careers
-            </Link>
-          </span>
-        </div>
+    <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[40vh] md:min-h-[50vh] flex items-center">
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/Images/public/coreValue.webp')`, backgroundPosition: "center" }} />
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="relative mx-auto w-full px-0 py-20 text-center">
+        <h1 className={`${lato.className} text-4xl md:text-5xl font-extrabold`}>Core Values</h1>
       </div>
-    </div>
+    </section>
   );
 }
-function InfoSection() {
+
+export default function CoreValuesTW() {
   return (
-    <div className={styles.infoSection}>
-      <div className={styles.infoContainer}>
-        <div className={styles.infoWrapper}>
-          <FadeIn>
-            <div className={styles.infoTop}>
-              <div className={styles.infoTopContainer}>
-                <div className={styles.infoTopWrapper}>
-                  <div className={styles.infoTopLeft}>
-                    <div className={styles.infoTopLeftContainer}>
-                      <h2 className={lato.className}>
-                      D.R.I.L.L.
-                      </h2>
-                      <p className={lato.className}>
-                         S&amp;W Foundation Contractors is committed to delivering the highest quality drilling services to our customers. Our core values are the foundation of our business and guide our team in everything we do. We are dedicated to providing our customers with the best possible service and ensuring that every project is completed on time and within budget. Our core values are:
-                         <br></br><br></br><b>Deditcated | Resilient | Impactful | Learners | Leaders </b>
-                      </p>
-                    </div>
-                  </div>
-                  <div className={styles.infoTopRight}>
-                    <Image
-                      className={styles.infoImage}
-                      src="Images/public/coreValue.webp"
-                      height={380}
-                      width={410}
-                      alt="S&W Foundations"
-                      loading="lazy"
-                      quality={80}
-                    />
-                  </div>
+    <>
+      <Head>
+        <title>Core Values | Tailwind Version</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <main className="flex w-full flex-col">
+        <Hero />
+        <section className="mx-auto w-full max-w-[1600px] px-6 py-10">
+          <div className="relative overflow-hidden rounded-2xl bg-[#0b2a5a] text-white shadow-2xl ring-1 ring-black/10">
+            <div className="absolute left-0 top-0 h-2 md:h-3 w-full bg-red-600" />
+            <div className="grid grid-cols-1 items-center gap-6 p-6 md:grid-cols-2 md:p-12">
+              <div>
+                <h2 className={`${lato.className} text-2xl md:text-3xl font-extrabold`}>Built on integrity</h2>
+                <p className="mt-4 leading-relaxed text-white/90">Accountability, craftsmanship, and continuous improvement define our culture and our work.</p>
+              </div>
+              <div className="flex items-center justify-end">
+                <div className="relative aspect-[4/3] w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/10 md:-mr-8">
+                  <Image src={`https://${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/Images/public/coreValue.webp`} alt="Core Values" fill sizes="(min-width: 768px) 600px, 90vw" className="object-cover" unoptimized loader={({src})=>src} />
                 </div>
               </div>
             </div>
-          </FadeIn>
-        </div>
-      </div>
-    </div>
-  );
-}
+          </div>
+        </section>
 
-function ArticleSection() {
-  return (
-  <div className={styles.articleSection}>
-    <div className={styles.articleContainer}>
-      <div className={styles.articleWrapper}>
-        <h3 className={lato.className}>United By Our Core Values...</h3>
-        <div className={styles.contentContainer}>
-          <article className={styles.articleContent}>
-            <p className={lato.className}>
-            At S&amp;W Foundation Contractors, our core values are not just words on a page; they are the bedrock upon which our company stands. These guiding principles have profoundly impacted our organization in countless positive ways, influencing every aspect of our operations. From fostering a culture of integrity and excellence to driving innovation and collaborative teamwork, our core values have been instrumental in shaping a cohesive, high-performing team. They ensure that we not only meet but exceed our clients&apos; expectations, building trust and establishing long-term relationships. Moreover, our commitment to these values has attracted top talent who are aligned with our mission, further fueling our success and growth. By embedding these core values into every action and decision, S&W Foundation Contractors has cultivated a strong, resilient company culture that is a testament to the power of principled business practice. This dedication to our core values has not only set us apart in the industry but has also paved the way for sustainable success and a legacy of positive impact.
-             
-            </p>
-          </article>
-        </div>
-        <span className={styles.btns}>
-            <Link className={styles.infoBtn1} href="/services">Services</Link>
-            <Link  className={styles.infoBtn2} href="/about">About Us</Link>
-          </span>
-      </div>
-    </div>
-  </div>
-    );
-}
+        {/* Article content */}
+        <section className="mx-auto w-full max-w-[1200px] px-6 py-6">
+          <h3 className={`${lato.className} text-2xl md:text-3xl font-extrabold text-[#0b2a5a]`}>United By Our Core Values...</h3>
+          <p className="mt-4 leading-relaxed text-neutral-800">At S&W Foundation Contractors, our core values are the bedrock upon which our company stands: Dedicated, Resilient, Impactful, Learners, Leaders. These principles shape how we operate and deliver for our clients—fostering integrity, excellence, and continuous improvement across every project.</p>
+        </section>
 
-const CoreValues = () => {
-  return (
-    <>
-    <Head>
-    <title>Core Values | S&amp;W Foundation - Comprehensive Pier Drilling, Auger Cast, Caisson &amp; Slurry Piers in Dallas, TX</title>
-    <meta name="description" content="At S&amp;W Foundation, our core values of Dedication, Resilience, Impact, Learning, and Leadership guide our commitment to excellence in drilling services." />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="keywords" content="core values, dedication, resilience, impact, learning, leadership, drilling services" />
-    <meta property="og:title" content="Core Values | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX" />
-    <meta property="og:description" content="Discover S&amp;W Foundation&apos;s range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.swfoundation.com/core-values" />
-    <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/coreValue.webp" />
-    <meta property='og:site_name' content='S&amp;W Commercial Pier Drilling Contractors'/>
-    <meta name="twitter:card" content="summary" />
-        <meta
-          name="twitter:title"
-          content="S&amp;W Foundation | Dallas, TX's Premier Commercial Construction Partner"
-        />
-        <meta
-          name="twitter:description"
-          content="Expertise in commercial pier drilling, crane &amp; trucking services, and more. See why businesses trust S&amp;W Foundation for their construction needs."
-        />
-        <meta
-          name="twitter:image"
-          content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp?t=2024-04-16T20%3A11%3A20.126Z"
-        />
-    <link rel="canonical" href="https://www.swfoundation.com/core-values" />
-    <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
-</Head>
-
-    <div className={styles.page}>
-      <section className={styles.hero}>
-        <Hero />
-      </section>
-      <section className={styles.info}>
-          <InfoSection />
-      </section>
-      <section className={styles.article}>
-          <ArticleSection />
-      </section>
-    </div>
+        <section className="mx-auto w-full max-w-[1200px] px-6 pb-14">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/tw/about" className="inline-flex items-center rounded-md bg-red-600 px-5 py-3 font-bold text-white shadow hover:bg-red-700">About</Link>
+            <Link href="/tw/contact" className="inline-flex items-center rounded-md bg-[#0b2a5a] px-5 py-3 font-bold text-white shadow hover:brightness-110">Contact</Link>
+          </div>
+        </section>
+      </main>
     </>
   );
+}
+
+CoreValuesTW.getLayout = function getLayout(page) {
+  return <TWLayout>{page}</TWLayout>;
 };
 
-export default CoreValues;
+

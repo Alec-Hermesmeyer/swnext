@@ -1,153 +1,70 @@
-import React from 'react';
-import styles from '../styles/Individual.module.css'
-import Link from "next/link";
-import Image from "next/image";
 import Head from "next/head";
-import { Inter } from "next/font/google";
-import { Oswald } from "next/font/google";
-import { Montserrat } from "next/font/google";
+import Image from "next/image";
+import Link from "next/link";
+import TWLayout from "@/components/TWLayout";
 import { Lato } from "next/font/google";
-import { FadeIn } from "@/components/FadeIn";
 
-
-const inter = Inter({ subsets: ["latin"] });
-const oswald = Oswald({ subsets: ["latin"] });
-const montserrat = Montserrat({ subsets: ["latin"] });
-const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 function Hero() {
   return (
-    <div className={styles.heroSectionPD}>
-      <div className={styles.heroContainer}>
-        <div className={styles.heroWrapper}>
-          <h1 className={lato.className}>Pier Drilling</h1>
-          <span>
-            <Link className={styles.heroLink} href="/contact">
-              Contact Us
-            </Link>
-            <Link className={styles.heroLink} href="/careers">
-              Careers
-            </Link>
-          </span>
-        </div>
+    <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[40vh] md:min-h-[50vh] flex items-center">
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8084.webp')`, backgroundPosition: "center" }} />
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="relative mx-auto w-full px-0 py-20 text-center">
+        <h1 className={`${lato.className} text-4xl md:text-5xl font-extrabold`}>Pier Drilling</h1>
       </div>
-    </div>
+    </section>
   );
 }
-function InfoSection() {
+
+export default function PierDrillingTW() {
   return (
-    <div className={styles.infoSection}>
-      <div className={styles.infoContainer}>
-        <div className={styles.infoWrapper}>
-          <FadeIn>
-            <div className={styles.infoTop}>
-              <div className={styles.infoTopContainer}>
-                <div className={styles.infoTopWrapper}>
-                  <div className={styles.infoTopLeft}>
-                    <div className={styles.infoTopLeftContainer}>
-                      <h2 className={lato.className}>
-                       State of the Art Equipment
-                      </h2>
-                      <p className={lato.className}>
-                         S&amp;W Foundation Contractors operates a fleet of 23 state-of-the-art drill rigs, allowing us to effeciently handle drilling operations for projects of all speacilizesand complexities. Our Advanced drilling equipment ensures that each foundation is solid, stable and capable of withstanding the test of time.
-                      </p>
-                    </div>
-                  </div>
-                  <div className={styles.infoTopRight}>
-                    <Image
-                      className={styles.infoImage}
-                      src="Images/public/redrig.webp"
-                      height={380}
-                      width={410}
-                      alt="S&W Foundations"
-                      loading="lazy"
-                      quality={80}
-                    />
-                  </div>
+    <>
+      <Head>
+        <title>Pier Drilling | Tailwind Version</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <main className="flex w-full flex-col">
+        <Hero />
+        {/* Info Row as a single navy card with red bar and image on right */}
+        <section className="mx-auto w-full max-w-[1600px] px-6 py-10">
+          <div className="relative overflow-hidden rounded-2xl bg-[#0b2a5a] text-white shadow-2xl ring-1 ring-black/10">
+            <div className="absolute left-0 top-0 h-2 md:h-3 w-full bg-red-600" />
+            <div className="grid grid-cols-1 items-center gap-6 p-6 md:grid-cols-2 md:p-12">
+              <div>
+                <h2 className={`${lato.className} text-2xl md:text-3xl font-extrabold`}>State of the Art Equipment</h2>
+                <p className="mt-4 leading-relaxed text-white/90">S&W Foundation Contractors operates a fleet of 23 state-of-the-art drill rigs, allowing us to efficiently handle drilling operations for projects of all specializations and complexities. Our advanced drilling equipment ensures that each foundation is solid, stable and capable of withstanding the test of time.</p>
+              </div>
+              <div className="flex items-center justify-end">
+                <div className="relative aspect-[4/3] w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/10 md:-mr-8">
+                  <Image src={`https://${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/Images/public/redrig.webp`} alt="S&W Rig" fill sizes="(min-width: 768px) 600px, 90vw" className="object-cover" unoptimized loader={({src})=>src} />
                 </div>
               </div>
             </div>
-          </FadeIn>
-        </div>
-      </div>
-    </div>
-  );
-}
+          </div>
+        </section>
 
-function ArticleSection() {
-  return (
-  <div className={styles.articleSection}>
-    <div className={styles.articleContainer}>
-      <div className={styles.articleWrapper}>
-        <h3 className={lato.className}>We set the standard and innovate to overcome obstacles...</h3>
-        <div className={styles.contentContainer}>
-          <article className={styles.articleContent}>
-            <p className={lato.className}>
-              We are the leaders in Commercial Pier Drilling for good reason! We deliver comprehensive Pier Drilling Solutions for major construction
-              projects across the United States. Our project management approach utilizes advanced technologies to drive efficiency and productivty onsite.
-              We invest in state of the art hydraulic rotary drills, auger cast pile rigs, and excavator mounted equipment to execute pier installation rapidly
-              and accurately. Our crews apply innovative drilling techniques and sequences tailored for specific soil conditions and project needs. Customers turn 
-              to us because the know we will deliver robust pier foundations that provide the load-bearing capacity required, even in challeging ground conditions.
-              Our specialized expertise in caisson, pile, micropile and helix pier construction provides deep foundation solutions enginnered for safety and longevity.
-              Whether it&apos;s constructing a high-rise core on friction piles, securing a hillside on caisson secant walls, or anchoring a tank farm on helical piers, you can count 
-              on us to deliver. Contact us today to learn more about our comprehensive portfolio of Commercial Pier Drilling Services.
-            </p>
-          </article>
-        </div>
-        <span className={styles.btns}>
-            <Link className={styles.infoBtn1} href="/services">Services</Link>
-            <Link  className={styles.infoBtn2} href="/limited-access">Limited-Access</Link>
-          </span>
-      </div>
-    </div>
-  </div>
-    );
-}
+        {/* Article section */}
+        <section className="mx-auto w-full max-w-[1200px] px-6 py-10">
+          <h3 className={`${lato.className} text-2xl md:text-3xl font-extrabold text-[#0b2a5a]`}>We set the standard and innovate to overcome obstacles…</h3>
+          <p className="mt-4 leading-relaxed text-neutral-800">We deliver comprehensive Pier Drilling Solutions for major construction projects across the United States. Our project management approach utilizes advanced technologies to drive efficiency and productivity onsite. We invest in state of the art hydraulic rotary drills, auger cast pile rigs, and excavator mounted equipment to execute pier installation rapidly and accurately. Our crews apply innovative drilling techniques and sequences tailored for specific soil conditions and project needs. Customers turn to us because they know we will deliver robust pier foundations that provide the load-bearing capacity required, even in challenging ground conditions. Our specialized expertise in caisson, pile, micropile and helix pier construction provides deep foundation solutions engineered for safety and longevity.</p>
+        </section>
 
-const PierDrilling = () => {
-  return (
-    <>
-    <Head>
-    <title>Pier Drilling | S&amp;W Foundation - Comprehensive Pier Drilling, Auger Cast, Caisson &amp; Slurry Piers in Dallas, TX</title>
-    <meta name="description" content="S&amp;W Foundation provides expert Pier Drilling services in Dallas, TX, including limited-access drilling, turnkey solutions, and more. Trust us for your commercial construction needs." />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="keywords" content="pier drilling, limited-access pier drilling, crane services, trucking services, turnkey solutions, caisson, slurry" />
-    <meta property="og:title" content="Pier Drilling Services | S&amp;W Foundation - Your Partner in Commercial Construction in Dallas, TX" />
-    <meta property="og:description" content="Discover S&amp;W Foundation&apos;s range of services: from expert pier drilling to crane and trucking solutions, we cater to all your commercial construction needs in the US." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.swfoundation.com/pier-drilling" />
-    <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8084.webp" />
-    <meta property='og:site_name' content='S&amp;W Commercial Pier Drilling Contractors'/>
-    <meta name="twitter:card" content="summary" />
-        <meta
-          name="twitter:title"
-          content="S&amp;W Foundation | Dallas, TX's Premier Commercial Construction Partner"
-        />
-        <meta
-          name="twitter:description"
-          content="Expertise in commercial pier drilling, crane &amp; trucking services, and more. See why businesses trust S&amp;W Foundation for their construction needs."
-        />
-        <meta
-          name="twitter:image"
-          content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp?t=2024-04-16T20%3A11%3A20.126Z"
-        />
-    <link rel="canonical" href="https://www.swfoundation.com/pier-drilling" />
-    <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon'/>
-</Head>
-
-    <div className={styles.page}>
-      <section className={styles.hero}>
-        <Hero />
-      </section>
-      <section className={styles.info}>
-          <InfoSection />
-      </section>
-      <section className={styles.article}>
-          <ArticleSection />
-      </section>
-    </div>
+        {/* Bottom CTAs */}
+        <section className="mx-auto w-full max-w-[1200px] px-6 pb-14">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/tw/services" className="inline-flex items-center rounded-md bg-red-600 px-5 py-3 font-bold text-white shadow hover:bg-red-700">Services</Link>
+            <Link href="/tw/limited-access" className="inline-flex items-center rounded-md bg-[#0b2a5a] px-5 py-3 font-bold text-white shadow hover:brightness-110">Limited-Access</Link>
+          </div>
+        </section>
+      </main>
     </>
   );
+}
+
+PierDrillingTW.getLayout = function getLayout(page) {
+  return <TWLayout>{page}</TWLayout>;
 };
 
-export default PierDrilling;
+

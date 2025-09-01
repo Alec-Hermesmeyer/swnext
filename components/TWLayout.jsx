@@ -34,9 +34,9 @@ export default function TWLayout({ children }) {
             <div>
               <h4 className="font-black">Company</h4>
               <ul className="mt-2 space-y-2 text-sm">
-                <li><Link href="/tw/about" className="hover:text-red-400">About</Link></li>
-                <li><Link href="/tw/core-values" className="hover:text-red-400">Core Values</Link></li>
-                <li><Link href="/tw/contact" className="hover:text-red-400">Contact</Link></li>
+                <li><Link href="/about" className="hover:text-red-400">About</Link></li>
+                <li><Link href="/core-values" className="hover:text-red-400">Core Values</Link></li>
+                <li><Link href="/contact" className="hover:text-red-400">Contact</Link></li>
               </ul>
             </div>
             <div>
