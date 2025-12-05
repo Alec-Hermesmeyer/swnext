@@ -1,145 +1,113 @@
-import React, { useState, useEffect } from "react";
-import styles from "@/styles/Admin.module.css";
-import withAuth from "@/components/withAuth";
+import { useEffect, useState } from "react";
+import Head from "next/head";
+import Link from "next/link";
+import withAuthTw from "@/components/withAuthTw";
+import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
+import { Lato } from "next/font/google";
 
-function JobPostingsAdmin() {
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+
+function CareersTW() {
   const [jobs, setJobs] = useState([]);
-  const [newJob, setNewJob] = useState({ jobTitle: "", jobDesc: "", is_Open: true });
   const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ jobTitle: '', jobDesc: '', is_Open: true });
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        let { data, error } = await supabase.from("jobs").select("*");
-        if (error) {
-          console.error("Error fetching jobs:", error);
-        } else {
-          setJobs(data);
-        }
-      } catch (error) {
-        console.error("Unexpected error fetching jobs:", error);
-      } finally {
-        setLoading(false);
-      }
+  useEffect(()=>{
+    const load = async () => {
+      const { data } = await supabase.from('jobs').select('*').order('id', { ascending: false });
+      setJobs(data || []);
+      setLoading(false);
     };
+    load();
+  },[]);
 
-    fetchJobs();
-  }, []);
-
-  const handleAddJob = async (e) => {
+  const add = async (e) => {
     e.preventDefault();
-    try {
-      let { data, error } = await supabase.from("jobs").insert([newJob]);
-      if (error) {
-        console.error("Error adding job:", error);
-      } else {
-        setJobs([...jobs, ...data]);
-        setNewJob({ jobTitle: "", jobDesc: "", is_Open: true });
-      }
-    } catch (error) {
-      console.error("Unexpected error adding job:", error);
-    }
+    const { data, error } = await supabase.from('jobs').insert([form]).select('*');
+    if (!error && data) { setJobs([data[0], ...jobs]); setForm({ jobTitle:'', jobDesc:'', is_Open:true }); }
   };
 
-  const handleDeleteJob = async (id) => {
-    try {
-      let { error } = await supabase.from("jobs").delete().eq("id", id);
-      if (error) {
-        console.error("Error deleting job:", error);
-      } else {
-        setJobs(jobs.filter((job) => job.id !== id));
-      }
-    } catch (error) {
-      console.error("Unexpected error deleting job:", error);
-    }
+  const toggleOpen = async (id, isOpen) => {
+    const { error } = await supabase.from('jobs').update({ is_Open: !isOpen }).eq('id', id);
+    if (!error) setJobs(jobs.map(j=> j.id===id? { ...j, is_Open: !isOpen }: j));
   };
 
-  const handleToggleJob = async (id, is_Open) => {
-    try {
-      let { error } = await supabase.from("jobs").update({ is_Open }).eq("id", id);
-      if (error) {
-        console.error("Error updating job status:", error);
-      } else {
-        setJobs(jobs.map((job) => (job.id === id ? { ...job, is_Open } : job)));
-      }
-    } catch (error) {
-      console.error("Unexpected error updating job status:", error);
-    }
+  const remove = async (id) => {
+    await supabase.from('jobs').delete().eq('id', id);
+    setJobs(jobs.filter(j=> j.id!==id));
   };
 
   return (
-    <div className={styles.manageJobs}>
-      <h2>Manage Job Postings</h2>
-      <form onSubmit={handleAddJob} className={styles.jobForm}>
-        <div>
-          <label>
-            Job Title:
-            <input
-              type="text"
-              value={newJob.jobTitle}
-              onChange={(e) => setNewJob({ ...newJob, jobTitle: e.target.value })}
-              required
-            />
-          </label>
+    <>
+      <Head>
+        <title>Careers | Tailwind</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <div>
+        <div className="mb-6">
+          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Manage Careers</h1>
+          <p className="mt-1 text-sm text-neutral-600">Add, edit, and manage job postings</p>
         </div>
-        <div>
-          <label>
-            Job Description:
-            <textarea
-              value={newJob.jobDesc}
-              onChange={(e) => setNewJob({ ...newJob, jobDesc: e.target.value })}
-              required
-            />
-          </label>
-        </div>
-        <div>
-          <label>
-            Open Position:
-            <input
-              type="checkbox"
-              checked={newJob.is_Open}
-              onChange={(e) => setNewJob({ ...newJob, is_Open: e.target.checked })}
-            />
-          </label>
-        </div>
-        <button type="submit">Add Job</button>
-      </form>
 
-      <h3>Current Job Postings</h3>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <ul className={styles.jobList}>
-          {jobs.map((job) => (
-            <li key={job.id} className={styles.jobItem}>
-              <h4>{job.jobTitle}</h4>
-              <p>{job.jobDesc}</p>
-              <p className={job.is_Open ? styles.openJob : styles.closedJob}>
-                {job.is_Open ? "Open" : "Closed"}
-              </p>
-              <div className={styles.jobActions}>
-                <button onClick={() => handleToggleJob(job.id, !job.is_Open)}>
-                  {job.is_Open ? "Close" : "Open"}
-                </button>
-                <button onClick={() => handleDeleteJob(job.id)}>Delete</button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+        <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
+          <form onSubmit={add} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-sm font-semibold text-neutral-700">Job Title</label>
+              <input className="mt-1 h-10 w-full rounded-md border border-neutral-300 px-3 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/30" value={form.jobTitle} onChange={(e)=>setForm({ ...form, jobTitle: e.target.value })} required />
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-sm font-semibold text-neutral-700">Job Description</label>
+              <textarea className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/30" value={form.jobDesc} onChange={(e)=>setForm({ ...form, jobDesc: e.target.value })} required />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-neutral-700">Open</label>
+              <select className="mt-1 h-10 w-full rounded-md border border-neutral-300 px-3 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/30" value={form.is_Open ? 'open' : 'closed'} onChange={(e)=>setForm({ ...form, is_Open: e.target.value==='open' })}>
+                <option value='open'>Open</option>
+                <option value='closed'>Closed</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <button className="inline-flex items-center rounded-md bg-red-600 px-5 py-2 font-bold text-white shadow hover:bg-red-700" type="submit">Add Job</button>
+            </div>
+          </form>
+        </section>
+
+        <section className="mt-6 rounded-xl border border-neutral-200 bg-white p-5 shadow">
+          <div className="mb-4 font-semibold text-neutral-700">Job Postings</div>
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full table-auto">
+                <thead>
+                  <tr className="text-left text-sm text-neutral-600"><th className="p-2">Title</th><th className="p-2">Status</th><th className="p-2"></th></tr>
+                </thead>
+                <tbody className="text-sm text-neutral-800">
+                  {jobs.map(j => (
+                    <tr key={j.id} className="border-t">
+                      <td className="p-2">{j.jobTitle}</td>
+                      <td className="p-2">{j.is_Open ? 'Open' : 'Closed'}</td>
+                      <td className="p-2 space-x-2">
+                        <button className="rounded-md bg-neutral-200 px-3 py-1 text-neutral-800 ring-1 ring-neutral-300 hover:bg-neutral-300" onClick={()=>toggleOpen(j.id, j.is_Open)}>{j.is_Open ? 'Close' : 'Open'}</button>
+                        <button className="rounded-md bg-rose-600 px-3 py-1 text-white hover:bg-rose-700" onClick={()=>remove(j.id)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
+    </>
   );
 }
 
-const AdminJobs = () => {
-  return (
-    <div className={styles.admin}>
-      <section className={styles.contactWidgetOffice}>
-        <JobPostingsAdmin />
-      </section>
-    </div>
-  );
+CareersTW.getLayout = function getLayout(page) {
+  return <TWAdminLayout>{page}</TWAdminLayout>;
 };
 
-export default withAuth(AdminJobs);
+export default withAuthTw(CareersTW);
+
+

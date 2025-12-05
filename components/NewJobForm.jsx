@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import styles from "@/styles/Jobs.module.css";
 import supabase from "@/components/Supabase";
 
 function NewJobForm({ onCreateJob, onCancel }) {
@@ -56,17 +55,17 @@ function NewJobForm({ onCreateJob, onCancel }) {
   };
 
   return (
-    <div className={styles.formContainer}>
-      <h2 className={styles.formTitle}>Create a New Job</h2>
-      <form onSubmit={handleSubmit} className={styles.form}>
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Create a New Job</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* PROJECT NAME */}
-        <div className={styles.formGroup}>
-          <label htmlFor="projectName" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="projectName" className="block text-sm font-medium text-gray-700">
             Project Name
           </label>
           <input
             id="projectName"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="e.g. Office Renovation"
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
@@ -75,13 +74,13 @@ function NewJobForm({ onCreateJob, onCancel }) {
         </div>
 
         {/* CLIENT NAME */}
-        <div className={styles.formGroup}>
-          <label htmlFor="clientName" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="clientName" className="block text-sm font-medium text-gray-700">
             Client Name
           </label>
           <input
             id="clientName"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="e.g. John Doe"
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
@@ -90,13 +89,13 @@ function NewJobForm({ onCreateJob, onCancel }) {
         </div>
 
         {/* BID AMOUNT */}
-        <div className={styles.formGroup}>
-          <label htmlFor="bidAmount" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="bidAmount" className="block text-sm font-medium text-gray-700">
             Bid Amount ($)
           </label>
           <input
             id="bidAmount"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             type="number"
             step="0.01"
             placeholder="e.g. 10000"
@@ -107,13 +106,13 @@ function NewJobForm({ onCreateJob, onCancel }) {
         </div>
 
         {/* BID DATE */}
-        <div className={styles.formGroup}>
-          <label htmlFor="bidDate" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="bidDate" className="block text-sm font-medium text-gray-700">
             Bid Date
           </label>
           <input
             id="bidDate"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             type="date"
             value={bidDate}
             onChange={(e) => setBidDate(e.target.value)}
@@ -121,13 +120,13 @@ function NewJobForm({ onCreateJob, onCancel }) {
         </div>
 
         {/* PROJECT MANAGER */}
-        <div className={styles.formGroup}>
-          <label htmlFor="projectManager" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="projectManager" className="block text-sm font-medium text-gray-700">
             Project Manager
           </label>
           <input
             id="projectManager"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="e.g. Jane Smith"
             value={projectManager}
             onChange={(e) => setProjectManager(e.target.value)}
@@ -136,13 +135,13 @@ function NewJobForm({ onCreateJob, onCancel }) {
         </div>
 
         {/* ADDRESS */}
-        <div className={styles.formGroup}>
-          <label htmlFor="address" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="address" className="block text-sm font-medium text-gray-700">
             Address
           </label>
           <textarea
             id="address"
-            className={styles.textarea}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="e.g. 123 Main St, Springfield"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -152,13 +151,13 @@ function NewJobForm({ onCreateJob, onCancel }) {
         </div>
 
         {/* CONTACT INFO */}
-        <div className={styles.formGroup}>
-          <label htmlFor="contactInfo" className={styles.label}>
+        <div className="space-y-2">
+          <label htmlFor="contactInfo" className="block text-sm font-medium text-gray-700">
             Contact Info
           </label>
           <input
             id="contactInfo"
-            className={styles.input}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             placeholder="e.g. 555-1234 or john@example.com"
             value={contactInfo}
             onChange={(e) => setContactInfo(e.target.value)}
@@ -167,28 +166,28 @@ function NewJobForm({ onCreateJob, onCancel }) {
         </div>
 
         {/* IS BID WON? */}
-        <div className={styles.formGroupInline}>
-          <label htmlFor="isWon" className={styles.labelCheckbox}>
+        <div className="flex items-center space-x-3">
+          <label htmlFor="isWon" className="flex items-center space-x-2">
             <input
               id="isWon"
               type="checkbox"
               checked={isWon}
               onChange={(e) => setIsWon(e.target.checked)}
-              className={styles.checkbox}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <span className={styles.labelText}>Is Bid Won?</span>
+            <span className="text-sm font-medium text-gray-700">Is Bid Won?</span>
           </label>
         </div>
 
         {/* JOB NUMBER ONLY IF WON */}
         {isWon && (
-          <div className={styles.formGroup}>
-            <label htmlFor="jobNumber" className={styles.label}>
+          <div className="space-y-2">
+            <label htmlFor="jobNumber" className="block text-sm font-medium text-gray-700">
               Job Number
             </label>
             <input
               id="jobNumber"
-              className={styles.input}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="e.g. 2024-001"
               value={jobNumber}
               onChange={(e) => setJobNumber(e.target.value)}
@@ -198,13 +197,13 @@ function NewJobForm({ onCreateJob, onCancel }) {
         )}
 
         {/* BUTTONS */}
-        <div className={styles.buttonContainer}>
-          <button type="submit" className={styles.submitButton}>
+        <div className="flex space-x-4 pt-6">
+          <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md font-medium">
             Create Job
           </button>
           <button
             type="button"
-            className={styles.cancelButton}
+            className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md font-medium"
             onClick={onCancel}
           >
             Cancel

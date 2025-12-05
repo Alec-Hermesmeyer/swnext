@@ -1,232 +1,119 @@
-import React, { useState, useEffect } from "react";
-import styles from "@/styles/Admin.module.css";
-import withAuth from "@/components/withAuth";
-import { truncateText } from "@/utils/truncateText";
-import { GridPattern } from "@/components/GridPattern";
-import { createClient } from "@supabase/supabase-js";
-import { Inter } from "next/font/google";
-import { Lato } from "next/font/google";
-import AdminLayout from "@/components/AdminLayout";
+import { useEffect, useState } from "react";
+import Head from "next/head";
 import Link from "next/link";
+import withAuthTw from "@/components/withAuthTw";
+import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
+import { Lato } from "next/font/google";
 
-const lato = Lato({ weight: ["900"], subsets: ["latin"] });
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-function Spacer() {
-  return (
-    <GridPattern className={styles.gridPattern} yOffset={10} interactive />
-  );
-}
-function OfficeContacts() {
-    const [contacts, setContacts] = useState([]);
-    const [loading, setLoading] = useState(true);
-  
-    useEffect(() => {
-      const fetchContacts = async () => {
-        try {
-          let { data, error } = await supabase
-            .from('company_contacts')
-            .select('*');
-  
-          if (error) {
-            console.error('Error fetching contacts:', error);
-          } else {
-            setContacts(data);
-          }
-        } catch (error) {
-          console.error('Unexpected error fetching contacts:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-  
-      fetchContacts();
-    }, []);
-  
-    if (loading) {
-      return <div>Loading...</div>;
+function CompanyContactsTW() {
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ name: "", job_title: "", email: "", phone: "" });
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from('company_contacts').select('*').order('id', { ascending: false });
+      setContacts(data || []);
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const add = async (e) => {
+    e.preventDefault();
+    const { data, error } = await supabase.from('company_contacts').upsert([form]).select('*');
+    if (!error && data) {
+      setContacts([data[0], ...contacts]);
+      setForm({ name: "", job_title: "", email: "", phone: "" });
     }
-  
-    return (
-      <div className={styles.officeContactsContainer}>
-        <div className={styles.gridOC}>
-          {contacts.map((contact, index) => (
-            <div className={styles.officeContactCard} key={index}>
-              <h2 className={lato.className}>{contact.name}</h2>
-              <p className={lato.className}>{contact.job_title}<br />
-                <br /><Link className={styles.email} href={`mailto:${contact.email}`}>{contact.email}</Link> <br />
-                <br /><Link className={styles.contactNumber} href={`tel:${contact.phone}`}>{contact.phone}</Link></p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-    function ManageContacts() {
-        const [contacts, setContacts] = useState([]);
-        const [newContact, setNewContact] = useState({ name: '', job_title: '', email: '', phone: '' });
-        const [loading, setLoading] = useState(true);
-      
-        useEffect(() => {
-          const fetchContacts = async () => {
-            try {
-              let { data, error } = await supabase
-                .from('company_contacts')
-                .select('*');
-      
-              if (error) {
-                console.error('Error fetching contacts:', error);
-              } else {
-                setContacts(data);
-              }
-            } catch (error) {
-              console.error('Unexpected error fetching contacts:', error);
-            } finally {
-              setLoading(false);
-            }
-          };
-      
-          fetchContacts();
-        }, []);
-      
-        const handleAddContact = async (e) => {
-            e.preventDefault();
-            console.log('Adding contact:', newContact);
-            try {
-              let { data, error } = await supabase
-                .from('company_contacts')
-                .upsert([newContact]);
-        
-              if (error) {
-                console.error('Error adding contact:', error);
-              } else {
-                console.log('Added contact:', data);
-                setContacts([...contacts, ...data]);
-                setNewContact({ name: '', job_title: '', email: '', phone: '' });
-              }
-            } catch (error) {
-              console.error('Unexpected error adding contact:', error);
-            }
-          };
-        
-          const handleDeleteContact = async (id) => {
-            console.log('Deleting contact with id:', id);
-            try {
-              let { error } = await supabase
-                .from('company_contacts')
-                .delete()
-                .eq('id', id);
-        
-              if (error) {
-                console.error('Error deleting contact:', error);
-              } else {
-                setContacts(contacts.filter((contact) => contact.id !== id));
-              }
-            } catch (error) {
-              console.error('Unexpected error deleting contact:', error);
-            }
-          };
-        
-          return (
-            <div className={styles.manageContacts}>
-              <h2>Manage Company Contacts</h2>
-              <form onSubmit={handleAddContact}>
-                <div>
-                  <label>
-                    Name:
-                    <input
-                      type="text"
-                      value={newContact.name}
-                      onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-                      required
-                    />
-                  </label>
-                </div>
-                <div>
-                  <label>
-                    Job Title:
-                    <input
-                      type="text"
-                      value={newContact.job_title}
-                      onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
-                      required
-                    />
-                  </label>
-                </div>
-                <div>
-                  <label>
-                    Email:
-                    <input
-                      type="email"
-                      value={newContact.email}
-                      onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                      required
-                    />
-                  </label>
-                </div>
-                <div>
-                  <label>
-                    Phone:
-                    <input
-                      type="tel"
-                      value={newContact.phone}
-                      onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                      required
-                    />
-                  </label>
-                </div>
-                <button type="submit">Add Contact</button>
-              </form>
-        
-              <h3>Current Contacts</h3>
-              {loading ? (
-                <p>Loading...</p>
-              ) : (
-                <ul>
-                  {contacts.map((contact) => (
-                    <li key={contact.id}>
-                      {contact.name} | {contact.job_title} | {contact.email} | {contact.phone}{' '}
-                      <button onClick={() => handleDeleteContact(contact.id)}>Delete</button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          );
-        }
-  
-function AddNewContact() {
-  //this function will allow admin to add a new user to the supabase database
+  };
+
+  const remove = async (id) => {
+    await supabase.from('company_contacts').delete().eq('id', id);
+    setContacts(contacts.filter((c) => c.id !== id));
+  };
+
   return (
-    <div>
-      <h1>Add User</h1>
-    </div>
+    <>
+      <Head>
+        <title>Company Contacts | Admin</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <div>
+        <div className="mb-6">
+          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Company Contacts</h1>
+          <p className="mt-1 text-sm text-neutral-600">Add and manage team member contact information</p>
+        </div>
+
+        <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
+          <form onSubmit={add} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-sm font-semibold text-neutral-700">Name</label>
+              <input className="mt-1 h-10 w-full rounded-md border border-neutral-300 px-3 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/30" value={form.name} onChange={(e)=>setForm({ ...form, name: e.target.value })} required />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-neutral-700">Job Title</label>
+              <input className="mt-1 h-10 w-full rounded-md border border-neutral-300 px-3 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/30" value={form.job_title} onChange={(e)=>setForm({ ...form, job_title: e.target.value })} required />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-neutral-700">Email</label>
+              <input type="email" className="mt-1 h-10 w-full rounded-md border border-neutral-300 px-3 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/30" value={form.email} onChange={(e)=>setForm({ ...form, email: e.target.value })} required />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-neutral-700">Phone</label>
+              <input className="mt-1 h-10 w-full rounded-md border border-neutral-300 px-3 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/30" value={form.phone} onChange={(e)=>setForm({ ...form, phone: e.target.value })} required />
+            </div>
+            <div className="md:col-span-2">
+              <button className="inline-flex items-center rounded-md bg-red-600 px-5 py-2 font-bold text-white shadow hover:bg-red-700" type="submit">Add Contact</button>
+            </div>
+          </form>
+        </section>
+
+        <section className="mt-6 rounded-xl border border-neutral-200 bg-white p-5 shadow">
+          <div className="mb-4 font-semibold text-neutral-700">Contacts</div>
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full table-auto">
+                <thead>
+                  <tr className="text-left text-sm text-neutral-600">
+                    <th className="p-2">Name</th>
+                    <th className="p-2">Title</th>
+                    <th className="p-2">Email</th>
+                    <th className="p-2">Phone</th>
+                    <th className="p-2"></th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm text-neutral-800">
+                  {contacts.map((c) => (
+                    <tr key={c.id} className="border-t">
+                      <td className="p-2">{c.name}</td>
+                      <td className="p-2">{c.job_title}</td>
+                      <td className="p-2">{c.email}</td>
+                      <td className="p-2">{c.phone}</td>
+                      <td className="p-2">
+                        <button className="rounded-md bg-rose-600 px-3 py-1 text-white hover:bg-rose-700" onClick={()=>remove(c.id)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
+    </>
   );
 }
 
-function DeleteContact() {
-  //this function will allow admin to delete a user from the supabase database
-  return (
-    <div>
-      <h1>Delete User</h1>
-    </div>
-  );
-}
-const Admin = () => {
-  return (
-   
-    <div className={styles.admin}>
-      
-      <section className={styles.contactWidgetOffice}>
-        <OfficeContacts />
-      </section>
-      <section className={styles.contactWidgetOffice}>
-        <ManageContacts />
-      </section>
-     
-    </div>
-    
-  );
+CompanyContactsTW.getLayout = function getLayout(page) {
+  return <TWAdminLayout>{page}</TWAdminLayout>;
 };
 
-export default withAuth(Admin);
+export default withAuthTw(CompanyContactsTW);
+
+

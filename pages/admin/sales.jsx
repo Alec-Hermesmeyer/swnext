@@ -1,31 +1,22 @@
 "use client"
-import React, { useState, useEffect } from "react";
-import styles from "@/styles/Admin.module.css";
-import withAuth from "@/components/withAuth";
-import { getSalesData } from "@/actions/jobInfo";
-import { GridPattern } from "@/components/GridPattern";
+import { useEffect, useState } from "react";
+import Head from "next/head";
+import Link from "next/link";
+import withAuthTw from "@/components/withAuthTw";
+import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
-import { SalesCharts } from "@/components/SalesChart";
 import { Lato } from "next/font/google";
-import { data } from "autoprefixer";
+import { getSalesData } from "@/actions/jobInfo";
 
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-const lato = Lato({ weight: ["900"], subsets: ["latin"] });
-
-function Spacer() {
-  return (
-    <GridPattern className={styles.gridPattern} yOffset={10} interactive />
-  );
-}
-function Customers() {
-  //this function will display customer data from the supabase database, allowing admin to view and delete them
+function SalesTW() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 5; // Number of customers per page
+  const pageSize = 5;
 
-  //Filter States 
   const [companyFilter, setCompanyFilter] = useState("");
   const [jobNameFilter, setJobNameFilter] = useState("");
   const [monthSoldFilter, setMonthSoldFilter] = useState("");
@@ -34,20 +25,13 @@ function Customers() {
 
   useEffect(() => {
     const fetchTotalCount = async () => {
-      const { data, error, count } = await supabase
+      const { count, error } = await supabase
         .from("Customer")
-        .select("name", { count: "exact", head: true })
-        
-       
-
-      if (error) {
-        console.error("Error fetching total count:", error);
-      } else {
+        .select("name", { count: "exact", head: true });
+      if (!error && typeof count === 'number') {
         setTotalPages(Math.ceil(count / pageSize));
-        
       }
     };
-
     fetchTotalCount();
   }, []);
 
@@ -60,142 +44,89 @@ function Customers() {
         scope: scopeFilter,
         estimator: estimatorFilter,
       });
-  
       if (paginatedData) {
         setCustomers(paginatedData);
-        setTotalPages(Math.ceil(totalCount / pageSize)); // Update total pages based on filtered results
-      } else {
-        console.log("No sales data received");
+        setTotalPages(Math.ceil(totalCount / pageSize));
       }
-  
       setLoading(false);
     };
-  
     fetchAndSetSalesData();
-  }, [page, pageSize, companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
-  
-  // Optionally, reset the page to 0 when filters change
-  useEffect(() => {
-    setPage(0);
-  }, [companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
+  }, [page, companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
 
+  useEffect(() => { setPage(0); }, [companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
 
-  const handlePreviousPage = () => {
-    if (page > 0) {
-      setPage(page - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (page < totalPages - 1) {
-      setPage(page + 1);
-    }
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const handlePreviousPage = () => { if (page > 0) setPage(page - 1); };
+  const handleNextPage = () => { if (page < totalPages - 1) setPage(page + 1); };
 
   return (
-    
-    <div className={styles.contactSubContainer}>
-      
-      {/* Filter Inputs */}
-      <div className={styles.filters}>
-        <input
-          type="text"
-          placeholder="Filter by Company"
-          value={companyFilter}
-          onChange={(e) => setCompanyFilter(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Filter by Job Name"
-          value={jobNameFilter}
-          onChange={(e) => setJobNameFilter(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Filter by Scope"
-          value={scopeFilter}
-          onChange={(e) => setScopeFilter(e.target.value)}
-        />
-         <input
-          type="text"
-          placeholder="Filter by Month Sold"
-          value={monthSoldFilter}
-          onChange={(e) => setMonthSoldFilter(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Filter by Estimator"
-          value={estimatorFilter}
-          onChange={(e) => setEstimatorFilter(e.target.value)}
-        />
-      </div>
-      {customers.map((customer, index) => (
-  <div id="sales" key={index} className={styles.contactSubWrapper}>
-    <table className={styles.contactSubTable}>
-  <thead className={styles.thread}>
-    <tr className={styles.tableRow}>
-      <th id="company-header" className={lato.className}>Company</th>
-      <th id="job-name-header" className={lato.className}>Job Name</th>
-      <th id="amount-header" className={lato.className}>Amount</th>
-      <th id="scope-header" className={lato.className}>Scope</th>
-      <th id="day-sold-header" className={lato.className}>Day Sold</th>
-      <th id="month-sold-header" className={lato.className}>Month Sold</th>
-      <th id="estimator-header" className={lato.className}>Estimator</th>
-    </tr>
-  </thead>
-  <tbody className={styles.tableBody}>
-    <tr className={styles.tableRow2}>
-      <td id="salesTD"  className={lato.className}>{customer.name}</td>
-      <td id="salesTD"  className={lato.className}>{customer.jobName}</td>
-      <td id="salesTD"  className={lato.className}>{customer.amount}</td>
-      <td id="salesTD"  className={lato.className}>{customer.scope}</td>
-      <td id="salesTD"  className={lato.className}>{customer.dateSold}</td>
-      <td id="salesTD"  className={lato.className}>{customer.monthSold}</td>
-      <td id="salesTD"  className={lato.className}>{customer.estimator}</td>
-    </tr>
-  </tbody>
-</table>
-  </div>
-))}
+    <>
+      <Head>
+        <title>Sales | Admin</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <div>
+        <div className="mb-6">
+          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Sales Pipeline</h1>
+          <p className="mt-1 text-sm text-neutral-600">View and filter sales data</p>
+        </div>
 
-    <div className={styles.pagination}>
-          <button onClick={handlePreviousPage} disabled={page === 0}>
-            Previous
-          </button>
-          <span>
-            Page {page + 1} of {totalPages}
-          </span>
-          <button onClick={handleNextPage} disabled={page >= totalPages - 1}>
-            Next
-          </button>
-        </div>
-        </div>
+        <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
+          <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
+            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Company" value={companyFilter} onChange={(e)=>setCompanyFilter(e.target.value)} />
+            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Job Name" value={jobNameFilter} onChange={(e)=>setJobNameFilter(e.target.value)} />
+            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Scope" value={scopeFilter} onChange={(e)=>setScopeFilter(e.target.value)} />
+            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Month Sold" value={monthSoldFilter} onChange={(e)=>setMonthSoldFilter(e.target.value)} />
+            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Estimator" value={estimatorFilter} onChange={(e)=>setEstimatorFilter(e.target.value)} />
+          </div>
+
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full table-auto">
+                <thead>
+                  <tr className="text-left text-sm text-neutral-600">
+                    <th className="p-2">Company</th>
+                    <th className="p-2">Job Name</th>
+                    <th className="p-2">Amount</th>
+                    <th className="p-2">Scope</th>
+                    <th className="p-2">Day Sold</th>
+                    <th className="p-2">Month Sold</th>
+                    <th className="p-2">Estimator</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm text-neutral-800">
+                  {customers.map((c, idx) => (
+                    <tr key={idx} className="border-t">
+                      <td className="p-2">{c.name}</td>
+                      <td className="p-2">{c.jobName}</td>
+                      <td className="p-2">{c.amount}</td>
+                      <td className="p-2">{c.scope}</td>
+                      <td className="p-2">{c.dateSold}</td>
+                      <td className="p-2">{c.monthSold}</td>
+                      <td className="p-2">{c.estimator}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button className="rounded-md bg-neutral-100 px-3 py-1 ring-1 ring-neutral-300 disabled:opacity-50" onClick={handlePreviousPage} disabled={page === 0}>Previous</button>
+            <span className="text-sm">Page {page + 1} of {totalPages}</span>
+            <button className="rounded-md bg-neutral-100 px-3 py-1 ring-1 ring-neutral-300 disabled:opacity-50" onClick={handleNextPage} disabled={page >= totalPages - 1}>Next</button>
+          </div>
+        </section>
+      </div>
+    </>
   );
 }
 
-const Sales = () => {
-    
-    
-      return (
-        <div className={styles.admin}>    
-        
-        <section className={styles.contactWidgetOffice}>
-        <div>
-          
-          <Customers data={data}/>
-        </div>
-      </section>
-      
-    
+SalesTW.getLayout = function getLayout(page) {
+  return <TWAdminLayout>{page}</TWAdminLayout>;
+};
 
-        </div>
+export default withAuthTw(SalesTW);
 
-    );
-    }
-    export default withAuth(Sales);
 
-    

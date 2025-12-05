@@ -1,350 +1,122 @@
-
-import React, { useState, useEffect } from 'react';
+import Head from "next/head";
+import Image from "next/image";
+import Link from "next/link";
+import TWLayout from "@/components/TWLayout";
 import { GridPattern } from "@/components/GridPattern";
 import { FadeIn } from "@/components/FadeIn";
-import Link from 'next/link';
-import Head from 'next/head';
-import styles from '../styles/Contact.module.css';
-import { Inter } from "next/font/google";
-import { Oswald } from "next/font/google";
-import { Montserrat } from "next/font/google";
+import { LocalBusinessSchema, BreadcrumbListSchema, PersonSchema } from "@/components/StructuredData";
 import { Lato } from "next/font/google";
+import { useEffect, useState } from "react";
 import supabase from "@/components/Supabase";
- 
+import { usePageImages } from "@/context/ImageContext";
 
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-const inter = Inter({ subsets: ["latin"] });
-const oswald = Oswald({ subsets: ["latin"] });
-const montserrat = Montserrat({ subsets: ["latin"] });
-const lato = Lato({ weight: ["900"], subsets: ["latin"] });
-
-// Featured bios and headshots
-const featuredProfilesData = {
-  "Luke Wardell": {
-    image: "/Luke W Final Headshot.png",
-    bio:
-      "As Vice President of Pre-Construction at S&W Foundation Contractors, Inc., Luke Wardell leads the front end of the project lifecycle, overseeing estimating, budgeting, and bid strategy. A graduate of the University of Arkansas, he brings a sharp analytical perspective to cost planning and scope development. Luke’s ability to align client goals with constructible, value-driven solutions has made him a key contributor to the company’s continued growth in both public and private sectors. His proactive approach ensures clarity and confidence before construction ever begins.",
-  },
-  "Sean Macalik": {
-    image: "/Sean M Final Headshot.png",
-    bio:
-      "In his role as Vice President of Construction, Sean Macalik directs all on-site operations for S&W Foundation Contractors, managing field teams and coordinating large-scale drilling and foundation efforts. With deep experience in heavy civil construction, Sean is known for driving jobsite efficiency while upholding the highest standards of safety and execution. He takes pride in delivering technically demanding projects under tight timelines and works closely with clients, engineers, and foremen to maintain momentum from start to finish.",
-  },
-  "Cesar Urrutia": {
-    image: "/Cesar U Final Headshot.png",
-    bio:
-      "Cesar Urrutia serves as Vice President of Operations at S&W Foundation Contractors, where he oversees staffing, resource allocation, and field readiness across all active projects. With a background rooted in hands-on fieldwork, Cesar ensures every crew is equipped, trained, and prepared to meet the unique demands of each site. He’s instrumental in shaping the company’s operational culture—emphasizing accountability, craftsmanship, and continuous improvement. Cesar’s leadership keeps projects moving seamlessly, from mobilization to closeout.",
-  },
-};
-
-function FeaturedProfiles() {
-  const [contacts, setContacts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('company_contacts')
-          .select('*');
-        if (error) {
-          console.error('Error fetching featured contacts:', error);
-        } else {
-          setContacts(data || []);
-        }
-      } catch (err) {
-        console.error('Unexpected error fetching featured contacts:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchContacts();
-  }, []);
-
-  if (loading) return null;
-
-  const order = ["Luke Wardell", "Sean Macalik", "Cesar Urrutia"];
-
+function Hero({ heroImage }) {
   return (
-    <section className={styles.featuredProfilesSection}>
-      {order.map((name, index) => {
-        const dbContact = contacts.find((c) => c.name === name);
-        const featured = featuredProfilesData[name];
-        if (!featured) return null;
-        const info = (
-          <div className={styles.profileInfo}>
-            <img
-              className={styles.profileImage}
-              src={featured.image}
-              alt={`${name} headshot`}
-              decoding="async"
-              loading={index === 0 ? 'eager' : 'lazy'}
-            />
-            <h3 className={`${lato.className} ${styles.profileName}`}>{name}</h3>
-            {dbContact && (
-              <>
-                <p className={`${lato.className} ${styles.profileTitle}`}>{dbContact.job_title}</p>
-                <p className={styles.profileContacts}>
-                  <Link className={styles.email} href={`mailto:${dbContact.email}`}>{dbContact.email}</Link>
-                  <span className={styles.profileDivider}> • </span>
-                  <Link className={styles.contactNumber} href={`tel:${dbContact.phone}`}>{dbContact.phone}</Link>
-                </p>
-              </>
-            )}
-          </div>
-        );
-        const bio = (
-          <div className={styles.profileBioCol}>
-            <p className={styles.profileBio}>{featured.bio}</p>
-          </div>
-        );
-        return (
-          <div key={name} className={styles.profileRow}>
-            {info}
-            {bio}
-          </div>
-        );
-      })}
+    <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[45vh] md:min-h-[55vh] flex items-center">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url('${heroImage}')`, backgroundPosition: "bottom" }}
+      />
+      <div className="absolute inset-0 bg-black/45" />
+      <div className="relative mx-auto w-full px-0 py-16 text-center">
+        <h1 className={`${lato.className} text-4xl md:text-5xl font-extrabold`}>Contact</h1>
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <Link href="tel:2147030484" className="inline-flex items-center rounded-md bg-red-600 px-5 py-3 font-bold text-white shadow-md hover:bg-red-700">Give Us A Call</Link>
+          <a href="#office-contacts" className="inline-flex items-center rounded-md bg-white/10 px-5 py-3 font-bold text-white ring-1 ring-white/30 hover:bg-white/20">Company Contacts</a>
+        </div>
+      </div>
     </section>
   );
 }
 
-function Hero() {
-  return (
-    <div className={styles.heroSection}>
-      <div className={styles.heroContainer}>
-        <div className={styles.heroWrapper}>
-          <h1 className={lato.className}>Contact</h1>
-          <span>
-            <Link className={styles.heroLink} href="tel:2147030484">
-              Give Us A Call
-            </Link>
-            <Link className={styles.heroLink} href='#officeContacts'>
-              Company Contacts
-            </Link>
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+function ContactForm() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [number, setNumber] = useState("");
+  const [message, setMessage] = useState("");
+  const [company, setCompany] = useState("");
 
-function Spacer() {
-  return (
-    <GridPattern />
-  );
-}
-
-function OfficeContacts() {
-  const [contacts, setContacts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        let { data, error } = await supabase
-          .from('company_contacts')
-          .select('*');
-
-        if (error) {
-          console.error('Error fetching contacts:', error);
-        } else {
-          setContacts(data);
-        }
-      } catch (error) {
-        console.error('Unexpected error fetching contacts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchContacts();
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>;
+  async function handleSubmit(e) {
+    e.preventDefault();
+    
+    // Track form submission in GA4
+    if (typeof window !== 'undefined' && window.trackFormSubmit) {
+      window.trackFormSubmit('contact_form');
+    }
+    
+    await supabase.from("contact_form").upsert({ name, email, number, message, company });
+    await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: "mattm@swfoundation.com, colinw@swfoundation.com",
+        subject: "New Form Submission",
+        text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nCompany: ${company}\nMessage: ${message}`,
+      }),
+    });
+    setName(""); setEmail(""); setNumber(""); setMessage(""); setCompany("");
   }
 
   return (
-    <div className={styles.officeContactsContainer}>
-      <div className={styles.grid}>
-        {contacts.map((contact, index) => (
-          <div className={styles.card} key={index}>
-            <h2 className={lato.className}>{contact.name}</h2>
-            <p className={lato.className}>{contact.job_title}<br />
-              <br /><Link className={styles.email} href={`mailto:${contact.email}`}>{contact.email}</Link> <br />
-              <br /><Link className={styles.contactNumber} href={`tel:${contact.phone}`}>{contact.phone}</Link></p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Form() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [number, setNumber] = useState('');
-  const [message, setMessage] = useState('');
-  const [company, setCompany] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      const { data, error } = await supabase
-        .from('contact_form')
-        .upsert({ name, email, number, message, company });
-
-      if (error) {
-        console.error('Error submitting form:', error);
-        return;
-      }
-       // Send form contents via email
-       const emailResponse = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: 'mattm@swfoundation.com, colinw@swfoundation.com',
-          subject: 'New Form Submission',
-          text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nCompany: ${company}\nMessage: ${message}`,
-        }),
-      });
-
-      if (!emailResponse.ok) {
-        console.error('Error sending email:', emailResponse.statusText);
-        return;
-      }
-
-      // Clear form inputs
-      setName('');
-      setEmail('');
-      setNumber('');
-      setMessage('');
-      setCompany('');
-    } catch (error) {
-      console.error('Unexpected error submitting form:', error);
-    }
-  };
-
-  return (
-    <>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <h2 className={lato.className}>Contact Us Today</h2>
-        <div className={styles.formContainer}>
-          <div className={styles.formWrapper}>
-            <div className={styles.formTop}>
-              <input
-                className={styles.formInput}
-                type='text'
-                placeholder='Your Name'
-                id='name'
-                name='name'
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <input
-                className={styles.formInput}
-                type='email'
-                placeholder='Your Email'
-                id='email'
-                name='email'
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className={styles.formCenter}>
-              <input
-                className={styles.formInput}
-                type='tel'
-                placeholder='Contact Number'
-                id='number'
-                name='number'
-                required
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-              />
-              <input
-                className={styles.formInput}
-                type='text'
-                placeholder='Company Name'
-                id='company'
-                name='company'
-                required
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-              />
-            </div>
-            <div className={styles.formBottom}>
-              <textarea onChange={(e) => setMessage(e.target.value)} value={message} required id='message' name='message' className={styles.contactMessage} placeholder='Tell Us About Your Project'></textarea>
-              <button className={styles.formSubmit} type='submit'><b>Submit</b></button>
-            </div>
-          </div>
+    <form onSubmit={handleSubmit} className="rounded-2xl bg-white/90 p-0 shadow-none ring-0">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-neutral-700">Your Name</label>
+          <input aria-label="Your Name" className="w-full rounded-lg border border-neutral-300 bg-white px-3 h-11 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={name} onChange={(e)=>setName(e.target.value)} />
         </div>
-      </form>
-    </>
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-neutral-700">Your Email</label>
+          <input aria-label="Your Email" type="email" className="w-full rounded-lg border border-neutral-300 bg-white px-3 h-11 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={email} onChange={(e)=>setEmail(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-neutral-700">Contact Number</label>
+          <input aria-label="Contact Number" className="w-full rounded-lg border border-neutral-300 bg-white px-3 h-11 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={number} onChange={(e)=>setNumber(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-neutral-700">Company Name</label>
+          <input aria-label="Company Name" className="w-full rounded-lg border border-neutral-300 bg-white px-3 h-11 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={company} onChange={(e)=>setCompany(e.target.value)} />
+        </div>
+      </div>
+      <div className="mt-4 space-y-1">
+        <label className="text-sm font-semibold text-neutral-700">Project Details</label>
+        <textarea aria-label="Project Details" className="w-full rounded-lg border border-neutral-300 bg-white p-3 h-32 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={message} onChange={(e)=>setMessage(e.target.value)} />
+      </div>
+      <div className="mt-5 flex justify-end">
+        <button className="inline-flex h-11 items-center justify-center rounded-lg bg-red-600 px-6 font-bold text-white shadow hover:bg-red-700">Submit</button>
+      </div>
+    </form>
   );
 }
 
-function JobForm() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [number, setNumber] = useState('');
-  const [message, setMessage] = useState('');
-  const [position, setPosition] = useState('');
+function CareersForm() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [number, setNumber] = useState("");
+  const [message, setMessage] = useState("");
+  const [position, setPosition] = useState("");
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-
-    try {
-      const { data, error } = await supabase
-        .from('job_form')
-        .upsert({ name, email, number, message, position });
-
-      if (error) {
-        console.error('Error submitting job form:', error);
-        return;
-      }
-
-      // Send form contents via email
-      const emailResponse = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: 'cliffw@swfoundation.com, colinw@swfoundation.com',
-          subject: 'New Job Application',
-          text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nPosition: ${position}\nMessage: ${message}`,
-        }),
-      });
-
-      if (!emailResponse.ok) {
-        console.error('Error sending email:', emailResponse.statusText);
-        return;
-      }
-
-      // Clear form inputs
-      setName('');
-      setEmail('');
-      setNumber('');
-      setMessage('');
-      setPosition('');
-    } catch (error) {
-      console.error('Unexpected error submitting job form:', error);
-    }
-  };
+    await supabase.from("job_form").upsert({ name, email, number, message, position });
+    await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: "cliffw@swfoundation.com, colinw@swfoundation.com",
+        subject: "New Job Application",
+        text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nPosition: ${position}\nMessage: ${message}`,
+      }),
+    });
+    setName(""); setEmail(""); setNumber(""); setMessage(""); setPosition("");
+  }
 
   const jobPositions = [
     'Groundhand/General Laborer',
     'Drill Rig Operator',
     'Crane Operator',
     'CDL Driver',
-    'Crane Operator',
     'Mechanic',
     'Welder',
     'Project Manager Assistant',
@@ -352,135 +124,219 @@ function JobForm() {
   ];
 
   return (
-    <>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <h2 className={lato.className}>Join Our Team</h2>
-        <div className={styles.formContainer}>
-          <div className={styles.formWrapper}>
-            <div className={styles.formTop}>
-              <input
-                className={styles.formInput}
-                type='text'
-                placeholder='Your Name'
-                id='name'
-                name='name'
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <input
-                className={styles.formInput}
-                type='email'
-                placeholder='Your Email'
-                id='email'
-                name='email'
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className={styles.formCenter}>
-              <input
-                className={styles.formInput}
-                type='tel'
-                placeholder='Contact Number'
-                id='number'
-                name='number'
-                required
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-              />
-              <select
-                className={styles.formInput}
-                type='text'
-                placeholder='Desired Job Title'
-                id='position'
-                name='Position'
-                required
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-              >
-                <option value='' disabled>Select a Position</option>
-                {jobPositions.map((job, index) => (
-                  <option key={index} value={job}>{job}</option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.formBottom}>
-              <textarea onChange={(e) => setMessage(e.target.value)} value={message} required id='message' name='message' className={styles.contactMessage} placeholder='Tell Us About Your Experience'></textarea>
-              <button className={styles.formSubmit} type='submit'><b>Submit</b></button>
-            </div>
-          </div>
+    <form onSubmit={handleSubmit} className="rounded-2xl bg-white/90 p-0 shadow-none ring-0">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-neutral-700">Your Name</label>
+          <input aria-label="Your Name" className="w-full rounded-lg border border-neutral-300 bg-white px-3 h-11 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={name} onChange={(e)=>setName(e.target.value)} />
         </div>
-      </form>
-    </>
-  );
-}
-
-function FormSection() {
-  return (
-    <div className={styles.formSectionContainer}>
-      <div className={styles.formSectionWrapper}>
-        <div className={styles.formLeft}>
-          <Form />
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-neutral-700">Your Email</label>
+          <input aria-label="Your Email" type="email" className="w-full rounded-lg border border-neutral-300 bg-white px-3 h-11 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={email} onChange={(e)=>setEmail(e.target.value)} />
         </div>
-        <div className={styles.formRight}>
-          <JobForm />
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-neutral-700">Contact Number</label>
+          <input aria-label="Contact Number" className="w-full rounded-lg border border-neutral-300 bg-white px-3 h-11 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={number} onChange={(e)=>setNumber(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-neutral-700">Desired Position</label>
+          <select aria-label="Desired Position" className="w-full rounded-lg border border-neutral-300 bg-white px-3 h-11 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={position} onChange={(e)=>setPosition(e.target.value)}>
+            <option value='' disabled>Select a Position</option>
+            {jobPositions.map((j)=> (<option key={j} value={j}>{j}</option>))}
+          </select>
         </div>
       </div>
-    </div>
+      <div className="mt-4 space-y-1">
+        <label className="text-sm font-semibold text-neutral-700">Experience & Notes</label>
+        <textarea aria-label="Experience" className="w-full rounded-lg border border-neutral-300 bg-white p-3 h-32 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={message} onChange={(e)=>setMessage(e.target.value)} />
+      </div>
+      <div className="mt-5 flex justify-end">
+        <button className="inline-flex h-11 items-center justify-center rounded-lg bg-red-600 px-6 font-bold text-white shadow hover:bg-red-700">Submit</button>
+      </div>
+    </form>
   );
 }
 
-export default function Contact() {
+function FeaturedProfiles() {
+  const featured = {
+    "Luke Wardell": {
+      image: "/Luke W Final Headshot.png",
+      bio: "As Vice President of Pre-Construction at S&W Foundation Contractors, Inc., Luke Wardell leads the front end of the project lifecycle, overseeing estimating, budgeting, and bid strategy. A graduate of the University of Arkansas, he brings a sharp analytical perspective to cost planning and scope development. Luke’s ability to align client goals with constructible, value-driven solutions has made him a key contributor to the company’s continued growth in both public and private sectors. His proactive approach ensures clarity and confidence before construction ever begins.",
+    },
+    "Sean Macalik": {
+      image: "/Sean M Final Headshot.png",
+      bio: "In his role as Vice President of Construction, Sean Macalik directs all on-site operations for S&W Foundation Contractors, managing field teams and coordinating large-scale drilling and foundation efforts. With deep experience in heavy civil construction, Sean is known for driving jobsite efficiency while upholding the highest standards of safety and execution. He takes pride in delivering technically demanding projects under tight timelines and works closely with clients, engineers, and foremen to maintain momentum from start to finish.",
+    },
+    "Cesar Urrutia": {
+      image: "/Cesar U Final Headshot.png",
+      bio: "Cesar Urrutia serves as Vice President of Operations at S&W Foundation Contractors, where he oversees staffing, resource allocation, and field readiness across all active projects. With a background rooted in hands-on fieldwork, Cesar ensures every crew is equipped, trained, and prepared to meet the unique demands of each site. He’s instrumental in shaping the company’s operational culture—emphasizing accountability, craftsmanship, and continuous improvement. Cesar’s leadership keeps projects moving seamlessly, from mobilization to closeout.",
+    },
+  };
+
+  const [contacts, setContacts] = useState([]);
+  useEffect(()=>{
+    supabase.from('company_contacts').select('*').then(({ data })=> setContacts(data || []));
+  },[]);
+  const order = ["Luke Wardell","Sean Macalik","Cesar Urrutia"];
+
+  return (
+    <section className="mx-auto w-full max-w-[1200px] px-6">
+      <div className="space-y-10">
+        {order.map((name, idx)=>{
+          const c = contacts.find((x)=> x.name === name);
+          const f = featured[name];
+          if(!f) return null;
+          return (
+            <div key={name} className="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
+              {/* Left: headshot + contact in a light card */}
+              <div className="rounded-2xl bg-white/90 p-5 shadow ring-1 ring-neutral-200 backdrop-blur-sm">
+                <div className="flex items-center gap-4">
+                  <img src={f.image} alt={`${name} headshot`} className="h-28 w-28 rounded-full border-4 border-[#0b2a5a] object-cover" />
+                  <div>
+                    <h3 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>{name}</h3>
+                    {c && (<p className="text-sm font-semibold text-neutral-800">{c.job_title}</p>)}
+                    {c && (
+                      <p className="mt-1 text-sm text-neutral-700">
+                        <Link href={`mailto:${c.email}`} className="font-semibold text-[#0b2a5a] hover:underline">{c.email}</Link>
+                        <span className="px-1">•</span>
+                        <Link href={`tel:${c.phone}`} className="font-semibold text-[#0b2a5a] hover:underline">{c.phone}</Link>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* Right: bio with accent */}
+              <div className="rounded-2xl bg-white/90 text-neutral-900 shadow-2xl ring-1 ring-neutral-200 backdrop-blur-sm">
+                <div className="h-1.5 w-full rounded-t-2xl bg-red-600" />
+                <div className="p-5">
+                  <p className="leading-relaxed">{f.bio}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function OfficeContacts() {
+  const [contacts, setContacts] = useState([]);
+  useEffect(()=>{
+    supabase.from('company_contacts').select('*').then(({ data })=> setContacts(data || []));
+  },[]);
+  return (
+    <section id="office-contacts" className="mx-auto w-full max-w-[1200px] px-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {contacts.map((c)=> (
+          <div key={c.id} className="rounded-xl border border-white/10 bg-[#0b2a5a] p-5 text-white shadow ring-1 ring-white/10">
+            <h3 className={`${lato.className} text-xl font-extrabold drop-shadow`}>{c.name}</h3>
+            <p className={`${lato.className} mt-1 font-semibold drop-shadow`}>{c.job_title}</p>
+            <p className="mt-3 text-sm drop-shadow"><Link href={`mailto:${c.email}`} className="underline">{c.email}</Link><br/><Link href={`tel:${c.phone}`} className="underline">{c.phone}</Link></p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function ContactTW() {
+  const { images: heroImages } = usePageImages("hero");
+  const breadcrumbs = [
+    { name: "Home", url: "https://www.swfoundation.com/" },
+    { name: "Contact", url: "https://www.swfoundation.com/contact" }
+  ];
+
   return (
     <>
       <Head>
-        <title>Contact S&W Foundation | Commercial Pier Drilling Specialists in Dallas, TX</title>
-        <meta name="description" content="Reach out to S&W Foundation, the leading specialists in commercial pier drilling across Dallas, TX and the wider US. Let's discuss how our expertise, advanced equipment, and commitment to safety can serve your project." />
+        <title>Contact S&W Foundation | Get Your Free Quote | Dallas Commercial Pier Drilling</title>
+        <meta 
+          name="description" 
+          content="Contact S&W Foundation for commercial pier drilling services in Dallas, TX. Get your free quote today! Call (214) 703-0484 or submit online. Nationwide foundation construction experts since 1986." 
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="keywords" content="contact, commercial pier drilling, Dallas, TX, S&W Foundation, quote, project consultation, advanced equipment, safety, leading specialists, US" />
-        <meta property="og:title" content="Contact S&W Foundation | Commercial Pier Drilling Specialists in Dallas, TX" />
-        <meta property="og:description" content="Looking for top-tier commercial pier drilling services in the US? Get in touch with S&W Foundation today for a comprehensive quote and experience our commitment to excellence." />
-        <meta property="og:type" content="website" />
+        <meta name="keywords" content="contact s&w foundation, pier drilling quote, commercial foundation contractors dallas, free drilling estimate, pier drilling services contact" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="Contact S&W Foundation | Get Your Free Quote | Commercial Pier Drilling" />
+        <meta property="og:description" content="Contact S&W Foundation for commercial pier drilling services in Dallas, TX. Get your free quote today! Call (214) 703-0484 or submit online." />
         <meta property="og:url" content="https://www.swfoundation.com/contact" />
-        <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/AFDB03DE-805D-45B2-9A37-1EAFA841A828.webp" />
-        <meta property='og:site_name' content='S&W Commercial Pier Drilling' />
-        <link rel="icon" href="/android-chrome-512x512.png" type='image/x-icon' />
+        <meta property="og:type" content="website" />
+        
+        {/* Canonical URL */}
         <link rel="canonical" href="https://www.swfoundation.com/contact" />
       </Head>
-      <div className={styles.contact}>
-        <section className={styles.hero}>
-          <Hero />
-        </section>
-        <div className={styles.spacer}>
-          <GridPattern className={styles.gridPattern} yOffset={10} interactive />
+      
+      {/* Structured Data */}
+      <LocalBusinessSchema />
+      <BreadcrumbListSchema breadcrumbs={breadcrumbs} />
+      <PersonSchema
+        name="Luke Wardell"
+        jobTitle="Vice President of Pre-Construction"
+        email="lukew@swfoundation.com"
+        telephone="+1-214-703-0484"
+        description="Luke Wardell leads the front end of the project lifecycle, overseeing estimating, budgeting, and bid strategy for S&W Foundation Contractors."
+        image="/Luke W Final Headshot.png"
+      />
+      <PersonSchema
+        name="Sean Macalik"
+        jobTitle="Vice President of Construction"
+        email="seanm@swfoundation.com" 
+        telephone="+1-214-703-0484"
+        description="Sean Macalik directs all on-site operations for S&W Foundation Contractors, managing field teams and coordinating large-scale drilling and foundation efforts."
+        image="/Sean M Final Headshot.png"
+      />
+      <PersonSchema
+        name="Cesar Urrutia"
+        jobTitle="Vice President of Operations"
+        email="cesaru@swfoundation.com"
+        telephone="+1-214-703-0484"
+        description="Cesar Urrutia oversees staffing, resource allocation, and field readiness across all active projects at S&W Foundation Contractors."
+        image="/Cesar U Final Headshot.png"
+      />
+      <main className="relative flex w-full flex-col">
+        {/* Global background pattern behind all content */}
+        <div className="pointer-events-none fixed inset-0 -z-10">
+          <GridPattern className="h-full w-full" yOffset={0} interactive strokeColor="#0b2a5a" strokeOpacity={0.12} />
         </div>
+        <Hero heroImage={heroImages.contact} />
+        <div className="h-8" />
         <FadeIn>
-          <section className={styles.formSection} id='jobForm'>
-            <FormSection />
+          <section className="mx-auto w-full max-w-[1200px] px-6 py-8">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              <div className="rounded-2xl bg-white/90 p-6 shadow-2xl ring-1 ring-black/10 backdrop-blur-sm">
+                <div className="h-1.5 w-full rounded-t-2xl bg-red-600 -mt-6 mb-4" />
+                <h2 className={`${lato.className} mb-2 text-2xl font-extrabold text-neutral-900`}>Contact S&W</h2>
+                <p className="mb-6 text-sm text-neutral-600">Tell us about your project and we’ll get back to you shortly.</p>
+                <ContactForm />
+              </div>
+              <div className="rounded-2xl bg-white/90 p-6 shadow-2xl ring-1 ring-black/10 backdrop-blur-sm">
+                <div className="h-1.5 w-full rounded-t-2xl bg-red-600 -mt-6 mb-4" />
+                <h2 className={`${lato.className} mb-2 text-2xl font-extrabold text-neutral-900`}>Careers Application</h2>
+                <p className="mb-6 text-sm text-neutral-600">Apply to join our team. We’re always looking for great people.</p>
+                <CareersForm />
+              </div>
+            </div>
           </section>
         </FadeIn>
-        <div className={styles.spacer}>
-          <GridPattern className={styles.gridPattern} yOffset={0} interactive />
-        </div>
+        <div className="h-8" />
         <FadeIn>
-            <FeaturedProfiles />
+          <FeaturedProfiles />
         </FadeIn>
-        <div className={styles.spacer}>
-          <GridPattern className={styles.gridPattern} yOffset={0} interactive />
-        </div>
+        <div className="h-8" />
         <FadeIn>
-          <section id='officeContacts' className={styles.officeContacts}>
-            <OfficeContacts />
-          </section>
+          <OfficeContacts />
         </FadeIn>
-        <div className={styles.spacer} id='spacer2'>
-          <GridPattern className={styles.gridPattern} yOffset={0} interactive />
-        </div>
-      </div>
+        <div className="h-8" />
+      </main>
     </>
   );
 }
+
+ContactTW.getLayout = function getLayout(page) {
+  return <TWLayout>{page}</TWLayout>;
+};
 
 

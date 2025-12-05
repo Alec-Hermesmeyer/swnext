@@ -1,11 +1,6 @@
-import path from "path";
-import matter from "gray-matter";
-import { remark } from "remark";
-import html from "remark-html";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import supabase from "@/components/Supabase";
-import styles from "../styles/Blog.module.css";
 import { Lato } from "next/font/google";
 import Link from "next/link";
 import ContactCard from "@/components/ContactCard";
@@ -40,28 +35,35 @@ export default function MarkdownBlogPost({ frontmatter, content }) {
 
   const contact = frontmatter.contact || {};
   console.log(contact.contactUrl);
-  const imagePath = `/Images/public/newimages/${frontmatter.imageId}.webp`;
+  const projectId = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID;
+  const supabaseUrl = frontmatter.imageId && projectId
+    ? `https://${projectId}.supabase.co/storage/v1/object/public/Images/public/newimages/${frontmatter.imageId}.webp`
+    : "";
+  const imageSrc = imageUrl || supabaseUrl;
 
   return (
-    <div className={styles.post}>
-      <div className={styles.postContainer}>
-        <div className={styles.postWrapper}>
-          <div className={styles.introSection}>
-            <div className={styles.introContainer}>
-              <div className={styles.introWrapper}>
-                <div className={styles.introContent}>
-                  <div className={styles.introContentContainer}>
-                    <div className={styles.introContentWrapper}>
-                      <div className={styles.introContentLeft}>
-                        {imagePath && (
-                          <span className={styles.imageContainer}>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-8">
+            <div className="space-y-8">
+              <div className="">
+                <div className="">
+                  <div className="">
+                    <div className="">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {imageSrc && (
+                          <span className="relative aspect-video rounded-lg overflow-hidden">
                             <Image
-                              className={styles.blogImg}
-                              src={imagePath}
+                              className="object-cover w-full h-full"
+                              src={imageSrc}
                               height={470}
                               width={520}
                               alt={frontmatter.title}
                               priority
+                              unoptimized
+                              loader={({ src }) => src}
+                              sizes="(max-width: 768px) 90vw, 520px"
                             />
                           </span>
                         )}
@@ -69,10 +71,10 @@ export default function MarkdownBlogPost({ frontmatter, content }) {
                           <ContactCard />
                         
                       </div>
-                      <div className={styles.introContentRight}>
+                      <div className="space-y-6">
                         <h1 className={lato.className}>{frontmatter.title}</h1>
                         <article
-                          className={styles.blogArticle}
+                          className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: content }}
                         ></article>
                       </div>
@@ -88,36 +90,4 @@ export default function MarkdownBlogPost({ frontmatter, content }) {
   );
 }
 
-export async function getStaticPaths() {
-  const files = fs.readdirSync(path.join("content", "blog"));
-
-  const paths = files.map((filename) => ({
-    params: {
-      slug: filename.replace(".md", ""),
-    },
-  }));
-
-  return {
-    paths,
-    fallback: false,
-  };
-}
-
-export async function getStaticProps({ params: { slug } }) {
-  const markdownWithMeta = fs.readFileSync(
-    path.join("content", "blog", `${slug}.md`),
-    "utf-8"
-  );
-
-  const { data: frontmatter, content } = matter(markdownWithMeta);
-
-  const processedContent = await remark().use(html).process(content);
-  const contentHtml = processedContent.toString();
-
-  return {
-    props: {
-      frontmatter,
-      content: contentHtml,
-    },
-  };
-}
+// Note: Static generation is handled in page files under /pages/tw/blog
