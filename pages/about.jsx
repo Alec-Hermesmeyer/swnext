@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import TWLayout from "@/components/TWLayout";
 import { FadeIn, FadeInStagger } from "@/components/FadeIn";
+import { OrganizationSchema, BreadcrumbListSchema, PersonSchema } from "@/components/StructuredData";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
@@ -90,6 +91,109 @@ function InfoSection() {
   );
 }
 
+function LeadershipSection() {
+  const leaders = [
+    {
+      name: "James Millhorn",
+      title: "Owner & President",
+      description: "James Millhorn leads S&W Foundation Contractors with a commitment to maintaining the company's legacy of safety excellence and quality workmanship. Under his leadership, the company continues to uphold the highest standards in commercial pier drilling and foundation construction.",
+      img: "/galleryImages/leadership/james.jpeg",
+    },
+    {
+      name: "David Bollman", 
+      title: "Owner & Vice President",
+      description: "David Bollman brings operational expertise and strategic vision to S&W Foundation's continued growth. His focus on innovation and efficiency ensures the company remains at the forefront of foundation construction technology and practices.",
+      img: "/galleryImages/leadership/david.jpeg",
+    },
+  ];
+
+  return (
+    <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 py-16 md:py-24 bg-neutral-50">
+      <div className="mx-auto w-full max-w-7xl px-6 md:px-10">
+        <FadeIn>
+          <div className="text-center mb-12">
+            <h2 className={`${lato.className} text-3xl md:text-4xl font-extrabold text-[#0b2a5a] mb-4`}>
+              Leadership Team
+            </h2>
+            <p className="text-lg text-neutral-600 max-w-3xl mx-auto">
+              Founded in 1986 and now owned by James Millhorn and David Bollman, S&W Foundation continues its commitment to excellence in commercial pier drilling and foundation construction.
+            </p>
+          </div>
+        </FadeIn>
+        
+        <FadeInStagger>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {leaders.map((leader, index) => (
+              <FadeIn key={index}>
+                <div className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <div className="w-24 h-24 bg-[#0b2a5a] rounded-full mx-auto mb-6 flex items-center justify-center">
+                    <span className="text-white text-2xl font-bold">{leader.name.split(' ').map(n => n[0]).join('')}</span>
+                  </div>
+                  <h3 className={`${lato.className} text-xl font-bold text-[#0b2a5a] mb-2 text-center`}>
+                    {leader.name}
+                  </h3>
+                  <p className="text-red-600 font-semibold text-center mb-4">
+                    {leader.title}
+                  </p>
+                  <p className="text-neutral-600 text-center leading-relaxed">
+                    {leader.description}
+                  </p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </FadeInStagger>
+      </div>
+    </section>
+  );
+}
+
+function CompanyStats() {
+  const stats = [
+    { number: "35+", label: "Years of Excellence", description: "Serving clients since 1986" },
+    { number: "13x", label: "ADSC Safety Awards", description: "Industry-leading safety record" },
+    { number: "1000+", label: "Projects Completed", description: "Commercial & industrial" },
+    { number: "50+", label: "States Served", description: "Nationwide coverage" },
+  ];
+
+  return (
+    <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 py-16 bg-[#0b2a5a] text-white">
+      <div className="mx-auto w-full max-w-7xl px-6 md:px-10">
+        <FadeIn>
+          <div className="text-center mb-12">
+            <h2 className={`${lato.className} text-3xl md:text-4xl font-extrabold mb-4`}>
+              By The Numbers
+            </h2>
+            <p className="text-xl text-white/80 max-w-3xl mx-auto">
+              Our track record speaks for itself - delivering exceptional results across decades of foundation construction.
+            </p>
+          </div>
+        </FadeIn>
+        
+        <FadeInStagger>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <FadeIn key={index}>
+                <div className="text-center">
+                  <div className={`${lato.className} text-4xl md:text-5xl font-black text-red-500 mb-2`}>
+                    {stat.number}
+                  </div>
+                  <h3 className={`${lato.className} text-lg font-bold mb-2`}>
+                    {stat.label}
+                  </h3>
+                  <p className="text-white/70 text-sm">
+                    {stat.description}
+                  </p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </FadeInStagger>
+      </div>
+    </section>
+  );
+}
+
 function ContactCTA() {
   return (
     <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[50vh] md:min-h-[55vh] flex items-center">
@@ -113,15 +217,54 @@ function ContactCTA() {
 }
 
 export default function AboutTW() {
+  const breadcrumbs = [
+    { name: "Home", url: "https://www.swfoundation.com/" },
+    { name: "About", url: "https://www.swfoundation.com/about" }
+  ];
+
   return (
     <>
       <Head>
-        <title>About | Tailwind Version</title>
-        <meta name="robots" content="noindex" />
+        <title>About S&W Foundation | 35+ Years Commercial Pier Drilling Excellence</title>
+        <meta 
+          name="description" 
+          content="Learn about S&W Foundation Contractors, Dallas-based commercial pier drilling experts since 1986. Family-owned company with nationwide reach, ADSC safety awards, and industry-leading foundation solutions." 
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="keywords" content="about s&w foundation, commercial pier drilling company, dallas foundation contractors, pier drilling history, foundation construction expertise, ADSC safety awards" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="About S&W Foundation | 35+ Years Commercial Pier Drilling Excellence" />
+        <meta property="og:description" content="Learn about S&W Foundation Contractors, Dallas-based commercial pier drilling experts since 1986. Family-owned company with nationwide reach and industry-leading foundation solutions." />
+        <meta property="og:url" content="https://www.swfoundation.com/about" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7297.webp" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://www.swfoundation.com/about" />
       </Head>
+      
+      {/* Structured Data */}
+      <OrganizationSchema />
+      <BreadcrumbListSchema breadcrumbs={breadcrumbs} />
+      <PersonSchema
+        name="James Millhorn"
+        jobTitle="Owner & President"
+        description="Owner and President of S&W Foundation Contractors, maintaining the company's legacy of safety excellence and quality workmanship in commercial pier drilling."
+        image="https://www.swfoundation.com/james-millhorn.jpg"
+      />
+      <PersonSchema
+        name="David Bollman"
+        jobTitle="Owner & Vice President"
+        description="Owner and Vice President of S&W Foundation Contractors, bringing operational expertise and strategic vision to foundation construction excellence."
+        image="https://www.swfoundation.com/david-bollman.jpg"
+      />
       <main className="flex w-full flex-col">
         <Hero />
         <InfoSection />
+        <CompanyStats />
+        <LeadershipSection />
         <ContactCTA />
       </main>
     </>

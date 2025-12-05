@@ -1,7 +1,9 @@
 import TWLayout from '@/components/TWLayout'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import GoogleAnalytics from '@/components/Analytics'
 import { AuthProvider } from '@/context/AuthContext'
+import { ImageProvider } from '@/context/ImageContext'
 import '@/styles/globals.css'
 
 export default function App({ Component, pageProps, router }) {
@@ -13,27 +15,28 @@ export default function App({ Component, pageProps, router }) {
 
   const getLayout = Component.getLayout || ((page) => page);
 
-  if (router.pathname.startsWith('/admin')) {
-    const TWAdminLayout = require('../components/TWAdminLayout').default;
+  // If the page provides its own layout (admin pages, login, etc.), use it exclusively
+  if (Component.getLayout) {
     return (
       <AuthProvider>
-        <TWAdminLayout>
+        <ImageProvider>
           {getLayout(<Component {...pageProps} />)}
-        </TWAdminLayout>
+        </ImageProvider>
       </AuthProvider>
     );
-  } else {
-    // If the page provides its own layout, use it exclusively
-    if (Component.getLayout) {
-      return getLayout(<Component {...pageProps} />);
-    }
-    // Otherwise, wrap with the Tailwind Layout
-    return (
-      <TWLayout>
-        {getLayout(<Component {...pageProps} />)}
-        <Analytics />
-        <SpeedInsights />
-      </TWLayout>
-    );
   }
+
+  // Otherwise, wrap with the default Tailwind Layout
+  return (
+    <AuthProvider>
+      <ImageProvider>
+        <GoogleAnalytics />
+        <TWLayout>
+          <Component {...pageProps} />
+          <Analytics />
+          <SpeedInsights />
+        </TWLayout>
+      </ImageProvider>
+    </AuthProvider>
+  );
 }

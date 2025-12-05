@@ -4,24 +4,20 @@ import matter from "gray-matter";
 import { remark } from "remark";
 import html from "remark-html";
 import Head from "next/head";
-import TWLayout from "@/components/TWLayout";
 import MarkdownBlogPost from "@/components/MarkdownBlogPost";
 
 export default function BlogPostTW({ frontmatter, content }) {
   return (
     <>
       <Head>
-        <title>{frontmatter.title} | Tailwind</title>
-        <meta name="robots" content="noindex" />
+        <title>{frontmatter.title} | S&W Foundation Blog</title>
+        <meta name="description" content={frontmatter.excerpt || `Read ${frontmatter.title} on the S&W Foundation blog - insights and updates from commercial pier drilling experts.`} />
       </Head>
       <MarkdownBlogPost frontmatter={frontmatter} content={content} />
     </>
   );
 }
 
-BlogPostTW.getLayout = function getLayout(page) {
-  return <TWLayout>{page}</TWLayout>;
-};
 
 export async function getStaticPaths() {
   const baseDir = path.join(process.cwd(), "content", "blog");

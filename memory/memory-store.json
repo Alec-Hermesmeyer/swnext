@@ -1,0 +1,54 @@
+{
+  "swnext-swarm": [
+    {
+      "key": "swarm-topology",
+      "value": "mesh with hierarchical coordination for Next.js SPARC project",
+      "namespace": "swnext-swarm",
+      "timestamp": 1756743266298
+    },
+    {
+      "key": "project-config",
+      "value": "{\"type\":\"nextjs\",\"methodology\":\"sparc\",\"maxAgents\":12,\"branch\":\"Development\"}",
+      "namespace": "swnext-swarm",
+      "timestamp": 1756743267055
+    },
+    {
+      "key": "agents-config",
+      "value": "{\"sparc-coord\":{\"type\":\"sparc-coord\",\"capabilities\":[\"sparc-methodology\",\"workflow-coordination\",\"phase-management\"]},\"nextjs-coder\":{\"type\":\"coder\",\"capabilities\":[\"nextjs\",\"react\",\"tailwind\",\"typescript\",\"frontend-development\"]},\"qa-tester\":{\"type\":\"tester\",\"capabilities\":[\"jest\",\"testing-library\",\"unit-testing\",\"integration-testing\",\"e2e-testing\"]},\"code-reviewer\":{\"type\":\"reviewer\",\"capabilities\":[\"code-review\",\"quality-assurance\",\"security-audit\",\"performance-analysis\"]},\"system-architect\":{\"type\":\"system-architect\",\"capabilities\":[\"architecture-design\",\"performance-optimization\",\"scalability\",\"system-design\"]}}",
+      "namespace": "swnext-swarm",
+      "timestamp": 1756743287364
+    },
+    {
+      "key": "sparc-phases",
+      "value": "{\"specification\":{\"description\":\"Requirements analysis and specification definition\",\"agents\":[\"researcher\",\"sparc-coord\"]},\"pseudocode\":{\"description\":\"Algorithm design and pseudocode creation\",\"agents\":[\"coder\",\"architect\"]},\"architecture\":{\"description\":\"System design and architecture planning\",\"agents\":[\"system-architect\",\"sparc-coord\"]},\"refinement\":{\"description\":\"TDD implementation and code refinement\",\"agents\":[\"coder\",\"tester\"]},\"completion\":{\"description\":\"Integration testing and final validation\",\"agents\":[\"reviewer\",\"tester\"]}}",
+      "namespace": "swnext-swarm",
+      "timestamp": 1756743288175
+    },
+    {
+      "key": "coordination-setup",
+      "value": "{\"mesh-topology\":true,\"agents-max\":12,\"communication-protocols\":\"hooks-based\",\"sparc-phases\":5,\"project-branch\":\"Development\",\"status\":\"initialized\"}",
+      "namespace": "swnext-swarm",
+      "timestamp": 1756743562105
+    }
+  ],
+  "default": [
+    {
+      "key": "spec-pseudocode_analysis",
+      "value": "Starting SPARC specification workflow test for API design - analyzing requirements for RESTful API with authentication, CRUD operations, and data validation",
+      "namespace": "default",
+      "timestamp": 1756744107989
+    },
+    {
+      "key": "spec-pseudocode_requirements",
+      "value": "Completed Phase 1 requirements - defined 4 functional requirements (user mgmt, task CRUD, auth, validation), 3 NFRs (performance, security, reliability), identified 4 edge cases, established success criteria and risk assessment",
+      "namespace": "default",
+      "timestamp": 1756744142568
+    },
+    {
+      "key": "spec-pseudocode_pseudocode",
+      "value": "Completed Phase 2 pseudocode - created 4 core algorithms (authentication, CRUD operations, validation pipeline, error handling), defined data flow specifications, caching strategy, and integration points with TDD anchors",
+      "namespace": "default",
+      "timestamp": 1756744207559
+    }
+  ]
+}

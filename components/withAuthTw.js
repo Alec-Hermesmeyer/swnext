@@ -16,7 +16,7 @@ const withAuthTw = (WrappedComponent) => {
         if (session) {
           setIsAuthed(true);
         } else {
-          router.replace('/tw/login');
+          router.replace('/login');
         }
         setLoading(false);
       };
@@ -28,7 +28,7 @@ const withAuthTw = (WrappedComponent) => {
           setIsAuthed(true);
         } else {
           setIsAuthed(false);
-          router.replace('/tw/login');
+          router.replace('/login');
         }
       });
 

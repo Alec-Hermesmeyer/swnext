@@ -13,8 +13,8 @@ export default function BlogIndexTW({ posts }) {
   return (
     <>
       <Head>
-        <title>Blog | Tailwind</title>
-        <meta name="robots" content="noindex" />
+        <title>Blog | S&W Foundation - Latest News and Insights</title>
+        <meta name="description" content="Stay updated with the latest news, insights, and industry updates from S&W Foundation Contractors. Expert perspectives on commercial pier drilling and foundation services." />
       </Head>
       <main className="flex w-full flex-col">
         <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[30vh] flex items-center">
@@ -35,7 +35,7 @@ export default function BlogIndexTW({ posts }) {
                   ? `https://${supa}.supabase.co/storage/v1/object/public/Images/public/newimages/${post.imageId}.webp`
                   : "";
                 return (
-                  <Link key={post.slug} href={`/tw/blog/${post.slug}`} className="group block overflow-hidden rounded-2xl bg-white shadow ring-1 ring-black/10">
+                  <Link key={post.slug} href={`/blog/${post.slug}`} className="group block overflow-hidden rounded-2xl bg-white shadow ring-1 ring-black/10">
                     <div className="relative h-48 w-full overflow-hidden">
                       <Image
                         src={imagePath}
@@ -62,9 +62,6 @@ export default function BlogIndexTW({ posts }) {
   );
 }
 
-BlogIndexTW.getLayout = function getLayout(page) {
-  return <TWLayout>{page}</TWLayout>;
-};
 
 export async function getStaticProps() {
   const files = fs.readdirSync(path.join(process.cwd(), "content", "blog"));

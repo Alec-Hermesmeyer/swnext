@@ -1,0 +1,52 @@
+[
+  {
+    "timestamp": "2025-09-01T16:22:42.003Z",
+    "bundleSize": {
+      "polyfills.js": {
+        "size": 112594,
+        "sizeKB": 110,
+        "category": "polyfills"
+      }
+    },
+    "recommendations": [
+      {
+        "type": "large-chunk",
+        "chunk": "polyfills.js",
+        "size": 110,
+        "message": "polyfills.js is 110KB - consider code splitting",
+        "priority": "medium"
+      }
+    ],
+    "performance": {
+      "totalBundleSize": 110,
+      "totalChunks": 1,
+      "recommendations": 1,
+      "score": 90
+    }
+  },
+  {
+    "timestamp": "2025-09-01T16:25:07.682Z",
+    "bundleSize": {
+      "polyfills.js": {
+        "size": 112594,
+        "sizeKB": 110,
+        "category": "polyfills"
+      }
+    },
+    "recommendations": [
+      {
+        "type": "large-chunk",
+        "chunk": "polyfills.js",
+        "size": 110,
+        "message": "polyfills.js is 110KB - consider code splitting",
+        "priority": "medium"
+      }
+    ],
+    "performance": {
+      "totalBundleSize": 110,
+      "totalChunks": 1,
+      "recommendations": 1,
+      "score": 90
+    }
+  }
+]

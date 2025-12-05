@@ -6,37 +6,37 @@ import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
-// Full mobile list mirrors legacy navbar
+// Full mobile list for navigation
 const mobileLinks = [
-  { name: "Home", link: "/tw" },
-  { name: "About", link: "/tw/about" },
-  { name: "Services", link: "/tw/services" },
-  { name: "Pier Drilling", link: "/tw/pier-drilling" },
-  { name: "Limited Access Pier Drilling", link: "/tw/limited-access" },
-  { name: "Turn Key Drilling Solutions", link: "/tw/turn-key" },
-  { name: "Crane Services", link: "/tw/crane" },
-  { name: "Helical Piles", link: "/tw/helical-piles" },
-  { name: "Contact", link: "/tw/contact" },
-  { name: "Careers", link: "/tw/careers" },
-  { name: "Gallery", link: "/tw/gallery" },
-  { name: "Safety", link: "/tw/safety" },
-  { name: "Core Values", link: "/tw/core-values" },
-  { name: "Blog", link: "/tw/blog" },
-  { name: "Login", link: "/tw/login" },
+  { name: "Home", link: "/" },
+  { name: "About", link: "/about" },
+  { name: "Services", link: "/services" },
+  { name: "Pier Drilling", link: "/pier-drilling" },
+  { name: "Limited Access Pier Drilling", link: "/limited-access" },
+  { name: "Turn Key Drilling Solutions", link: "/turn-key" },
+  { name: "Crane Services", link: "/crane" },
+  { name: "Helical Piles", link: "/helical-piles" },
+  { name: "Contact", link: "/contact" },
+  { name: "Careers", link: "/careers" },
+  { name: "Gallery", link: "/gallery" },
+  { name: "Safety", link: "/safety" },
+  { name: "Core Values", link: "/core-values" },
+  { name: "Blog", link: "/blog" },
+  { name: "Login", link: "/login" },
 ];
 
 const aboutMenu = [
-  { name: "Safety", link: "/tw/safety" },
-  { name: "Core Values", link: "/tw/core-values" },
-  { name: "Blog", link: "/tw/blog" },
+  { name: "Safety", link: "/safety" },
+  { name: "Core Values", link: "/core-values" },
+  { name: "Blog", link: "/blog" },
 ];
 
 const servicesMenu = [
-  { name: "Pier Drilling", link: "/tw/pier-drilling" },
-  { name: "Limited Access Pier Drilling", link: "/tw/limited-access" },
-  { name: "Turn Key Drilling Solutions", link: "/tw/turn-key" },
-  { name: "Crane Services", link: "/tw/crane" },
-  { name: "Helical Piles", link: "/tw/helical-piles" },
+  { name: "Pier Drilling", link: "/pier-drilling" },
+  { name: "Limited Access Pier Drilling", link: "/limited-access" },
+  { name: "Turn Key Drilling Solutions", link: "/turn-key" },
+  { name: "Crane Services", link: "/crane" },
+  { name: "Helical Piles", link: "/helical-piles" },
 ];
 
 const NavTailwind = () => {
@@ -49,142 +49,142 @@ const NavTailwind = () => {
   };
 
   return (
-    <nav className="bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-sm sticky top-0 z-50 py-2">
-      <div className="mx-auto w-full max-w-[1600px] px-4 md:px-6">
-        <div className="flex items-center justify-between min-h-16 py-1">
+    <nav className="bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-[5px_15px_25px_rgba(0,0,0,0.43)] fixed top-0 w-full z-50 h-[15vh] flex items-center justify-center max-md:h-[12vh]">
+      <div className="mx-auto w-[95%] h-full max-w-7xl">
+        <div className="flex items-center justify-evenly h-full w-full max-md:justify-between max-md:px-4">
           
           {/* Logo */}
-          <Link href="/tw" className="flex items-center">
-            <Image
-              src="/swlogorwb.png"
-              alt="S&W Foundation Contractors"
-              width={140}
-              height={40}
-              sizes="140px"
-              priority
-              unoptimized
-              loader={({ src }) => src}
-            />
-          </Link>
+          <div className="flex-1 flex items-center justify-center">
+            <Link href="/">
+              <Image
+                src="Images/public/att.webp"
+                alt="S&W Foundation Contractors Logo"
+                width={100}
+                height={100}
+                priority
+              />
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {/* About dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setAboutOpen(true)}
-              onMouseLeave={() => setAboutOpen(false)}
-            >
-              <Link href="/tw/about" className={`${lato.className} text-base font-semibold text-neutral-800 hover:text-red-600`}>
-                About
-              </Link>
-              {aboutOpen && (
-                <div className="absolute left-0 top-full z-50 w-56 rounded-md border border-neutral-200 bg-white py-2 shadow-xl">
-                  {aboutMenu.map((i) => (
-                    <Link key={i.link} href={i.link} className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-50">
-                      {i.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+          <div className="flex-[3] h-full w-[70%] hidden lg:flex items-center justify-center">
+            <ul className="list-none flex items-center justify-evenly w-full">
+              {/* About dropdown */}
+              <li
+                className="relative cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600 bg-white/60 rounded-lg"
+                onMouseEnter={() => setAboutOpen(true)}
+                onMouseLeave={() => setAboutOpen(false)}
+              >
+                <Link href="/about" className={`${lato.className} text-lg`}>
+                  About
+                </Link>
+                {aboutOpen && (
+                  <ul className="absolute top-full left-0 w-52 bg-white/60 rounded-lg list-none p-0 m-0 flex flex-col items-center justify-evenly z-[1000] transition-all duration-300 ease-in-out">
+                    {aboutMenu.map((item) => (
+                      <li key={item.link} className="w-full">
+                        <Link
+                          href={item.link}
+                          className="block w-full py-3 text-center text-black hover:text-red-600 transition-all duration-100 ease-in-out text-lg"
+                        >
+                          {item.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
 
-            {/* Services dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setServicesOpen(true)}
-              onMouseLeave={() => setServicesOpen(false)}
-            >
-              <Link href="/tw/services" className={`${lato.className} text-base font-semibold text-neutral-800 hover:text-red-600`}>
-                Services
-              </Link>
-              {servicesOpen && (
-                <div className="absolute left-0 top-full z-50 w-72 rounded-md border border-neutral-200 bg-white py-2 shadow-xl">
-                  {servicesMenu.map((i) => (
-                    <Link key={i.link} href={i.link} className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-50">
-                      {i.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+              {/* Services dropdown */}
+              <li
+                className="relative cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600 bg-white/60 rounded-lg"
+                onMouseEnter={() => setServicesOpen(true)}
+                onMouseLeave={() => setServicesOpen(false)}
+              >
+                <Link href="/services" className={`${lato.className} text-lg`}>
+                  Services
+                </Link>
+                {servicesOpen && (
+                  <ul className="absolute top-full left-0 w-64 bg-white/60 rounded-lg list-none p-0 m-0 flex flex-col items-center justify-evenly z-[1000] transition-all duration-300 ease-in-out">
+                    {servicesMenu.map((item) => (
+                      <li key={item.link} className="w-full">
+                        <Link
+                          href={item.link}
+                          className="block w-full py-3 text-center text-black hover:text-red-600 transition-all duration-100 ease-in-out text-lg"
+                        >
+                          {item.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
 
-            {/* Direct links */}
-            <Link href="/tw/contact" className={`${lato.className} text-base font-semibold text-neutral-800 hover:text-red-600`}>Contact</Link>
-            <Link href="/tw/careers" className={`${lato.className} text-base font-semibold text-neutral-800 hover:text-red-600`}>Careers</Link>
-            <Link href="/tw/gallery" className={`${lato.className} text-base font-semibold text-neutral-800 hover:text-red-600`}>Gallery</Link>
-            <Link href="/tw/blog" className={`${lato.className} text-base font-semibold text-neutral-800 hover:text-red-600`}>Blog</Link>
-            <Link href="/tw/login" className={`${lato.className} text-base font-semibold text-neutral-800 hover:text-red-600`}>Login</Link>
+              {/* Direct links */}
+              <li className="cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600">
+                <Link href="/contact" className={`${lato.className} text-lg`}>Contact</Link>
+              </li>
+              <li className="cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600">
+                <Link href="/careers" className={`${lato.className} text-lg`}>Careers</Link>
+              </li>
+              <li className="cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600">
+                <Link href="/gallery" className={`${lato.className} text-lg`}>Gallery</Link>
+              </li>
+            </ul>
           </div>
 
           {/* Social Links & Mobile Menu Button */}
-          <div className="flex items-center space-x-4">
-            {/* Social Links */}
-            <div className="hidden md:flex items-center space-x-3">
+          <div className="flex-[1.2] h-full w-full flex items-center justify-end">
+            <div className="mt-2.5 flex items-center justify-evenly w-[70%] text-[#10275e] text-[30px]">
+              {/* Social Links - Hidden on mobile */}
               <a
                 href="https://www.facebook.com/SWFoundationContractors"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                className="lg:block hidden hover:text-red-600 transition-colors duration-200"
+                aria-label="Facebook"
               >
-                <FaFacebookSquare size={24} />
+                <FaFacebookSquare />
               </a>
               <a
                 href="https://www.linkedin.com/company/s-w-foundation-contractors-inc"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                className="lg:block hidden hover:text-red-600 transition-colors duration-200"
+                aria-label="LinkedIn"
               >
-                <FaLinkedin size={24} />
+                <FaLinkedin />
               </a>
-            </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={toggleMobileMenu}
-              className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors duration-200"
-            >
-              {isMobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
-            </button>
+              {/* Mobile Menu Button */}
+              <button
+                onClick={toggleMobileMenu}
+                className="lg:hidden p-2 text-black hover:text-red-600 transition-colors duration-200"
+                aria-label="Toggle mobile menu"
+              >
+                {isMobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-200 py-4">
-            <div className="flex flex-col space-y-1">
-              {mobileLinks.map((item, index) => (
-                <Link
-                  key={index}
-                  href={item.link}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 text-base font-medium text-gray-800 hover:text-red-600 hover:bg-gray-50 transition-colors duration-200"
-                >
-                  {item.name}
-                </Link>
-              ))}
-
-              {/* Mobile Social */}
-              <div className="px-4 py-3 border-t border-gray-200 mt-4">
-                <div className="flex items-center space-x-4">
-                  <a
-                    href="https://www.facebook.com/SWFoundationContractors"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
-                  >
-                    <FaFacebookSquare size={24} />
-                  </a>
-                  <a
-                    href="https://www.linkedin.com/company/s-w-foundation-contractors-inc"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
-                  >
-                    <FaLinkedin size={24} />
-                  </a>
-                </div>
-              </div>
+          <div className="fixed top-[15vh] md:top-[12vh] left-0 w-full h-[calc(100vh-15vh)] md:h-[calc(100vh-12vh)] overflow-y-auto bg-gradient-to-r from-red-800 via-white to-[#10275e] flex transition-all duration-800 ease-in-out lg:hidden z-40">
+            <div className="w-full">
+              <ul className="list-none flex flex-col items-center justify-evenly h-full w-full py-4">
+                {mobileLinks.map((item, index) => (
+                  <li key={index} className="w-full text-center py-2">
+                    <Link
+                      href={item.link}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-black text-center text-xl font-bold flex items-center justify-center py-3 hover:text-red-600 transition-colors duration-200"
+                      style={{ textShadow: '2px 2px 2px white' }}
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         )}

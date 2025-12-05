@@ -1,0 +1,222 @@
+{
+  "projectName": "S&W Foundation Contractors - Next.js/Tailwind",
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-09",
+  
+  "fileOrganization": {
+    "mandatoryRules": {
+      "noRootFiles": "NEVER save working files, text/mds and tests to the root folder",
+      "useDirectories": ["src/", "tests/", "docs/", "config/"],
+      "description": "Follows CLAUDE.md guidelines strictly"
+    },
+    "directoryStructure": {
+      "src/": {
+        "components/": "Reusable UI components organized by atomic design",
+        "hooks/": "Custom React hooks",
+        "utils/": "Utility functions and helpers",
+        "lib/": "Third-party service integrations",
+        "types/": "TypeScript type definitions",
+        "constants/": "Application constants"
+      },
+      "docs/": {
+        "architecture/": "System architecture documentation",
+        "adr/": "Architecture Decision Records",
+        "patterns/": "Design patterns and best practices"
+      },
+      "config/": {
+        "eslint/": "ESLint configurations",
+        "tailwind/": "Tailwind CSS configurations", 
+        "next/": "Next.js specific configurations"
+      },
+      "tests/": {
+        "unit/": "Unit tests",
+        "integration/": "Integration tests", 
+        "e2e/": "End-to-end tests"
+      }
+    }
+  },
+  
+  "codeStandards": {
+    "fileNaming": {
+      "components": "PascalCase (Button.jsx, ContactForm.jsx)",
+      "utilities": "camelCase (formatDate.js, apiClient.js)",
+      "constants": "UPPER_SNAKE_CASE (API_ENDPOINTS.js)",
+      "tests": "*.test.jsx or *.spec.jsx"
+    },
+    "componentStructure": {
+      "template": "ComponentName/",
+      "files": [
+        "ComponentName.jsx",
+        "ComponentName.test.jsx",
+        "ComponentName.stories.jsx (optional)",
+        "hooks/useComponentName.js",
+        "utils/componentHelpers.js",
+        "index.js"
+      ]
+    },
+    "importConventions": {
+      "absolute": "Use @/ for src imports",
+      "examples": [
+        "import { Button } from '@/components/ui/Button';",
+        "import { useLocalStorage } from '@/hooks/useLocalStorage';",
+        "import { formatDate } from '@/utils/formatDate';"
+      ]
+    }
+  },
+  
+  "sparcMethodology": {
+    "phases": {
+      "specification": {
+        "description": "Requirements analysis and user story definition",
+        "deliverables": ["User stories", "Acceptance criteria", "Technical requirements"],
+        "template": "docs/patterns/SPARC_DEVELOPMENT_PATTERNS.md"
+      },
+      "pseudocode": {
+        "description": "Algorithm design and logic planning",
+        "deliverables": ["Algorithm pseudocode", "Data flow diagrams", "Logic validation"],
+        "template": "Pseudocode templates in development patterns"
+      },
+      "architecture": {
+        "description": "System design and component relationships",
+        "deliverables": ["Component architecture", "Integration points", "Performance considerations"],
+        "template": "ADR-003: Component Architecture Patterns"
+      },
+      "refinement": {
+        "description": "Test-driven development and implementation",
+        "deliverables": ["Unit tests", "Integration tests", "Implementation code"],
+        "approach": "RED-GREEN-REFACTOR cycle"
+      },
+      "completion": {
+        "description": "Integration, testing, and deployment",
+        "deliverables": ["Production deployment", "Documentation", "Monitoring setup"],
+        "checklist": "docs/patterns/SPARC_DEVELOPMENT_PATTERNS.md"
+      }
+    },
+    "commands": {
+      "tdd": "npx claude-flow sparc tdd \"<feature>\"",
+      "individual": "npx claude-flow sparc run <mode> \"<task>\"",
+      "batch": "npx claude-flow sparc batch <modes> \"<task>\"",
+      "pipeline": "npx claude-flow sparc pipeline \"<task>\""
+    }
+  },
+  
+  "componentPatterns": {
+    "atomicDesign": {
+      "atoms": ["Button", "Input", "Text", "Icon"],
+      "molecules": ["FormField", "SearchBox", "NavItem", "Card"],
+      "organisms": ["Header", "Footer", "NavigationBar", "ContactForm"],
+      "templates": ["TWLayout", "AdminLayout", "BlogLayout"],
+      "pages": ["AboutPage", "ServicesPage", "ContactPage"]
+    },
+    "layoutPatterns": {
+      "getLayout": "Standard Next.js layout pattern",
+      "fullWidth": "Full viewport width sections",
+      "responsive": "Mobile-first responsive design"
+    }
+  },
+  
+  "tailwindPatterns": {
+    "designSystem": {
+      "colors": {
+        "primary": "red-600 (S&W brand red)",
+        "secondary": "#0b2a5a (S&W navy blue)",
+        "neutrals": "Standard gray scale"
+      },
+      "typography": {
+        "font": "Lato (400, 700, 900)",
+        "scale": "Mobile-first responsive scaling",
+        "patterns": "Consistent heading and body text patterns"
+      },
+      "spacing": {
+        "sections": "py-8 md:py-12 standard pattern",
+        "containers": "px-6 md:px-10 standard pattern",
+        "maxWidth": "max-w-[1600px] for content areas"
+      }
+    },
+    "componentVariants": {
+      "button": ["primary", "secondary", "outline", "ghost"],
+      "card": ["default", "navy", "gray"],
+      "spacing": ["sm", "md", "lg", "xl"]
+    }
+  },
+  
+  "testingStandards": {
+    "strategy": "Test-Driven Development (TDD)",
+    "types": {
+      "unit": "Component behavior and logic",
+      "integration": "User workflows and feature interactions",
+      "e2e": "Full application workflows"
+    },
+    "tools": {
+      "testing": "@testing-library/react",
+      "userEvents": "@testing-library/user-event", 
+      "mocking": "jest",
+      "coverage": "jest --coverage"
+    },
+    "patterns": {
+      "structure": "describe > it pattern",
+      "setup": "Common test data and utilities",
+      "assertions": "Behavior-focused testing",
+      "async": "Proper async/await handling"
+    }
+  },
+  
+  "performanceStandards": {
+    "codeSpitting": "Route-based and component-based lazy loading",
+    "imageOptimization": "Next.js Image component with proper sizing",
+    "bundleSize": "Monitor and optimize bundle size",
+    "caching": "Proper caching strategies for static assets"
+  },
+  
+  "qualityGates": {
+    "preCommit": {
+      "linting": "ESLint checks pass",
+      "formatting": "Prettier formatting applied",
+      "tests": "All tests passing",
+      "typeCheck": "TypeScript checks pass (when applicable)"
+    },
+    "preMerge": {
+      "codeReview": "Peer review completed",
+      "integration": "Integration tests pass",
+      "performance": "Performance benchmarks met",
+      "accessibility": "A11y requirements satisfied"
+    },
+    "deployment": {
+      "build": "Production build successful",
+      "staging": "Staging deployment tested",
+      "monitoring": "Error tracking and performance monitoring configured"
+    }
+  },
+  
+  "tooling": {
+    "development": {
+      "nextjs": "15.3.4",
+      "react": "18.3.1", 
+      "tailwindcss": "3.4.14",
+      "framerMotion": "10.16.12"
+    },
+    "build": {
+      "eslint": "Code linting",
+      "postcss": "CSS processing",
+      "autoprefixer": "Vendor prefixes"
+    },
+    "deployment": {
+      "vercel": "Primary deployment platform",
+      "supabase": "Backend services and storage"
+    }
+  },
+  
+  "documentation": {
+    "required": {
+      "adr": "Architecture Decision Records for major decisions",
+      "api": "API endpoint documentation",
+      "components": "Component usage documentation",
+      "deployment": "Deployment and environment setup"
+    },
+    "maintenance": {
+      "updateFrequency": "Update with each major feature",
+      "reviewCycle": "Quarterly documentation review",
+      "ownership": "Team responsibility for accuracy"
+    }
+  }
+}

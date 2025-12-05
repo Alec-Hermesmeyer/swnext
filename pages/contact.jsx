@@ -4,18 +4,20 @@ import Link from "next/link";
 import TWLayout from "@/components/TWLayout";
 import { GridPattern } from "@/components/GridPattern";
 import { FadeIn } from "@/components/FadeIn";
+import { LocalBusinessSchema, BreadcrumbListSchema, PersonSchema } from "@/components/StructuredData";
 import { Lato } from "next/font/google";
 import { useEffect, useState } from "react";
 import supabase from "@/components/Supabase";
+import { usePageImages } from "@/context/ImageContext";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-function Hero() {
+function Hero({ heroImage }) {
   return (
     <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[45vh] md:min-h-[55vh] flex items-center">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/rig112211.webp?version=1')", backgroundPosition: "bottom" }}
+        style={{ backgroundImage: `url('${heroImage}')`, backgroundPosition: "bottom" }}
       />
       <div className="absolute inset-0 bg-black/45" />
       <div className="relative mx-auto w-full px-0 py-16 text-center">
@@ -38,6 +40,12 @@ function ContactForm() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    
+    // Track form submission in GA4
+    if (typeof window !== 'undefined' && window.trackFormSubmit) {
+      window.trackFormSubmit('contact_form');
+    }
+    
     await supabase.from("contact_form").upsert({ name, email, number, message, company });
     await fetch("/api/send-email", {
       method: "POST",
@@ -233,18 +241,67 @@ function OfficeContacts() {
 }
 
 export default function ContactTW() {
+  const { images: heroImages } = usePageImages("hero");
+  const breadcrumbs = [
+    { name: "Home", url: "https://www.swfoundation.com/" },
+    { name: "Contact", url: "https://www.swfoundation.com/contact" }
+  ];
+
   return (
     <>
       <Head>
-        <title>Contact | Tailwind Version</title>
-        <meta name="robots" content="noindex" />
+        <title>Contact S&W Foundation | Get Your Free Quote | Dallas Commercial Pier Drilling</title>
+        <meta 
+          name="description" 
+          content="Contact S&W Foundation for commercial pier drilling services in Dallas, TX. Get your free quote today! Call (214) 703-0484 or submit online. Nationwide foundation construction experts since 1986." 
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="keywords" content="contact s&w foundation, pier drilling quote, commercial foundation contractors dallas, free drilling estimate, pier drilling services contact" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="Contact S&W Foundation | Get Your Free Quote | Commercial Pier Drilling" />
+        <meta property="og:description" content="Contact S&W Foundation for commercial pier drilling services in Dallas, TX. Get your free quote today! Call (214) 703-0484 or submit online." />
+        <meta property="og:url" content="https://www.swfoundation.com/contact" />
+        <meta property="og:type" content="website" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://www.swfoundation.com/contact" />
       </Head>
+      
+      {/* Structured Data */}
+      <LocalBusinessSchema />
+      <BreadcrumbListSchema breadcrumbs={breadcrumbs} />
+      <PersonSchema
+        name="Luke Wardell"
+        jobTitle="Vice President of Pre-Construction"
+        email="lukew@swfoundation.com"
+        telephone="+1-214-703-0484"
+        description="Luke Wardell leads the front end of the project lifecycle, overseeing estimating, budgeting, and bid strategy for S&W Foundation Contractors."
+        image="/Luke W Final Headshot.png"
+      />
+      <PersonSchema
+        name="Sean Macalik"
+        jobTitle="Vice President of Construction"
+        email="seanm@swfoundation.com" 
+        telephone="+1-214-703-0484"
+        description="Sean Macalik directs all on-site operations for S&W Foundation Contractors, managing field teams and coordinating large-scale drilling and foundation efforts."
+        image="/Sean M Final Headshot.png"
+      />
+      <PersonSchema
+        name="Cesar Urrutia"
+        jobTitle="Vice President of Operations"
+        email="cesaru@swfoundation.com"
+        telephone="+1-214-703-0484"
+        description="Cesar Urrutia oversees staffing, resource allocation, and field readiness across all active projects at S&W Foundation Contractors."
+        image="/Cesar U Final Headshot.png"
+      />
       <main className="relative flex w-full flex-col">
         {/* Global background pattern behind all content */}
         <div className="pointer-events-none fixed inset-0 -z-10">
           <GridPattern className="h-full w-full" yOffset={0} interactive strokeColor="#0b2a5a" strokeOpacity={0.12} />
         </div>
-        <Hero />
+        <Hero heroImage={heroImages.contact} />
         <div className="h-8" />
         <FadeIn>
           <section className="mx-auto w-full max-w-[1200px] px-6 py-8">

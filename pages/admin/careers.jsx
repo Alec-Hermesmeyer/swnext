@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import TWAdminLayout from "@/components/TWAdminLayout";
 import withAuthTw from "@/components/withAuthTw";
+import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { Lato } from "next/font/google";
 
@@ -44,10 +44,10 @@ function CareersTW() {
         <title>Careers | Tailwind</title>
         <meta name="robots" content="noindex" />
       </Head>
-      <main className="mx-auto w-full max-w-[1200px] px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Careers</h1>
-          <Link href="/tw/admin" className="rounded-lg bg-neutral-100 px-3 py-2 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-200">Back to Admin</Link>
+      <div>
+        <div className="mb-6">
+          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Manage Careers</h1>
+          <p className="mt-1 text-sm text-neutral-600">Add, edit, and manage job postings</p>
         </div>
 
         <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
@@ -99,7 +99,7 @@ function CareersTW() {
             </div>
           )}
         </section>
-      </main>
+      </div>
     </>
   );
 }

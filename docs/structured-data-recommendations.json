@@ -1,0 +1,209 @@
+{
+  "structuredDataRecommendations": {
+    "organization": {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "S&W Foundation Contractors",
+      "alternateName": "S&W Foundation",
+      "url": "https://www.swfoundation.com",
+      "logo": "https://www.swfoundation.com/swlogorwb.png",
+      "description": "Leading commercial pier drilling contractor in Dallas, TX since 1986. Nationwide foundation construction, crane services, limited access drilling.",
+      "foundingDate": "1986",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "2806 Singleton St.",
+        "addressLocality": "Rowlett",
+        "addressRegion": "TX",
+        "postalCode": "75088",
+        "addressCountry": "US"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+1-214-703-0484",
+        "contactType": "customer service",
+        "contactOption": "TollFree",
+        "areaServed": "US"
+      },
+      "sameAs": [
+        "https://www.facebook.com/SWFoundationContractors",
+        "https://www.linkedin.com/company/s-w-foundation-contractors-inc"
+      ],
+      "serviceArea": {
+        "@type": "State",
+        "name": "Texas"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Foundation Drilling Services",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Commercial Pier Drilling",
+              "description": "Professional pier drilling services for commercial construction projects"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service", 
+              "name": "Foundation Construction",
+              "description": "Complete foundation construction services nationwide"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Crane Services",
+              "description": "Specialized crane services for construction projects"
+            }
+          }
+        ]
+      }
+    },
+    "localBusiness": {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "S&W Foundation Contractors",
+      "image": "https://www.swfoundation.com/homeHero.webp",
+      "telephone": "+1-214-703-0484",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "2806 Singleton St.",
+        "addressLocality": "Rowlett",
+        "addressRegion": "TX",
+        "postalCode": "75088"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 32.90144,
+        "longitude": -96.57587
+      },
+      "url": "https://www.swfoundation.com",
+      "priceRange": "$$",
+      "servedCuisine": "Foundation Construction Services",
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday", 
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "08:00",
+        "closes": "17:00"
+      }
+    },
+    "breadcrumbList": {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://www.swfoundation.com"
+        }
+      ]
+    },
+    "webSite": {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "S&W Foundation Contractors",
+      "url": "https://www.swfoundation.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://www.swfoundation.com/search?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    "implementationInstructions": {
+      "homepage": {
+        "schemas": ["organization", "localBusiness", "webSite"],
+        "location": "Add to <Head> component or _app.js"
+      },
+      "aboutPage": {
+        "schemas": ["organization", "breadcrumbList"],
+        "additions": {
+          "@type": "AboutPage",
+          "mainEntity": {
+            "@type": "Organization",
+            "name": "S&W Foundation Contractors"
+          }
+        }
+      },
+      "servicesPage": {
+        "schemas": ["breadcrumbList", "service"],
+        "service": {
+          "@context": "https://schema.org",
+          "@type": "Service",
+          "name": "Commercial Pier Drilling Services",
+          "description": "Professional pier drilling and foundation construction services for commercial projects",
+          "provider": {
+            "@type": "Organization",
+            "name": "S&W Foundation Contractors"
+          },
+          "areaServed": {
+            "@type": "Country",
+            "name": "United States"
+          },
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Drilling Services",
+            "itemListElement": [
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Pier Drilling",
+                  "description": "Commercial pier drilling services"
+                }
+              },
+              {
+                "@type": "Offer", 
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Foundation Construction",
+                  "description": "Complete foundation construction"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "contactPage": {
+        "schemas": ["organization", "breadcrumbList"],
+        "additions": {
+          "@type": "ContactPage",
+          "mainEntity": {
+            "@type": "Organization",
+            "name": "S&W Foundation Contractors",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+1-214-703-0484",
+              "contactType": "customer service"
+            }
+          }
+        }
+      }
+    }
+  },
+  "implementationExample": {
+    "nextjsImplementation": {
+      "file": "components/StructuredData.js",
+      "code": "import Head from 'next/head';\n\nexport default function StructuredData({ schema }) {\n  return (\n    <Head>\n      <script\n        type=\"application/ld+json\"\n        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}\n      />\n    </Head>\n  );\n}",
+      "usage": "import StructuredData from '../components/StructuredData';\n\n// In your page component:\n<StructuredData schema={organizationSchema} />"
+    },
+    "testingTools": [
+      "https://search.google.com/test/rich-results",
+      "https://validator.schema.org/",
+      "Google Search Console Rich Results report"
+    ]
+  }
+}

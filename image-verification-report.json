@@ -1,0 +1,320 @@
+{
+  "timestamp": "2025-09-05T15:07:33.395Z",
+  "total": 39,
+  "available": 39,
+  "missing": 0,
+  "details": [
+    {
+      "category": "homepage",
+      "name": "hero",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/trucks2.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "infoBlock1",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_8061.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "infoBlock2",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7620.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "infoBlock3",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7653.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "pierDrillingCard",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/redrig.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "limitedAccessCard",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/home1.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "turnKeyCard",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/rigcraneposing.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "craneCard",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_6825.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "helicalPilesCard",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/Pratt3.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "safetyCard",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7642.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "homepage",
+      "name": "contactCTA",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7753.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "hero",
+      "name": "main",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/trucks2.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "hero",
+      "name": "service",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7517.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "hero",
+      "name": "about",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7297.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "hero",
+      "name": "contact",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/rig112211.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "hero",
+      "name": "careers",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_5171.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "hero",
+      "name": "pierDrilling",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_8084.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "hero",
+      "name": "footer",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7753.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "hero",
+      "name": "safety",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7642.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "hero",
+      "name": "coreValues",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/coreValue.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "preparation",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/preperation.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "pratt1",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/prat1e.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "cutting",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/indacut.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "home",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/home.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "pratt3",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/Pratt3.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "servicesHero",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/galleryImages/gal18.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "pierDrillingHero",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/redrig.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "limitedAccessHero",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/home1.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "craneHero",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_6825.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "helicalPilesHero",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/Pratt3.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "turnKeyHero",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/rigcraneposing.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "pierDrillingContent",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/redrig.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "limitedAccessContent",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/home1.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "craneContent",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_6825.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "helicalPilesContent",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/Pratt3.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "turnKeyContent",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/rigcraneposing.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "safetyContent",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7642.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "services",
+      "name": "contactCTA",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/IMG_7753.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    },
+    {
+      "category": "social",
+      "name": "defaultOg",
+      "url": "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/att.webp",
+      "available": true,
+      "status": 200,
+      "contentType": "image/webp"
+    }
+  ]
+}

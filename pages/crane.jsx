@@ -2,14 +2,15 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import TWLayout from "@/components/TWLayout";
+import { usePageImages } from "@/context/ImageContext";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-function Hero() {
+function Hero({ images }) {
   return (
     <section className="relative w-screen -ml-[50vw] -mr-[50vw] left-1/2 right-1/2 text-white min-h-[40vh] md:min-h-[50vh] flex items-center">
-      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_7118.webp')", backgroundPosition: "center" }} />
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${images.craneHero}')`, backgroundPosition: "center" }} />
       <div className="absolute inset-0 bg-black/50" />
       <div className="relative mx-auto w-full px-0 py-20 text-center">
         <h1 className={`${lato.className} text-4xl md:text-5xl font-extrabold`}>Crane Services</h1>
@@ -19,14 +20,30 @@ function Hero() {
 }
 
 export default function CraneTW() {
+  const { images } = usePageImages("services");
   return (
     <>
       <Head>
-        <title>Crane Services | Tailwind Version</title>
-        <meta name="robots" content="noindex" />
+        <title>Crane Services Dallas TX | Heavy Equipment Rental | S&W Foundation Contractors</title>
+        <meta 
+          name="description" 
+          content="Professional crane services in Dallas, TX. Heavy equipment rental and crane operations for construction projects. Experienced crane operators and modern fleet. Commercial and industrial projects." 
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="keywords" content="crane services dallas, heavy equipment rental texas, crane operations, construction crane rental, commercial crane services, crane operators dallas" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="Crane Services Dallas TX | Heavy Equipment Rental" />
+        <meta property="og:description" content="Professional crane services in Dallas, TX. Heavy equipment rental and crane operations for construction projects with experienced operators." />
+        <meta property="og:url" content="https://www.swfoundation.com/crane" />
+        <meta property="og:type" content="website" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://www.swfoundation.com/crane" />
       </Head>
       <main className="flex w-full flex-col">
-        <Hero />
+        <Hero images={images} />
         <section className="mx-auto w-full max-w-[1600px] px-6 py-10">
           <div className="relative overflow-hidden rounded-2xl bg-[#0b2a5a] text-white shadow-2xl ring-1 ring-black/10">
             <div className="absolute left-0 top-0 h-2 md:h-3 w-full bg-red-600" />
@@ -37,7 +54,7 @@ export default function CraneTW() {
               </div>
               <div className="flex items-center justify-end">
                 <div className="relative aspect-[4/3] w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/10 md:-mr-8">
-                  <Image src={`https://${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/Images/public/newimages/IMG_6825.webp`} alt="Crane" fill sizes="(min-width: 768px) 600px, 90vw" className="object-cover" unoptimized loader={({src})=>src} />
+                  <Image src={images.craneContent} alt="Professional Crane Operations" fill sizes="(min-width: 768px) 600px, 90vw" className="object-cover" unoptimized loader={({src})=>src} />
                 </div>
               </div>
             </div>
@@ -52,8 +69,8 @@ export default function CraneTW() {
 
         <section className="mx-auto w-full max-w-[1200px] px-6 pb-14">
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/tw/services" className="inline-flex items-center rounded-md bg-red-600 px-5 py-3 font-bold text-white shadow hover:bg-red-700">All Services</Link>
-            <Link href="/tw/turn-key" className="inline-flex items-center rounded-md bg-[#0b2a5a] px-5 py-3 font-bold text-white shadow hover:brightness-110">Turn-Key</Link>
+            <Link href="/services" className="inline-flex items-center rounded-md bg-red-600 px-5 py-3 font-bold text-white shadow hover:bg-red-700">All Services</Link>
+            <Link href="/turn-key" className="inline-flex items-center rounded-md bg-[#0b2a5a] px-5 py-3 font-bold text-white shadow hover:brightness-110">Turn-Key</Link>
           </div>
         </section>
       </main>
