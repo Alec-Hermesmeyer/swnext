@@ -47,7 +47,10 @@ export function AuthProvider({ children }) {
         setRole(profile?.role || 'user');
       } else {
         setRole(null);
-        router.push('/login');
+        // Only redirect to login if on an admin page
+        if (router.pathname.startsWith('/admin')) {
+          router.push('/login');
+        }
       }
 
       setLoading(false);
