@@ -5,11 +5,6 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 const nextConfig = {
   reactStrictMode: true,
-
-  // Skip lint and type checks during build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -17,7 +12,12 @@ const nextConfig = {
   images: {
     loader: 'custom',
     loaderFile: './supabase-image-loader.js',
-    domains: ['edycymyofrowahspzzpg.supabase.co']
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'edycymyofrowahspzzpg.supabase.co',
+      },
+    ],
   },
   
   // Performance optimizations
@@ -29,6 +29,9 @@ const nextConfig = {
   // Compiler optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
+  },
+  turbopack: {
+    root: __dirname,
   },
   
   // Webpack optimizations
@@ -66,4 +69,3 @@ const nextConfig = {
 }
 
 module.exports = withBundleAnalyzer(nextConfig);
-
