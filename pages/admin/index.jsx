@@ -8,6 +8,7 @@ const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 const adminLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "📊", description: "View stats and overview", color: "bg-blue-50 border-blue-200" },
+  { href: "/admin/social-media", label: "Social Media", icon: "📱", description: "AI-powered social manager", color: "bg-sky-50 border-sky-200" },
   { href: "/admin/image-assignments", label: "Page Images", icon: "🖼️", description: "Assign images to pages", color: "bg-orange-50 border-orange-200" },
   { href: "/admin/company-contacts", label: "Company Contacts", icon: "👥", description: "Manage team contacts", color: "bg-green-50 border-green-200" },
   { href: "/admin/careers", label: "Careers", icon: "💼", description: "Manage job postings", color: "bg-purple-50 border-purple-200" },
