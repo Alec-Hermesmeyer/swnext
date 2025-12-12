@@ -7,9 +7,12 @@ import { ImageProvider } from '@/context/ImageContext'
 import '@/styles/globals.css'
 
 export default function App({ Component, pageProps, router }) {
-  if (typeof window !== 'undefined' && 'serviceWorker' in window.navigator) {
-    window.addEventListener('load', () => {
-      window.navigator.serviceWorker.register('/service-worker.js');
+  // Unregister any old service workers that might be caching pages
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => {
+        registration.unregister();
+      });
     });
   }
 
