@@ -1,95 +1,45 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState, useCallback } from 'react';
-import supabase from '@/components/Supabase';
+import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 const withAuthTw = (WrappedComponent) => {
   const Wrapper = (props) => {
     const router = useRouter();
-    const [loading, setLoading] = useState(true);
-    const [isAuthed, setIsAuthed] = useState(false);
-
-    const checkSession = useCallback(async () => {
-      try {
-        // First try to refresh the session
-        const { data: { session }, error } = await supabase.auth.getSession();
-
-        if (error) {
-          console.error('Session error:', error);
-          // Try to refresh if there's an error
-          const { data: refreshData } = await supabase.auth.refreshSession();
-          if (refreshData?.session) {
-            setIsAuthed(true);
-            setLoading(false);
-            return;
-          }
-        }
-
-        if (session) {
-          setIsAuthed(true);
-        } else {
-          router.replace('/login');
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err);
-        router.replace('/login');
-      } finally {
-        setLoading(false);
-      }
-    }, [router]);
+    const { user, loading } = useAuth();
 
     useEffect(() => {
-      let isMounted = true;
+      if (!loading && !user) {
+        router.replace('/login');
+      }
+    }, [user, loading, router]);
 
-      checkSession();
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <svg className="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span className="text-neutral-600">Loading...</span>
+          </div>
+        </div>
+      );
+    }
 
-      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (!isMounted) return;
+    if (!user) return null;
 
-        // Handle token refresh events
-        if (event === 'TOKEN_REFRESHED') {
-          setIsAuthed(true);
-          return;
-        }
-
-        if (event === 'SIGNED_OUT') {
-          setIsAuthed(false);
-          router.replace('/login');
-          return;
-        }
-
-        if (session) {
-          setIsAuthed(true);
-        } else if (event === 'SIGNED_IN') {
-          setIsAuthed(true);
-        } else {
-          // Don't immediately redirect - try refresh first
-          const { data } = await supabase.auth.refreshSession();
-          if (!data?.session) {
-            setIsAuthed(false);
-            router.replace('/login');
-          }
-        }
-      });
-
-      return () => {
-        isMounted = false;
-        authListener.subscription.unsubscribe();
-      };
-    }, [router, checkSession]);
-
-    if (loading) return <p>Loading...</p>;
-    if (!isAuthed) return null;
     return <WrappedComponent {...props} />;
   };
 
   Wrapper.displayName = `withAuthTw(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+
   // Hoist getLayout so Next uses the admin layout instead of the site layout
   if (WrappedComponent.getLayout) {
     Wrapper.getLayout = WrappedComponent.getLayout;
   }
+
   return Wrapper;
 };
 
 export default withAuthTw;
-
-
