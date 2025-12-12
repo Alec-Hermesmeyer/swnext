@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import supabase from '@/components/Supabase';
 
 const withAuthTw = (WrappedComponent) => {
@@ -8,27 +8,66 @@ const withAuthTw = (WrappedComponent) => {
     const [loading, setLoading] = useState(true);
     const [isAuthed, setIsAuthed] = useState(false);
 
-    useEffect(() => {
-      let isMounted = true;
-      const checkSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!isMounted) return;
+    const checkSession = useCallback(async () => {
+      try {
+        // First try to refresh the session
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('Session error:', error);
+          // Try to refresh if there's an error
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          if (refreshData?.session) {
+            setIsAuthed(true);
+            setLoading(false);
+            return;
+          }
+        }
+
         if (session) {
           setIsAuthed(true);
         } else {
           router.replace('/login');
         }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        router.replace('/login');
+      } finally {
         setLoading(false);
-      };
+      }
+    }, [router]);
+
+    useEffect(() => {
+      let isMounted = true;
 
       checkSession();
-      const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (!isMounted) return;
-        if (session) {
+
+        // Handle token refresh events
+        if (event === 'TOKEN_REFRESHED') {
           setIsAuthed(true);
-        } else {
+          return;
+        }
+
+        if (event === 'SIGNED_OUT') {
           setIsAuthed(false);
           router.replace('/login');
+          return;
+        }
+
+        if (session) {
+          setIsAuthed(true);
+        } else if (event === 'SIGNED_IN') {
+          setIsAuthed(true);
+        } else {
+          // Don't immediately redirect - try refresh first
+          const { data } = await supabase.auth.refreshSession();
+          if (!data?.session) {
+            setIsAuthed(false);
+            router.replace('/login');
+          }
         }
       });
 
@@ -36,7 +75,7 @@ const withAuthTw = (WrappedComponent) => {
         isMounted = false;
         authListener.subscription.unsubscribe();
       };
-    }, [router]);
+    }, [router, checkSession]);
 
     if (loading) return <p>Loading...</p>;
     if (!isAuthed) return null;
