@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = 'https://edycymyofrowahspzzpg.supabase.co'
@@ -14,9 +14,66 @@ const Form = () => {
   const [number, setNumber] = useState('')
   const [message, setMessage] = useState('')
   const [company, setCompany] = useState('')
+  // Anti-bot fields
+  const [hpWebsite, setHpWebsite] = useState('') // honeypot
+  const [renderedAt, setRenderedAt] = useState(0)
+
+  useEffect(() => {
+    setRenderedAt(Date.now())
+  }, [])
+
+  const disposableDomains = new Set([
+    'mailinator.com','guerrillamail.com','sharklasers.com','10minutemail.com','yopmail.com','tempmail.com','temp-mail.org','trashmail.com','burnermail.io','fakeinbox.com','getnada.com'
+  ])
+
+  const isDisposableEmail = (addr) => {
+    const at = addr.lastIndexOf('@')
+    if (at === -1) return false
+    const domain = addr.slice(at + 1).toLowerCase()
+    return disposableDomains.has(domain)
+  }
+
+  const looksGibberish = (text) => {
+    if (!text) return true
+    const stripped = String(text).trim()
+    if (stripped.length < 2) return true
+    // Long token without vowels
+    if (/\b[b-df-hj-np-tv-z]{8,}\b/i.test(stripped)) return true
+    // Excessively long single token
+    if (/\b[a-z0-9]{25,}\b/i.test(stripped)) return true
+    return false
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Client-side anti-bot: honeypot
+    if (hpWebsite && hpWebsite.trim().length > 0) {
+      return
+    }
+    // Submission time check (at least 2s on page)
+    if (renderedAt && Date.now() - renderedAt < 2000) {
+      return
+    }
+    // Per-session cooldown (60s)
+    try {
+      const last = localStorage.getItem('contact_last_submit_ts')
+      if (last && Date.now() - parseInt(last, 10) < 60000) {
+        return
+      }
+    } catch {}
+
+    // Basic validations
+    const nameOk = typeof name === 'string' && name.trim().length >= 2 && !looksGibberish(name)
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    const msgOk = typeof message === 'string' && message.trim().length >= 15 && !looksGibberish(message)
+    const companyOk = typeof company === 'string' && company.trim().length >= 2 && !looksGibberish(company)
+    if (!nameOk || !emailOk || !msgOk || !companyOk) {
+      return
+    }
+    if (isDisposableEmail(email)) {
+      return
+    }
 
     // Submit form data to Supabase table
     const { data, error } = await supabase
@@ -34,6 +91,9 @@ const Form = () => {
     setNumber('')
     setMessage('')
     setCompany('')
+    try {
+      localStorage.setItem('contact_last_submit_ts', String(Date.now()))
+    } catch {}
   }
 
   return (
@@ -99,6 +159,26 @@ const Form = () => {
                     
                     {/* Form Bottom */}
                     <div className="w-full flex flex-col items-center justify-between space-y-6 flex-grow">
+                        {/* Honeypot + render timestamp */}
+                        <div className="sr-only" aria-hidden="true">
+                            <label htmlFor="website">Website</label>
+                            <input
+                              id="website"
+                              name="website"
+                              type="text"
+                              autoComplete="off"
+                              tabIndex={-1}
+                              value={hpWebsite}
+                              onChange={(e) => setHpWebsite(e.target.value)}
+                            />
+                            <input
+                              id="renderedAt"
+                              name="renderedAt"
+                              type="hidden"
+                              value={renderedAt}
+                              readOnly
+                            />
+                        </div>
                         <textarea 
                             onChange={(e) => setMessage(e.target.value)} 
                             value={message} 

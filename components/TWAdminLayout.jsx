@@ -12,6 +12,7 @@ export default function TWAdminLayout({ children }) {
   const navLinks = [
     { href: "/admin", label: "Home" },
     { href: "/admin/dashboard", label: "Dashboard" },
+    { href: "/admin/crew-scheduler", label: "Crew Scheduler" },
     { href: "/admin/social-media", label: "Social Media" },
     { href: "/admin/image-assignments", label: "Page Images" },
     { href: "/admin/company-contacts", label: "Contacts" },

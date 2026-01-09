@@ -25,6 +25,7 @@
     "claude-flow:status": "node scripts/claude-flow/workflow-automation.js status"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/supabase-js": "^2.39.7",
     "@vercel/analytics": "^1.6.1",
     "@vercel/edge-config": "^1.4.3",
@@ -40,6 +41,7 @@
     "next": "16.0.7",
     "node-cache": "^5.1.2",
     "nodemailer": "^7.0.11",
+    "picocolors": "^1.1.1",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",
