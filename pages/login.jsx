@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/router";
 import Head from "next/head";
 import TWLayout from "@/components/TWLayout";
 import { GridPattern } from "@/components/GridPattern";
@@ -8,6 +9,7 @@ import { Lato } from "next/font/google";
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 export default function LoginTW() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -18,8 +20,12 @@ export default function LoginTW() {
     setLoading(true); setError(null);
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setError(error.message);
-      else window.location.href = "/admin";
+      if (error) {
+        setError(error.message);
+      } else {
+        await supabase.auth.getSession();
+        router.replace("/admin");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -62,5 +68,4 @@ export default function LoginTW() {
 LoginTW.getLayout = function getLayout(page) {
   return <TWLayout>{page}</TWLayout>;
 };
-
 

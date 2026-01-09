@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = 'https://edycymyofrowahspzzpg.supabase.co'
@@ -14,9 +14,62 @@ const JobForm = () => {
     const [number, setNumber] = useState('')
     const [message, setMessage] = useState('')
     const [position, setPosition] = useState('')
+    // Anti-bot fields
+    const [hpWebsite, setHpWebsite] = useState('')
+    const [renderedAt, setRenderedAt] = useState(0)
+
+    useEffect(() => {
+        setRenderedAt(Date.now())
+    }, [])
+
+    const disposableDomains = new Set([
+        'mailinator.com','guerrillamail.com','sharklasers.com','10minutemail.com','yopmail.com','tempmail.com','temp-mail.org','trashmail.com','burnermail.io','fakeinbox.com','getnada.com'
+    ])
+    const isDisposableEmail = (addr) => {
+        const at = addr.lastIndexOf('@')
+        if (at === -1) return false
+        const domain = addr.slice(at + 1).toLowerCase()
+        return disposableDomains.has(domain)
+    }
+    const looksGibberish = (text) => {
+        if (!text) return true
+        const stripped = String(text).trim()
+        if (stripped.length < 2) return true
+        if (/\b[b-df-hj-np-tv-z]{8,}\b/i.test(stripped)) return true
+        if (/\b[a-z0-9]{25,}\b/i.test(stripped)) return true
+        return false
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+
+        // Honeypot
+        if (hpWebsite && hpWebsite.trim().length > 0) {
+            return
+        }
+        // Time on page >= 2s
+        if (renderedAt && Date.now() - renderedAt < 2000) {
+            return
+        }
+        // Per-session cooldown (60s)
+        try {
+            const last = localStorage.getItem('job_last_submit_ts')
+            if (last && Date.now() - parseInt(last, 10) < 60000) {
+                return
+            }
+        } catch {}
+
+        // Validations
+        const nameOk = typeof name === 'string' && name.trim().length >= 2 && !looksGibberish(name)
+        const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        const msgOk = typeof message === 'string' && message.trim().length >= 15 && !looksGibberish(message)
+        const positionOk = typeof position === 'string' && position.trim().length > 0
+        if (!nameOk || !emailOk || !msgOk || !positionOk) {
+            return
+        }
+        if (isDisposableEmail(email)) {
+            return
+        }
 
         // Submit form data to Supabase table
         const { data, error } = await supabase
@@ -34,6 +87,9 @@ const JobForm = () => {
         setNumber('')
         setMessage('')
         setPosition('')
+        try {
+            localStorage.setItem('job_last_submit_ts', String(Date.now()))
+        } catch {}
     }
     const jobPositions = [
         'Groundhand/General Laborer',
@@ -114,6 +170,26 @@ const JobForm = () => {
                         
                         {/* Form Bottom */}
                         <div className="w-full flex flex-col items-center justify-between space-y-6 flex-grow">
+                    {/* Honeypot + render timestamp */}
+                    <div className="sr-only" aria-hidden="true">
+                        <label htmlFor="website">Website</label>
+                        <input
+                          id="website"
+                          name="website"
+                          type="text"
+                          autoComplete="off"
+                          tabIndex={-1}
+                          value={hpWebsite}
+                          onChange={(e) => setHpWebsite(e.target.value)}
+                        />
+                        <input
+                          id="renderedAt"
+                          name="renderedAt"
+                          type="hidden"
+                          value={renderedAt}
+                          readOnly
+                        />
+                    </div>
                             <textarea 
                                 onChange={(e) => setMessage(e.target.value)} 
                                 value={message} 
