@@ -24,6 +24,34 @@ const toDateString = (date) => {
   return d.toISOString().split("T")[0];
 };
 
+const formatWorkerLabel = (worker) => {
+  if (!worker?.name) return "";
+  return worker.role ? `${worker.name} (${worker.role})` : worker.name;
+};
+
+const formatWorkerOption = (worker) => {
+  if (!worker?.name) return "";
+  return worker.role ? `${worker.name} — ${worker.role}` : worker.name;
+};
+
+const buildDateRange = (start, end) => {
+  if (!start || !end) return [];
+  const startDate = new Date(`${start}T00:00:00`);
+  const endDate = new Date(`${end}T00:00:00`);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return [];
+  }
+  if (startDate > endDate) return [];
+
+  const dates = [];
+  const current = new Date(startDate);
+  while (current <= endDate) {
+    dates.push(toDateString(current));
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+};
+
 function CrewScheduler() {
   const [activeTab, setActiveTab] = useState("schedule");
   const [selectedDate, setSelectedDate] = useState(toDateString(new Date()));
@@ -39,6 +67,7 @@ function CrewScheduler() {
   // New worker form
   const [newWorkerName, setNewWorkerName] = useState("");
   const [newWorkerPhone, setNewWorkerPhone] = useState("");
+  const [newWorkerRole, setNewWorkerRole] = useState("");
 
   // New category form
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -49,6 +78,10 @@ function CrewScheduler() {
     job_name: "",
     job_number: "",
     customer_name: "",
+    hiring_contractor: "",
+    hiring_contact_name: "",
+    hiring_contact_phone: "",
+    hiring_contact_email: "",
     address: "",
     city: "",
     zip: "",
@@ -77,6 +110,13 @@ function CrewScheduler() {
   // --- Phase 6: Daily Packets state ---
   const [packetsSending, setPacketsSending] = useState(false);
   const [packetsStatus, setPacketsStatus] = useState(null);
+
+  // --- Schedule copy / prepopulate state ---
+  const [copyStartDate, setCopyStartDate] = useState(toDateString(new Date()));
+  const [copyEndDate, setCopyEndDate] = useState(toDateString(new Date()));
+  const [copyOverwrite, setCopyOverwrite] = useState(false);
+  const [copyingCategoryId, setCopyingCategoryId] = useState(null);
+  const [copyStatus, setCopyStatus] = useState(null);
 
   // Fetch workers, categories, jobs, superintendents, trucks on mount
   useEffect(() => {
@@ -147,6 +187,10 @@ function CrewScheduler() {
       job_name: newJob.job_name.trim(),
       job_number: newJob.job_number.trim() || null,
       customer_name: newJob.customer_name.trim() || null,
+      hiring_contractor: newJob.hiring_contractor.trim() || null,
+      hiring_contact_name: newJob.hiring_contact_name.trim() || null,
+      hiring_contact_phone: newJob.hiring_contact_phone.trim() || null,
+      hiring_contact_email: newJob.hiring_contact_email.trim() || null,
       address: newJob.address.trim() || null,
       city: newJob.city.trim() || null,
       zip: newJob.zip.trim() || null,
@@ -159,6 +203,10 @@ function CrewScheduler() {
         job_name: "",
         job_number: "",
         customer_name: "",
+        hiring_contractor: "",
+        hiring_contact_name: "",
+        hiring_contact_phone: "",
+        hiring_contact_email: "",
         address: "",
         city: "",
         zip: "",
@@ -228,6 +276,7 @@ function CrewScheduler() {
           crane_info: rd.crane_info || "",
           notes: rd.notes || "",
           superintendent_name: rd.crew_superintendents?.name || "",
+          superintendent_phone: rd.crew_superintendents?.phone || "",
           truck_number: rd.crew_trucks?.truck_number || "",
         };
       });
@@ -243,10 +292,15 @@ function CrewScheduler() {
     setSaving(true);
     const { error } = await supabase
       .from("crew_workers")
-      .insert({ name: newWorkerName.trim(), phone: newWorkerPhone.trim() || null });
+      .insert({
+        name: newWorkerName.trim(),
+        phone: newWorkerPhone.trim() || null,
+        role: newWorkerRole.trim() || null,
+      });
     if (!error) {
       setNewWorkerName("");
       setNewWorkerPhone("");
+      setNewWorkerRole("");
       fetchWorkers();
     }
     setSaving(false);
@@ -255,6 +309,11 @@ function CrewScheduler() {
   const deleteWorker = async (id) => {
     if (!confirm("Remove this worker?")) return;
     await supabase.from("crew_workers").update({ is_active: false }).eq("id", id);
+    fetchWorkers();
+  };
+
+  const updateWorker = async (id, updates) => {
+    await supabase.from("crew_workers").update(updates).eq("id", id);
     fetchWorkers();
   };
 
@@ -301,6 +360,23 @@ function CrewScheduler() {
   const deleteAssignment = async (assignmentId) => {
     await supabase.from("crew_assignments").delete().eq("id", assignmentId);
     fetchSchedule(selectedDate);
+  };
+
+  const splitAssignment = async (assignment) => {
+    if (!currentSchedule) return;
+    setSaving(true);
+    const { error } = await supabase.from("crew_assignments").insert({
+      schedule_id: currentSchedule.id,
+      category_id: assignment.category_id,
+      worker_id: assignment.worker_id || null,
+      job_id: null,
+      job_name: "",
+      sort_order: (assignment.sort_order || 0) + 1,
+    });
+    if (!error) {
+      fetchSchedule(selectedDate);
+    }
+    setSaving(false);
   };
 
   // --- Phase 2: Superintendent CRUD ---
@@ -390,11 +466,159 @@ function CrewScheduler() {
             crane_info: rigData.crane_info || "",
             notes: rigData.notes || "",
             superintendent_name: rigData.crew_superintendents?.name || "",
+            superintendent_phone: rigData.crew_superintendents?.phone || "",
             truck_number: rigData.crew_trucks?.truck_number || "",
           },
         }));
       }
     }
+  };
+
+  const handleCopyCategoryRange = async (categoryId) => {
+    if (!currentSchedule) return;
+
+    const category = categories.find((c) => c.id === categoryId);
+    const categoryAssignments = assignments.filter(
+      (a) => a.category_id === categoryId
+    );
+    const detail = rigDetails[categoryId] || {};
+    const hasRigDetail =
+      detail.superintendent_id || detail.truck_id || detail.crane_info || detail.notes;
+
+    if (categoryAssignments.length === 0 && !hasRigDetail) {
+      setCopyStatus({
+        type: "error",
+        message: "This rig has no crew or rig details to copy.",
+      });
+      return;
+    }
+
+    const rangeDates = buildDateRange(copyStartDate, copyEndDate).filter(
+      (date) => date !== selectedDate
+    );
+    if (rangeDates.length === 0) {
+      setCopyStatus({
+        type: "error",
+        message: "Select a valid date range (excluding the current day).",
+      });
+      return;
+    }
+
+    if (
+      !confirm(
+        `Copy ${category?.name || "this rig"} to ${rangeDates.length} day(s)? ${
+          copyOverwrite
+            ? "Existing entries for this rig in the range will be replaced."
+            : "Existing entries for this rig will be skipped."
+        }`
+      )
+    ) {
+      return;
+    }
+
+    setCopyingCategoryId(categoryId);
+    setCopyStatus(null);
+
+    try {
+      const { data: existingSchedules } = await supabase
+        .from("crew_schedules")
+        .select("id, schedule_date")
+        .gte("schedule_date", rangeDates[0])
+        .lte("schedule_date", rangeDates[rangeDates.length - 1]);
+
+      const scheduleMap = new Map(
+        (existingSchedules || []).map((s) => [s.schedule_date, s])
+      );
+
+      let copiedCount = 0;
+      let skippedCount = 0;
+
+      for (const date of rangeDates) {
+        let schedule = scheduleMap.get(date);
+        if (!schedule) {
+          const { data: created, error: createError } = await supabase
+            .from("crew_schedules")
+            .insert({ schedule_date: date })
+            .select()
+            .single();
+          if (createError) {
+            skippedCount += 1;
+            continue;
+          }
+          schedule = created;
+          scheduleMap.set(date, schedule);
+        }
+
+        if (!copyOverwrite) {
+          const { count: assignmentCount } = await supabase
+            .from("crew_assignments")
+            .select("id", { count: "exact", head: true })
+            .eq("schedule_id", schedule.id)
+            .eq("category_id", categoryId);
+          const { count: detailCount } = await supabase
+            .from("schedule_rig_details")
+            .select("id", { count: "exact", head: true })
+            .eq("schedule_id", schedule.id)
+            .eq("category_id", categoryId);
+
+          if ((assignmentCount && assignmentCount > 0) || (detailCount && detailCount > 0)) {
+            skippedCount += 1;
+            continue;
+          }
+        } else {
+          await supabase
+            .from("crew_assignments")
+            .delete()
+            .eq("schedule_id", schedule.id)
+            .eq("category_id", categoryId);
+          await supabase
+            .from("schedule_rig_details")
+            .delete()
+            .eq("schedule_id", schedule.id)
+            .eq("category_id", categoryId);
+        }
+
+        if (categoryAssignments.length > 0) {
+          const assignmentRows = categoryAssignments.map((a) => ({
+            schedule_id: schedule.id,
+            category_id: categoryId,
+            worker_id: a.worker_id || null,
+            job_id: a.job_id || null,
+            job_name: a.job_name || null,
+            notes: a.notes || null,
+            sort_order: a.sort_order || 0,
+          }));
+          await supabase.from("crew_assignments").insert(assignmentRows);
+        }
+
+        if (hasRigDetail) {
+          await supabase.from("schedule_rig_details").insert({
+            schedule_id: schedule.id,
+            category_id: categoryId,
+            superintendent_id: detail.superintendent_id || null,
+            truck_id: detail.truck_id || null,
+            crane_info: detail.crane_info || null,
+            notes: detail.notes || null,
+          });
+        }
+
+        copiedCount += 1;
+      }
+
+      setCopyStatus({
+        type: "success",
+        message: `Copied ${category?.name || "rig"} to ${copiedCount} day(s)${
+          skippedCount ? `, skipped ${skippedCount} existing day(s)` : ""
+        }.`,
+      });
+    } catch (err) {
+      setCopyStatus({
+        type: "error",
+        message: "Failed to copy the rig schedule. Please try again.",
+      });
+    }
+
+    setCopyingCategoryId(null);
   };
 
   // --- Phase 5: Save & Email Schedule ---
@@ -425,7 +649,7 @@ function CrewScheduler() {
 
       const emailAssignments = assignments.map((a) => ({
         category_id: a.category_id,
-        worker_name: a.crew_workers?.name || "Unassigned",
+        worker_name: formatWorkerLabel(a.crew_workers) || "Unassigned",
         job_name: a.crew_jobs?.job_name || a.job_name || "",
       }));
 
@@ -463,43 +687,48 @@ function CrewScheduler() {
   };
 
   // --- Phase 6: Derive scheduled jobs for the daily packets tab ---
-  const scheduledJobsForDate = useMemo(() => {
-    // Get unique jobs from assignments
-    const jobMap = new Map();
+  const scheduledPacketsForDate = useMemo(() => {
+    const packets = [];
     assignments.forEach((a) => {
-      if (!a.job_id || !a.crew_jobs) return;
-      if (!jobMap.has(a.job_id)) {
-        const job = a.crew_jobs;
-        const cat = a.crew_categories || {};
-        const detail = rigDetails[a.category_id] || {};
-        const crewForJob = assignments
-          .filter((x) => x.job_id === a.job_id)
-          .map((x) => x.crew_workers?.name)
-          .filter(Boolean);
+      if (!a.job_id || !a.crew_jobs || !a.worker_id) return;
+      const job = a.crew_jobs;
+      const cat = a.crew_categories || {};
+      const detail = rigDetails[a.category_id] || {};
+      const crewForJob = assignments
+        .filter((x) => x.job_id === a.job_id)
+        .map((x) => formatWorkerLabel(x.crew_workers))
+        .filter(Boolean);
 
-        jobMap.set(a.job_id, {
-          job_id: a.job_id,
-          assignment: a,
-          job_name: job.job_name,
-          job_number: job.job_number,
-          customer_name: job.customer_name,
-          address: job.address,
-          city: job.city,
-          zip: job.zip,
-          pm_name: job.pm_name,
-          pm_phone: job.pm_phone,
-          crane_required: job.crane_required,
-          dig_tess_number: job.dig_tess_number || "",
-          rig_name: cat.name || "",
-          category_id: a.category_id,
-          superintendent_name: detail.superintendent_name || "",
-          truck_number: detail.truck_number || "",
-          crane_info: detail.crane_info || "",
-          crew_names: crewForJob.join(", "),
-        });
-      }
+      packets.push({
+        packet_id: a.id,
+        assignment: a,
+        worker_name: formatWorkerLabel(a.crew_workers),
+        worker_phone: a.crew_workers?.phone || "",
+        job_id: a.job_id,
+        job_name: job.job_name,
+        job_number: job.job_number,
+        customer_name: job.customer_name,
+        hiring_contractor: job.hiring_contractor,
+        hiring_contact_name: job.hiring_contact_name,
+        hiring_contact_phone: job.hiring_contact_phone,
+        hiring_contact_email: job.hiring_contact_email,
+        address: job.address,
+        city: job.city,
+        zip: job.zip,
+        pm_name: job.pm_name,
+        pm_phone: job.pm_phone,
+        crane_required: job.crane_required,
+        dig_tess_number: job.dig_tess_number || "",
+        rig_name: cat.name || "",
+        category_id: a.category_id,
+        superintendent_name: detail.superintendent_name || "",
+        superintendent_phone: detail.superintendent_phone || "",
+        truck_number: detail.truck_number || "",
+        crane_info: detail.crane_info || "",
+        crew_names: crewForJob.join(", "),
+      });
     });
-    return Array.from(jobMap.values());
+    return packets;
   }, [assignments, rigDetails]);
 
   // --- Phase 6: Update dig tess number on blur ---
@@ -509,20 +738,27 @@ function CrewScheduler() {
 
   // --- Phase 6: Email all packets ---
   const handleEmailPackets = async () => {
-    if (scheduledJobsForDate.length === 0) {
-      alert("No jobs scheduled for this date.");
+    if (scheduledPacketsForDate.length === 0) {
+      alert("No crew packets scheduled for this date.");
       return;
     }
-    if (!confirm(`Email ${scheduledJobsForDate.length} cover sheet packet(s) to Phil?`)) return;
+    if (!confirm(`Email ${scheduledPacketsForDate.length} worker packet(s) to Phil?`))
+      return;
 
     setPacketsSending(true);
     setPacketsStatus(null);
 
     try {
-      const packets = scheduledJobsForDate.map((j) => ({
+      const packets = scheduledPacketsForDate.map((j) => ({
+        worker_name: j.worker_name,
+        worker_phone: j.worker_phone,
         job_name: j.job_name,
         job_number: j.job_number,
         customer_name: j.customer_name,
+        hiring_contractor: j.hiring_contractor,
+        hiring_contact_name: j.hiring_contact_name,
+        hiring_contact_phone: j.hiring_contact_phone,
+        hiring_contact_email: j.hiring_contact_email,
         address: j.address,
         city: j.city,
         zip: j.zip,
@@ -531,6 +767,7 @@ function CrewScheduler() {
         dig_tess_number: j.dig_tess_number,
         rig_name: j.rig_name,
         superintendent_name: j.superintendent_name,
+        superintendent_phone: j.superintendent_phone,
         truck_number: j.truck_number,
         crane_info: j.crane_info,
         crane_required: j.crane_required,
@@ -565,7 +802,11 @@ function CrewScheduler() {
     const category = assignment.crew_categories || {};
     const detail = overrideDetail || rigDetails[assignment.category_id] || {};
     const crewForJob = assignments.filter((a) => a.job_id === assignment.job_id);
-    const crewNames = crewForJob.map((a) => a.crew_workers?.name).filter(Boolean).join(", ");
+    const crewNames = crewForJob
+      .map((a) => formatWorkerLabel(a.crew_workers))
+      .filter(Boolean)
+      .join(", ");
+    const operatorLabel = formatWorkerLabel(assignment.crew_workers);
 
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
@@ -575,33 +816,62 @@ function CrewScheduler() {
         <title>Cover Sheet - ${job.job_name || "Job"}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
-          .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-          .pm-stamp { border: 1px solid #000; padding: 10px; width: 100px; height: 60px; text-align: center; }
-          .field-row { display: flex; gap: 20px; margin-bottom: 12px; flex-wrap: wrap; }
+          :root {
+            --sw-blue: #0b2a5a;
+            --sw-red: #dc2626;
+            --sw-gray: #f8fafc;
+          }
+          body { font-family: Arial, sans-serif; padding: 18px; font-size: 12px; color: #0f172a; }
+          .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--sw-blue);
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+          }
+          .brand-left { display: flex; align-items: center; gap: 10px; }
+          .brand-logo { width: 70px; height: 70px; object-fit: contain; }
+          .brand-title { font-size: 16px; font-weight: 800; color: var(--sw-blue); letter-spacing: 0.4px; }
+          .brand-sub { font-size: 10px; text-transform: uppercase; color: var(--sw-red); letter-spacing: 1px; margin-top: 2px; }
+          .brand-right { text-align: right; }
+          .doc-title { font-size: 14px; font-weight: 800; color: var(--sw-red); text-transform: uppercase; }
+          .doc-date { font-size: 12px; color: #475569; margin-top: 2px; }
+          .pm-stamp { border: 2px solid var(--sw-blue); color: var(--sw-blue); padding: 8px; width: 90px; height: 55px; text-align: center; font-size: 10px; font-weight: 700; margin-top: 8px; }
+          .field-row { display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
           .field { display: flex; align-items: baseline; gap: 4px; }
-          .field label { font-weight: bold; white-space: nowrap; }
-          .field-value { border-bottom: 1px solid #000; min-width: 120px; padding: 2px 4px; }
-          .field-value.wide { min-width: 200px; }
-          .section-title { font-weight: bold; margin: 16px 0 8px; border-bottom: 1px solid #000; padding-bottom: 4px; }
-          .text-area { border: 1px solid #000; min-height: 80px; padding: 8px; margin-bottom: 12px; }
-          .text-area.large { min-height: 200px; }
-          .equipment-lines { border: 1px solid #000; padding: 8px; }
-          .equipment-lines .line { border-bottom: 1px solid #ccc; height: 24px; margin-bottom: 4px; }
-          .equipment-lines .line:last-child { border-bottom: none; }
+          .field label { font-weight: 700; white-space: nowrap; color: #1f2937; }
+          .field-value { border-bottom: 1px solid #111827; min-width: 120px; padding: 2px 4px; }
+          .field-value.wide { min-width: 220px; }
+          .section-title { font-weight: 800; margin: 14px 0 6px; border-bottom: 1px solid var(--sw-blue); padding-bottom: 4px; color: var(--sw-blue); }
+          .text-area { border: 1px solid #111827; min-height: 70px; padding: 8px; margin-bottom: 10px; }
+          .text-area.large { min-height: 160px; }
+          .equipment-lines { border: 1px solid #111827; padding: 8px; }
+          .equipment-lines .line { border-bottom: 1px dashed #cbd5e1; height: 22px; margin-bottom: 4px; }
+          .equipment-lines .line:last-child { border-bottom: none; margin-bottom: 0; }
           @media print { body { padding: 10px; } }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div></div>
-          <div class="pm-stamp">PM Stamp</div>
+        <div class="brand-header">
+          <div class="brand-left">
+            <img class="brand-logo" src="/att.png" alt="S&W Foundation logo" />
+            <div>
+              <div class="brand-title">S&amp;W Foundation</div>
+              <div class="brand-sub">Foundation Since 1986</div>
+            </div>
+          </div>
+          <div class="brand-right">
+            <div class="doc-title">Cover Sheet</div>
+            <div class="doc-date">${formatDate(selectedDate)}</div>
+            <div class="pm-stamp">PM Stamp</div>
+          </div>
         </div>
 
         <div class="field-row">
           <div class="field">
             <label>OP:</label>
-            <span class="field-value">${assignment.crew_workers?.name || ""}</span>
+            <span class="field-value">${operatorLabel || ""}</span>
           </div>
           <div class="field">
             <label>Date:</label>
@@ -619,12 +889,40 @@ function CrewScheduler() {
 
         <div class="field-row">
           <div class="field">
+            <label>Address:</label>
+            <span class="field-value wide">${
+              [job.address, job.city, job.zip].filter(Boolean).join(", ")
+            }</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
             <label>Customer:</label>
             <span class="field-value wide">${job.customer_name || ""}</span>
           </div>
           <div class="field">
             <label>Dig Tess #:</label>
             <span class="field-value">${job.dig_tess_number || ""}</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Hiring Contractor:</label>
+            <span class="field-value wide">${job.hiring_contractor || ""}</span>
+          </div>
+          <div class="field">
+            <label>Contact:</label>
+            <span class="field-value wide">${
+              [
+                job.hiring_contact_name,
+                job.hiring_contact_phone,
+                job.hiring_contact_email,
+              ]
+                .filter(Boolean)
+                .join(" • ")
+            }</span>
           </div>
         </div>
 
@@ -722,7 +1020,11 @@ function CrewScheduler() {
     const category = assignment.crew_categories || {};
     const detail = overrideDetail || rigDetails[assignment.category_id] || {};
     const crewForJob = assignments.filter((a) => a.job_id === assignment.job_id);
-    const crewNames = crewForJob.map((a) => a.crew_workers?.name).filter(Boolean).join(", ");
+    const crewNames = crewForJob
+      .map((a) => formatWorkerLabel(a.crew_workers))
+      .filter(Boolean)
+      .join(", ");
+    const operatorLabel = formatWorkerLabel(assignment.crew_workers);
 
     // Generate pier rows (40 rows)
     const pierRows = Array.from(
@@ -753,23 +1055,42 @@ function CrewScheduler() {
         <title>Daily Log - ${job.job_name || "Job"}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: Arial, sans-serif; padding: 15px; font-size: 11px; }
-          .header { display: flex; justify-content: space-between; margin-bottom: 15px; }
-          .pm-stamp { border: 1px solid #000; padding: 8px; width: 80px; height: 50px; text-align: center; font-size: 10px; }
-          .field-row { display: flex; gap: 15px; margin-bottom: 8px; flex-wrap: wrap; }
+          :root {
+            --sw-blue: #0b2a5a;
+            --sw-red: #dc2626;
+            --sw-gray: #f8fafc;
+          }
+          body { font-family: Arial, sans-serif; padding: 15px; font-size: 11px; color: #0f172a; }
+          .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--sw-blue);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+          }
+          .brand-left { display: flex; align-items: center; gap: 10px; }
+          .brand-logo { width: 60px; height: 60px; object-fit: contain; }
+          .brand-title { font-size: 14px; font-weight: 800; color: var(--sw-blue); letter-spacing: 0.4px; }
+          .brand-sub { font-size: 9px; text-transform: uppercase; color: var(--sw-red); letter-spacing: 1px; margin-top: 2px; }
+          .brand-right { text-align: right; }
+          .doc-title { font-size: 12px; font-weight: 800; color: var(--sw-red); text-transform: uppercase; }
+          .doc-date { font-size: 11px; color: #475569; margin-top: 2px; }
+          .pm-stamp { border: 2px solid var(--sw-blue); color: var(--sw-blue); padding: 6px; width: 80px; height: 48px; text-align: center; font-size: 9px; font-weight: 700; margin-top: 6px; }
+          .field-row { display: flex; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
           .field { display: flex; align-items: baseline; gap: 3px; }
-          .field label { font-weight: bold; white-space: nowrap; font-size: 10px; }
-          .field-value { border-bottom: 1px solid #000; min-width: 80px; padding: 1px 3px; font-size: 10px; }
-          .field-value.wide { min-width: 150px; }
-          .section-title { font-weight: bold; margin: 12px 0 6px; border-bottom: 1px solid #000; padding-bottom: 3px; font-size: 11px; }
-          .text-area { border: 1px solid #000; min-height: 60px; padding: 6px; margin-bottom: 10px; }
-          .pier-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 9px; }
-          .pier-table th, .pier-table td { border: 1px solid #000; padding: 2px 4px; text-align: center; }
-          .pier-table th { background: #f0f0f0; font-size: 8px; }
-          .pier-table td { height: 16px; }
-          .signature-line { margin-top: 20px; }
-          .signature-line label { font-weight: bold; }
-          .signature-value { border-bottom: 1px solid #000; display: inline-block; width: 300px; }
+          .field label { font-weight: 700; white-space: nowrap; font-size: 10px; color: #1f2937; }
+          .field-value { border-bottom: 1px solid #111827; min-width: 80px; padding: 1px 3px; font-size: 10px; }
+          .field-value.wide { min-width: 160px; }
+          .section-title { font-weight: 800; margin: 10px 0 5px; border-bottom: 1px solid var(--sw-blue); padding-bottom: 3px; font-size: 11px; color: var(--sw-blue); }
+          .text-area { border: 1px solid #111827; min-height: 55px; padding: 6px; margin-bottom: 8px; }
+          .pier-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 9px; }
+          .pier-table th, .pier-table td { border: 1px solid #111827; padding: 2px 3px; text-align: center; }
+          .pier-table th { background: #f8fafc; font-size: 8px; }
+          .pier-table td { height: 15px; }
+          .signature-line { margin-top: 16px; }
+          .signature-line label { font-weight: 700; }
+          .signature-value { border-bottom: 1px solid #111827; display: inline-block; width: 300px; }
           @media print {
             body { padding: 5px; }
             .pier-table { page-break-inside: avoid; }
@@ -777,15 +1098,25 @@ function CrewScheduler() {
         </style>
       </head>
       <body>
-        <div class="header">
-          <div></div>
-          <div class="pm-stamp">PM Stamp</div>
+        <div class="brand-header">
+          <div class="brand-left">
+            <img class="brand-logo" src="/att.png" alt="S&W Foundation logo" />
+            <div>
+              <div class="brand-title">S&amp;W Foundation</div>
+              <div class="brand-sub">Foundation Since 1986</div>
+            </div>
+          </div>
+          <div class="brand-right">
+            <div class="doc-title">Daily Log &amp; Inspection</div>
+            <div class="doc-date">${formatDate(selectedDate)}</div>
+            <div class="pm-stamp">PM Stamp</div>
+          </div>
         </div>
 
         <div class="field-row">
           <div class="field">
             <label>OP:</label>
-            <span class="field-value">${assignment.crew_workers?.name || ""}</span>
+            <span class="field-value">${operatorLabel || ""}</span>
           </div>
           <div class="field">
             <label>Date:</label>
@@ -798,6 +1129,15 @@ function CrewScheduler() {
           <div class="field">
             <label>Job #:</label>
             <span class="field-value">${job.job_number || ""}</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Address:</label>
+            <span class="field-value wide">${
+              [job.address, job.city, job.zip].filter(Boolean).join(", ")
+            }</span>
           </div>
         </div>
 
@@ -822,6 +1162,25 @@ function CrewScheduler() {
 
         <div class="field-row">
           <div class="field">
+            <label>Hiring Contractor:</label>
+            <span class="field-value wide">${job.hiring_contractor || ""}</span>
+          </div>
+          <div class="field">
+            <label>Contact:</label>
+            <span class="field-value wide">${
+              [
+                job.hiring_contact_name,
+                job.hiring_contact_phone,
+                job.hiring_contact_email,
+              ]
+                .filter(Boolean)
+                .join(" • ")
+            }</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
             <label>Crane:</label>
             <span class="field-value">${detail.crane_info || (job.crane_required ? "Yes" : "")}</span>
           </div>
@@ -831,7 +1190,7 @@ function CrewScheduler() {
           </div>
           <div class="field">
             <label>S&W PM:</label>
-            <span class="field-value">${job.pm_name || ""}</span>
+            <span class="field-value">${job.pm_name || ""}${job.pm_phone ? " - " + job.pm_phone : ""}</span>
           </div>
         </div>
 
@@ -917,26 +1276,25 @@ function CrewScheduler() {
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: Arial, sans-serif;
             padding: 20px;
             color: #1f2937;
           }
-          .header {
-            text-align: center;
+          .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #0b2a5a;
+            padding-bottom: 14px;
+            border-bottom: 3px solid #0b2a5a;
           }
-          .header h1 {
-            font-size: 24px;
-            font-weight: 800;
-            color: #0b2a5a;
-          }
-          .header .date {
-            font-size: 18px;
-            color: #4b5563;
-            margin-top: 4px;
-          }
+          .brand-left { display: flex; align-items: center; gap: 10px; }
+          .brand-logo { width: 60px; height: 60px; object-fit: contain; }
+          .brand-name { font-size: 18px; font-weight: 800; color: #0b2a5a; letter-spacing: 0.4px; }
+          .brand-sub { font-size: 11px; text-transform: uppercase; color: #dc2626; letter-spacing: 1px; margin-top: 2px; }
+          .brand-right { text-align: right; }
+          .doc-title { font-size: 16px; font-weight: 800; color: #dc2626; text-transform: uppercase; }
+          .doc-date { font-size: 16px; color: #4b5563; margin-top: 4px; }
           .category {
             margin-bottom: 20px;
             page-break-inside: avoid;
@@ -983,14 +1341,23 @@ function CrewScheduler() {
           }
           @media print {
             body { padding: 0; }
-            .header { border-bottom-width: 1px; }
+            .brand-header { border-bottom-width: 1px; }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <h1>S&W Foundation - Daily Crew Schedule</h1>
-          <div class="date">${formatDate(selectedDate)}</div>
+        <div class="brand-header">
+          <div class="brand-left">
+            <img class="brand-logo" src="/att.png" alt="S&W Foundation logo" />
+            <div>
+              <div class="brand-name">S&amp;W Foundation</div>
+              <div class="brand-sub">Foundation Since 1986</div>
+            </div>
+          </div>
+          <div class="brand-right">
+            <div class="doc-title">Daily Crew Schedule</div>
+            <div class="doc-date">${formatDate(selectedDate)}</div>
+          </div>
         </div>
         ${categories
           .map((cat) => {
@@ -1015,12 +1382,12 @@ function CrewScheduler() {
                 <div class="category-content">
                   ${
                     catAssignments.length > 0
-                      ? catAssignments
+                          ? catAssignments
                           .map(
                             (a) => `
                         <div class="assignment">
                           <span class="worker-name">${
-                            a.crew_workers?.name || "Unassigned"
+                            formatWorkerLabel(a.crew_workers) || "Unassigned"
                           }</span>
                           <span class="job-name">${a.crew_jobs?.job_name || a.job_name || ""}</span>
                         </div>
@@ -1070,10 +1437,10 @@ function CrewScheduler() {
     { id: "schedule", label: "Build Schedule" },
     { id: "packets", label: "Daily Packets" },
     { id: "jobs", label: "Manage Jobs" },
-    { id: "workers", label: "Workers" },
+    { id: "workers", label: "Crew & Titles" },
+    { id: "categories", label: "Rigs & Categories" },
     { id: "superintendents", label: "Superintendents" },
     { id: "trucks", label: "Trucks" },
-    { id: "categories", label: "Categories" },
   ];
 
   if (loading) {
@@ -1098,15 +1465,23 @@ function CrewScheduler() {
       </Head>
       <div>
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1
-              className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}
-            >
-              Crew Scheduler
-            </h1>
-            <p className="mt-1 text-sm text-neutral-600">
-              Build daily crew assignments, email schedules, and print packets
-            </p>
+          <div className="flex items-center gap-3">
+            <img
+              src="/att.png"
+              alt="S&W Foundation logo"
+              className="h-12 w-12 object-contain"
+            />
+            <div>
+              <h1
+                className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}
+              >
+                S&amp;W Foundation Crew Scheduler
+              </h1>
+              <p className="mt-1 text-sm text-neutral-600">
+                Foundation since 1986 • Build daily crew assignments, email schedules,
+                and print packets
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {/* Finalized badge */}
@@ -1226,6 +1601,101 @@ function CrewScheduler() {
               </h2>
             </div>
 
+            <div className="print:hidden mb-4 grid gap-4 lg:grid-cols-[1.2fr,1.8fr]">
+              <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h3 className={`${lato.className} text-base font-bold text-neutral-900`}>
+                    Prepopulate By Rig
+                  </h3>
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                    Copy crews + rig details
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-neutral-600">
+                  Choose a date range, then click &quot;Copy Rig&quot; on the rig
+                  card you want to prefill.
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <label className="text-xs font-semibold text-neutral-500">
+                    Start date
+                    <input
+                      type="date"
+                      value={copyStartDate}
+                      onChange={(e) => setCopyStartDate(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                    />
+                  </label>
+                  <label className="text-xs font-semibold text-neutral-500">
+                    End date
+                    <input
+                      type="date"
+                      value={copyEndDate}
+                      onChange={(e) => setCopyEndDate(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                    />
+                  </label>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-neutral-600">
+                    <input
+                      type="checkbox"
+                      checked={copyOverwrite}
+                      onChange={(e) => setCopyOverwrite(e.target.checked)}
+                      className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
+                    />
+                    Overwrite existing schedules in range
+                  </label>
+                  <span className="text-xs font-semibold text-neutral-500">
+                    Use each rig&apos;s Copy button
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-neutral-500">
+                  Current day is excluded to prevent duplicates.
+                </p>
+                {copyStatus && (
+                  <div
+                    className={`mt-3 rounded-lg px-3 py-2 text-xs font-semibold ${
+                      copyStatus.type === "success"
+                        ? "bg-green-50 text-green-700"
+                        : "bg-red-50 text-red-700"
+                    }`}
+                  >
+                    {copyStatus.message}
+                    <button
+                      onClick={() => setCopyStatus(null)}
+                      className="ml-2 font-bold"
+                    >
+                      x
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-neutral-200 bg-gradient-to-br from-blue-50 via-white to-red-50 p-4 shadow-sm">
+                <h3 className={`${lato.className} text-base font-bold text-neutral-900`}>
+                  Suggested Flow
+                </h3>
+                <div className="mt-2 space-y-2 text-sm text-neutral-700">
+                  <div>
+                    <span className="font-semibold text-[#0b2a5a]">1.</span> Add
+                    jobs with addresses and PM info.
+                  </div>
+                  <div>
+                    <span className="font-semibold text-[#0b2a5a]">2.</span> Add
+                    crew members and job titles.
+                  </div>
+                  <div>
+                    <span className="font-semibold text-[#0b2a5a]">3.</span> Set
+                    up rigs, cranes, or shop categories.
+                  </div>
+                  <div>
+                    <span className="font-semibold text-[#0b2a5a]">4.</span> Build
+                    the schedule, then prepopulate future days.
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-4 lg:grid-cols-2">
               {categories.map((category) => {
                 const catAssignments = assignments.filter(
@@ -1256,6 +1726,14 @@ function CrewScheduler() {
                           title="Print all forms for this rig"
                         >
                           Print Forms
+                        </button>
+                        <button
+                          onClick={() => handleCopyCategoryRange(category.id)}
+                          disabled={copyingCategoryId !== null}
+                          className="rounded-md bg-white/20 px-2 py-1 text-xs font-semibold text-white hover:bg-white/30 transition-colors disabled:opacity-60"
+                          title="Copy this rig's crews to the date range above"
+                        >
+                          {copyingCategoryId === category.id ? "Copying..." : "Copy Rig"}
                         </button>
                         <button
                           onClick={() => addAssignment(category.id)}
@@ -1361,7 +1839,7 @@ function CrewScheduler() {
                               <option value="">Select worker...</option>
                               {workers.map((w) => (
                                 <option key={w.id} value={w.id}>
-                                  {w.name}
+                                  {formatWorkerOption(w)}
                                 </option>
                               ))}
                             </select>
@@ -1389,6 +1867,13 @@ function CrewScheduler() {
                                 </option>
                               ))}
                             </select>
+                            <button
+                              onClick={() => splitAssignment(assignment)}
+                              className="rounded-md border border-neutral-200 px-2 py-1 text-xs font-semibold text-neutral-600 hover:bg-neutral-50"
+                              title="Add another job for this crew member"
+                            >
+                              Split
+                            </button>
                             {assignment.job_id && (
                               <div className="flex gap-1">
                                 <button
@@ -1486,16 +1971,37 @@ function CrewScheduler() {
         {activeTab === "packets" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className={`${lato.className} text-lg font-bold text-neutral-900`}>
-                Daily Packets - {formatDate(selectedDate)}
-              </h3>
-              <button
-                onClick={handleEmailPackets}
-                disabled={packetsSending || scheduledJobsForDate.length === 0}
-                className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a2350] disabled:opacity-50 transition-colors"
-              >
-                {packetsSending ? "Sending..." : `Email All Packets (${scheduledJobsForDate.length})`}
-              </button>
+              <div className="flex items-center gap-2">
+                <h3 className={`${lato.className} text-lg font-bold text-neutral-900`}>
+                  Daily Packets - {formatDate(selectedDate)}
+                </h3>
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                  Per crew member
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() =>
+                    window.open(
+                      "/NEW%20LOG%20%26%20INSPECTION.pdf",
+                      "_blank",
+                      "noopener,noreferrer"
+                    )
+                  }
+                  className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-neutral-700 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                >
+                  Open Log &amp; Inspection PDF
+                </button>
+                <button
+                  onClick={handleEmailPackets}
+                  disabled={packetsSending || scheduledPacketsForDate.length === 0}
+                  className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a2350] disabled:opacity-50 transition-colors"
+                >
+                  {packetsSending
+                    ? "Sending..."
+                    : `Email All Packets (${scheduledPacketsForDate.length})`}
+                </button>
+              </div>
             </div>
 
             {packetsStatus && (
@@ -1513,10 +2019,10 @@ function CrewScheduler() {
               </div>
             )}
 
-            {scheduledJobsForDate.length === 0 ? (
+            {scheduledPacketsForDate.length === 0 ? (
               <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center">
                 <p className="text-neutral-600">
-                  No jobs scheduled for this date. Build the schedule first.
+                  No crew packets scheduled for this date. Build the schedule first.
                 </p>
                 <button
                   onClick={() => setActiveTab("schedule")}
@@ -1527,95 +2033,123 @@ function CrewScheduler() {
               </div>
             ) : (
               <div className="grid gap-4 lg:grid-cols-2">
-                {scheduledJobsForDate.map((job) => (
-                  <div
-                    key={job.job_id}
-                    className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
-                  >
-                    <div className="bg-neutral-50 px-4 py-3 border-b border-neutral-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-semibold text-neutral-900">
-                            {job.job_name}
-                          </span>
-                          {job.job_number && (
-                            <span className="ml-2 rounded bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">
-                              #{job.job_number}
+                {scheduledPacketsForDate.map((packet) => {
+                  const contactDetails = [
+                    packet.hiring_contact_name,
+                    packet.hiring_contact_phone,
+                    packet.hiring_contact_email,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ");
+
+                  return (
+                    <div
+                      key={packet.packet_id}
+                      className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
+                    >
+                      <div className="bg-neutral-50 px-4 py-3 border-b border-neutral-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-semibold text-neutral-900">
+                              {packet.worker_name || "Crew Packet"}
                             </span>
+                            {packet.job_number && (
+                              <span className="ml-2 rounded bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">
+                                #{packet.job_number}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handlePrintCoverSheet(packet.assignment)}
+                              className="rounded-md bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                            >
+                              Cover Sheet
+                            </button>
+                            <button
+                              onClick={() =>
+                                window.open(
+                                  "/NEW%20LOG%20%26%20INSPECTION.pdf",
+                                  "_blank",
+                                  "noopener,noreferrer"
+                                )
+                              }
+                              className="rounded-md bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors"
+                            >
+                              Log &amp; Inspection PDF
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="px-4 py-3 space-y-2 text-sm">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                          {packet.job_name && (
+                            <div>
+                              <span className="text-neutral-500">Job:</span>{" "}
+                              <span className="font-medium">{packet.job_name}</span>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-neutral-500">Rig:</span>{" "}
+                            <span className="font-medium">{packet.rig_name}</span>
+                          </div>
+                          {packet.hiring_contractor && (
+                            <div>
+                              <span className="text-neutral-500">Hiring:</span>{" "}
+                              <span className="font-medium">{packet.hiring_contractor}</span>
+                            </div>
+                          )}
+                          {contactDetails && (
+                            <div>
+                              <span className="text-neutral-500">Contact:</span>{" "}
+                              <span className="font-medium">{contactDetails}</span>
+                            </div>
+                          )}
+                          {packet.superintendent_name && (
+                            <div>
+                              <span className="text-neutral-500">Supt:</span>{" "}
+                              <span className="font-medium">{packet.superintendent_name}</span>
+                            </div>
+                          )}
+                          {packet.truck_number && (
+                            <div>
+                              <span className="text-neutral-500">Truck:</span>{" "}
+                              <span className="font-medium">{packet.truck_number}</span>
+                            </div>
                           )}
                         </div>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handlePrintCoverSheet(job.assignment)}
-                            className="rounded-md bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
-                          >
-                            Cover Sheet
-                          </button>
-                          <button
-                            onClick={() => handlePrintDailyLog(job.assignment)}
-                            className="rounded-md bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors"
-                          >
-                            Daily Log
-                          </button>
+                        {packet.crew_names && (
+                          <div>
+                            <span className="text-neutral-500">Crew:</span>{" "}
+                            <span className="font-medium">{packet.crew_names}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 pt-1">
+                          <label className="text-xs font-semibold text-neutral-500 whitespace-nowrap">
+                            Dig Tess #:
+                          </label>
+                          <input
+                            type="text"
+                            defaultValue={packet.dig_tess_number}
+                            onBlur={(e) => {
+                              updateDigTessNumber(packet.job_id, e.target.value);
+                              // Also update local jobs list
+                              setJobs((prev) =>
+                                prev.map((j) =>
+                                  j.id === packet.job_id
+                                    ? { ...j, dig_tess_number: e.target.value }
+                                    : j
+                                )
+                              );
+                            }}
+                            placeholder="Enter Dig Tess #"
+                            className="flex-1 rounded border border-neutral-300 px-2 py-1 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
                         </div>
                       </div>
                     </div>
-                    <div className="px-4 py-3 space-y-2 text-sm">
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                        {job.customer_name && (
-                          <div>
-                            <span className="text-neutral-500">Customer:</span>{" "}
-                            <span className="font-medium">{job.customer_name}</span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-neutral-500">Rig:</span>{" "}
-                          <span className="font-medium">{job.rig_name}</span>
-                        </div>
-                        {job.superintendent_name && (
-                          <div>
-                            <span className="text-neutral-500">Supt:</span>{" "}
-                            <span className="font-medium">{job.superintendent_name}</span>
-                          </div>
-                        )}
-                        {job.truck_number && (
-                          <div>
-                            <span className="text-neutral-500">Truck:</span>{" "}
-                            <span className="font-medium">{job.truck_number}</span>
-                          </div>
-                        )}
-                      </div>
-                      {job.crew_names && (
-                        <div>
-                          <span className="text-neutral-500">Crew:</span>{" "}
-                          <span className="font-medium">{job.crew_names}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 pt-1">
-                        <label className="text-xs font-semibold text-neutral-500 whitespace-nowrap">
-                          Dig Tess #:
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={job.dig_tess_number}
-                          onBlur={(e) => {
-                            updateDigTessNumber(job.job_id, e.target.value);
-                            // Also update local jobs list
-                            setJobs((prev) =>
-                              prev.map((j) =>
-                                j.id === job.job_id
-                                  ? { ...j, dig_tess_number: e.target.value }
-                                  : j
-                              )
-                            );
-                          }}
-                          placeholder="Enter Dig Tess #"
-                          className="flex-1 rounded border border-neutral-300 px-2 py-1 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1658,6 +2192,42 @@ function CrewScheduler() {
                   value={newJob.customer_name}
                   onChange={(e) =>
                     setNewJob({ ...newJob, customer_name: e.target.value })
+                  }
+                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Hiring Contractor"
+                  value={newJob.hiring_contractor}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, hiring_contractor: e.target.value })
+                  }
+                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Contact Name"
+                  value={newJob.hiring_contact_name}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, hiring_contact_name: e.target.value })
+                  }
+                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Contact Phone"
+                  value={newJob.hiring_contact_phone}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, hiring_contact_phone: e.target.value })
+                  }
+                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+                <input
+                  type="email"
+                  placeholder="Contact Email"
+                  value={newJob.hiring_contact_email}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, hiring_contact_email: e.target.value })
                   }
                   className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                 />
@@ -1789,6 +2359,23 @@ function CrewScheduler() {
                               {job.pm_phone ? ` • ${job.pm_phone}` : ""}
                             </div>
                           )}
+                          {(job.hiring_contractor ||
+                            job.hiring_contact_name ||
+                            job.hiring_contact_phone ||
+                            job.hiring_contact_email) && (
+                            <div className="mt-1 text-sm text-neutral-500">
+                              {job.hiring_contractor
+                                ? `Hiring: ${job.hiring_contractor}`
+                                : "Hiring Contact"}{" "}
+                              {[
+                                job.hiring_contact_name,
+                                job.hiring_contact_phone,
+                                job.hiring_contact_email,
+                              ]
+                                .filter(Boolean)
+                                .join(" • ")}
+                            </div>
+                          )}
                           {job.customer_name && (
                             <div className="mt-1 text-sm text-neutral-500">
                               Customer: {job.customer_name}
@@ -1820,7 +2407,7 @@ function CrewScheduler() {
               <h3
                 className={`${lato.className} mb-3 font-bold text-neutral-900`}
               >
-                Add New Worker
+                Add Crew Member
               </h3>
               <div className="flex flex-wrap gap-3">
                 <input
@@ -1836,6 +2423,13 @@ function CrewScheduler() {
                   value={newWorkerPhone}
                   onChange={(e) => setNewWorkerPhone(e.target.value)}
                   className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Role / Title (optional)"
+                  value={newWorkerRole}
+                  onChange={(e) => setNewWorkerRole(e.target.value)}
+                  className="w-48 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                 />
                 <button
                   onClick={addWorker}
@@ -1853,13 +2447,13 @@ function CrewScheduler() {
                 <h3
                   className={`${lato.className} font-bold text-neutral-900`}
                 >
-                  Workers ({workers.length})
+                  Crew Members ({workers.length})
                 </h3>
               </div>
               <div className="divide-y">
                 {workers.length === 0 ? (
                   <div className="px-4 py-8 text-center text-neutral-500">
-                    No workers added yet. Add your first worker above.
+                    No crew members added yet. Add your first crew member above.
                   </div>
                 ) : (
                   workers.map((worker) => (
@@ -1867,15 +2461,38 @@ function CrewScheduler() {
                       key={worker.id}
                       className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50"
                     >
-                      <div>
-                        <div className="font-semibold text-neutral-900">
-                          {worker.name}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className="font-semibold text-neutral-900">
+                            {worker.name}
+                          </div>
+                          {worker.role && (
+                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                              {worker.role}
+                            </span>
+                          )}
                         </div>
                         {worker.phone && (
                           <div className="text-sm text-neutral-500">
                             {worker.phone}
                           </div>
                         )}
+                        <div className="mt-2 flex items-center gap-2">
+                          <label className="text-xs font-semibold text-neutral-500">
+                            Title
+                          </label>
+                          <input
+                            type="text"
+                            defaultValue={worker.role || ""}
+                            placeholder="Set title..."
+                            onBlur={(e) =>
+                              updateWorker(worker.id, {
+                                role: e.target.value.trim() || null,
+                              })
+                            }
+                            className="w-48 rounded border border-neutral-300 px-2 py-1 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                        </div>
                       </div>
                       <button
                         onClick={() => deleteWorker(worker.id)}

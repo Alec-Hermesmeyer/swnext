@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS crew_jobs (
   job_name TEXT NOT NULL,
   job_number TEXT,
   customer_name TEXT,
+  hiring_contractor TEXT,
+  hiring_contact_name TEXT,
+  hiring_contact_phone TEXT,
+  hiring_contact_email TEXT,
   address TEXT,
   city TEXT,
   zip TEXT,
@@ -140,6 +144,12 @@ ALTER TABLE crew_schedules ADD COLUMN IF NOT EXISTS finalized_by TEXT;
 
 -- Dig Tess number on crew_jobs
 ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS dig_tess_number TEXT;
+
+-- Hiring contractor contact fields on crew_jobs
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contractor TEXT;
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_name TEXT;
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_phone TEXT;
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_email TEXT;
 
 -- RLS + policies for new tables
 ALTER TABLE crew_superintendents ENABLE ROW LEVEL SECURITY;

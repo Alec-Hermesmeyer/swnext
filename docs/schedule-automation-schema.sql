@@ -45,6 +45,14 @@ CREATE TABLE IF NOT EXISTS schedule_rig_details (
 ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS dig_tess_number TEXT;
 
 -- ============================================
+-- ALTER: Hiring contractor contact fields
+-- ============================================
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contractor TEXT;
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_name TEXT;
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_phone TEXT;
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_email TEXT;
+
+-- ============================================
 -- ALTER: Add finalization fields to crew_schedules
 -- ============================================
 ALTER TABLE crew_schedules ADD COLUMN IF NOT EXISTS is_finalized BOOLEAN DEFAULT false;
