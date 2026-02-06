@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260206-101445", "file": "/Users/alechermesmeyer/Desktop/final/swnext/docs/crew-scheduler-schema.sql", "timestamp": "2026-02-06T16:14:45Z", "type": "post-edit", "branch": "tailwind-only", "diff_summary": " docs/crew-scheduler-schema.sql | 57 ++++++++++++++++++++++++++++++++++++++++++  1 file changed, 57 insertions(+) "}
