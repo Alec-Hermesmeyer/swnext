@@ -51,7 +51,11 @@ export default async function handler(req, res) {
   const buildCoverSheetDocx = (packet) => {
     const template = fs.readFileSync(templatePath, "binary");
     const zip = new PizZip(template);
-    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      delimiters: { start: "{{", end: "}}" },
+    });
 
     const data = {
       job_number: packet.job_number || "",

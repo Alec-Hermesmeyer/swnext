@@ -9,12 +9,39 @@ import { Lato } from "next/font/google";
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 // Format date for display
+const toLocalDate = (value) => {
+  if (!value) return new Date();
+  if (value instanceof Date) return value;
+  const str = String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return new Date(`${str}T12:00:00`);
+  }
+  return new Date(value);
+};
+
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("en-US", {
+  return toLocalDate(date).toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
+  });
+};
+
+const formatShortDate = (date) =>
+  toLocalDate(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+const formatDateTime = (value) => {
+  if (!value) return "";
+  return new Date(value).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 };
 
@@ -59,6 +86,8 @@ function CrewScheduler() {
   const [categories, setCategories] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [customerNames, setCustomerNames] = useState([]);
+  const [recentSchedules, setRecentSchedules] = useState([]);
   const [currentSchedule, setCurrentSchedule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -68,6 +97,11 @@ function CrewScheduler() {
   const [newWorkerName, setNewWorkerName] = useState("");
   const [newWorkerPhone, setNewWorkerPhone] = useState("");
   const [newWorkerRole, setNewWorkerRole] = useState("");
+  const [bulkCrewText, setBulkCrewText] = useState("");
+  const [bulkCrewRows, setBulkCrewRows] = useState([]);
+  const [bulkCrewError, setBulkCrewError] = useState(null);
+  const [bulkCrewImporting, setBulkCrewImporting] = useState(false);
+  const [bulkCrewFilename, setBulkCrewFilename] = useState("");
 
   // New category form
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -77,6 +111,7 @@ function CrewScheduler() {
   const [newJob, setNewJob] = useState({
     job_name: "",
     job_number: "",
+    dig_tess_number: "",
     customer_name: "",
     hiring_contractor: "",
     hiring_contact_name: "",
@@ -125,6 +160,8 @@ function CrewScheduler() {
     fetchJobs();
     fetchSuperintendents();
     fetchTrucks();
+    fetchCustomers();
+    fetchRecentSchedules();
   }, []);
 
   // Fetch schedule when date changes
@@ -133,6 +170,10 @@ function CrewScheduler() {
       fetchSchedule(selectedDate);
     }
   }, [selectedDate]);
+
+  useEffect(() => {
+    fetchRecentSchedules();
+  }, [currentSchedule?.id]);
 
   const fetchWorkers = async () => {
     const { data, error } = await supabase
@@ -179,29 +220,175 @@ function CrewScheduler() {
     if (!error) setTrucks(data || []);
   };
 
-  const addJob = async () => {
-    if (!newJob.job_name.trim()) return;
-    setSaving(true);
-    const { error } = await supabase.from("crew_jobs").insert({
-      ...newJob,
-      job_name: newJob.job_name.trim(),
-      job_number: newJob.job_number.trim() || null,
-      customer_name: newJob.customer_name.trim() || null,
-      hiring_contractor: newJob.hiring_contractor.trim() || null,
-      hiring_contact_name: newJob.hiring_contact_name.trim() || null,
-      hiring_contact_phone: newJob.hiring_contact_phone.trim() || null,
-      hiring_contact_email: newJob.hiring_contact_email.trim() || null,
-      address: newJob.address.trim() || null,
-      city: newJob.city.trim() || null,
-      zip: newJob.zip.trim() || null,
-      pm_name: newJob.pm_name.trim() || null,
-      pm_phone: newJob.pm_phone.trim() || null,
-      default_rig: newJob.default_rig.trim() || null,
+  const normalizeCustomerName = (name) =>
+    String(name || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+
+  const normalizeCrewKey = (row) =>
+    `${String(row.name || "").trim().toLowerCase()}::${String(row.phone || "")
+      .trim()
+      .toLowerCase()}`;
+
+  const splitCsvLine = (line) => {
+    if (!line) return [];
+    if (line.includes("\t") && !line.includes(",")) {
+      return line.split("\t").map((s) => s.trim());
+    }
+    const result = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === "," && !inQuotes) {
+        result.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
+  const parseCrewInput = (raw) => {
+    const text = String(raw || "")
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n");
+    const lines = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!lines.length) {
+      return { rows: [], error: "No crew names found. Add at least one name." };
+    }
+
+    const firstColumns = splitCsvLine(lines[0]).map((c) => c.toLowerCase());
+    const headerMap = {};
+    firstColumns.forEach((col, idx) => {
+      if (col.includes("name")) headerMap.name = idx;
+      if (col.includes("phone")) headerMap.phone = idx;
+      if (col.includes("role") || col.includes("title")) headerMap.role = idx;
     });
+    const hasHeader = Object.keys(headerMap).length > 0;
+
+    const rows = [];
+    const startIndex = hasHeader ? 1 : 0;
+    for (let i = startIndex; i < lines.length; i += 1) {
+      const cols = splitCsvLine(lines[i]);
+      if (!cols.length) continue;
+      if (hasHeader) {
+        const name = cols[headerMap.name] || "";
+        if (!name.trim()) continue;
+        rows.push({
+          name: name.trim(),
+          phone: (cols[headerMap.phone] || "").trim(),
+          role: (cols[headerMap.role] || "").trim(),
+        });
+      } else if (cols.length === 1) {
+        rows.push({ name: cols[0].trim(), phone: "", role: "" });
+      } else {
+        rows.push({
+          name: (cols[0] || "").trim(),
+          phone: (cols[1] || "").trim(),
+          role: (cols[2] || "").trim(),
+        });
+      }
+    }
+
+    const deduped = new Map();
+    rows.forEach((row) => {
+      if (!row.name) return;
+      deduped.set(normalizeCrewKey(row), row);
+    });
+
+    return { rows: Array.from(deduped.values()), error: null };
+  };
+
+  const fetchCustomers = async () => {
+    const { data, error } = await supabase
+      .from("Customer")
+      .select("id, name");
     if (!error) {
+      const uniqueMap = new Map();
+      (data || []).forEach((c) => {
+        const clean = String(c?.name || "").trim();
+        if (!clean) return;
+        const key = normalizeCustomerName(clean);
+        if (!uniqueMap.has(key)) uniqueMap.set(key, clean);
+      });
+      setCustomerNames(
+        Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b))
+      );
+    }
+  };
+
+  const ensureCustomerExists = async (name) => {
+    const clean = String(name || "").trim();
+    if (!clean) return;
+    const key = normalizeCustomerName(clean);
+    const existingSet = new Set(customerNames.map(normalizeCustomerName));
+    if (existingSet.has(key)) return;
+    const { data, error } = await supabase
+      .from("Customer")
+      .insert({ name: clean })
+      .select("name")
+      .single();
+    if (!error && data?.name) {
+      setCustomerNames((prev) => {
+        const map = new Map(prev.map((n) => [normalizeCustomerName(n), n]));
+        map.set(key, clean);
+        return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
+      });
+    }
+  };
+
+  const fetchRecentSchedules = async () => {
+    const { data, error } = await supabase
+      .from("crew_schedules")
+      .select("id, schedule_date, is_finalized, finalized_at")
+      .order("schedule_date", { ascending: false })
+      .limit(10);
+    if (!error) setRecentSchedules(data || []);
+  };
+
+  const normalizeJobInput = (job) => ({
+    job_name: String(job.job_name || "").trim(),
+    job_number: String(job.job_number || "").trim() || null,
+    dig_tess_number: String(job.dig_tess_number || "").trim() || null,
+    customer_name: String(job.customer_name || "").trim() || null,
+    hiring_contractor: String(job.hiring_contractor || "").trim() || null,
+    hiring_contact_name: String(job.hiring_contact_name || "").trim() || null,
+    hiring_contact_phone: String(job.hiring_contact_phone || "").trim() || null,
+    hiring_contact_email: String(job.hiring_contact_email || "").trim() || null,
+    address: String(job.address || "").trim() || null,
+    city: String(job.city || "").trim() || null,
+    zip: String(job.zip || "").trim() || null,
+    pm_name: String(job.pm_name || "").trim() || null,
+    pm_phone: String(job.pm_phone || "").trim() || null,
+    default_rig: String(job.default_rig || "").trim() || null,
+    crane_required: !!job.crane_required,
+  });
+
+  const addJob = async () => {
+    const payload = normalizeJobInput(newJob);
+    if (!payload.job_name) return;
+    setSaving(true);
+    const { error } = await supabase.from("crew_jobs").insert(payload);
+    if (!error) {
+      await ensureCustomerExists(payload.hiring_contractor);
       setNewJob({
         job_name: "",
         job_number: "",
+        dig_tess_number: "",
         customer_name: "",
         hiring_contractor: "",
         hiring_contact_name: "",
@@ -224,6 +411,28 @@ function CrewScheduler() {
     await supabase.from("crew_jobs").update(updates).eq("id", id);
     fetchJobs();
     setEditingJob(null);
+    await ensureCustomerExists(updates.hiring_contractor);
+  };
+
+  const startEditingJob = (job) => {
+    setEditingJob({
+      id: job.id,
+      job_name: job.job_name || "",
+      job_number: job.job_number || "",
+      dig_tess_number: job.dig_tess_number || "",
+      customer_name: job.customer_name || "",
+      hiring_contractor: job.hiring_contractor || "",
+      hiring_contact_name: job.hiring_contact_name || "",
+      hiring_contact_phone: job.hiring_contact_phone || "",
+      hiring_contact_email: job.hiring_contact_email || "",
+      address: job.address || "",
+      city: job.city || "",
+      zip: job.zip || "",
+      pm_name: job.pm_name || "",
+      pm_phone: job.pm_phone || "",
+      default_rig: job.default_rig || "",
+      crane_required: !!job.crane_required,
+    });
   };
 
   const deleteJob = async (id) => {
@@ -317,6 +526,56 @@ function CrewScheduler() {
     fetchWorkers();
   };
 
+  const handleBulkCrewParse = (text) => {
+    const { rows, error } = parseCrewInput(text);
+    setBulkCrewRows(rows);
+    setBulkCrewError(error);
+  };
+
+  const handleBulkCrewFile = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setBulkCrewFilename(file.name);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result || "";
+      setBulkCrewText(String(content));
+      handleBulkCrewParse(String(content));
+    };
+    reader.readAsText(file);
+  };
+
+  const clearBulkCrew = () => {
+    setBulkCrewText("");
+    setBulkCrewRows([]);
+    setBulkCrewError(null);
+    setBulkCrewFilename("");
+  };
+
+  const importBulkCrew = async () => {
+    if (!bulkCrewRows.length) return;
+    setBulkCrewImporting(true);
+    setBulkCrewError(null);
+    try {
+      const chunkSize = 200;
+      for (let i = 0; i < bulkCrewRows.length; i += chunkSize) {
+        const chunk = bulkCrewRows.slice(i, i + chunkSize);
+        const payload = chunk.map((row) => ({
+          name: row.name,
+          phone: row.phone || null,
+          role: row.role || null,
+        }));
+        const { error } = await supabase.from("crew_workers").insert(payload);
+        if (error) throw error;
+      }
+      clearBulkCrew();
+      fetchWorkers();
+    } catch (err) {
+      setBulkCrewError("Import failed. Please check the file and try again.");
+    }
+    setBulkCrewImporting(false);
+  };
+
   const addCategory = async () => {
     if (!newCategoryName.trim()) return;
     setSaving(true);
@@ -359,6 +618,31 @@ function CrewScheduler() {
 
   const deleteAssignment = async (assignmentId) => {
     await supabase.from("crew_assignments").delete().eq("id", assignmentId);
+    fetchSchedule(selectedDate);
+  };
+
+  const clearCategorySchedule = async (categoryId) => {
+    if (!currentSchedule) return;
+    const category = categories.find((c) => c.id === categoryId);
+    if (
+      !confirm(
+        `Clear all crew assignments and rig details for ${category?.name || "this category"}?`
+      )
+    ) {
+      return;
+    }
+    setSaving(true);
+    await supabase
+      .from("crew_assignments")
+      .delete()
+      .eq("schedule_id", currentSchedule.id)
+      .eq("category_id", categoryId);
+    await supabase
+      .from("schedule_rig_details")
+      .delete()
+      .eq("schedule_id", currentSchedule.id)
+      .eq("category_id", categoryId);
+    setSaving(false);
     fetchSchedule(selectedDate);
   };
 
@@ -624,7 +908,10 @@ function CrewScheduler() {
   // --- Phase 5: Save & Email Schedule ---
   const handleSaveAndEmail = async () => {
     if (!currentSchedule) return;
-    if (!confirm("Finalize and email this schedule? Cesar will receive the schedule and Phil will be notified.")) return;
+    const confirmMessage = currentSchedule?.is_finalized
+      ? "Resend this schedule email? Updates will be sent to Cesar and Phil."
+      : "Finalize and email this schedule? Cesar will receive the schedule and Phil will be notified.";
+    if (!confirm(confirmMessage)) return;
 
     setEmailSending(true);
     setEmailStatus(null);
@@ -1411,6 +1698,13 @@ function CrewScheduler() {
     printWindow.print();
   };
 
+  const shiftSelectedDate = (days) => {
+    const base = new Date(`${selectedDate}T00:00:00`);
+    if (Number.isNaN(base.getTime())) return;
+    base.setDate(base.getDate() + days);
+    setSelectedDate(toDateString(base));
+  };
+
   // Print all forms for a category/rig
   const handlePrintAllForCategory = (categoryId) => {
     const catAssignments = assignments.filter(
@@ -1490,15 +1784,39 @@ function CrewScheduler() {
                 Finalized
               </span>
             )}
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-            />
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 items-center rounded-lg border border-neutral-300 bg-white shadow-sm">
+                <button
+                  onClick={() => shiftSelectedDate(-1)}
+                  className="flex h-9 items-center rounded-l-lg px-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-50"
+                  title="Previous day"
+                >
+                  ◀
+                </button>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="h-9 w-[150px] bg-transparent px-2 text-sm focus:outline-none"
+                />
+                <button
+                  onClick={() => shiftSelectedDate(1)}
+                  className="flex h-9 items-center rounded-r-lg px-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-50"
+                  title="Next day"
+                >
+                  ▶
+                </button>
+              </div>
+              <button
+                onClick={() => setSelectedDate(toDateString(new Date()))}
+                className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+              >
+                Today
+              </button>
+            </div>
             <button
               onClick={handlePrint}
-              className="rounded-lg bg-neutral-600 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-700 transition-colors"
+              className="h-9 rounded-lg bg-neutral-600 px-4 text-sm font-semibold text-white hover:bg-neutral-700 transition-colors"
             >
               Schedule PDF
             </button>
@@ -1531,16 +1849,20 @@ function CrewScheduler() {
                   });
                 }
               }}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+              className="h-9 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
             >
               Print All Forms
             </button>
             <button
               onClick={handleSaveAndEmail}
               disabled={emailSending}
-              className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a2350] disabled:opacity-50 transition-colors"
+              className="h-9 rounded-lg bg-[#0b2a5a] px-4 text-sm font-semibold text-white hover:bg-[#0a2350] disabled:opacity-50 transition-colors"
             >
-              {emailSending ? "Sending..." : "Save & Email Schedule"}
+              {emailSending
+                ? "Sending..."
+                : currentSchedule?.is_finalized
+                ? "Resend Schedule"
+                : "Save & Email Schedule"}
             </button>
           </div>
         </div>
@@ -1567,7 +1889,10 @@ function CrewScheduler() {
         {/* Finalized warning */}
         {currentSchedule?.is_finalized && activeTab === "schedule" && (
           <div className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            This schedule has been finalized and emailed. Edits will not be automatically re-sent.
+            This schedule was finalized
+            {currentSchedule?.finalized_at
+              ? ` on ${formatDateTime(currentSchedule.finalized_at)}`
+              : ""}. You can still edit and resend if plans change.
           </div>
         )}
 
@@ -1607,9 +1932,6 @@ function CrewScheduler() {
                   <h3 className={`${lato.className} text-base font-bold text-neutral-900`}>
                     Prepopulate By Rig
                   </h3>
-                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                    Copy crews + rig details
-                  </span>
                 </div>
                 <p className="mt-1 text-sm text-neutral-600">
                   Choose a date range, then click &quot;Copy Rig&quot; on the rig
@@ -1622,7 +1944,7 @@ function CrewScheduler() {
                       type="date"
                       value={copyStartDate}
                       onChange={(e) => setCopyStartDate(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                      className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-3 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                     />
                   </label>
                   <label className="text-xs font-semibold text-neutral-500">
@@ -1631,7 +1953,7 @@ function CrewScheduler() {
                       type="date"
                       value={copyEndDate}
                       onChange={(e) => setCopyEndDate(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                      className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-3 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                     />
                   </label>
                 </div>
@@ -1696,6 +2018,57 @@ function CrewScheduler() {
               </div>
             </div>
 
+            {recentSchedules.length > 0 && (
+              <div className="print:hidden mb-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className={`${lato.className} text-base font-bold text-neutral-900`}>
+                      Recent Schedules
+                    </h3>
+                    <p className="text-xs text-neutral-500">
+                      Jump to a previous day to review, edit, or resend.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedDate(toDateString(new Date()))}
+                    className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
+                  >
+                    Go to Today
+                  </button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {recentSchedules.map((sched) => {
+                    const isSelected = sched.schedule_date === selectedDate;
+                    const statusClass = sched.is_finalized
+                      ? isSelected
+                        ? "text-emerald-200"
+                        : "text-emerald-600"
+                      : isSelected
+                      ? "text-neutral-200"
+                      : "text-neutral-400";
+                    return (
+                      <button
+                        key={sched.id}
+                        onClick={() => setSelectedDate(sched.schedule_date)}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                          isSelected
+                            ? "border-[#0b2a5a] bg-[#0b2a5a] text-white"
+                            : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+                        }`}
+                      >
+                        {formatShortDate(sched.schedule_date)}
+                        <span
+                          className={`ml-2 text-[10px] uppercase ${statusClass}`}
+                        >
+                          {sched.is_finalized ? "Finalized" : "Draft"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="grid gap-4 lg:grid-cols-2">
               {categories.map((category) => {
                 const catAssignments = assignments.filter(
@@ -1734,6 +2107,13 @@ function CrewScheduler() {
                           title="Copy this rig's crews to the date range above"
                         >
                           {copyingCategoryId === category.id ? "Copying..." : "Copy Rig"}
+                        </button>
+                        <button
+                          onClick={() => clearCategorySchedule(category.id)}
+                          className="rounded-md bg-white/20 px-2 py-1 text-xs font-semibold text-white hover:bg-white/30 transition-colors"
+                          title="Clear crew assignments and rig details for this category"
+                        >
+                          Clear Rig
                         </button>
                         <button
                           onClick={() => addAssignment(category.id)}
@@ -1788,7 +2168,7 @@ function CrewScheduler() {
                         </select>
                         <input
                           type="text"
-                          placeholder="Crane info"
+                          placeholder="Crane ID / Name"
                           defaultValue={detail.crane_info || ""}
                           onBlur={(e) =>
                             updateRigDetail(
@@ -1801,7 +2181,7 @@ function CrewScheduler() {
                         />
                         <input
                           type="text"
-                          placeholder="Notes"
+                          placeholder="Location / Notes"
                           defaultValue={detail.notes || ""}
                           onBlur={(e) =>
                             updateRigDetail(
@@ -2188,6 +2568,15 @@ function CrewScheduler() {
                 />
                 <input
                   type="text"
+                  placeholder="Dig Tess #"
+                  value={newJob.dig_tess_number}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, dig_tess_number: e.target.value })
+                  }
+                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+                <input
+                  type="text"
                   placeholder="Customer Name"
                   value={newJob.customer_name}
                   onChange={(e) =>
@@ -2202,6 +2591,7 @@ function CrewScheduler() {
                   onChange={(e) =>
                     setNewJob({ ...newJob, hiring_contractor: e.target.value })
                   }
+                  list="customer-options"
                   className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                 />
                 <input
@@ -2286,6 +2676,10 @@ function CrewScheduler() {
                   className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                 />
               </div>
+              <p className="mt-2 text-xs text-neutral-500">
+                Hiring contractor names come from your customer list. Start typing to select
+                an existing name or enter a new one.
+              </p>
               <div className="mt-3 flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm text-neutral-600">
                   <input
@@ -2310,6 +2704,212 @@ function CrewScheduler() {
                 </button>
               </div>
             </div>
+
+            {customerNames.length > 0 && (
+              <datalist id="customer-options">
+                {customerNames.map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
+            )}
+
+            {editingJob && (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h3
+                    className={`${lato.className} font-bold text-neutral-900`}
+                  >
+                    Edit Job: {editingJob.job_name || "Untitled"}
+                  </h3>
+                  <button
+                    onClick={() => setEditingJob(null)}
+                    className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-white/70"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <input
+                    type="text"
+                    placeholder="Job Name *"
+                    value={editingJob.job_name}
+                    onChange={(e) =>
+                      setEditingJob({ ...editingJob, job_name: e.target.value })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Job Number"
+                    value={editingJob.job_number}
+                    onChange={(e) =>
+                      setEditingJob({ ...editingJob, job_number: e.target.value })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Dig Tess #"
+                    value={editingJob.dig_tess_number}
+                    onChange={(e) =>
+                      setEditingJob({
+                        ...editingJob,
+                        dig_tess_number: e.target.value,
+                      })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Customer Name"
+                    value={editingJob.customer_name}
+                    onChange={(e) =>
+                      setEditingJob({
+                        ...editingJob,
+                        customer_name: e.target.value,
+                      })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Hiring Contractor"
+                    value={editingJob.hiring_contractor}
+                    onChange={(e) =>
+                      setEditingJob({
+                        ...editingJob,
+                        hiring_contractor: e.target.value,
+                      })
+                    }
+                    list="customer-options"
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Contact Name"
+                    value={editingJob.hiring_contact_name}
+                    onChange={(e) =>
+                      setEditingJob({
+                        ...editingJob,
+                        hiring_contact_name: e.target.value,
+                      })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Contact Phone"
+                    value={editingJob.hiring_contact_phone}
+                    onChange={(e) =>
+                      setEditingJob({
+                        ...editingJob,
+                        hiring_contact_phone: e.target.value,
+                      })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Contact Email"
+                    value={editingJob.hiring_contact_email}
+                    onChange={(e) =>
+                      setEditingJob({
+                        ...editingJob,
+                        hiring_contact_email: e.target.value,
+                      })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Address"
+                    value={editingJob.address}
+                    onChange={(e) =>
+                      setEditingJob({ ...editingJob, address: e.target.value })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={editingJob.city}
+                    onChange={(e) =>
+                      setEditingJob({ ...editingJob, city: e.target.value })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="ZIP"
+                    value={editingJob.zip}
+                    onChange={(e) =>
+                      setEditingJob({ ...editingJob, zip: e.target.value })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="S&W PM Name"
+                    value={editingJob.pm_name}
+                    onChange={(e) =>
+                      setEditingJob({ ...editingJob, pm_name: e.target.value })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="PM Phone"
+                    value={editingJob.pm_phone}
+                    onChange={(e) =>
+                      setEditingJob({ ...editingJob, pm_phone: e.target.value })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Default Rig"
+                    value={editingJob.default_rig}
+                    onChange={(e) =>
+                      setEditingJob({ ...editingJob, default_rig: e.target.value })
+                    }
+                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <label className="flex items-center gap-2 text-sm text-neutral-600">
+                    <input
+                      type="checkbox"
+                      checked={editingJob.crane_required}
+                      onChange={(e) =>
+                        setEditingJob({
+                          ...editingJob,
+                          crane_required: e.target.checked,
+                        })
+                      }
+                      className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
+                    />
+                    Crane Required
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditingJob(null)}
+                      className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateJob(editingJob.id, normalizeJobInput(editingJob))
+                      }
+                      disabled={!editingJob.job_name.trim()}
+                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Jobs List */}
             <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
@@ -2359,6 +2959,11 @@ function CrewScheduler() {
                               {job.pm_phone ? ` • ${job.pm_phone}` : ""}
                             </div>
                           )}
+                          {job.dig_tess_number && (
+                            <div className="mt-1 text-sm text-neutral-500">
+                              Dig Tess #: {job.dig_tess_number}
+                            </div>
+                          )}
                           {(job.hiring_contractor ||
                             job.hiring_contact_name ||
                             job.hiring_contact_phone ||
@@ -2382,12 +2987,20 @@ function CrewScheduler() {
                             </div>
                           )}
                         </div>
-                        <button
-                          onClick={() => deleteJob(job.id)}
-                          className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                        >
-                          Deactivate
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => startEditingJob(job)}
+                            className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-neutral-100 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteJob(job.id)}
+                            className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                          >
+                            Deactivate
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -2439,6 +3052,105 @@ function CrewScheduler() {
                   Add Worker
                 </button>
               </div>
+            </div>
+
+            {/* Bulk Add Crew */}
+            <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className={`${lato.className} mb-1 font-bold text-neutral-900`}>
+                    Bulk Add Crew
+                  </h3>
+                  <p className="text-sm text-neutral-600">
+                    Upload a CSV or paste a list. Supported columns: `name`, `phone`,
+                    `role` (optional). You can also paste one name per line.
+                  </p>
+                </div>
+                {bulkCrewRows.length > 0 && (
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                    {bulkCrewRows.length} ready
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-3 grid gap-3 lg:grid-cols-[1fr,1fr]">
+                <label className="text-xs font-semibold text-neutral-500">
+                  Upload file
+                  <input
+                    type="file"
+                    accept=".csv,.txt"
+                    onChange={handleBulkCrewFile}
+                    className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  {bulkCrewFilename && (
+                    <span className="mt-1 block text-xs text-neutral-500">
+                      Loaded: {bulkCrewFilename}
+                    </span>
+                  )}
+                </label>
+                <label className="text-xs font-semibold text-neutral-500">
+                  Or paste list
+                  <textarea
+                    value={bulkCrewText}
+                    onChange={(e) => setBulkCrewText(e.target.value)}
+                    placeholder="Name, Phone, Role\nJane Smith, 214-555-0100, Operator\nJohn Doe\n"
+                    rows={4}
+                    className="mt-1 w-full resize-y rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => handleBulkCrewParse(bulkCrewText)}
+                  className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                >
+                  Preview List
+                </button>
+                <button
+                  onClick={importBulkCrew}
+                  disabled={bulkCrewImporting || bulkCrewRows.length === 0}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {bulkCrewImporting
+                    ? "Importing..."
+                    : `Import ${bulkCrewRows.length || ""}`}
+                </button>
+                <button
+                  onClick={clearBulkCrew}
+                  className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                >
+                  Clear
+                </button>
+                {bulkCrewError && (
+                  <span className="text-sm font-semibold text-red-600">
+                    {bulkCrewError}
+                  </span>
+                )}
+              </div>
+
+              {bulkCrewRows.length > 0 && (
+                <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                  Preview:
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {bulkCrewRows.slice(0, 8).map((row, idx) => (
+                      <span
+                        key={`${row.name}-${idx}`}
+                        className="rounded-full bg-white px-2 py-1"
+                      >
+                        {row.name}
+                        {row.role ? ` — ${row.role}` : ""}
+                        {row.phone ? ` • ${row.phone}` : ""}
+                      </span>
+                    ))}
+                    {bulkCrewRows.length > 8 && (
+                      <span className="text-neutral-500">
+                        +{bulkCrewRows.length - 8} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Workers List */}
