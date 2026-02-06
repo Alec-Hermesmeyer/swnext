@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260206-101304", "file": "/Users/alechermesmeyer/Desktop/final/swnext/pages/api/send-schedule.js", "timestamp": "2026-02-06T16:13:04Z", "type": "post-edit", "branch": "tailwind-only", "diff_summary": " pages/api/send-schedule.js | 142 +++++++++++++++++++++++++++++++++++++++++++++  1 file changed, 142 insertions(+) "}

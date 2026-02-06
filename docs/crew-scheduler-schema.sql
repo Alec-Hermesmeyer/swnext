@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS crew_jobs (
   job_name TEXT NOT NULL,
   job_number TEXT,
   customer_name TEXT,
+  hiring_contractor TEXT,
+  hiring_contact_name TEXT,
+  hiring_contact_phone TEXT,
+  hiring_contact_email TEXT,
   address TEXT,
   city TEXT,
   zip TEXT,
@@ -96,3 +100,66 @@ CREATE INDEX IF NOT EXISTS idx_jobs_number ON crew_jobs(job_number);
 -- Migration: Add job_id column to existing crew_assignments table
 -- Run this if you already have the table created:
 -- ALTER TABLE crew_assignments ADD COLUMN IF NOT EXISTS job_id UUID REFERENCES crew_jobs(id) ON DELETE SET NULL;
+
+-- ============================================
+-- Schedule Automation Extension Tables
+-- See also: /docs/schedule-automation-schema.sql
+-- ============================================
+
+-- Superintendents table
+CREATE TABLE IF NOT EXISTS crew_superintendents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Trucks table
+CREATE TABLE IF NOT EXISTS crew_trucks (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  truck_number TEXT NOT NULL,
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Per-rig details (superintendent, truck, crane per rig per day)
+CREATE TABLE IF NOT EXISTS schedule_rig_details (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  schedule_id UUID REFERENCES crew_schedules(id) ON DELETE CASCADE,
+  category_id UUID REFERENCES crew_categories(id) ON DELETE CASCADE,
+  superintendent_id UUID REFERENCES crew_superintendents(id) ON DELETE SET NULL,
+  truck_id UUID REFERENCES crew_trucks(id) ON DELETE SET NULL,
+  crane_info TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(schedule_id, category_id)
+);
+
+-- Finalization fields on crew_schedules
+ALTER TABLE crew_schedules ADD COLUMN IF NOT EXISTS is_finalized BOOLEAN DEFAULT false;
+ALTER TABLE crew_schedules ADD COLUMN IF NOT EXISTS finalized_at TIMESTAMPTZ;
+ALTER TABLE crew_schedules ADD COLUMN IF NOT EXISTS finalized_by TEXT;
+
+-- Dig Tess number on crew_jobs
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS dig_tess_number TEXT;
+
+-- Hiring contractor contact fields on crew_jobs
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contractor TEXT;
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_name TEXT;
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_phone TEXT;
+ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_email TEXT;
+
+-- RLS + policies for new tables
+ALTER TABLE crew_superintendents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE crew_trucks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schedule_rig_details ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all for authenticated users" ON crew_superintendents FOR ALL USING (true);
+CREATE POLICY "Allow all for authenticated users" ON crew_trucks FOR ALL USING (true);
+CREATE POLICY "Allow all for authenticated users" ON schedule_rig_details FOR ALL USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_rig_details_schedule ON schedule_rig_details(schedule_id);
+CREATE INDEX IF NOT EXISTS idx_rig_details_category ON schedule_rig_details(category_id);
+CREATE INDEX IF NOT EXISTS idx_superintendents_active ON crew_superintendents(is_active);
+CREATE INDEX IF NOT EXISTS idx_trucks_active ON crew_trucks(is_active);
