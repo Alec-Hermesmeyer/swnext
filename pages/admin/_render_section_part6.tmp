@@ -1,0 +1,126 @@
+
+                {/* ---- SUPERS TAB ---- */}
+                {managePanelTab === "supers" && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
+                        Add New Superintendent
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        <input
+                          type="text"
+                          placeholder="Superintendent name"
+                          value={newSuperintendentName}
+                          onChange={(e) => setNewSuperintendentName(e.target.value)}
+                          className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Phone (optional)"
+                          value={newSuperintendentPhone}
+                          onChange={(e) => setNewSuperintendentPhone(e.target.value)}
+                          className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <button
+                          onClick={addSuperintendent}
+                          disabled={saving || !newSuperintendentName.trim()}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Superintendent
+                        </button>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                      <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                          Superintendents ({superintendents.length})
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {superintendents.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No superintendents added yet.
+                          </div>
+                        ) : (
+                          superintendents.map((s) => (
+                            <div key={s.id} className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50">
+                              <div>
+                                <div className="font-semibold text-neutral-900">{s.name}</div>
+                                {s.phone && <div className="text-sm text-neutral-500">{s.phone}</div>}
+                              </div>
+                              <button
+                                onClick={() => deleteSuperintendent(s.id)}
+                                className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ---- TRUCKS TAB ---- */}
+                {managePanelTab === "trucks" && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
+                        Add New Truck
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        <input
+                          type="text"
+                          placeholder="Truck number"
+                          value={newTruckNumber}
+                          onChange={(e) => setNewTruckNumber(e.target.value)}
+                          className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Description (optional)"
+                          value={newTruckDescription}
+                          onChange={(e) => setNewTruckDescription(e.target.value)}
+                          className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <button
+                          onClick={addTruck}
+                          disabled={saving || !newTruckNumber.trim()}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Truck
+                        </button>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                      <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                          Trucks ({trucks.length})
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {trucks.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No trucks added yet.
+                          </div>
+                        ) : (
+                          trucks.map((t) => (
+                            <div key={t.id} className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50">
+                              <div>
+                                <div className="font-semibold text-neutral-900">Truck #{t.truck_number}</div>
+                                {t.description && <div className="text-sm text-neutral-500">{t.description}</div>}
+                              </div>
+                              <button
+                                onClick={() => deleteTruck(t.id)}
+                                className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
