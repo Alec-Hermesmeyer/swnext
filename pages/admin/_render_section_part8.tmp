@@ -1,0 +1,80 @@
+
+                {/* ---- RIGS TAB ---- */}
+                {managePanelTab === "rigs" && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
+                        Add New Category
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <input
+                          type="text"
+                          placeholder="Category name (e.g., Rig 1, Crane, Shop)"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-neutral-600">Color:</label>
+                          <input
+                            type="color"
+                            value={newCategoryColor}
+                            onChange={(e) => setNewCategoryColor(e.target.value)}
+                            className="h-9 w-14 cursor-pointer rounded border border-neutral-300"
+                          />
+                        </div>
+                        <button
+                          onClick={addCategory}
+                          disabled={saving || !newCategoryName.trim()}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Category
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                      <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                          Categories ({categories.length})
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {categories.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No categories created yet. Add categories like &quot;Rig 1&quot;, &quot;Crane&quot;, &quot;Equipment&quot;, etc.
+                          </div>
+                        ) : (
+                          categories.map((category) => (
+                            <div key={category.id} className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50">
+                              <div className="flex items-center gap-3">
+                                <div className="h-6 w-6 rounded" style={{ backgroundColor: category.color }}></div>
+                                <span className="font-semibold text-neutral-900">{category.name}</span>
+                              </div>
+                              <button
+                                onClick={() => deleteCategory(category.id)}
+                                className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+CrewScheduler.getLayout = function getLayout(page) {
+  return <TWAdminLayout>{page}</TWAdminLayout>;
+};
+
+export default withAuthTw(CrewScheduler);
