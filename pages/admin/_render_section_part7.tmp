@@ -1,0 +1,265 @@
+
+                {/* ---- JOBS TAB ---- */}
+                {managePanelTab === "jobs" && (
+                  <div className="space-y-4">
+                    {/* Add Job Form */}
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
+                        Add New Job
+                      </h3>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <input
+                          type="text"
+                          placeholder="Job Name *"
+                          value={newJob.job_name}
+                          onChange={(e) => setNewJob({ ...newJob, job_name: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Job Number"
+                          value={newJob.job_number}
+                          onChange={(e) => setNewJob({ ...newJob, job_number: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Dig Tess #"
+                          value={newJob.dig_tess_number}
+                          onChange={(e) => setNewJob({ ...newJob, dig_tess_number: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Customer Name"
+                          value={newJob.customer_name}
+                          onChange={(e) => setNewJob({ ...newJob, customer_name: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Hiring Contractor"
+                          value={newJob.hiring_contractor}
+                          onChange={(e) => setNewJob({ ...newJob, hiring_contractor: e.target.value })}
+                          list="customer-options"
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Contact Name"
+                          value={newJob.hiring_contact_name}
+                          onChange={(e) => setNewJob({ ...newJob, hiring_contact_name: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Contact Phone"
+                          value={newJob.hiring_contact_phone}
+                          onChange={(e) => setNewJob({ ...newJob, hiring_contact_phone: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="email"
+                          placeholder="Contact Email"
+                          value={newJob.hiring_contact_email}
+                          onChange={(e) => setNewJob({ ...newJob, hiring_contact_email: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Address"
+                          value={newJob.address}
+                          onChange={(e) => setNewJob({ ...newJob, address: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="City"
+                          value={newJob.city}
+                          onChange={(e) => setNewJob({ ...newJob, city: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="ZIP"
+                          value={newJob.zip}
+                          onChange={(e) => setNewJob({ ...newJob, zip: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="S&W PM Name"
+                          value={newJob.pm_name}
+                          onChange={(e) => setNewJob({ ...newJob, pm_name: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="PM Phone"
+                          value={newJob.pm_phone}
+                          onChange={(e) => setNewJob({ ...newJob, pm_phone: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Default Rig"
+                          value={newJob.default_rig}
+                          onChange={(e) => setNewJob({ ...newJob, default_rig: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between">
+                        <label className="flex items-center gap-2 text-sm text-neutral-600">
+                          <input
+                            type="checkbox"
+                            checked={newJob.crane_required}
+                            onChange={(e) => setNewJob({ ...newJob, crane_required: e.target.checked })}
+                            className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
+                          />
+                          Crane Required
+                        </label>
+                        <button
+                          onClick={addJob}
+                          disabled={saving || !newJob.job_name.trim()}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Job
+                        </button>
+                      </div>
+                    </div>
+
+                    {customerNames.length > 0 && (
+                      <datalist id="customer-options">
+                        {customerNames.map((name) => (
+                          <option key={name} value={name} />
+                        ))}
+                      </datalist>
+                    )}
+
+                    {editingJob && (
+                      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                            Edit Job: {editingJob.job_name || "Untitled"}
+                          </h3>
+                          <button
+                            onClick={() => setEditingJob(null)}
+                            className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-white/70"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <input type="text" placeholder="Job Name *" value={editingJob.job_name} onChange={(e) => setEditingJob({ ...editingJob, job_name: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Job Number" value={editingJob.job_number} onChange={(e) => setEditingJob({ ...editingJob, job_number: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Dig Tess #" value={editingJob.dig_tess_number} onChange={(e) => setEditingJob({ ...editingJob, dig_tess_number: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Customer Name" value={editingJob.customer_name} onChange={(e) => setEditingJob({ ...editingJob, customer_name: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Hiring Contractor" value={editingJob.hiring_contractor} onChange={(e) => setEditingJob({ ...editingJob, hiring_contractor: e.target.value })} list="customer-options" className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Contact Name" value={editingJob.hiring_contact_name} onChange={(e) => setEditingJob({ ...editingJob, hiring_contact_name: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Contact Phone" value={editingJob.hiring_contact_phone} onChange={(e) => setEditingJob({ ...editingJob, hiring_contact_phone: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="email" placeholder="Contact Email" value={editingJob.hiring_contact_email} onChange={(e) => setEditingJob({ ...editingJob, hiring_contact_email: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Address" value={editingJob.address} onChange={(e) => setEditingJob({ ...editingJob, address: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="City" value={editingJob.city} onChange={(e) => setEditingJob({ ...editingJob, city: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="ZIP" value={editingJob.zip} onChange={(e) => setEditingJob({ ...editingJob, zip: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="S&W PM Name" value={editingJob.pm_name} onChange={(e) => setEditingJob({ ...editingJob, pm_name: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="PM Phone" value={editingJob.pm_phone} onChange={(e) => setEditingJob({ ...editingJob, pm_phone: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Default Rig" value={editingJob.default_rig} onChange={(e) => setEditingJob({ ...editingJob, default_rig: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                        </div>
+                        <div className="mt-3 flex items-center justify-between">
+                          <label className="flex items-center gap-2 text-sm text-neutral-600">
+                            <input
+                              type="checkbox"
+                              checked={editingJob.crane_required}
+                              onChange={(e) => setEditingJob({ ...editingJob, crane_required: e.target.checked })}
+                              className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
+                            />
+                            Crane Required
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setEditingJob(null)}
+                              className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => updateJob(editingJob.id, normalizeJobInput(editingJob))}
+                              disabled={!editingJob.job_name.trim()}
+                              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                            >
+                              Save Changes
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Jobs List */}
+                    <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                      <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                          Active Jobs ({jobs.length})
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {jobs.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No active jobs. Add your first job above.
+                          </div>
+                        ) : (
+                          jobs.map((job) => (
+                            <div key={job.id} className="px-4 py-3 hover:bg-neutral-50">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-neutral-900">{job.job_name}</span>
+                                    {job.job_number && (
+                                      <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">#{job.job_number}</span>
+                                    )}
+                                    {job.crane_required && (
+                                      <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">Crane</span>
+                                    )}
+                                  </div>
+                                  <div className="mt-1 text-sm text-neutral-500">
+                                    {[job.address, job.city, job.zip].filter(Boolean).join(", ") || "No address"}
+                                  </div>
+                                  {(job.pm_name || job.pm_phone) && (
+                                    <div className="mt-1 text-sm text-neutral-500">
+                                      PM: {job.pm_name}{job.pm_phone ? ` • ${job.pm_phone}` : ""}
+                                    </div>
+                                  )}
+                                  {job.dig_tess_number && (
+                                    <div className="mt-1 text-sm text-neutral-500">Dig Tess #: {job.dig_tess_number}</div>
+                                  )}
+                                  {(job.hiring_contractor || job.hiring_contact_name || job.hiring_contact_phone || job.hiring_contact_email) && (
+                                    <div className="mt-1 text-sm text-neutral-500">
+                                      {job.hiring_contractor ? `Hiring: ${job.hiring_contractor}` : "Hiring Contact"}{" "}
+                                      {[job.hiring_contact_name, job.hiring_contact_phone, job.hiring_contact_email].filter(Boolean).join(" • ")}
+                                    </div>
+                                  )}
+                                  {job.customer_name && (
+                                    <div className="mt-1 text-sm text-neutral-500">Customer: {job.customer_name}</div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => startEditingJob(job)}
+                                    className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-neutral-100 transition-colors"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => deleteJob(job.id)}
+                                    className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                  >
+                                    Deactivate
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
