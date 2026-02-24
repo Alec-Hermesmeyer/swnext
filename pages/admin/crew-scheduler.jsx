@@ -153,6 +153,12 @@ function CrewScheduler() {
   const [copyingCategoryId, setCopyingCategoryId] = useState(null);
   const [copyStatus, setCopyStatus] = useState(null);
 
+  // --- Visual Board State ---
+  const [activeRigId, setActiveRigId] = useState(null);
+  const [showManagePanel, setShowManagePanel] = useState(false);
+  const [managePanelTab, setManagePanelTab] = useState("workers");
+  const [sidebarSearch, setSidebarSearch] = useState("");
+
   // Fetch workers, categories, jobs, superintendents, trucks on mount
   useEffect(() => {
     fetchWorkers();
