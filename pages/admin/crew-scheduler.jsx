@@ -1916,63 +1916,49 @@ function CrewScheduler() {
         <title>Crew Scheduler | Admin</title>
         <meta name="robots" content="noindex" />
       </Head>
-      <div>
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div style={{ height: "calc(100vh - 64px)" }} className="flex flex-col overflow-hidden">
+        {/* ===== TOP BAR ===== */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 bg-white px-4 py-2">
           <div className="flex items-center gap-3">
-            <img
-              src="/att.png"
-              alt="S&W Foundation logo"
-              className="h-12 w-12 object-contain"
-            />
-            <div>
-              <h1
-                className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}
-              >
-                S&amp;W Foundation Crew Scheduler
-              </h1>
-              <p className="mt-1 text-sm text-neutral-600">
-                Foundation since 1986 • Build daily crew assignments, email schedules,
-                and print packets
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Finalized badge */}
+            <img src="/att.png" alt="S&W Foundation logo" className="h-10 w-10 object-contain" />
+            <h1 className={`${lato.className} text-xl font-extrabold text-[#0b2a5a]`}>
+              Crew Scheduler
+            </h1>
             {currentSchedule?.is_finalized && (
               <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
                 Finalized
               </span>
             )}
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 items-center rounded-lg border border-neutral-300 bg-white shadow-sm">
-                <button
-                  onClick={() => shiftSelectedDate(-1)}
-                  className="flex h-9 items-center rounded-l-lg px-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-50"
-                  title="Previous day"
-                >
-                  ◀
-                </button>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="h-9 w-[150px] bg-transparent px-2 text-sm focus:outline-none"
-                />
-                <button
-                  onClick={() => shiftSelectedDate(1)}
-                  className="flex h-9 items-center rounded-r-lg px-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-50"
-                  title="Next day"
-                >
-                  ▶
-                </button>
-              </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex h-9 items-center rounded-lg border border-neutral-300 bg-white shadow-sm">
               <button
-                onClick={() => setSelectedDate(toDateString(new Date()))}
-                className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                onClick={() => shiftSelectedDate(-1)}
+                className="flex h-9 items-center rounded-l-lg px-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-50"
+                title="Previous day"
               >
-                Today
+                ◀
+              </button>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="h-9 w-[150px] bg-transparent px-2 text-sm focus:outline-none"
+              />
+              <button
+                onClick={() => shiftSelectedDate(1)}
+                className="flex h-9 items-center rounded-r-lg px-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-50"
+                title="Next day"
+              >
+                ▶
               </button>
             </div>
+            <button
+              onClick={() => setSelectedDate(toDateString(new Date()))}
+              className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+            >
+              Today
+            </button>
             <button
               onClick={handlePrint}
               className="h-9 rounded-lg bg-neutral-600 px-4 text-sm font-semibold text-white hover:bg-neutral-700 transition-colors"
@@ -1983,9 +1969,7 @@ function CrewScheduler() {
               onClick={() => {
                 const jobAssignments = assignments.filter((a) => a.job_id);
                 const uniqueJobs = [
-                  ...new Map(
-                    jobAssignments.map((a) => [a.job_id, a])
-                  ).values(),
+                  ...new Map(jobAssignments.map((a) => [a.job_id, a])).values(),
                 ];
                 if (uniqueJobs.length === 0) {
                   alert("No jobs assigned. Select jobs in the schedule first.");
@@ -1997,20 +1981,14 @@ function CrewScheduler() {
                   )
                 ) {
                   uniqueJobs.forEach((assignment, i) => {
-                    setTimeout(
-                      () => handlePrintCoverSheet(assignment),
-                      i * 600
-                    );
-                    setTimeout(
-                      () => handlePrintDailyLog(assignment),
-                      i * 600 + 300
-                    );
+                    setTimeout(() => handlePrintCoverSheet(assignment), i * 600);
+                    setTimeout(() => handlePrintDailyLog(assignment), i * 600 + 300);
                   });
                 }
               }}
               className="h-9 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
             >
-              Print All Forms
+              Print Forms
             </button>
             <button
               onClick={handleSaveAndEmail}
@@ -2021,50 +1999,50 @@ function CrewScheduler() {
                 ? "Sending..."
                 : currentSchedule?.is_finalized
                 ? "Resend Schedule"
-                : "Save & Email Schedule"}
+                : "Save & Email"}
+            </button>
+            <button
+              onClick={() => setShowManagePanel(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+              title="Manage Resources"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
             </button>
           </div>
         </div>
 
-        {/* Email status messages */}
+        {/* Status messages */}
         {emailStatus && (
           <div
-            className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${
+            className={`mx-4 mt-2 rounded-lg px-4 py-2 text-sm font-medium ${
               emailStatus.type === "success"
                 ? "bg-green-50 text-green-700"
                 : "bg-red-50 text-red-700"
             }`}
           >
             {emailStatus.message}
-            <button
-              onClick={() => setEmailStatus(null)}
-              className="ml-2 font-bold"
-            >
-              x
-            </button>
+            <button onClick={() => setEmailStatus(null)} className="ml-2 font-bold">x</button>
           </div>
         )}
-
-        {/* Finalized warning */}
         {currentSchedule?.is_finalized && activeTab === "schedule" && (
-          <div className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            This schedule was finalized
-            {currentSchedule?.finalized_at
-              ? ` on ${formatDateTime(currentSchedule.finalized_at)}`
-              : ""}. You can still edit and resend if plans change.
+          <div className="mx-4 mt-2 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-700">
+            Finalized{currentSchedule?.finalized_at ? ` on ${formatDateTime(currentSchedule.finalized_at)}` : ""}. You can still edit and resend.
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="mb-6 flex gap-1 overflow-x-auto rounded-lg bg-neutral-100 p-1">
+        {/* Tab bar */}
+        <div className="flex gap-1 border-b border-neutral-200 bg-neutral-50 px-4 pt-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-shrink-0 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+              className={`rounded-t-lg px-4 py-2 text-sm font-semibold transition-colors ${
                 activeTab === tab.id
-                  ? "bg-white text-neutral-900 shadow-sm"
-                  : "text-neutral-600 hover:text-neutral-900"
+                  ? "bg-white text-neutral-900 border border-neutral-200 border-b-white -mb-px"
+                  : "text-neutral-500 hover:text-neutral-800"
               }`}
             >
               {tab.label}
@@ -2072,1538 +2050,1358 @@ function CrewScheduler() {
           ))}
         </div>
 
-        {/* ============================================ */}
-        {/* Schedule Tab (Phase 3: enhanced with rig details) */}
-        {/* ============================================ */}
+        {/* ===== SCHEDULE VIEW ===== */}
         {activeTab === "schedule" && (
-          <div ref={printRef}>
-            <div className="mb-4 rounded-lg bg-[#0b2a5a] px-4 py-3">
-              <h2
-                className={`${lato.className} text-lg font-bold text-white`}
-              >
-                {formatDate(selectedDate)}
-              </h2>
+          <div className="flex flex-1 overflow-hidden">
+            {/* --- Resource Sidebar --- */}
+            <div className="w-64 flex-shrink-0 overflow-y-auto border-r border-neutral-200 bg-neutral-50 p-3">
+              <input
+                type="text"
+                placeholder="Search resources..."
+                value={sidebarSearch}
+                onChange={(e) => setSidebarSearch(e.target.value)}
+                className="mb-3 w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+
+              {!activeRigId ? (
+                <div className="rounded-lg bg-neutral-100 px-3 py-4 text-center text-xs text-neutral-500">
+                  Click a rig card to start assigning
+                </div>
+              ) : (
+                <div className="mb-3 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs font-semibold text-blue-700">
+                  Assigning to: {getCategoryName(activeRigId)}
+                </div>
+              )}
+
+              {/* Workers */}
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-neutral-700 uppercase tracking-wide">Workers</span>
+                  <span className="text-[10px] text-neutral-400">{filteredWorkers.length}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {filteredWorkers.map((w) => {
+                    const assignedCats = workerAssignmentMap[w.id] || [];
+                    const isOnActiveRig = activeRigId && assignedCats.includes(activeRigId);
+                    const isAssignedElsewhere = assignedCats.length > 0 && !isOnActiveRig;
+
+                    let chipClass = "";
+                    if (isOnActiveRig) {
+                      chipClass = "bg-blue-100 text-blue-700 border border-blue-300";
+                    } else if (isAssignedElsewhere) {
+                      chipClass = "bg-neutral-100 text-neutral-400 border border-neutral-200 cursor-not-allowed";
+                    } else if (activeRigId) {
+                      chipClass = "bg-white text-neutral-700 border border-neutral-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer";
+                    } else {
+                      chipClass = "bg-white text-neutral-600 border border-neutral-200";
+                    }
+
+                    return (
+                      <button
+                        key={w.id}
+                        onClick={() => handleSidebarClick("worker", w.id)}
+                        disabled={!activeRigId || isAssignedElsewhere}
+                        className={`rounded-full px-2.5 py-1 text-xs transition-colors ${chipClass}`}
+                        title={isAssignedElsewhere ? `Assigned to ${getCategoryName(assignedCats[0])}` : w.role || w.name}
+                      >
+                        {w.name}
+                        {isAssignedElsewhere && (
+                          <span className="ml-1 text-[10px]">({getCategoryName(assignedCats[0])})</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {filteredWorkers.length === 0 && (
+                    <span className="text-[10px] text-neutral-400 italic">No workers found</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Superintendents */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-neutral-700 uppercase tracking-wide">Supers</span>
+                  <span className="text-[10px] text-neutral-400">{filteredSuperintendents.length}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {filteredSuperintendents.map((s) => {
+                    const assignedCat = superAssignmentMap[s.id];
+                    const isOnActiveRig = activeRigId && String(assignedCat) === String(activeRigId);
+                    const isAssignedElsewhere = assignedCat && !isOnActiveRig;
+
+                    let chipClass = "";
+                    if (isOnActiveRig) {
+                      chipClass = "bg-green-100 text-green-700 border border-green-300";
+                    } else if (isAssignedElsewhere) {
+                      chipClass = "bg-neutral-100 text-neutral-400 border border-neutral-200 cursor-not-allowed";
+                    } else if (activeRigId) {
+                      chipClass = "bg-white text-neutral-700 border border-neutral-300 hover:border-green-400 hover:bg-green-50 cursor-pointer";
+                    } else {
+                      chipClass = "bg-white text-neutral-600 border border-neutral-200";
+                    }
+
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => handleSidebarClick("super", s.id)}
+                        disabled={!activeRigId || isAssignedElsewhere}
+                        className={`rounded-full px-2.5 py-1 text-xs transition-colors ${chipClass}`}
+                        title={isAssignedElsewhere ? `Assigned to ${getCategoryName(assignedCat)}` : s.name}
+                      >
+                        {s.name}
+                        {isAssignedElsewhere && (
+                          <span className="ml-1 text-[10px]">({getCategoryName(assignedCat)})</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {filteredSuperintendents.length === 0 && (
+                    <span className="text-[10px] text-neutral-400 italic">No supers found</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Trucks */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-neutral-700 uppercase tracking-wide">Trucks</span>
+                  <span className="text-[10px] text-neutral-400">{filteredTrucks.length}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {filteredTrucks.map((t) => {
+                    const assignedCat = truckAssignmentMap[t.id];
+                    const isOnActiveRig = activeRigId && String(assignedCat) === String(activeRigId);
+                    const isAssignedElsewhere = assignedCat && !isOnActiveRig;
+
+                    let chipClass = "";
+                    if (isOnActiveRig) {
+                      chipClass = "bg-orange-100 text-orange-700 border border-orange-300";
+                    } else if (isAssignedElsewhere) {
+                      chipClass = "bg-neutral-100 text-neutral-400 border border-neutral-200 cursor-not-allowed";
+                    } else if (activeRigId) {
+                      chipClass = "bg-white text-neutral-700 border border-neutral-300 hover:border-orange-400 hover:bg-orange-50 cursor-pointer";
+                    } else {
+                      chipClass = "bg-white text-neutral-600 border border-neutral-200";
+                    }
+
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => handleSidebarClick("truck", t.id)}
+                        disabled={!activeRigId || isAssignedElsewhere}
+                        className={`rounded-full px-2.5 py-1 text-xs transition-colors ${chipClass}`}
+                        title={isAssignedElsewhere ? `Assigned to ${getCategoryName(assignedCat)}` : `Truck #${t.truck_number}`}
+                      >
+                        #{t.truck_number}
+                        {isAssignedElsewhere && (
+                          <span className="ml-1 text-[10px]">({getCategoryName(assignedCat)})</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {filteredTrucks.length === 0 && (
+                    <span className="text-[10px] text-neutral-400 italic">No trucks found</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Jobs */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-neutral-700 uppercase tracking-wide">Jobs</span>
+                  <span className="text-[10px] text-neutral-400">{filteredJobs.length}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {filteredJobs.map((j) => {
+                    let chipClass = "";
+                    if (activeRigId) {
+                      chipClass = "bg-white text-neutral-700 border border-neutral-300 hover:border-purple-400 hover:bg-purple-50 cursor-pointer";
+                    } else {
+                      chipClass = "bg-white text-neutral-600 border border-neutral-200";
+                    }
+
+                    return (
+                      <button
+                        key={j.id}
+                        onClick={() => handleSidebarClick("job", j.id)}
+                        disabled={!activeRigId}
+                        className={`rounded-full px-2.5 py-1 text-xs transition-colors ${chipClass}`}
+                        title={j.job_number ? `#${j.job_number} - ${j.job_name}` : j.job_name}
+                      >
+                        {j.job_name}
+                      </button>
+                    );
+                  })}
+                  {filteredJobs.length === 0 && (
+                    <span className="text-[10px] text-neutral-400 italic">No jobs found</span>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="print:hidden mb-4 grid gap-4 lg:grid-cols-[1.2fr,1.8fr]">
-              <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <h3 className={`${lato.className} text-base font-bold text-neutral-900`}>
-                    Prepopulate By Rig
-                  </h3>
-                </div>
-                <p className="mt-1 text-sm text-neutral-600">
-                  Choose a date range, then click &quot;Copy Rig&quot; on the rig
-                  card you want to prefill.
-                </p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <label className="text-xs font-semibold text-neutral-500">
-                    Start date
-                    <input
-                      type="date"
-                      value={copyStartDate}
-                      onChange={(e) => setCopyStartDate(e.target.value)}
-                      className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-3 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                    />
-                  </label>
-                  <label className="text-xs font-semibold text-neutral-500">
-                    End date
-                    <input
-                      type="date"
-                      value={copyEndDate}
-                      onChange={(e) => setCopyEndDate(e.target.value)}
-                      className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-3 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                    />
-                  </label>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-neutral-600">
+            {/* --- Schedule Board --- */}
+            <div ref={printRef} className="flex-1 overflow-y-auto p-4">
+              {/* Date header */}
+              <div className="mb-4 rounded-lg bg-[#0b2a5a] px-4 py-2.5">
+                <h2 className={`${lato.className} text-base font-bold text-white`}>
+                  {formatDate(selectedDate)}
+                </h2>
+              </div>
+
+              {/* Compact prepopulate section */}
+              <div className="print:hidden mb-3 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-xs font-bold text-neutral-700">Copy rig to range:</span>
+                  <input
+                    type="date"
+                    value={copyStartDate}
+                    onChange={(e) => setCopyStartDate(e.target.value)}
+                    className="h-7 rounded border border-neutral-300 px-2 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <span className="text-xs text-neutral-400">to</span>
+                  <input
+                    type="date"
+                    value={copyEndDate}
+                    onChange={(e) => setCopyEndDate(e.target.value)}
+                    className="h-7 rounded border border-neutral-300 px-2 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                  <label className="flex items-center gap-1.5 text-xs text-neutral-600">
                     <input
                       type="checkbox"
                       checked={copyOverwrite}
                       onChange={(e) => setCopyOverwrite(e.target.checked)}
                       className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
                     />
-                    Overwrite existing schedules in range
+                    Overwrite
                   </label>
-                  <span className="text-xs font-semibold text-neutral-500">
-                    Use each rig&apos;s Copy button
-                  </span>
+                  <span className="text-[10px] text-neutral-400">Use each rig&apos;s Copy button</span>
                 </div>
-                <p className="mt-2 text-xs text-neutral-500">
-                  Current day is excluded to prevent duplicates.
-                </p>
                 {copyStatus && (
                   <div
-                    className={`mt-3 rounded-lg px-3 py-2 text-xs font-semibold ${
+                    className={`mt-2 rounded px-3 py-1.5 text-xs font-semibold ${
                       copyStatus.type === "success"
                         ? "bg-green-50 text-green-700"
                         : "bg-red-50 text-red-700"
                     }`}
                   >
                     {copyStatus.message}
-                    <button
-                      onClick={() => setCopyStatus(null)}
-                      className="ml-2 font-bold"
-                    >
-                      x
-                    </button>
+                    <button onClick={() => setCopyStatus(null)} className="ml-2 font-bold">x</button>
                   </div>
                 )}
               </div>
 
-              <div className="rounded-xl border border-neutral-200 bg-gradient-to-br from-blue-50 via-white to-red-50 p-4 shadow-sm">
-                <h3 className={`${lato.className} text-base font-bold text-neutral-900`}>
-                  Suggested Flow
-                </h3>
-                <div className="mt-2 space-y-2 text-sm text-neutral-700">
-                  <div>
-                    <span className="font-semibold text-[#0b2a5a]">1.</span> Add
-                    jobs with addresses and PM info.
-                  </div>
-                  <div>
-                    <span className="font-semibold text-[#0b2a5a]">2.</span> Add
-                    crew members and job titles.
-                  </div>
-                  <div>
-                    <span className="font-semibold text-[#0b2a5a]">3.</span> Set
-                    up rigs, cranes, or shop categories.
-                  </div>
-                  <div>
-                    <span className="font-semibold text-[#0b2a5a]">4.</span> Build
-                    the schedule, then prepopulate future days.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {recentSchedules.length > 0 && (
-              <div className="print:hidden mb-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h3 className={`${lato.className} text-base font-bold text-neutral-900`}>
-                      Recent Schedules
-                    </h3>
-                    <p className="text-xs text-neutral-500">
-                      Jump to a previous day to review, edit, or resend.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedDate(toDateString(new Date()))}
-                    className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
-                  >
-                    Go to Today
-                  </button>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
+              {/* Recent schedules */}
+              {recentSchedules.length > 0 && (
+                <div className="print:hidden mb-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-neutral-500">Recent:</span>
                   {recentSchedules.map((sched) => {
                     const isSelected = sched.schedule_date === selectedDate;
-                    const statusClass = sched.is_finalized
-                      ? isSelected
-                        ? "text-emerald-200"
-                        : "text-emerald-600"
-                      : isSelected
-                      ? "text-neutral-200"
-                      : "text-neutral-400";
                     return (
                       <button
                         key={sched.id}
                         onClick={() => setSelectedDate(sched.schedule_date)}
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        className={`rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors ${
                           isSelected
                             ? "border-[#0b2a5a] bg-[#0b2a5a] text-white"
-                            : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+                            : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
                         }`}
                       >
                         {formatShortDate(sched.schedule_date)}
-                        <span
-                          className={`ml-2 text-[10px] uppercase ${statusClass}`}
-                        >
-                          {sched.is_finalized ? "Finalized" : "Draft"}
-                        </span>
+                        {sched.is_finalized && (
+                          <span className={`ml-1 text-[9px] uppercase ${isSelected ? "text-emerald-200" : "text-emerald-500"}`}>
+                            Sent
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              {categories.map((category) => {
-                const catAssignments = assignments.filter(
-                  (a) => a.category_id === category.id
-                );
-                const detail = rigDetails[category.id] || {};
-
-                return (
-                  <div
-                    key={category.id}
-                    className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
-                  >
-                    <div
-                      className="flex items-center justify-between px-4 py-3"
-                      style={{ backgroundColor: category.color }}
-                    >
-                      <h3
-                        className={`${lato.className} font-bold text-white`}
-                      >
-                        {category.name}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            handlePrintAllForCategory(category.id)
-                          }
-                          className="rounded-md bg-white/20 px-2 py-1 text-xs font-semibold text-white hover:bg-white/30 transition-colors"
-                          title="Print all forms for this rig"
-                        >
-                          Print Forms
-                        </button>
-                        <button
-                          onClick={() => handleCopyCategoryRange(category.id)}
-                          disabled={copyingCategoryId !== null}
-                          className="rounded-md bg-white/20 px-2 py-1 text-xs font-semibold text-white hover:bg-white/30 transition-colors disabled:opacity-60"
-                          title="Copy this rig's crews to the date range above"
-                        >
-                          {copyingCategoryId === category.id ? "Copying..." : "Copy Rig"}
-                        </button>
-                        <button
-                          onClick={() => clearCategorySchedule(category.id)}
-                          className="rounded-md bg-white/20 px-2 py-1 text-xs font-semibold text-white hover:bg-white/30 transition-colors"
-                          title="Clear crew assignments and rig details for this category"
-                        >
-                          Clear Rig
-                        </button>
-                        <button
-                          onClick={() => addAssignment(category.id)}
-                          className="rounded-md bg-white/20 px-2 py-1 text-xs font-semibold text-white hover:bg-white/30 transition-colors"
-                        >
-                          + Add Crew
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Phase 3: Per-rig details section */}
-                    <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <select
-                          value={detail.superintendent_id || ""}
-                          onChange={(e) =>
-                            updateRigDetail(
-                              category.id,
-                              "superintendent_id",
-                              e.target.value || null
-                            )
-                          }
-                          className="rounded border border-neutral-300 px-2 py-1.5 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        >
-                          <option value="">Superintendent...</option>
-                          {superintendents.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.name}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          value={detail.truck_id || ""}
-                          onChange={(e) =>
-                            updateRigDetail(
-                              category.id,
-                              "truck_id",
-                              e.target.value || null
-                            )
-                          }
-                          className="rounded border border-neutral-300 px-2 py-1.5 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        >
-                          <option value="">Truck #...</option>
-                          {trucks.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.truck_number}
-                              {t.description
-                                ? ` - ${t.description}`
-                                : ""}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="text"
-                          placeholder="Crane ID / Name"
-                          defaultValue={detail.crane_info || ""}
-                          onBlur={(e) =>
-                            updateRigDetail(
-                              category.id,
-                              "crane_info",
-                              e.target.value
-                            )
-                          }
-                          className="rounded border border-neutral-300 px-2 py-1.5 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Location / Notes"
-                          defaultValue={detail.notes || ""}
-                          onBlur={(e) =>
-                            updateRigDetail(
-                              category.id,
-                              "notes",
-                              e.target.value
-                            )
-                          }
-                          className="rounded border border-neutral-300 px-2 py-1.5 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="divide-y">
-                      {catAssignments.length === 0 ? (
-                        <div className="px-4 py-6 text-center text-sm text-neutral-400">
-                          No crew assigned. Click &quot;+ Add Crew&quot; to
-                          start.
-                        </div>
-                      ) : (
-                        catAssignments.map((assignment) => (
-                          <div
-                            key={assignment.id}
-                            className="flex items-center gap-2 px-4 py-3"
-                          >
-                            <select
-                              value={assignment.worker_id || ""}
-                              onChange={(e) =>
-                                updateAssignment(assignment.id, {
-                                  worker_id: e.target.value || null,
-                                })
-                              }
-                              className="w-36 rounded-md border border-neutral-300 px-2 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                            >
-                              <option value="">Select worker...</option>
-                              {workers.map((w) => (
-                                <option key={w.id} value={w.id}>
-                                  {formatWorkerOption(w)}
-                                </option>
-                              ))}
-                            </select>
-                            <select
-                              value={assignment.job_id || ""}
-                              onChange={(e) =>
-                                updateAssignment(assignment.id, {
-                                  job_id: e.target.value || null,
-                                  job_name: e.target.value
-                                    ? jobs.find(
-                                        (j) => j.id === e.target.value
-                                      )?.job_name
-                                    : assignment.job_name,
-                                })
-                              }
-                              className="flex-1 rounded-md border border-neutral-300 px-2 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                            >
-                              <option value="">Select job...</option>
-                              {jobs.map((j) => (
-                                <option key={j.id} value={j.id}>
-                                  {j.job_number
-                                    ? `${j.job_number} - `
-                                    : ""}
-                                  {j.job_name}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              onClick={() => splitAssignment(assignment)}
-                              className="rounded-md border border-neutral-200 px-2 py-1 text-xs font-semibold text-neutral-600 hover:bg-neutral-50"
-                              title="Add another job for this crew member"
-                            >
-                              Split
-                            </button>
-                            {assignment.job_id && (
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() =>
-                                    handlePrintCoverSheet(assignment)
-                                  }
-                                  className="rounded-md p-2 text-neutral-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                                  title="Print Cover Sheet"
-                                >
-                                  <svg
-                                    className="h-4 w-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                  </svg>
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handlePrintDailyLog(assignment)
-                                  }
-                                  className="rounded-md p-2 text-neutral-400 hover:bg-green-50 hover:text-green-600 transition-colors"
-                                  title="Print Daily Log & Inspection"
-                                >
-                                  <svg
-                                    className="h-4 w-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                  </svg>
-                                </button>
-                              </div>
-                            )}
-                            <button
-                              onClick={() =>
-                                deleteAssignment(assignment.id)
-                              }
-                              className="rounded-md p-2 text-neutral-400 hover:bg-neutral-100 hover:text-red-600 transition-colors"
-                            >
-                              <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {categories.length === 0 && (
-              <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center">
-                <p className="text-neutral-600">
-                  No categories created yet.
-                </p>
-                <button
-                  onClick={() => setActiveTab("categories")}
-                  className="mt-2 text-sm font-semibold text-red-600 hover:text-red-700"
-                >
-                  Create your first category
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ============================================ */}
-        {/* Daily Packets Tab (Phase 6) */}
-        {/* ============================================ */}
-        {activeTab === "packets" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h3 className={`${lato.className} text-lg font-bold text-neutral-900`}>
-                  Daily Packets - {formatDate(selectedDate)}
-                </h3>
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                  Per crew member
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() =>
-                    window.open(
-                      "/NEW%20LOG%20%26%20INSPECTION.pdf",
-                      "_blank",
-                      "noopener,noreferrer"
-                    )
-                  }
-                  className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-neutral-700 border border-neutral-200 hover:bg-neutral-50 transition-colors"
-                >
-                  Open Log &amp; Inspection PDF
-                </button>
-                <button
-                  onClick={handleEmailPackets}
-                  disabled={packetsSending || scheduledPacketsForDate.length === 0}
-                  className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a2350] disabled:opacity-50 transition-colors"
-                >
-                  {packetsSending
-                    ? "Sending..."
-                    : `Email All Packets (${scheduledPacketsForDate.length})`}
-                </button>
-              </div>
-            </div>
-
-            {packetsStatus && (
-              <div
-                className={`rounded-lg px-4 py-3 text-sm font-medium ${
-                  packetsStatus.type === "success"
-                    ? "bg-green-50 text-green-700"
-                    : "bg-red-50 text-red-700"
-                }`}
-              >
-                {packetsStatus.message}
-                <button onClick={() => setPacketsStatus(null)} className="ml-2 font-bold">
-                  x
-                </button>
-              </div>
-            )}
-
-            {scheduledPacketsForDate.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center">
-                <p className="text-neutral-600">
-                  No crew packets scheduled for this date. Build the schedule first.
-                </p>
-                <button
-                  onClick={() => setActiveTab("schedule")}
-                  className="mt-2 text-sm font-semibold text-red-600 hover:text-red-700"
-                >
-                  Go to Build Schedule
-                </button>
-              </div>
-            ) : (
-              <div className="grid gap-4 lg:grid-cols-2">
-                {scheduledPacketsForDate.map((packet) => {
-                  const contactDetails = [
-                    packet.hiring_contact_name,
-                    packet.hiring_contact_phone,
-                    packet.hiring_contact_email,
-                  ]
-                    .filter(Boolean)
-                    .join(" • ");
+              {/* Rig Cards */}
+              <div className="space-y-4">
+                {categories.map((category) => {
+                  const catAssignments = assignments.filter(
+                    (a) => a.category_id === category.id
+                  );
+                  const detail = rigDetails[category.id] || {};
+                  const isActive = activeRigId === category.id;
+                  const rigJob = catAssignments.find((a) => a.job_id);
+                  const rigJobObj = rigJob?.crew_jobs || null;
+                  const superObj = superintendents.find(
+                    (s) => String(s.id) === String(detail.superintendent_id)
+                  );
+                  const truckObj = trucks.find(
+                    (t) => String(t.id) === String(detail.truck_id)
+                  );
 
                   return (
                     <div
-                      key={packet.packet_id}
-                      className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
+                      key={category.id}
+                      onClick={() => setActiveRigId(category.id)}
+                      className={`rounded-xl border-2 bg-white shadow-sm overflow-hidden cursor-pointer transition-all ${
+                        isActive
+                          ? "border-blue-500 ring-2 ring-blue-200"
+                          : "border-neutral-200 hover:border-neutral-300"
+                      }`}
                     >
-                      <div className="bg-neutral-50 px-4 py-3 border-b border-neutral-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="font-semibold text-neutral-900">
-                              {packet.worker_name || "Crew Packet"}
-                            </span>
-                            {packet.job_number && (
-                              <span className="ml-2 rounded bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">
-                                #{packet.job_number}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => handlePrintCoverSheet(packet.assignment)}
-                              className="rounded-md bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
-                            >
-                              Cover Sheet
-                            </button>
-                            <button
-                              onClick={() =>
-                                window.open(
-                                  "/NEW%20LOG%20%26%20INSPECTION.pdf",
-                                  "_blank",
-                                  "noopener,noreferrer"
-                                )
-                              }
-                              className="rounded-md bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors"
-                            >
-                              Log &amp; Inspection PDF
-                            </button>
-                          </div>
+                      {/* Card Header */}
+                      <div
+                        className="flex items-center justify-between px-4 py-2.5"
+                        style={{ backgroundColor: category.color }}
+                      >
+                        <h3 className={`${lato.className} font-bold text-white text-sm`}>
+                          {category.name}
+                        </h3>
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => handlePrintAllForCategory(category.id)}
+                            className="rounded-md bg-white/20 px-2 py-1 text-[11px] font-semibold text-white hover:bg-white/30 transition-colors"
+                            title="Print all forms for this rig"
+                          >
+                            Print
+                          </button>
+                          <button
+                            onClick={() => handleCopyCategoryRange(category.id)}
+                            disabled={copyingCategoryId !== null}
+                            className="rounded-md bg-white/20 px-2 py-1 text-[11px] font-semibold text-white hover:bg-white/30 transition-colors disabled:opacity-60"
+                            title="Copy this rig to date range"
+                          >
+                            {copyingCategoryId === category.id ? "..." : "Copy"}
+                          </button>
+                          <button
+                            onClick={() => clearCategorySchedule(category.id)}
+                            className="rounded-md bg-white/20 px-2 py-1 text-[11px] font-semibold text-white hover:bg-white/30 transition-colors"
+                            title="Clear rig"
+                          >
+                            Clear
+                          </button>
+                          <button
+                            onClick={() => addAssignment(category.id)}
+                            className="rounded-md bg-white/20 px-2 py-1 text-[11px] font-semibold text-white hover:bg-white/30 transition-colors"
+                          >
+                            + Crew
+                          </button>
                         </div>
                       </div>
-                      <div className="px-4 py-3 space-y-2 text-sm">
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                          {packet.job_name && (
-                            <div>
-                              <span className="text-neutral-500">Job:</span>{" "}
-                              <span className="font-medium">{packet.job_name}</span>
-                            </div>
-                          )}
-                          <div>
-                            <span className="text-neutral-500">Rig:</span>{" "}
-                            <span className="font-medium">{packet.rig_name}</span>
-                          </div>
-                          {packet.hiring_contractor && (
-                            <div>
-                              <span className="text-neutral-500">Hiring:</span>{" "}
-                              <span className="font-medium">{packet.hiring_contractor}</span>
-                            </div>
-                          )}
-                          {contactDetails && (
-                            <div>
-                              <span className="text-neutral-500">Contact:</span>{" "}
-                              <span className="font-medium">{contactDetails}</span>
-                            </div>
-                          )}
-                          {packet.superintendent_name && (
-                            <div>
-                              <span className="text-neutral-500">Supt:</span>{" "}
-                              <span className="font-medium">{packet.superintendent_name}</span>
-                            </div>
-                          )}
-                          {packet.truck_number && (
-                            <div>
-                              <span className="text-neutral-500">Truck:</span>{" "}
-                              <span className="font-medium">{packet.truck_number}</span>
-                            </div>
+
+                      {/* Card Body */}
+                      <div className="px-4 py-3 space-y-2.5" onClick={(e) => e.stopPropagation()}>
+                        {/* Job row */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-neutral-500 w-10 flex-shrink-0">Job</span>
+                          {rigJobObj ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 text-purple-700 border border-purple-200 px-2.5 py-1 text-xs font-medium">
+                              {rigJobObj.job_name}
+                              {rigJobObj.job_number && (
+                                <span className="text-purple-400 text-[10px]">#{rigJobObj.job_number}</span>
+                              )}
+                              <button
+                                onClick={() => removeJobFromRig(category.id)}
+                                className="ml-0.5 text-purple-400 hover:text-purple-700"
+                                title="Remove job"
+                              >
+                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </span>
+                          ) : (
+                            <span className="text-xs text-neutral-400 italic">
+                              {isActive ? "Click a job in sidebar" : "No job assigned"}
+                            </span>
                           )}
                         </div>
-                        {packet.crew_names && (
-                          <div>
-                            <span className="text-neutral-500">Crew:</span>{" "}
-                            <span className="font-medium">{packet.crew_names}</span>
+
+                        {/* Super + Truck row */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-neutral-500 w-10 flex-shrink-0">Supt</span>
+                            {superObj ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 border border-green-200 px-2.5 py-1 text-xs font-medium">
+                                {superObj.name}
+                                <button
+                                  onClick={() => updateRigDetail(category.id, "superintendent_id", null)}
+                                  className="ml-0.5 text-green-400 hover:text-green-700"
+                                  title="Remove superintendent"
+                                >
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                              </span>
+                            ) : (
+                              <span className="text-xs text-neutral-400 italic">None</span>
+                            )}
                           </div>
-                        )}
-                        <div className="flex items-center gap-2 pt-1">
-                          <label className="text-xs font-semibold text-neutral-500 whitespace-nowrap">
-                            Dig Tess #:
-                          </label>
-                          <input
-                            type="text"
-                            defaultValue={packet.dig_tess_number}
-                            onBlur={(e) => {
-                              updateDigTessNumber(packet.job_id, e.target.value);
-                              // Also update local jobs list
-                              setJobs((prev) =>
-                                prev.map((j) =>
-                                  j.id === packet.job_id
-                                    ? { ...j, dig_tess_number: e.target.value }
-                                    : j
-                                )
-                              );
-                            }}
-                            placeholder="Enter Dig Tess #"
-                            className="flex-1 rounded border border-neutral-300 px-2 py-1 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                          />
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-neutral-500 flex-shrink-0">Truck</span>
+                            {truckObj ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 border border-orange-200 px-2.5 py-1 text-xs font-medium">
+                                #{truckObj.truck_number}
+                                <button
+                                  onClick={() => updateRigDetail(category.id, "truck_id", null)}
+                                  className="ml-0.5 text-orange-400 hover:text-orange-700"
+                                  title="Remove truck"
+                                >
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                              </span>
+                            ) : (
+                              <span className="text-xs text-neutral-400 italic">None</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Crew row */}
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs font-semibold text-neutral-500 w-10 flex-shrink-0 pt-1">Crew</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {catAssignments.filter((a) => a.worker_id).length === 0 ? (
+                              <span className="text-xs text-neutral-400 italic pt-0.5">
+                                {isActive ? "Click workers in sidebar" : "No crew assigned"}
+                              </span>
+                            ) : (
+                              catAssignments
+                                .filter((a) => a.worker_id)
+                                .map((a) => (
+                                  <span
+                                    key={a.id}
+                                    className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 text-xs font-medium"
+                                  >
+                                    {formatWorkerLabel(a.crew_workers) || "Worker"}
+                                    <button
+                                      onClick={() => deleteAssignment(a.id)}
+                                      className="ml-0.5 text-blue-400 hover:text-blue-700"
+                                      title="Remove from rig"
+                                    >
+                                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                  </span>
+                                ))
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Crane + Notes row */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-neutral-500 w-10 flex-shrink-0">Crane</span>
+                            <input
+                              type="text"
+                              placeholder="Crane info..."
+                              defaultValue={detail.crane_info || ""}
+                              onBlur={(e) => updateRigDetail(category.id, "crane_info", e.target.value)}
+                              className="h-7 w-32 rounded border border-neutral-200 px-2 text-xs focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2 flex-1">
+                            <span className="text-xs font-semibold text-neutral-500 flex-shrink-0">Notes</span>
+                            <input
+                              type="text"
+                              placeholder="Location / notes..."
+                              defaultValue={detail.notes || ""}
+                              onBlur={(e) => updateRigDetail(category.id, "notes", e.target.value)}
+                              className="h-7 flex-1 rounded border border-neutral-200 px-2 text-xs focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            )}
-          </div>
-        )}
 
-        {/* ============================================ */}
-        {/* Jobs Tab */}
-        {/* ============================================ */}
-        {activeTab === "jobs" && (
-          <div className="space-y-4">
-            {/* Add Job Form */}
-            <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <h3
-                className={`${lato.className} mb-3 font-bold text-neutral-900`}
-              >
-                Add New Job
-              </h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <input
-                  type="text"
-                  placeholder="Job Name *"
-                  value={newJob.job_name}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, job_name: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Job Number"
-                  value={newJob.job_number}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, job_number: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Dig Tess #"
-                  value={newJob.dig_tess_number}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, dig_tess_number: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Customer Name"
-                  value={newJob.customer_name}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, customer_name: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Hiring Contractor"
-                  value={newJob.hiring_contractor}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, hiring_contractor: e.target.value })
-                  }
-                  list="customer-options"
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Contact Name"
-                  value={newJob.hiring_contact_name}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, hiring_contact_name: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Contact Phone"
-                  value={newJob.hiring_contact_phone}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, hiring_contact_phone: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="email"
-                  placeholder="Contact Email"
-                  value={newJob.hiring_contact_email}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, hiring_contact_email: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Address"
-                  value={newJob.address}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, address: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="City"
-                  value={newJob.city}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, city: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="ZIP"
-                  value={newJob.zip}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, zip: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="S&W PM Name"
-                  value={newJob.pm_name}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, pm_name: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="PM Phone"
-                  value={newJob.pm_phone}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, pm_phone: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Default Rig"
-                  value={newJob.default_rig}
-                  onChange={(e) =>
-                    setNewJob({ ...newJob, default_rig: e.target.value })
-                  }
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-              </div>
-              <p className="mt-2 text-xs text-neutral-500">
-                Hiring contractor names come from your customer list. Start typing to select
-                an existing name or enter a new one.
-              </p>
-              <div className="mt-3 flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm text-neutral-600">
-                  <input
-                    type="checkbox"
-                    checked={newJob.crane_required}
-                    onChange={(e) =>
-                      setNewJob({
-                        ...newJob,
-                        crane_required: e.target.checked,
-                      })
-                    }
-                    className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
-                  />
-                  Crane Required
-                </label>
-                <button
-                  onClick={addJob}
-                  disabled={saving || !newJob.job_name.trim()}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-                >
-                  Add Job
-                </button>
-              </div>
-            </div>
-
-            {customerNames.length > 0 && (
-              <datalist id="customer-options">
-                {customerNames.map((name) => (
-                  <option key={name} value={name} />
-                ))}
-              </datalist>
-            )}
-
-            {editingJob && (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <h3
-                    className={`${lato.className} font-bold text-neutral-900`}
-                  >
-                    Edit Job: {editingJob.job_name || "Untitled"}
-                  </h3>
+              {categories.length === 0 && (
+                <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center">
+                  <p className="text-neutral-600">No categories created yet.</p>
                   <button
-                    onClick={() => setEditingJob(null)}
-                    className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-white/70"
+                    onClick={() => { setShowManagePanel(true); setManagePanelTab("rigs"); }}
+                    className="mt-2 text-sm font-semibold text-red-600 hover:text-red-700"
                   >
-                    Cancel
+                    Create your first category
                   </button>
-                </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <input
-                    type="text"
-                    placeholder="Job Name *"
-                    value={editingJob.job_name}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, job_name: e.target.value })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Job Number"
-                    value={editingJob.job_number}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, job_number: e.target.value })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Dig Tess #"
-                    value={editingJob.dig_tess_number}
-                    onChange={(e) =>
-                      setEditingJob({
-                        ...editingJob,
-                        dig_tess_number: e.target.value,
-                      })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Customer Name"
-                    value={editingJob.customer_name}
-                    onChange={(e) =>
-                      setEditingJob({
-                        ...editingJob,
-                        customer_name: e.target.value,
-                      })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Hiring Contractor"
-                    value={editingJob.hiring_contractor}
-                    onChange={(e) =>
-                      setEditingJob({
-                        ...editingJob,
-                        hiring_contractor: e.target.value,
-                      })
-                    }
-                    list="customer-options"
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Contact Name"
-                    value={editingJob.hiring_contact_name}
-                    onChange={(e) =>
-                      setEditingJob({
-                        ...editingJob,
-                        hiring_contact_name: e.target.value,
-                      })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Contact Phone"
-                    value={editingJob.hiring_contact_phone}
-                    onChange={(e) =>
-                      setEditingJob({
-                        ...editingJob,
-                        hiring_contact_phone: e.target.value,
-                      })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="email"
-                    placeholder="Contact Email"
-                    value={editingJob.hiring_contact_email}
-                    onChange={(e) =>
-                      setEditingJob({
-                        ...editingJob,
-                        hiring_contact_email: e.target.value,
-                      })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Address"
-                    value={editingJob.address}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, address: e.target.value })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="City"
-                    value={editingJob.city}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, city: e.target.value })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="ZIP"
-                    value={editingJob.zip}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, zip: e.target.value })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="S&W PM Name"
-                    value={editingJob.pm_name}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, pm_name: e.target.value })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="PM Phone"
-                    value={editingJob.pm_phone}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, pm_phone: e.target.value })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Default Rig"
-                    value={editingJob.default_rig}
-                    onChange={(e) =>
-                      setEditingJob({ ...editingJob, default_rig: e.target.value })
-                    }
-                    className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm text-neutral-600">
-                    <input
-                      type="checkbox"
-                      checked={editingJob.crane_required}
-                      onChange={(e) =>
-                        setEditingJob({
-                          ...editingJob,
-                          crane_required: e.target.checked,
-                        })
-                      }
-                      className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
-                    />
-                    Crane Required
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setEditingJob(null)}
-                      className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() =>
-                        updateJob(editingJob.id, normalizeJobInput(editingJob))
-                      }
-                      disabled={!editingJob.job_name.trim()}
-                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-                    >
-                      Save Changes
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Jobs List */}
-            <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
-              <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-                <h3
-                  className={`${lato.className} font-bold text-neutral-900`}
-                >
-                  Active Jobs ({jobs.length})
-                </h3>
-              </div>
-              <div className="divide-y">
-                {jobs.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-neutral-500">
-                    No active jobs. Add your first job above.
-                  </div>
-                ) : (
-                  jobs.map((job) => (
-                    <div
-                      key={job.id}
-                      className="px-4 py-3 hover:bg-neutral-50"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-neutral-900">
-                              {job.job_name}
-                            </span>
-                            {job.job_number && (
-                              <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                                #{job.job_number}
-                              </span>
-                            )}
-                            {job.crane_required && (
-                              <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-                                Crane
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-1 text-sm text-neutral-500">
-                            {[job.address, job.city, job.zip]
-                              .filter(Boolean)
-                              .join(", ") || "No address"}
-                          </div>
-                          {(job.pm_name || job.pm_phone) && (
-                            <div className="mt-1 text-sm text-neutral-500">
-                              PM: {job.pm_name}
-                              {job.pm_phone ? ` • ${job.pm_phone}` : ""}
-                            </div>
-                          )}
-                          {job.dig_tess_number && (
-                            <div className="mt-1 text-sm text-neutral-500">
-                              Dig Tess #: {job.dig_tess_number}
-                            </div>
-                          )}
-                          {(job.hiring_contractor ||
-                            job.hiring_contact_name ||
-                            job.hiring_contact_phone ||
-                            job.hiring_contact_email) && (
-                            <div className="mt-1 text-sm text-neutral-500">
-                              {job.hiring_contractor
-                                ? `Hiring: ${job.hiring_contractor}`
-                                : "Hiring Contact"}{" "}
-                              {[
-                                job.hiring_contact_name,
-                                job.hiring_contact_phone,
-                                job.hiring_contact_email,
-                              ]
-                                .filter(Boolean)
-                                .join(" • ")}
-                            </div>
-                          )}
-                          {job.customer_name && (
-                            <div className="mt-1 text-sm text-neutral-500">
-                              Customer: {job.customer_name}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => startEditingJob(job)}
-                            className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-neutral-100 transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => deleteJob(job.id)}
-                            className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                          >
-                            Deactivate
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================ */}
-        {/* Workers Tab */}
-        {/* ============================================ */}
-        {activeTab === "workers" && (
-          <div className="space-y-4">
-            {/* Add Worker Form */}
-            <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <h3
-                className={`${lato.className} mb-3 font-bold text-neutral-900`}
-              >
-                Add Crew Member
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                <input
-                  type="text"
-                  placeholder="Worker name"
-                  value={newWorkerName}
-                  onChange={(e) => setNewWorkerName(e.target.value)}
-                  className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Phone (optional)"
-                  value={newWorkerPhone}
-                  onChange={(e) => setNewWorkerPhone(e.target.value)}
-                  className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Role / Title (optional)"
-                  value={newWorkerRole}
-                  onChange={(e) => setNewWorkerRole(e.target.value)}
-                  className="w-48 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <button
-                  onClick={addWorker}
-                  disabled={saving || !newWorkerName.trim()}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-                >
-                  Add Worker
-                </button>
-              </div>
-            </div>
-
-            {/* Bulk Add Crew */}
-            <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className={`${lato.className} mb-1 font-bold text-neutral-900`}>
-                    Bulk Add Crew
-                  </h3>
-                  <p className="text-sm text-neutral-600">
-                    Upload a CSV or paste a list. Supported columns: `name`, `phone`,
-                    `role` (optional). You can also paste one name per line.
-                  </p>
-                </div>
-                {bulkCrewRows.length > 0 && (
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                    {bulkCrewRows.length} ready
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-3 grid gap-3 lg:grid-cols-[1fr,1fr]">
-                <label className="text-xs font-semibold text-neutral-500">
-                  Upload file
-                  <input
-                    type="file"
-                    accept=".csv,.txt"
-                    onChange={handleBulkCrewFile}
-                    className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  {bulkCrewFilename && (
-                    <span className="mt-1 block text-xs text-neutral-500">
-                      Loaded: {bulkCrewFilename}
-                    </span>
-                  )}
-                </label>
-                <label className="text-xs font-semibold text-neutral-500">
-                  Or paste list
-                  <textarea
-                    value={bulkCrewText}
-                    onChange={(e) => setBulkCrewText(e.target.value)}
-                    placeholder="Name, Phone, Role\nJane Smith, 214-555-0100, Operator\nJohn Doe\n"
-                    rows={4}
-                    className="mt-1 w-full resize-y rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                </label>
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => handleBulkCrewParse(bulkCrewText)}
-                  className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
-                >
-                  Preview List
-                </button>
-                <button
-                  onClick={importBulkCrew}
-                  disabled={bulkCrewImporting || bulkCrewRows.length === 0}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-                >
-                  {bulkCrewImporting
-                    ? "Importing..."
-                    : `Import ${bulkCrewRows.length || ""}`}
-                </button>
-                <button
-                  onClick={clearBulkCrew}
-                  className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
-                >
-                  Clear
-                </button>
-                {bulkCrewError && (
-                  <span className="text-sm font-semibold text-red-600">
-                    {bulkCrewError}
-                  </span>
-                )}
-              </div>
-
-              {bulkCrewRows.length > 0 && (
-                <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
-                  Preview:
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    {bulkCrewRows.slice(0, 8).map((row, idx) => (
-                      <span
-                        key={`${row.name}-${idx}`}
-                        className="rounded-full bg-white px-2 py-1"
-                      >
-                        {row.name}
-                        {row.role ? ` — ${row.role}` : ""}
-                        {row.phone ? ` • ${row.phone}` : ""}
-                      </span>
-                    ))}
-                    {bulkCrewRows.length > 8 && (
-                      <span className="text-neutral-500">
-                        +{bulkCrewRows.length - 8} more
-                      </span>
-                    )}
-                  </div>
                 </div>
               )}
             </div>
+          </div>
+        )}
 
-            {/* Workers List */}
-            <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
-              <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-                <h3
-                  className={`${lato.className} font-bold text-neutral-900`}
-                >
-                  Crew Members ({workers.length})
-                </h3>
+        {/* ===== PACKETS VIEW ===== */}
+        {activeTab === "packets" && (
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h3 className={`${lato.className} text-lg font-bold text-neutral-900`}>
+                    Daily Packets - {formatDate(selectedDate)}
+                  </h3>
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                    Per crew member
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() =>
+                      window.open(
+                        "/NEW%20LOG%20%26%20INSPECTION.pdf",
+                        "_blank",
+                        "noopener,noreferrer"
+                      )
+                    }
+                    className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-neutral-700 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                  >
+                    Open Log &amp; Inspection PDF
+                  </button>
+                  <button
+                    onClick={handleEmailPackets}
+                    disabled={packetsSending || scheduledPacketsForDate.length === 0}
+                    className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a2350] disabled:opacity-50 transition-colors"
+                  >
+                    {packetsSending
+                      ? "Sending..."
+                      : `Email All Packets (${scheduledPacketsForDate.length})`}
+                  </button>
+                </div>
               </div>
-              <div className="divide-y">
-                {workers.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-neutral-500">
-                    No crew members added yet. Add your first crew member above.
-                  </div>
-                ) : (
-                  workers.map((worker) => (
-                    <div
-                      key={worker.id}
-                      className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className="font-semibold text-neutral-900">
-                            {worker.name}
+
+              {packetsStatus && (
+                <div
+                  className={`rounded-lg px-4 py-3 text-sm font-medium ${
+                    packetsStatus.type === "success"
+                      ? "bg-green-50 text-green-700"
+                      : "bg-red-50 text-red-700"
+                  }`}
+                >
+                  {packetsStatus.message}
+                  <button onClick={() => setPacketsStatus(null)} className="ml-2 font-bold">
+                    x
+                  </button>
+                </div>
+              )}
+
+              {scheduledPacketsForDate.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center">
+                  <p className="text-neutral-600">
+                    No crew packets scheduled for this date. Build the schedule first.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab("schedule")}
+                    className="mt-2 text-sm font-semibold text-red-600 hover:text-red-700"
+                  >
+                    Go to Build Schedule
+                  </button>
+                </div>
+              ) : (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {scheduledPacketsForDate.map((packet) => {
+                    const contactDetails = [
+                      packet.hiring_contact_name,
+                      packet.hiring_contact_phone,
+                      packet.hiring_contact_email,
+                    ]
+                      .filter(Boolean)
+                      .join(" • ");
+
+                    return (
+                      <div
+                        key={packet.packet_id}
+                        className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
+                      >
+                        <div className="bg-neutral-50 px-4 py-3 border-b border-neutral-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="font-semibold text-neutral-900">
+                                {packet.worker_name || "Crew Packet"}
+                              </span>
+                              {packet.job_number && (
+                                <span className="ml-2 rounded bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">
+                                  #{packet.job_number}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handlePrintCoverSheet(packet.assignment)}
+                                className="rounded-md bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                              >
+                                Cover Sheet
+                              </button>
+                              <button
+                                onClick={() =>
+                                  window.open(
+                                    "/NEW%20LOG%20%26%20INSPECTION.pdf",
+                                    "_blank",
+                                    "noopener,noreferrer"
+                                  )
+                                }
+                                className="rounded-md bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors"
+                              >
+                                Log &amp; Inspection PDF
+                              </button>
+                            </div>
                           </div>
-                          {worker.role && (
-                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                              {worker.role}
+                        </div>
+                        <div className="px-4 py-3 space-y-2 text-sm">
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                            {packet.job_name && (
+                              <div>
+                                <span className="text-neutral-500">Job:</span>{" "}
+                                <span className="font-medium">{packet.job_name}</span>
+                              </div>
+                            )}
+                            <div>
+                              <span className="text-neutral-500">Rig:</span>{" "}
+                              <span className="font-medium">{packet.rig_name}</span>
+                            </div>
+                            {packet.hiring_contractor && (
+                              <div>
+                                <span className="text-neutral-500">Hiring:</span>{" "}
+                                <span className="font-medium">{packet.hiring_contractor}</span>
+                              </div>
+                            )}
+                            {contactDetails && (
+                              <div>
+                                <span className="text-neutral-500">Contact:</span>{" "}
+                                <span className="font-medium">{contactDetails}</span>
+                              </div>
+                            )}
+                            {packet.superintendent_name && (
+                              <div>
+                                <span className="text-neutral-500">Supt:</span>{" "}
+                                <span className="font-medium">{packet.superintendent_name}</span>
+                              </div>
+                            )}
+                            {packet.truck_number && (
+                              <div>
+                                <span className="text-neutral-500">Truck:</span>{" "}
+                                <span className="font-medium">{packet.truck_number}</span>
+                              </div>
+                            )}
+                          </div>
+                          {packet.crew_names && (
+                            <div>
+                              <span className="text-neutral-500">Crew:</span>{" "}
+                              <span className="font-medium">{packet.crew_names}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 pt-1">
+                            <label className="text-xs font-semibold text-neutral-500 whitespace-nowrap">
+                              Dig Tess #:
+                            </label>
+                            <input
+                              type="text"
+                              defaultValue={packet.dig_tess_number}
+                              onBlur={(e) => {
+                                updateDigTessNumber(packet.job_id, e.target.value);
+                                setJobs((prev) =>
+                                  prev.map((j) =>
+                                    j.id === packet.job_id
+                                      ? { ...j, dig_tess_number: e.target.value }
+                                      : j
+                                  )
+                                );
+                              }}
+                              placeholder="Enter Dig Tess #"
+                              className="flex-1 rounded border border-neutral-300 px-2 py-1 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ===== MANAGEMENT SLIDE-OUT PANEL ===== */}
+        {showManagePanel && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/30 z-40"
+              onClick={() => setShowManagePanel(false)}
+            />
+            {/* Panel */}
+            <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl z-50 flex flex-col">
+              {/* Panel Header */}
+              <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+                <h2 className={`${lato.className} text-lg font-bold text-neutral-900`}>
+                  Manage Resources
+                </h2>
+                <button
+                  onClick={() => setShowManagePanel(false)}
+                  className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Panel Tab bar */}
+              <div className="flex border-b border-neutral-200 bg-neutral-50 px-2">
+                {[
+                  { id: "workers", label: "Workers" },
+                  { id: "supers", label: "Supers" },
+                  { id: "trucks", label: "Trucks" },
+                  { id: "jobs", label: "Jobs" },
+                  { id: "rigs", label: "Rigs" },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setManagePanelTab(t.id)}
+                    className={`px-3 py-2 text-xs font-semibold transition-colors ${
+                      managePanelTab === t.id
+                        ? "border-b-2 border-red-600 text-red-600"
+                        : "text-neutral-500 hover:text-neutral-800"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Panel Content */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {/* ---- WORKERS TAB ---- */}
+                {managePanelTab === "workers" && (
+                  <div className="space-y-4">
+                    {/* Add Worker Form */}
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
+                        Add Crew Member
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        <input
+                          type="text"
+                          placeholder="Worker name"
+                          value={newWorkerName}
+                          onChange={(e) => setNewWorkerName(e.target.value)}
+                          className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Phone (optional)"
+                          value={newWorkerPhone}
+                          onChange={(e) => setNewWorkerPhone(e.target.value)}
+                          className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Role / Title (optional)"
+                          value={newWorkerRole}
+                          onChange={(e) => setNewWorkerRole(e.target.value)}
+                          className="w-48 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <button
+                          onClick={addWorker}
+                          disabled={saving || !newWorkerName.trim()}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Worker
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Bulk Add Crew */}
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className={`${lato.className} mb-1 font-bold text-neutral-900`}>
+                            Bulk Add Crew
+                          </h3>
+                          <p className="text-sm text-neutral-600">
+                            Upload a CSV or paste a list. Columns: name, phone, role (optional).
+                          </p>
+                        </div>
+                        {bulkCrewRows.length > 0 && (
+                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                            {bulkCrewRows.length} ready
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-3 grid gap-3 lg:grid-cols-[1fr,1fr]">
+                        <label className="text-xs font-semibold text-neutral-500">
+                          Upload file
+                          <input
+                            type="file"
+                            accept=".csv,.txt"
+                            onChange={handleBulkCrewFile}
+                            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                          {bulkCrewFilename && (
+                            <span className="mt-1 block text-xs text-neutral-500">
+                              Loaded: {bulkCrewFilename}
                             </span>
                           )}
-                        </div>
-                        {worker.phone && (
-                          <div className="text-sm text-neutral-500">
-                            {worker.phone}
-                          </div>
+                        </label>
+                        <label className="text-xs font-semibold text-neutral-500">
+                          Or paste list
+                          <textarea
+                            value={bulkCrewText}
+                            onChange={(e) => setBulkCrewText(e.target.value)}
+                            placeholder="Name, Phone, Role&#10;Jane Smith, 214-555-0100, Operator&#10;John Doe"
+                            rows={4}
+                            className="mt-1 w-full resize-y rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                        </label>
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={() => handleBulkCrewParse(bulkCrewText)}
+                          className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                        >
+                          Preview List
+                        </button>
+                        <button
+                          onClick={importBulkCrew}
+                          disabled={bulkCrewImporting || bulkCrewRows.length === 0}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          {bulkCrewImporting ? "Importing..." : `Import ${bulkCrewRows.length || ""}`}
+                        </button>
+                        <button
+                          onClick={clearBulkCrew}
+                          className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                        >
+                          Clear
+                        </button>
+                        {bulkCrewError && (
+                          <span className="text-sm font-semibold text-red-600">{bulkCrewError}</span>
                         )}
-                        <div className="mt-2 flex items-center gap-2">
-                          <label className="text-xs font-semibold text-neutral-500">
-                            Title
-                          </label>
+                      </div>
+                      {bulkCrewRows.length > 0 && (
+                        <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                          Preview:
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            {bulkCrewRows.slice(0, 8).map((row, idx) => (
+                              <span key={`${row.name}-${idx}`} className="rounded-full bg-white px-2 py-1">
+                                {row.name}{row.role ? ` — ${row.role}` : ""}{row.phone ? ` • ${row.phone}` : ""}
+                              </span>
+                            ))}
+                            {bulkCrewRows.length > 8 && (
+                              <span className="text-neutral-500">+{bulkCrewRows.length - 8} more</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Workers List */}
+                    <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                      <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                          Crew Members ({workers.length})
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {workers.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No crew members added yet.
+                          </div>
+                        ) : (
+                          workers.map((worker) => (
+                            <div
+                              key={worker.id}
+                              className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="font-semibold text-neutral-900">{worker.name}</div>
+                                  {worker.role && (
+                                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                                      {worker.role}
+                                    </span>
+                                  )}
+                                </div>
+                                {worker.phone && (
+                                  <div className="text-sm text-neutral-500">{worker.phone}</div>
+                                )}
+                                <div className="mt-2 flex items-center gap-2">
+                                  <label className="text-xs font-semibold text-neutral-500">Title</label>
+                                  <input
+                                    type="text"
+                                    defaultValue={worker.role || ""}
+                                    placeholder="Set title..."
+                                    onBlur={(e) =>
+                                      updateWorker(worker.id, { role: e.target.value.trim() || null })
+                                    }
+                                    className="w-48 rounded border border-neutral-300 px-2 py-1 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                                  />
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => deleteWorker(worker.id)}
+                                className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ---- SUPERS TAB ---- */}
+                {managePanelTab === "supers" && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
+                        Add New Superintendent
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        <input
+                          type="text"
+                          placeholder="Superintendent name"
+                          value={newSuperintendentName}
+                          onChange={(e) => setNewSuperintendentName(e.target.value)}
+                          className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Phone (optional)"
+                          value={newSuperintendentPhone}
+                          onChange={(e) => setNewSuperintendentPhone(e.target.value)}
+                          className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <button
+                          onClick={addSuperintendent}
+                          disabled={saving || !newSuperintendentName.trim()}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Superintendent
+                        </button>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                      <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                          Superintendents ({superintendents.length})
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {superintendents.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No superintendents added yet.
+                          </div>
+                        ) : (
+                          superintendents.map((s) => (
+                            <div key={s.id} className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50">
+                              <div>
+                                <div className="font-semibold text-neutral-900">{s.name}</div>
+                                {s.phone && <div className="text-sm text-neutral-500">{s.phone}</div>}
+                              </div>
+                              <button
+                                onClick={() => deleteSuperintendent(s.id)}
+                                className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ---- TRUCKS TAB ---- */}
+                {managePanelTab === "trucks" && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
+                        Add New Truck
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        <input
+                          type="text"
+                          placeholder="Truck number"
+                          value={newTruckNumber}
+                          onChange={(e) => setNewTruckNumber(e.target.value)}
+                          className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Description (optional)"
+                          value={newTruckDescription}
+                          onChange={(e) => setNewTruckDescription(e.target.value)}
+                          className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <button
+                          onClick={addTruck}
+                          disabled={saving || !newTruckNumber.trim()}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Truck
+                        </button>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                      <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                          Trucks ({trucks.length})
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {trucks.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No trucks added yet.
+                          </div>
+                        ) : (
+                          trucks.map((t) => (
+                            <div key={t.id} className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50">
+                              <div>
+                                <div className="font-semibold text-neutral-900">Truck #{t.truck_number}</div>
+                                {t.description && <div className="text-sm text-neutral-500">{t.description}</div>}
+                              </div>
+                              <button
+                                onClick={() => deleteTruck(t.id)}
+                                className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ---- JOBS TAB ---- */}
+                {managePanelTab === "jobs" && (
+                  <div className="space-y-4">
+                    {/* Add Job Form */}
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
+                        Add New Job
+                      </h3>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <input
+                          type="text"
+                          placeholder="Job Name *"
+                          value={newJob.job_name}
+                          onChange={(e) => setNewJob({ ...newJob, job_name: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Job Number"
+                          value={newJob.job_number}
+                          onChange={(e) => setNewJob({ ...newJob, job_number: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Dig Tess #"
+                          value={newJob.dig_tess_number}
+                          onChange={(e) => setNewJob({ ...newJob, dig_tess_number: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Customer Name"
+                          value={newJob.customer_name}
+                          onChange={(e) => setNewJob({ ...newJob, customer_name: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Hiring Contractor"
+                          value={newJob.hiring_contractor}
+                          onChange={(e) => setNewJob({ ...newJob, hiring_contractor: e.target.value })}
+                          list="customer-options"
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Contact Name"
+                          value={newJob.hiring_contact_name}
+                          onChange={(e) => setNewJob({ ...newJob, hiring_contact_name: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Contact Phone"
+                          value={newJob.hiring_contact_phone}
+                          onChange={(e) => setNewJob({ ...newJob, hiring_contact_phone: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="email"
+                          placeholder="Contact Email"
+                          value={newJob.hiring_contact_email}
+                          onChange={(e) => setNewJob({ ...newJob, hiring_contact_email: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Address"
+                          value={newJob.address}
+                          onChange={(e) => setNewJob({ ...newJob, address: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="City"
+                          value={newJob.city}
+                          onChange={(e) => setNewJob({ ...newJob, city: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="ZIP"
+                          value={newJob.zip}
+                          onChange={(e) => setNewJob({ ...newJob, zip: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="S&W PM Name"
+                          value={newJob.pm_name}
+                          onChange={(e) => setNewJob({ ...newJob, pm_name: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="PM Phone"
+                          value={newJob.pm_phone}
+                          onChange={(e) => setNewJob({ ...newJob, pm_phone: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Default Rig"
+                          value={newJob.default_rig}
+                          onChange={(e) => setNewJob({ ...newJob, default_rig: e.target.value })}
+                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between">
+                        <label className="flex items-center gap-2 text-sm text-neutral-600">
                           <input
-                            type="text"
-                            defaultValue={worker.role || ""}
-                            placeholder="Set title..."
-                            onBlur={(e) =>
-                              updateWorker(worker.id, {
-                                role: e.target.value.trim() || null,
-                              })
-                            }
-                            className="w-48 rounded border border-neutral-300 px-2 py-1 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                            type="checkbox"
+                            checked={newJob.crane_required}
+                            onChange={(e) => setNewJob({ ...newJob, crane_required: e.target.checked })}
+                            className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
+                          />
+                          Crane Required
+                        </label>
+                        <button
+                          onClick={addJob}
+                          disabled={saving || !newJob.job_name.trim()}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Job
+                        </button>
+                      </div>
+                    </div>
+
+                    {customerNames.length > 0 && (
+                      <datalist id="customer-options">
+                        {customerNames.map((name) => (
+                          <option key={name} value={name} />
+                        ))}
+                      </datalist>
+                    )}
+
+                    {editingJob && (
+                      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                            Edit Job: {editingJob.job_name || "Untitled"}
+                          </h3>
+                          <button
+                            onClick={() => setEditingJob(null)}
+                            className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-white/70"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <input type="text" placeholder="Job Name *" value={editingJob.job_name} onChange={(e) => setEditingJob({ ...editingJob, job_name: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Job Number" value={editingJob.job_number} onChange={(e) => setEditingJob({ ...editingJob, job_number: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Dig Tess #" value={editingJob.dig_tess_number} onChange={(e) => setEditingJob({ ...editingJob, dig_tess_number: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Customer Name" value={editingJob.customer_name} onChange={(e) => setEditingJob({ ...editingJob, customer_name: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Hiring Contractor" value={editingJob.hiring_contractor} onChange={(e) => setEditingJob({ ...editingJob, hiring_contractor: e.target.value })} list="customer-options" className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Contact Name" value={editingJob.hiring_contact_name} onChange={(e) => setEditingJob({ ...editingJob, hiring_contact_name: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Contact Phone" value={editingJob.hiring_contact_phone} onChange={(e) => setEditingJob({ ...editingJob, hiring_contact_phone: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="email" placeholder="Contact Email" value={editingJob.hiring_contact_email} onChange={(e) => setEditingJob({ ...editingJob, hiring_contact_email: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Address" value={editingJob.address} onChange={(e) => setEditingJob({ ...editingJob, address: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="City" value={editingJob.city} onChange={(e) => setEditingJob({ ...editingJob, city: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="ZIP" value={editingJob.zip} onChange={(e) => setEditingJob({ ...editingJob, zip: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="S&W PM Name" value={editingJob.pm_name} onChange={(e) => setEditingJob({ ...editingJob, pm_name: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="PM Phone" value={editingJob.pm_phone} onChange={(e) => setEditingJob({ ...editingJob, pm_phone: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <input type="text" placeholder="Default Rig" value={editingJob.default_rig} onChange={(e) => setEditingJob({ ...editingJob, default_rig: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                        </div>
+                        <div className="mt-3 flex items-center justify-between">
+                          <label className="flex items-center gap-2 text-sm text-neutral-600">
+                            <input
+                              type="checkbox"
+                              checked={editingJob.crane_required}
+                              onChange={(e) => setEditingJob({ ...editingJob, crane_required: e.target.checked })}
+                              className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
+                            />
+                            Crane Required
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setEditingJob(null)}
+                              className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => updateJob(editingJob.id, normalizeJobInput(editingJob))}
+                              disabled={!editingJob.job_name.trim()}
+                              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                            >
+                              Save Changes
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Jobs List */}
+                    <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                      <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                          Active Jobs ({jobs.length})
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {jobs.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No active jobs. Add your first job above.
+                          </div>
+                        ) : (
+                          jobs.map((job) => (
+                            <div key={job.id} className="px-4 py-3 hover:bg-neutral-50">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-neutral-900">{job.job_name}</span>
+                                    {job.job_number && (
+                                      <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">#{job.job_number}</span>
+                                    )}
+                                    {job.crane_required && (
+                                      <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">Crane</span>
+                                    )}
+                                  </div>
+                                  <div className="mt-1 text-sm text-neutral-500">
+                                    {[job.address, job.city, job.zip].filter(Boolean).join(", ") || "No address"}
+                                  </div>
+                                  {(job.pm_name || job.pm_phone) && (
+                                    <div className="mt-1 text-sm text-neutral-500">
+                                      PM: {job.pm_name}{job.pm_phone ? ` • ${job.pm_phone}` : ""}
+                                    </div>
+                                  )}
+                                  {job.dig_tess_number && (
+                                    <div className="mt-1 text-sm text-neutral-500">Dig Tess #: {job.dig_tess_number}</div>
+                                  )}
+                                  {(job.hiring_contractor || job.hiring_contact_name || job.hiring_contact_phone || job.hiring_contact_email) && (
+                                    <div className="mt-1 text-sm text-neutral-500">
+                                      {job.hiring_contractor ? `Hiring: ${job.hiring_contractor}` : "Hiring Contact"}{" "}
+                                      {[job.hiring_contact_name, job.hiring_contact_phone, job.hiring_contact_email].filter(Boolean).join(" • ")}
+                                    </div>
+                                  )}
+                                  {job.customer_name && (
+                                    <div className="mt-1 text-sm text-neutral-500">Customer: {job.customer_name}</div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => startEditingJob(job)}
+                                    className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-neutral-100 transition-colors"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => deleteJob(job.id)}
+                                    className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                  >
+                                    Deactivate
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ---- RIGS TAB ---- */}
+                {managePanelTab === "rigs" && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
+                        Add New Category
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <input
+                          type="text"
+                          placeholder="Category name (e.g., Rig 1, Crane, Shop)"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        />
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-neutral-600">Color:</label>
+                          <input
+                            type="color"
+                            value={newCategoryColor}
+                            onChange={(e) => setNewCategoryColor(e.target.value)}
+                            className="h-9 w-14 cursor-pointer rounded border border-neutral-300"
                           />
                         </div>
+                        <button
+                          onClick={addCategory}
+                          disabled={saving || !newCategoryName.trim()}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Category
+                        </button>
                       </div>
-                      <button
-                        onClick={() => deleteWorker(worker.id)}
-                        className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                      >
-                        Remove
-                      </button>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* ============================================ */}
-        {/* Superintendents Tab (Phase 2) */}
-        {/* ============================================ */}
-        {activeTab === "superintendents" && (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
-                Add New Superintendent
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                <input
-                  type="text"
-                  placeholder="Superintendent name"
-                  value={newSuperintendentName}
-                  onChange={(e) => setNewSuperintendentName(e.target.value)}
-                  className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Phone (optional)"
-                  value={newSuperintendentPhone}
-                  onChange={(e) => setNewSuperintendentPhone(e.target.value)}
-                  className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <button
-                  onClick={addSuperintendent}
-                  disabled={saving || !newSuperintendentName.trim()}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-                >
-                  Add Superintendent
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
-              <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-                <h3 className={`${lato.className} font-bold text-neutral-900`}>
-                  Superintendents ({superintendents.length})
-                </h3>
-              </div>
-              <div className="divide-y">
-                {superintendents.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-neutral-500">
-                    No superintendents added yet. Add your first superintendent above.
-                  </div>
-                ) : (
-                  superintendents.map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50"
-                    >
-                      <div>
-                        <div className="font-semibold text-neutral-900">{s.name}</div>
-                        {s.phone && (
-                          <div className="text-sm text-neutral-500">{s.phone}</div>
+                    <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                      <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                          Categories ({categories.length})
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {categories.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No categories created yet. Add categories like &quot;Rig 1&quot;, &quot;Crane&quot;, &quot;Equipment&quot;, etc.
+                          </div>
+                        ) : (
+                          categories.map((category) => (
+                            <div key={category.id} className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50">
+                              <div className="flex items-center gap-3">
+                                <div className="h-6 w-6 rounded" style={{ backgroundColor: category.color }}></div>
+                                <span className="font-semibold text-neutral-900">{category.name}</span>
+                              </div>
+                              <button
+                                onClick={() => deleteCategory(category.id)}
+                                className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ))
                         )}
                       </div>
-                      <button
-                        onClick={() => deleteSuperintendent(s.id)}
-                        className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                      >
-                        Remove
-                      </button>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================ */}
-        {/* Trucks Tab (Phase 2) */}
-        {/* ============================================ */}
-        {activeTab === "trucks" && (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
-                Add New Truck
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                <input
-                  type="text"
-                  placeholder="Truck number"
-                  value={newTruckNumber}
-                  onChange={(e) => setNewTruckNumber(e.target.value)}
-                  className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Description (optional)"
-                  value={newTruckDescription}
-                  onChange={(e) => setNewTruckDescription(e.target.value)}
-                  className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <button
-                  onClick={addTruck}
-                  disabled={saving || !newTruckNumber.trim()}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-                >
-                  Add Truck
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
-              <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-                <h3 className={`${lato.className} font-bold text-neutral-900`}>
-                  Trucks ({trucks.length})
-                </h3>
-              </div>
-              <div className="divide-y">
-                {trucks.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-neutral-500">
-                    No trucks added yet. Add your first truck above.
                   </div>
-                ) : (
-                  trucks.map((t) => (
-                    <div
-                      key={t.id}
-                      className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50"
-                    >
-                      <div>
-                        <div className="font-semibold text-neutral-900">
-                          Truck #{t.truck_number}
-                        </div>
-                        {t.description && (
-                          <div className="text-sm text-neutral-500">{t.description}</div>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => deleteTruck(t.id)}
-                        className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))
                 )}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* ============================================ */}
-        {/* Categories Tab */}
-        {/* ============================================ */}
-        {activeTab === "categories" && (
-          <div className="space-y-4">
-            {/* Add Category Form */}
-            <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <h3
-                className={`${lato.className} mb-3 font-bold text-neutral-900`}
-              >
-                Add New Category
-              </h3>
-              <div className="flex flex-wrap items-center gap-3">
-                <input
-                  type="text"
-                  placeholder="Category name (e.g., Rig 1, Crane, Shop)"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="flex-1 min-w-[200px] rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                />
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-neutral-600">Color:</label>
-                  <input
-                    type="color"
-                    value={newCategoryColor}
-                    onChange={(e) => setNewCategoryColor(e.target.value)}
-                    className="h-9 w-14 cursor-pointer rounded border border-neutral-300"
-                  />
-                </div>
-                <button
-                  onClick={addCategory}
-                  disabled={saving || !newCategoryName.trim()}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-                >
-                  Add Category
-                </button>
-              </div>
-            </div>
-
-            {/* Categories List */}
-            <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
-              <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-                <h3
-                  className={`${lato.className} font-bold text-neutral-900`}
-                >
-                  Categories ({categories.length})
-                </h3>
-              </div>
-              <div className="divide-y">
-                {categories.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-neutral-500">
-                    No categories created yet. Add categories like &quot;Rig
-                    1&quot;, &quot;Crane&quot;, &quot;Equipment&quot;, etc.
-                  </div>
-                ) : (
-                  categories.map((category) => (
-                    <div
-                      key={category.id}
-                      className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="h-6 w-6 rounded"
-                          style={{ backgroundColor: category.color }}
-                        ></div>
-                        <span className="font-semibold text-neutral-900">
-                          {category.name}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => deleteCategory(category.id)}
-                        className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
+          </>
         )}
       </div>
     </>
