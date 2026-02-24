@@ -1732,15 +1732,168 @@ function CrewScheduler() {
     });
   };
 
-  // --- Tab definitions ---
+  // --- Visual Board: computed assignment maps ---
+  const workerAssignmentMap = useMemo(() => {
+    const map = {};
+    assignments.forEach((a) => {
+      if (a.worker_id) {
+        if (!map[a.worker_id]) map[a.worker_id] = [];
+        map[a.worker_id].push(a.category_id);
+      }
+    });
+    return map;
+  }, [assignments]);
+
+  const superAssignmentMap = useMemo(() => {
+    const map = {};
+    Object.entries(rigDetails).forEach(([catId, detail]) => {
+      if (detail.superintendent_id) {
+        map[detail.superintendent_id] = catId;
+      }
+    });
+    return map;
+  }, [rigDetails]);
+
+  const truckAssignmentMap = useMemo(() => {
+    const map = {};
+    Object.entries(rigDetails).forEach(([catId, detail]) => {
+      if (detail.truck_id) {
+        map[detail.truck_id] = catId;
+      }
+    });
+    return map;
+  }, [rigDetails]);
+
+  const getCategoryName = (catId) => {
+    const cat = categories.find((c) => String(c.id) === String(catId));
+    return cat?.name || "";
+  };
+
+  const getRigJobId = (categoryId) => {
+    const catAssignments = assignments.filter(
+      (a) => a.category_id === categoryId && a.job_id
+    );
+    if (catAssignments.length === 0) return null;
+    return catAssignments[0].job_id;
+  };
+
+  const assignWorkerToRig = async (categoryId, workerId) => {
+    if (!currentSchedule) return;
+    setSaving(true);
+    const rigJob = getRigJobId(categoryId);
+    const job = rigJob ? jobs.find((j) => j.id === rigJob) : null;
+    const { error } = await supabase.from("crew_assignments").insert({
+      schedule_id: currentSchedule.id,
+      category_id: categoryId,
+      worker_id: workerId,
+      job_id: rigJob || null,
+      job_name: job?.job_name || "",
+    });
+    if (!error) fetchSchedule(selectedDate);
+    setSaving(false);
+  };
+
+  const assignJobToRig = async (categoryId, jobId) => {
+    if (!currentSchedule) return;
+    setSaving(true);
+    const job = jobs.find((j) => j.id === jobId);
+    const catAssignments = assignments.filter(
+      (a) => a.category_id === categoryId
+    );
+    if (catAssignments.length === 0) {
+      await supabase.from("crew_assignments").insert({
+        schedule_id: currentSchedule.id,
+        category_id: categoryId,
+        worker_id: null,
+        job_id: jobId,
+        job_name: job?.job_name || "",
+      });
+    } else {
+      for (const a of catAssignments) {
+        await supabase
+          .from("crew_assignments")
+          .update({ job_id: jobId, job_name: job?.job_name || "" })
+          .eq("id", a.id);
+      }
+    }
+    fetchSchedule(selectedDate);
+    setSaving(false);
+  };
+
+  const removeJobFromRig = async (categoryId) => {
+    if (!currentSchedule) return;
+    const catAssignments = assignments.filter(
+      (a) => a.category_id === categoryId
+    );
+    for (const a of catAssignments) {
+      await supabase
+        .from("crew_assignments")
+        .update({ job_id: null, job_name: "" })
+        .eq("id", a.id);
+    }
+    fetchSchedule(selectedDate);
+  };
+
+  const handleSidebarClick = (type, id) => {
+    if (!activeRigId) return;
+    if (type === "worker") {
+      const alreadyOnRig = assignments.some(
+        (a) => a.worker_id === id && a.category_id === activeRigId
+      );
+      if (alreadyOnRig) return;
+      if (workerAssignmentMap[id]) return;
+      assignWorkerToRig(activeRigId, id);
+    } else if (type === "super") {
+      if (superAssignmentMap[id]) return;
+      updateRigDetail(activeRigId, "superintendent_id", id);
+    } else if (type === "truck") {
+      if (truckAssignmentMap[id]) return;
+      updateRigDetail(activeRigId, "truck_id", id);
+    } else if (type === "job") {
+      assignJobToRig(activeRigId, id);
+    }
+  };
+
+  const filteredWorkers = useMemo(() => {
+    if (!sidebarSearch) return workers;
+    const q = sidebarSearch.toLowerCase();
+    return workers.filter(
+      (w) =>
+        w.name.toLowerCase().includes(q) ||
+        (w.role && w.role.toLowerCase().includes(q))
+    );
+  }, [workers, sidebarSearch]);
+
+  const filteredSuperintendents = useMemo(() => {
+    if (!sidebarSearch) return superintendents;
+    const q = sidebarSearch.toLowerCase();
+    return superintendents.filter((s) => s.name.toLowerCase().includes(q));
+  }, [superintendents, sidebarSearch]);
+
+  const filteredTrucks = useMemo(() => {
+    if (!sidebarSearch) return trucks;
+    const q = sidebarSearch.toLowerCase();
+    return trucks.filter(
+      (t) =>
+        t.truck_number.toLowerCase().includes(q) ||
+        (t.description && t.description.toLowerCase().includes(q))
+    );
+  }, [trucks, sidebarSearch]);
+
+  const filteredJobs = useMemo(() => {
+    if (!sidebarSearch) return jobs;
+    const q = sidebarSearch.toLowerCase();
+    return jobs.filter(
+      (j) =>
+        j.job_name.toLowerCase().includes(q) ||
+        (j.job_number && j.job_number.toLowerCase().includes(q))
+    );
+  }, [jobs, sidebarSearch]);
+
+  // --- View definitions ---
   const tabs = [
-    { id: "schedule", label: "Build Schedule" },
+    { id: "schedule", label: "Schedule" },
     { id: "packets", label: "Daily Packets" },
-    { id: "jobs", label: "Manage Jobs" },
-    { id: "workers", label: "Crew & Titles" },
-    { id: "categories", label: "Rigs & Categories" },
-    { id: "superintendents", label: "Superintendents" },
-    { id: "trucks", label: "Trucks" },
   ];
 
   if (loading) {
