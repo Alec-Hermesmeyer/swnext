@@ -79,6 +79,100 @@ const buildDateRange = (start, end) => {
   return dates;
 };
 
+const toMonthString = (value) => {
+  const d = toLocalDate(value);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+};
+
+const formatMonthLabel = (monthValue) => {
+  if (!monthValue) return "";
+  const [year, month] = String(monthValue).split("-").map(Number);
+  if (!year || !month) return monthValue;
+  return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const getMonthBounds = (monthValue) => {
+  if (!monthValue) return null;
+  const [year, month] = String(monthValue).split("-").map(Number);
+  if (!year || !month) return null;
+  const monthText = String(month).padStart(2, "0");
+  const lastDay = new Date(year, month, 0).getDate();
+  return {
+    start: `${year}-${monthText}-01`,
+    end: `${year}-${monthText}-${String(lastDay).padStart(2, "0")}`,
+    lastDay,
+    firstWeekday: new Date(year, month - 1, 1).getDay(),
+  };
+};
+
+const shiftMonthString = (monthValue, delta) => {
+  const [year, month] = String(monthValue || "").split("-").map(Number);
+  if (!year || !month) return toMonthString(new Date());
+  const d = new Date(year, month - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const toNonNegativeInteger = (value) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const parsed = Number.parseInt(raw, 10);
+  if (Number.isNaN(parsed)) return null;
+  return Math.max(parsed, 0);
+};
+
+const JOB_PROGRESS_STATUS_OPTIONS = [
+  { value: "planned", label: "Planned" },
+  { value: "active", label: "Active" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "complete", label: "Complete" },
+];
+
+const JOB_PROGRESS_STATUS_LABELS = JOB_PROGRESS_STATUS_OPTIONS.reduce(
+  (acc, option) => ({ ...acc, [option.value]: option.label }),
+  {}
+);
+
+const JOB_INTAKE_FIELD_ORDER = [
+  "job_name",
+  "job_number",
+  "dig_tess_number",
+  "customer_name",
+  "hiring_contractor",
+  "hiring_contact_name",
+  "hiring_contact_phone",
+  "hiring_contact_email",
+  "address",
+  "city",
+  "zip",
+  "pm_name",
+  "pm_phone",
+  "default_rig",
+  "crane_required",
+];
+
+const JOB_INTAKE_HEADER_ALIASES = {
+  job_name: ["job name", "job", "project name", "project", "site name"],
+  job_number: ["job number", "job #", "job no", "project number", "project #", "number"],
+  dig_tess_number: ["dig tess", "dig tess #", "dig-tess", "dig_tess_number", "dig ticket"],
+  customer_name: ["customer", "customer name", "owner"],
+  hiring_contractor: ["hiring contractor", "contractor", "gc", "general contractor"],
+  hiring_contact_name: ["contact", "contact name", "hiring contact", "hiring contact name"],
+  hiring_contact_phone: ["contact phone", "phone", "hiring contact phone", "contact number"],
+  hiring_contact_email: ["contact email", "email", "hiring contact email"],
+  address: ["address", "job address", "site address", "street"],
+  city: ["city", "town"],
+  zip: ["zip", "zipcode", "postal", "postal code"],
+  pm_name: ["pm", "pm name", "project manager", "project manager name"],
+  pm_phone: ["pm phone", "project manager phone"],
+  default_rig: ["default rig", "rig", "rig preference"],
+  crane_required: ["crane", "crane required", "needs crane", "crane?"],
+};
+
 function CrewScheduler() {
   const [activeTab, setActiveTab] = useState("schedule");
   const [selectedDate, setSelectedDate] = useState(toDateString(new Date()));
@@ -126,6 +220,10 @@ function CrewScheduler() {
     crane_required: false,
   });
   const [editingJob, setEditingJob] = useState(null);
+  const [jobIntakeText, setJobIntakeText] = useState("");
+  const [jobIntakeStatus, setJobIntakeStatus] = useState(null);
+  const [jobIntakePreviewRows, setJobIntakePreviewRows] = useState([]);
+  const [jobIntakeImporting, setJobIntakeImporting] = useState(false);
 
   // --- Phase 2: Superintendent & Truck state ---
   const [superintendents, setSuperintendents] = useState([]);
@@ -152,12 +250,43 @@ function CrewScheduler() {
   const [copyOverwrite, setCopyOverwrite] = useState(false);
   const [copyingCategoryId, setCopyingCategoryId] = useState(null);
   const [copyStatus, setCopyStatus] = useState(null);
+  const [scheduleRigSearch, setScheduleRigSearch] = useState("");
+  const [scheduleNeedsAttentionOnly, setScheduleNeedsAttentionOnly] = useState(false);
 
   // --- Visual Board State ---
-  const [activeRigId, setActiveRigId] = useState(null);
   const [showManagePanel, setShowManagePanel] = useState(false);
   const [managePanelTab, setManagePanelTab] = useState("workers");
-  const [sidebarSearch, setSidebarSearch] = useState("");
+  const [rigWorkerDrafts, setRigWorkerDrafts] = useState({});
+
+  // --- Job Progress State ---
+  const [jobProgressByJobId, setJobProgressByJobId] = useState({});
+  const [jobProgressAvailable, setJobProgressAvailable] = useState(true);
+  const [jobProgressStatus, setJobProgressStatus] = useState(null);
+  const [editingProgressJobId, setEditingProgressJobId] = useState(null);
+  const [editingProgress, setEditingProgress] = useState(null);
+  const [savingProgress, setSavingProgress] = useState(false);
+
+  // --- History Calendar State ---
+  const [historyView, setHistoryView] = useState("rig");
+  const [historyMonth, setHistoryMonth] = useState(toMonthString(new Date()));
+  const [historyEntityId, setHistoryEntityId] = useState("");
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyFinalizedOnly, setHistoryFinalizedOnly] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
+  const [historyAssignments, setHistoryAssignments] = useState([]);
+  const [historySelectedDate, setHistorySelectedDate] = useState("");
+
+  // --- Planner Calendar State (live + future schedules) ---
+  const [plannerMonth, setPlannerMonth] = useState(toMonthString(new Date()));
+  const [plannerLoading, setPlannerLoading] = useState(false);
+  const [plannerError, setPlannerError] = useState(null);
+  const [plannerSchedules, setPlannerSchedules] = useState([]);
+  const [plannerAssignments, setPlannerAssignments] = useState([]);
+  const [plannerRigDetails, setPlannerRigDetails] = useState([]);
+  const [plannerSearch, setPlannerSearch] = useState("");
+  const [plannerFinalizedOnly, setPlannerFinalizedOnly] = useState(false);
+  const [plannerSelectedDate, setPlannerSelectedDate] = useState("");
 
   // Fetch workers, categories, jobs, superintendents, trucks on mount
   useEffect(() => {
@@ -168,6 +297,7 @@ function CrewScheduler() {
     fetchTrucks();
     fetchCustomers();
     fetchRecentSchedules();
+    fetchJobProgress();
   }, []);
 
   // Fetch schedule when date changes
@@ -206,6 +336,23 @@ function CrewScheduler() {
       .eq("is_active", true)
       .order("job_name");
     if (!error) setJobs(data || []);
+  };
+
+  const fetchJobProgress = async () => {
+    const { data, error } = await supabase
+      .from("crew_job_progress")
+      .select("*");
+    if (error) {
+      setJobProgressAvailable(false);
+      return;
+    }
+    const byJobId = {};
+    (data || []).forEach((row) => {
+      if (!row?.job_id) return;
+      byJobId[row.job_id] = row;
+    });
+    setJobProgressByJobId(byJobId);
+    setJobProgressAvailable(true);
   };
 
   const fetchSuperintendents = async () => {
@@ -319,6 +466,113 @@ function CrewScheduler() {
     return { rows: Array.from(deduped.values()), error: null };
   };
 
+  const normalizeHeaderLabel = (value) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/[_-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const getJobIntakeHeaderMap = (columns) => {
+    const map = {};
+    columns.forEach((column, idx) => {
+      const normalized = normalizeHeaderLabel(column);
+      if (!normalized) return;
+      Object.entries(JOB_INTAKE_HEADER_ALIASES).forEach(([field, aliases]) => {
+        if (map[field] !== undefined) return;
+        if (aliases.includes(normalized)) {
+          map[field] = idx;
+        }
+      });
+    });
+    return map;
+  };
+
+  const parseBooleanLike = (value) => {
+    const normalized = String(value || "").trim().toLowerCase();
+    if (!normalized) return false;
+    return ["true", "yes", "y", "1", "required", "crane"].includes(normalized);
+  };
+
+  const parseJobIntakeInput = (raw) => {
+    const text = String(raw || "")
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n");
+    const lines = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!lines.length) {
+      return {
+        rows: [],
+        error: "No jobs found. Paste at least one row from the spreadsheet.",
+      };
+    }
+
+    const firstColumns = splitCsvLine(lines[0]);
+    const headerMap = getJobIntakeHeaderMap(firstColumns);
+    const hasHeader =
+      headerMap.job_name !== undefined || headerMap.job_number !== undefined;
+    const rows = [];
+    const startIndex = hasHeader ? 1 : 0;
+
+    for (let i = startIndex; i < lines.length; i += 1) {
+      const cols = splitCsvLine(lines[i]);
+      if (!cols.length) continue;
+
+      const draft = {};
+      JOB_INTAKE_FIELD_ORDER.forEach((field, idx) => {
+        if (hasHeader) {
+          const headerIdx = headerMap[field];
+          draft[field] = headerIdx === undefined ? "" : cols[headerIdx] || "";
+        } else {
+          draft[field] = cols[idx] || "";
+        }
+      });
+
+      const jobNumber = String(draft.job_number || "").trim();
+      const jobName =
+        String(draft.job_name || "").trim() || (jobNumber ? `Job ${jobNumber}` : "");
+
+      if (!jobName) continue;
+      rows.push({
+        ...draft,
+        job_name: jobName,
+        job_number: jobNumber,
+        dig_tess_number: String(draft.dig_tess_number || "").trim(),
+        customer_name: String(draft.customer_name || "").trim(),
+        hiring_contractor: String(draft.hiring_contractor || "").trim(),
+        hiring_contact_name: String(draft.hiring_contact_name || "").trim(),
+        hiring_contact_phone: String(draft.hiring_contact_phone || "").trim(),
+        hiring_contact_email: String(draft.hiring_contact_email || "").trim(),
+        address: String(draft.address || "").trim(),
+        city: String(draft.city || "").trim(),
+        zip: String(draft.zip || "").trim(),
+        pm_name: String(draft.pm_name || "").trim(),
+        pm_phone: String(draft.pm_phone || "").trim(),
+        default_rig: String(draft.default_rig || "").trim(),
+        crane_required: parseBooleanLike(draft.crane_required),
+      });
+    }
+
+    if (!rows.length) {
+      return {
+        rows: [],
+        error: "Could not parse any job rows. Include at least a job name column.",
+      };
+    }
+
+    const deduped = new Map();
+    rows.forEach((row) => {
+      const key = row.job_number
+        ? `num::${row.job_number.toLowerCase()}`
+        : `name::${row.job_name.toLowerCase()}`;
+      deduped.set(key, row);
+    });
+
+    return { rows: Array.from(deduped.values()), error: null };
+  };
+
   const fetchCustomers = async () => {
     const { data, error } = await supabase
       .from("Customer")
@@ -383,6 +637,117 @@ function CrewScheduler() {
     default_rig: String(job.default_rig || "").trim() || null,
     crane_required: !!job.crane_required,
   });
+
+  const normalizeJobMatchValue = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
+
+  const clearJobIntake = () => {
+    setJobIntakeText("");
+    setJobIntakePreviewRows([]);
+    setJobIntakeStatus(null);
+  };
+
+  const previewJobIntake = () => {
+    const { rows, error } = parseJobIntakeInput(jobIntakeText);
+    setJobIntakePreviewRows(rows);
+    if (error) {
+      setJobIntakeStatus({ type: "error", message: error });
+      return;
+    }
+    setJobIntakeStatus({
+      type: "success",
+      message: `Ready to import ${rows.length} job${rows.length === 1 ? "" : "s"}.`,
+    });
+  };
+
+  const importJobIntake = async () => {
+    const { rows, error } = parseJobIntakeInput(jobIntakeText);
+    setJobIntakePreviewRows(rows);
+    if (error || rows.length === 0) {
+      setJobIntakeStatus({
+        type: "error",
+        message: error || "No jobs available to import.",
+      });
+      return;
+    }
+
+    setJobIntakeImporting(true);
+    setJobIntakeStatus(null);
+    try {
+      const { data: existingJobs, error: existingError } = await supabase
+        .from("crew_jobs")
+        .select("id, job_name, job_number");
+      if (existingError) throw existingError;
+
+      const byNumber = new Map();
+      const byName = new Map();
+      (existingJobs || []).forEach((job) => {
+        const numberKey = normalizeJobMatchValue(job.job_number);
+        const nameKey = normalizeJobMatchValue(job.job_name);
+        if (numberKey) byNumber.set(numberKey, job);
+        if (nameKey) byName.set(nameKey, job);
+      });
+
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+
+      for (const row of rows) {
+        const payload = normalizeJobInput(row);
+        if (!payload.job_name) {
+          skipped += 1;
+          continue;
+        }
+
+        const numberKey = normalizeJobMatchValue(payload.job_number);
+        const nameKey = normalizeJobMatchValue(payload.job_name);
+        const existing = (numberKey && byNumber.get(numberKey)) || byName.get(nameKey);
+
+        if (existing) {
+          const { error: updateError } = await supabase
+            .from("crew_jobs")
+            .update({ ...payload, is_active: true })
+            .eq("id", existing.id);
+          if (updateError) {
+            skipped += 1;
+            continue;
+          }
+          updated += 1;
+        } else {
+          const { data: inserted, error: insertError } = await supabase
+            .from("crew_jobs")
+            .insert(payload)
+            .select("id, job_name, job_number")
+            .single();
+          if (insertError) {
+            skipped += 1;
+            continue;
+          }
+          created += 1;
+          const insertedNumber = normalizeJobMatchValue(inserted?.job_number);
+          const insertedName = normalizeJobMatchValue(inserted?.job_name);
+          if (insertedNumber) byNumber.set(insertedNumber, inserted);
+          if (insertedName) byName.set(insertedName, inserted);
+        }
+
+        await ensureCustomerExists(payload.hiring_contractor);
+      }
+
+      await fetchJobs();
+      setJobIntakeStatus({
+        type: skipped > 0 ? "warning" : "success",
+        message: `Job intake complete. Created: ${created}, Updated: ${updated}, Skipped: ${skipped}.`,
+      });
+    } catch (err) {
+      setJobIntakeStatus({
+        type: "error",
+        message: "Job intake failed. Please try again.",
+      });
+    }
+    setJobIntakeImporting(false);
+  };
 
   const addJob = async () => {
     const payload = normalizeJobInput(newJob);
@@ -1711,6 +2076,12 @@ function CrewScheduler() {
     setSelectedDate(toDateString(base));
   };
 
+  const openScheduleForDate = (date) => {
+    if (!date) return;
+    setSelectedDate(date);
+    setActiveTab("schedule");
+  };
+
   // Print all forms for a category/rig
   const handlePrintAllForCategory = (categoryId) => {
     const catAssignments = assignments.filter(
@@ -1744,30 +2115,107 @@ function CrewScheduler() {
     return map;
   }, [assignments]);
 
-  const superAssignmentMap = useMemo(() => {
-    const map = {};
-    Object.entries(rigDetails).forEach(([catId, detail]) => {
-      if (detail.superintendent_id) {
-        map[detail.superintendent_id] = catId;
-      }
-    });
-    return map;
-  }, [rigDetails]);
+  const scheduleRigStatusByCategoryId = useMemo(() => {
+    const statusMap = {};
+    categories.forEach((category) => {
+      const catAssignments = assignments.filter(
+        (assignment) => String(assignment.category_id) === String(category.id)
+      );
+      const detail = rigDetails[category.id] || {};
+      const rigJobAssignment = catAssignments.find((assignment) => assignment.job_id);
+      const rigJob = rigJobAssignment?.crew_jobs
+        || (rigJobAssignment?.job_id
+          ? jobs.find((job) => String(job.id) === String(rigJobAssignment.job_id))
+          : null);
+      const crewAssignments = catAssignments.filter((assignment) => assignment.worker_id);
+      const superName = superintendents.find(
+        (superintendent) =>
+          String(superintendent.id) === String(detail.superintendent_id)
+      )?.name || "";
+      const truckLabel = trucks.find(
+        (truck) => String(truck.id) === String(detail.truck_id)
+      )?.truck_number || "";
 
-  const truckAssignmentMap = useMemo(() => {
-    const map = {};
-    Object.entries(rigDetails).forEach(([catId, detail]) => {
-      if (detail.truck_id) {
-        map[detail.truck_id] = catId;
-      }
-    });
-    return map;
-  }, [rigDetails]);
+      const hasJob = !!rigJobAssignment?.job_id;
+      const hasSuper = !!detail.superintendent_id;
+      const hasTruck = !!detail.truck_id;
+      const hasCrew = crewAssignments.length > 0;
+      const completion = Math.round(
+        ((Number(hasJob) + Number(hasSuper) + Number(hasTruck) + Number(hasCrew)) / 4) *
+          100
+      );
+      const missing = [];
+      if (!hasJob) missing.push("Job");
+      if (!hasSuper) missing.push("Super");
+      if (!hasTruck) missing.push("Truck");
+      if (!hasCrew) missing.push("Crew");
 
-  const getCategoryName = (catId) => {
-    const cat = categories.find((c) => String(c.id) === String(catId));
-    return cat?.name || "";
-  };
+      statusMap[category.id] = {
+        hasJob,
+        hasSuper,
+        hasTruck,
+        hasCrew,
+        completion,
+        ready: missing.length === 0,
+        missing,
+        jobName: rigJob?.job_name || "",
+        jobNumber: rigJob?.job_number || "",
+        location: [rigJob?.address, rigJob?.city, rigJob?.zip].filter(Boolean).join(", "),
+        superName,
+        truckLabel: truckLabel ? `#${truckLabel}` : "",
+        crewNames: crewAssignments.map((assignment) => assignment?.crew_workers?.name || ""),
+      };
+    });
+    return statusMap;
+  }, [assignments, categories, jobs, rigDetails, superintendents, trucks]);
+
+  const visibleScheduleCategories = useMemo(() => {
+    const query = scheduleRigSearch.trim().toLowerCase();
+    return categories.filter((category) => {
+      const status = scheduleRigStatusByCategoryId[category.id];
+      if (!status) return true;
+      if (scheduleNeedsAttentionOnly && status.ready) return false;
+      if (!query) return true;
+      return [
+        category.name,
+        status.jobName,
+        status.jobNumber,
+        status.location,
+        status.superName,
+        status.truckLabel,
+        ...status.crewNames,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+    });
+  }, [
+    categories,
+    scheduleNeedsAttentionOnly,
+    scheduleRigSearch,
+    scheduleRigStatusByCategoryId,
+  ]);
+
+  const scheduleOverview = useMemo(() => {
+    const statuses = Object.values(scheduleRigStatusByCategoryId);
+    const totalRigs = categories.length;
+    const readyRigs = statuses.filter((status) => status.ready).length;
+    const rigsWithJob = statuses.filter((status) => status.hasJob).length;
+    const rigsMissingCrew = statuses.filter((status) => !status.hasCrew).length;
+    const assignedWorkerIds = new Set(
+      assignments.filter((assignment) => assignment.worker_id).map((assignment) => assignment.worker_id)
+    );
+    const unassignedWorkers = workers.filter(
+      (worker) => !assignedWorkerIds.has(worker.id)
+    ).length;
+    return {
+      totalRigs,
+      readyRigs,
+      rigsWithJob,
+      rigsMissingCrew,
+      unassignedWorkers,
+    };
+  }, [assignments, categories.length, scheduleRigStatusByCategoryId, workers]);
 
   const getRigJobId = (categoryId) => {
     const catAssignments = assignments.filter(
@@ -1778,10 +2226,26 @@ function CrewScheduler() {
   };
 
   const assignWorkerToRig = async (categoryId, workerId) => {
-    if (!currentSchedule) return;
+    if (!currentSchedule || !workerId) return;
+    const alreadyOnRig = assignments.some(
+      (a) =>
+        String(a.category_id) === String(categoryId) &&
+        String(a.worker_id) === String(workerId)
+    );
+    if (alreadyOnRig) return;
+
+    const assignedElsewhere = assignments.some(
+      (a) =>
+        String(a.worker_id) === String(workerId) &&
+        String(a.category_id) !== String(categoryId)
+    );
+    if (assignedElsewhere) return;
+
     setSaving(true);
     const rigJob = getRigJobId(categoryId);
-    const job = rigJob ? jobs.find((j) => j.id === rigJob) : null;
+    const job = rigJob
+      ? jobs.find((j) => String(j.id) === String(rigJob))
+      : null;
     const { error } = await supabase.from("crew_assignments").insert({
       schedule_id: currentSchedule.id,
       category_id: categoryId,
@@ -1793,10 +2257,24 @@ function CrewScheduler() {
     setSaving(false);
   };
 
+  const setRigWorkerDraft = (categoryId, workerId) => {
+    setRigWorkerDrafts((prev) => ({
+      ...prev,
+      [categoryId]: workerId,
+    }));
+  };
+
+  const addDraftWorkerToRig = async (categoryId) => {
+    const workerId = rigWorkerDrafts[categoryId];
+    if (!workerId) return;
+    await assignWorkerToRig(categoryId, workerId);
+    setRigWorkerDraft(categoryId, "");
+  };
+
   const assignJobToRig = async (categoryId, jobId) => {
     if (!currentSchedule) return;
     setSaving(true);
-    const job = jobs.find((j) => j.id === jobId);
+    const job = jobs.find((j) => String(j.id) === String(jobId));
     const catAssignments = assignments.filter(
       (a) => a.category_id === categoryId
     );
@@ -1834,66 +2312,660 @@ function CrewScheduler() {
     fetchSchedule(selectedDate);
   };
 
-  const handleSidebarClick = (type, id) => {
-    if (!activeRigId) return;
-    if (type === "worker") {
-      const alreadyOnRig = assignments.some(
-        (a) => a.worker_id === id && a.category_id === activeRigId
-      );
-      if (alreadyOnRig) return;
-      if (workerAssignmentMap[id]) return;
-      assignWorkerToRig(activeRigId, id);
-    } else if (type === "super") {
-      if (superAssignmentMap[id]) return;
-      updateRigDetail(activeRigId, "superintendent_id", id);
-    } else if (type === "truck") {
-      if (truckAssignmentMap[id]) return;
-      updateRigDetail(activeRigId, "truck_id", id);
-    } else if (type === "job") {
-      assignJobToRig(activeRigId, id);
-    }
+  const getJobProgress = (jobId) => jobProgressByJobId[jobId] || null;
+
+  const getProgressPercent = (progress) => {
+    const done = Number(progress?.holes_completed);
+    const total = Number(progress?.holes_target);
+    if (!Number.isFinite(done) || !Number.isFinite(total) || total <= 0) return null;
+    return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
   };
 
-  const filteredWorkers = useMemo(() => {
-    if (!sidebarSearch) return workers;
-    const q = sidebarSearch.toLowerCase();
-    return workers.filter(
-      (w) =>
-        w.name.toLowerCase().includes(q) ||
-        (w.role && w.role.toLowerCase().includes(q))
-    );
-  }, [workers, sidebarSearch]);
+  const getProgressStatusLabel = (status) =>
+    JOB_PROGRESS_STATUS_LABELS[status] || "Planned";
 
-  const filteredSuperintendents = useMemo(() => {
-    if (!sidebarSearch) return superintendents;
-    const q = sidebarSearch.toLowerCase();
-    return superintendents.filter((s) => s.name.toLowerCase().includes(q));
-  }, [superintendents, sidebarSearch]);
+  const formatProgressDateRange = (progress) => {
+    if (!progress?.estimated_start_date && !progress?.estimated_end_date) return "";
+    const start = progress.estimated_start_date
+      ? formatShortDate(progress.estimated_start_date)
+      : "TBD";
+    const end = progress.estimated_end_date
+      ? formatShortDate(progress.estimated_end_date)
+      : "TBD";
+    return `${start} - ${end}`;
+  };
 
-  const filteredTrucks = useMemo(() => {
-    if (!sidebarSearch) return trucks;
-    const q = sidebarSearch.toLowerCase();
-    return trucks.filter(
-      (t) =>
-        t.truck_number.toLowerCase().includes(q) ||
-        (t.description && t.description.toLowerCase().includes(q))
-    );
-  }, [trucks, sidebarSearch]);
+  const buildProgressDraft = (jobId) => {
+    const existing = getJobProgress(jobId) || {};
+    return {
+      status: existing.status || "planned",
+      holes_completed:
+        existing.holes_completed === null || existing.holes_completed === undefined
+          ? ""
+          : String(existing.holes_completed),
+      holes_target:
+        existing.holes_target === null || existing.holes_target === undefined
+          ? ""
+          : String(existing.holes_target),
+      estimated_start_date: existing.estimated_start_date || "",
+      estimated_end_date: existing.estimated_end_date || "",
+      notes: existing.notes || "",
+    };
+  };
 
-  const filteredJobs = useMemo(() => {
-    if (!sidebarSearch) return jobs;
-    const q = sidebarSearch.toLowerCase();
-    return jobs.filter(
-      (j) =>
-        j.job_name.toLowerCase().includes(q) ||
-        (j.job_number && j.job_number.toLowerCase().includes(q))
+  const startEditingProgress = (jobId) => {
+    if (!jobProgressAvailable) return;
+    setEditingProgressJobId(jobId);
+    setEditingProgress(buildProgressDraft(jobId));
+    setJobProgressStatus(null);
+  };
+
+  const cancelEditingProgress = () => {
+    setEditingProgressJobId(null);
+    setEditingProgress(null);
+  };
+
+  const saveJobProgress = async (jobId) => {
+    if (!jobProgressAvailable || !editingProgress || !jobId) return;
+
+    const holesCompleted = toNonNegativeInteger(editingProgress.holes_completed);
+    const holesTarget = toNonNegativeInteger(editingProgress.holes_target);
+    const cleanStatus = JOB_PROGRESS_STATUS_LABELS[editingProgress.status]
+      ? editingProgress.status
+      : "planned";
+    const payload = {
+      job_id: jobId,
+      status: cleanStatus,
+      holes_completed: holesCompleted,
+      holes_target: holesTarget,
+      estimated_start_date: editingProgress.estimated_start_date || null,
+      estimated_end_date: editingProgress.estimated_end_date || null,
+      notes: editingProgress.notes?.trim() || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    setSavingProgress(true);
+    setJobProgressStatus(null);
+    const { error } = await supabase
+      .from("crew_job_progress")
+      .upsert(payload, { onConflict: "job_id" });
+
+    if (error) {
+      setSavingProgress(false);
+      setJobProgressStatus({
+        type: "error",
+        message: "Unable to save job progress right now.",
+      });
+      return;
+    }
+
+    await supabase.from("crew_job_progress_updates").insert({
+      ...payload,
+      update_date: toDateString(new Date()),
+    });
+
+    await fetchJobProgress();
+    setSavingProgress(false);
+    cancelEditingProgress();
+    setJobProgressStatus({
+      type: "success",
+      message: "Job progress saved.",
+    });
+  };
+
+  const historyEntityOptions = useMemo(() => {
+    if (historyView === "rig") {
+      return categories.map((category) => ({
+        id: category.id,
+        label: category.name,
+      }));
+    }
+    if (historyView === "crew") {
+      return workers.map((worker) => ({
+        id: worker.id,
+        label: formatWorkerOption(worker),
+      }));
+    }
+    return jobs.map((job) => ({
+      id: job.id,
+      label: job.job_number ? `${job.job_name} (#${job.job_number})` : job.job_name,
+    }));
+  }, [historyView, categories, workers, jobs]);
+
+  useEffect(() => {
+    if (historyEntityOptions.length === 0) {
+      setHistoryEntityId("");
+      return;
+    }
+    const exists = historyEntityOptions.some(
+      (option) => String(option.id) === String(historyEntityId)
     );
-  }, [jobs, sidebarSearch]);
+    if (!exists) setHistoryEntityId(historyEntityOptions[0].id);
+  }, [historyEntityOptions, historyEntityId]);
+
+  useEffect(() => {
+    if (activeTab !== "history") return undefined;
+    const monthBounds = getMonthBounds(historyMonth);
+    if (!monthBounds || !historyEntityId) {
+      setHistoryAssignments([]);
+      return undefined;
+    }
+
+    let isActive = true;
+    const fetchHistoryAssignments = async () => {
+      setHistoryLoading(true);
+      setHistoryError(null);
+
+      let query = supabase
+        .from("crew_assignments")
+        .select(
+          "id, category_id, worker_id, job_id, job_name, notes, crew_schedules!inner(schedule_date, is_finalized), crew_workers(name, role), crew_categories(name, color), crew_jobs(job_name, job_number)"
+        )
+        .gte("crew_schedules.schedule_date", monthBounds.start)
+        .lte("crew_schedules.schedule_date", monthBounds.end)
+        .order("schedule_id", { ascending: true })
+        .order("sort_order", { ascending: true });
+
+      if (historyView === "rig") {
+        query = query.eq("category_id", historyEntityId);
+      } else if (historyView === "crew") {
+        query = query.eq("worker_id", historyEntityId);
+      } else if (historyView === "job") {
+        query = query.eq("job_id", historyEntityId);
+      }
+
+      const { data, error } = await query;
+      if (!isActive) return;
+
+      if (error) {
+        setHistoryAssignments([]);
+        setHistoryError("Could not load history for that view.");
+        setHistoryLoading(false);
+        return;
+      }
+
+      const normalized = (data || []).map((row) => ({
+        id: row.id,
+        date: row.crew_schedules?.schedule_date || "",
+        finalized: !!row.crew_schedules?.is_finalized,
+        worker: formatWorkerLabel(row.crew_workers),
+        rig: row.crew_categories?.name || "",
+        rigColor: row.crew_categories?.color || "#6b7280",
+        job: row.crew_jobs?.job_name || row.job_name || "",
+        jobNumber: row.crew_jobs?.job_number || "",
+        notes: row.notes || "",
+      }));
+      setHistoryAssignments(normalized);
+      setHistoryLoading(false);
+    };
+
+    fetchHistoryAssignments();
+    return () => {
+      isActive = false;
+    };
+  }, [activeTab, historyView, historyEntityId, historyMonth]);
+
+  const historyFilteredAssignments = useMemo(() => {
+    const query = historySearch.trim().toLowerCase();
+    return historyAssignments.filter((entry) => {
+      if (historyFinalizedOnly && !entry.finalized) return false;
+      if (!query) return true;
+      return [
+        entry.date,
+        entry.worker,
+        entry.rig,
+        entry.job,
+        entry.jobNumber,
+        entry.notes,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+    });
+  }, [historyAssignments, historyFinalizedOnly, historySearch]);
+
+  const historyAssignmentsByDate = useMemo(() => {
+    const map = {};
+    historyFilteredAssignments.forEach((entry) => {
+      if (!entry.date) return;
+      if (!map[entry.date]) map[entry.date] = [];
+      map[entry.date].push(entry);
+    });
+    return map;
+  }, [historyFilteredAssignments]);
+
+  const historyCalendarCells = useMemo(() => {
+    const monthBounds = getMonthBounds(historyMonth);
+    if (!monthBounds) return [];
+    const cells = [];
+    for (let i = 0; i < monthBounds.firstWeekday; i += 1) {
+      cells.push(null);
+    }
+    for (let day = 1; day <= monthBounds.lastDay; day += 1) {
+      const date = `${historyMonth}-${String(day).padStart(2, "0")}`;
+      cells.push({
+        date,
+        day,
+        entries: historyAssignmentsByDate[date] || [],
+      });
+    }
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }, [historyMonth, historyAssignmentsByDate]);
+
+  useEffect(() => {
+    const dayKeys = Object.keys(historyAssignmentsByDate).sort();
+    const fallbackDate = `${historyMonth}-01`;
+    if (dayKeys.length === 0) {
+      if (historySelectedDate !== fallbackDate) setHistorySelectedDate(fallbackDate);
+      return;
+    }
+    const hasSelectedDate =
+      !!historySelectedDate &&
+      historySelectedDate.startsWith(historyMonth) &&
+      !!historyAssignmentsByDate[historySelectedDate];
+    if (!hasSelectedDate) setHistorySelectedDate(dayKeys[0]);
+  }, [historyAssignmentsByDate, historyMonth, historySelectedDate]);
+
+  const selectedHistoryAssignments = useMemo(
+    () => historyAssignmentsByDate[historySelectedDate] || [],
+    [historyAssignmentsByDate, historySelectedDate]
+  );
+
+  const historySummary = useMemo(() => {
+    const uniqueJobs = new Set();
+    const uniqueWorkers = new Set();
+    const uniqueRigs = new Set();
+    historyFilteredAssignments.forEach((entry) => {
+      if (entry.job) uniqueJobs.add(entry.job);
+      if (entry.worker) uniqueWorkers.add(entry.worker);
+      if (entry.rig) uniqueRigs.add(entry.rig);
+    });
+    return {
+      days: Object.keys(historyAssignmentsByDate).length,
+      assignments: historyFilteredAssignments.length,
+      uniqueJobs: uniqueJobs.size,
+      uniqueWorkers: uniqueWorkers.size,
+      uniqueRigs: uniqueRigs.size,
+    };
+  }, [historyAssignmentsByDate, historyFilteredAssignments]);
+
+  const getHistoryEntryHeadline = (entry) => {
+    if (historyView === "rig") {
+      return `${entry.worker || "Unassigned"} -> ${entry.job || "No job"}`;
+    }
+    if (historyView === "crew") {
+      return `${entry.rig || "No rig"} -> ${entry.job || "No job"}`;
+    }
+    return `${entry.rig || "No rig"} -> ${entry.worker || "Unassigned"}`;
+  };
+
+  const getHistoryEntrySubline = (entry) => {
+    const parts = [];
+    if (entry.jobNumber) parts.push(`#${entry.jobNumber}`);
+    if (entry.notes) parts.push(entry.notes);
+    if (entry.finalized) parts.push("Finalized");
+    return parts.join(" • ");
+  };
+
+  const selectedHistoryEntityLabel =
+    historyEntityOptions.find((option) => String(option.id) === String(historyEntityId))
+      ?.label || "";
+
+  useEffect(() => {
+    if (activeTab !== "planner") return undefined;
+    const monthBounds = getMonthBounds(plannerMonth);
+    if (!monthBounds) {
+      setPlannerSchedules([]);
+      setPlannerAssignments([]);
+      setPlannerRigDetails([]);
+      return undefined;
+    }
+
+    let isActive = true;
+    const fetchPlannerMonth = async () => {
+      setPlannerLoading(true);
+      setPlannerError(null);
+
+      const { data: schedulesData, error: schedulesError } = await supabase
+        .from("crew_schedules")
+        .select("id, schedule_date, is_finalized, finalized_at")
+        .gte("schedule_date", monthBounds.start)
+        .lte("schedule_date", monthBounds.end)
+        .order("schedule_date", { ascending: true });
+
+      if (!isActive) return;
+      if (schedulesError) {
+        setPlannerSchedules([]);
+        setPlannerAssignments([]);
+        setPlannerRigDetails([]);
+        setPlannerError("Could not load planner data for this month.");
+        setPlannerLoading(false);
+        return;
+      }
+
+      const schedulesList = schedulesData || [];
+      setPlannerSchedules(schedulesList);
+      if (schedulesList.length === 0) {
+        setPlannerAssignments([]);
+        setPlannerRigDetails([]);
+        setPlannerLoading(false);
+        return;
+      }
+
+      const scheduleIds = schedulesList.map((schedule) => schedule.id);
+      const [{ data: assignmentData, error: assignmentError }, { data: detailData, error: detailError }] =
+        await Promise.all([
+          supabase
+            .from("crew_assignments")
+            .select(
+              "id, schedule_id, category_id, worker_id, job_id, job_name, notes, sort_order, crew_workers(name, role), crew_categories(name, color), crew_jobs(job_name, job_number)"
+            )
+            .in("schedule_id", scheduleIds)
+            .order("sort_order", { ascending: true }),
+          supabase
+            .from("schedule_rig_details")
+            .select(
+              "id, schedule_id, category_id, notes, crane_info, crew_categories(name, color), crew_superintendents(name), crew_trucks(truck_number)"
+            )
+            .in("schedule_id", scheduleIds),
+        ]);
+
+      if (!isActive) return;
+      if (assignmentError || detailError) {
+        setPlannerAssignments([]);
+        setPlannerRigDetails([]);
+        setPlannerError("Could not load planner assignments.");
+        setPlannerLoading(false);
+        return;
+      }
+
+      setPlannerAssignments(assignmentData || []);
+      setPlannerRigDetails(detailData || []);
+      setPlannerLoading(false);
+    };
+
+    fetchPlannerMonth();
+    return () => {
+      isActive = false;
+    };
+  }, [activeTab, plannerMonth]);
+
+  const plannerScheduleById = useMemo(() => {
+    const map = {};
+    plannerSchedules.forEach((schedule) => {
+      map[schedule.id] = schedule;
+    });
+    return map;
+  }, [plannerSchedules]);
+
+  const plannerAssignmentRows = useMemo(
+    () =>
+      plannerAssignments
+        .map((row) => {
+          const schedule = plannerScheduleById[row.schedule_id];
+          if (!schedule?.schedule_date) return null;
+          return {
+            id: row.id,
+            date: schedule.schedule_date,
+            finalized: !!schedule.is_finalized,
+            workerId: row.worker_id,
+            worker: formatWorkerLabel(row.crew_workers) || "",
+            rig: row.crew_categories?.name || "",
+            rigColor: row.crew_categories?.color || "#6b7280",
+            job: row.crew_jobs?.job_name || row.job_name || "",
+            jobNumber: row.crew_jobs?.job_number || "",
+            notes: row.notes || "",
+          };
+        })
+        .filter(Boolean),
+    [plannerAssignments, plannerScheduleById]
+  );
+
+  const plannerRigDetailRows = useMemo(
+    () =>
+      plannerRigDetails
+        .map((row) => {
+          const schedule = plannerScheduleById[row.schedule_id];
+          if (!schedule?.schedule_date) return null;
+          return {
+            id: row.id,
+            date: schedule.schedule_date,
+            finalized: !!schedule.is_finalized,
+            rig: row.crew_categories?.name || "",
+            rigColor: row.crew_categories?.color || "#6b7280",
+            superintendent: row.crew_superintendents?.name || "",
+            truck: row.crew_trucks?.truck_number || "",
+            crane: row.crane_info || "",
+            notes: row.notes || "",
+          };
+        })
+        .filter(Boolean),
+    [plannerRigDetails, plannerScheduleById]
+  );
+
+  const plannerDayMap = useMemo(() => {
+    const query = plannerSearch.trim().toLowerCase();
+    const map = {};
+
+    plannerSchedules.forEach((schedule) => {
+      if (plannerFinalizedOnly && !schedule.is_finalized) return;
+      map[schedule.schedule_date] = {
+        date: schedule.schedule_date,
+        finalized: !!schedule.is_finalized,
+        rigs: new Map(),
+      };
+    });
+
+    plannerAssignmentRows.forEach((entry) => {
+      if (!entry.date) return;
+      if (plannerFinalizedOnly && !entry.finalized) return;
+
+      const haystack = [
+        entry.worker,
+        entry.rig,
+        entry.job,
+        entry.jobNumber,
+        entry.notes,
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (query && !haystack.includes(query)) return;
+
+      if (!map[entry.date]) {
+        map[entry.date] = {
+          date: entry.date,
+          finalized: !!entry.finalized,
+          rigs: new Map(),
+        };
+      }
+      const day = map[entry.date];
+      const rigName = entry.rig || "Unassigned Rig";
+      if (!day.rigs.has(rigName)) {
+        day.rigs.set(rigName, {
+          name: rigName,
+          color: entry.rigColor || "#6b7280",
+          workers: new Set(),
+          jobs: new Set(),
+          notes: new Set(),
+          superintendent: "",
+          truck: "",
+          crane: "",
+        });
+      }
+      const rig = day.rigs.get(rigName);
+      if (entry.worker) rig.workers.add(entry.worker);
+      if (entry.job) {
+        rig.jobs.add(entry.jobNumber ? `${entry.job} #${entry.jobNumber}` : entry.job);
+      }
+      if (entry.notes) rig.notes.add(entry.notes);
+    });
+
+    plannerRigDetailRows.forEach((detail) => {
+      if (!detail.date) return;
+      if (plannerFinalizedOnly && !detail.finalized) return;
+
+      const haystack = [
+        detail.rig,
+        detail.superintendent,
+        detail.truck,
+        detail.crane,
+        detail.notes,
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (query && !haystack.includes(query)) return;
+
+      if (!map[detail.date]) {
+        map[detail.date] = {
+          date: detail.date,
+          finalized: !!detail.finalized,
+          rigs: new Map(),
+        };
+      }
+
+      const day = map[detail.date];
+      const rigName = detail.rig || "Unassigned Rig";
+      if (!day.rigs.has(rigName)) {
+        day.rigs.set(rigName, {
+          name: rigName,
+          color: detail.rigColor || "#6b7280",
+          workers: new Set(),
+          jobs: new Set(),
+          notes: new Set(),
+          superintendent: "",
+          truck: "",
+          crane: "",
+        });
+      }
+      const rig = day.rigs.get(rigName);
+      if (detail.superintendent) rig.superintendent = detail.superintendent;
+      if (detail.truck) rig.truck = detail.truck;
+      if (detail.crane) rig.crane = detail.crane;
+      if (detail.notes) rig.notes.add(detail.notes);
+    });
+
+    return map;
+  }, [
+    plannerAssignmentRows,
+    plannerFinalizedOnly,
+    plannerRigDetailRows,
+    plannerSchedules,
+    plannerSearch,
+  ]);
+
+  const plannerCalendarCells = useMemo(() => {
+    const monthBounds = getMonthBounds(plannerMonth);
+    if (!monthBounds) return [];
+    const cells = [];
+    for (let i = 0; i < monthBounds.firstWeekday; i += 1) {
+      cells.push(null);
+    }
+    for (let day = 1; day <= monthBounds.lastDay; day += 1) {
+      const date = `${plannerMonth}-${String(day).padStart(2, "0")}`;
+      cells.push({
+        date,
+        day,
+        dayData: plannerDayMap[date] || null,
+      });
+    }
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }, [plannerDayMap, plannerMonth]);
+
+  useEffect(() => {
+    const dates = Object.keys(plannerDayMap).sort();
+    const fallbackDate = `${plannerMonth}-01`;
+    if (dates.length === 0) {
+      if (plannerSelectedDate !== fallbackDate) setPlannerSelectedDate(fallbackDate);
+      return;
+    }
+    const selectedIsValid =
+      !!plannerSelectedDate &&
+      plannerSelectedDate.startsWith(plannerMonth) &&
+      !!plannerDayMap[plannerSelectedDate];
+    if (!selectedIsValid) setPlannerSelectedDate(dates[0]);
+  }, [plannerDayMap, plannerMonth, plannerSelectedDate]);
+
+  const selectedPlannerDay = plannerDayMap[plannerSelectedDate] || null;
+
+  const selectedPlannerRigs = useMemo(() => {
+    if (!selectedPlannerDay) return [];
+    return Array.from(selectedPlannerDay.rigs.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }, [selectedPlannerDay]);
+
+  const plannerSummary = useMemo(() => {
+    const days = Object.keys(plannerDayMap).length;
+    const rigs = new Set();
+    let workers = 0;
+    let jobsCount = 0;
+    Object.values(plannerDayMap).forEach((day) => {
+      day.rigs.forEach((rig) => {
+        rigs.add(rig.name);
+        workers += rig.workers.size;
+        jobsCount += rig.jobs.size;
+      });
+    });
+    return {
+      days,
+      rigs: rigs.size,
+      workers,
+      jobs: jobsCount,
+    };
+  }, [plannerDayMap]);
+
+  const plannerPatternSummary = useMemo(() => {
+    const crewByDayRig = new Map();
+    const workerRigCounts = new Map();
+
+    plannerAssignmentRows.forEach((entry) => {
+      if (!entry.worker) return;
+      if (plannerFinalizedOnly && !entry.finalized) return;
+
+      const rigName = entry.rig || "Unassigned Rig";
+      const dayRigKey = `${entry.date}::${rigName}`;
+      if (!crewByDayRig.has(dayRigKey)) crewByDayRig.set(dayRigKey, new Set());
+      crewByDayRig.get(dayRigKey).add(entry.worker);
+
+      const workerRigKey = `${entry.worker}::${rigName}`;
+      workerRigCounts.set(workerRigKey, (workerRigCounts.get(workerRigKey) || 0) + 1);
+    });
+
+    const pairCounts = new Map();
+    crewByDayRig.forEach((workersSet) => {
+      const workersForRig = Array.from(workersSet).sort();
+      for (let i = 0; i < workersForRig.length; i += 1) {
+        for (let j = i + 1; j < workersForRig.length; j += 1) {
+          const pairKey = `${workersForRig[i]} + ${workersForRig[j]}`;
+          pairCounts.set(pairKey, (pairCounts.get(pairKey) || 0) + 1);
+        }
+      }
+    });
+
+    const topPairs = Array.from(pairCounts.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const topWorkerRigs = Array.from(workerRigCounts.entries())
+      .map(([label, count]) => {
+        const [worker, rig] = label.split("::");
+        return { worker, rig, count };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return { topPairs, topWorkerRigs };
+  }, [plannerAssignmentRows, plannerFinalizedOnly]);
 
   // --- View definitions ---
   const tabs = [
     { id: "schedule", label: "Schedule" },
+    { id: "planner", label: "Live Planner" },
     { id: "packets", label: "Daily Packets" },
+    { id: "history", label: "Calendar History" },
   ];
 
   if (loading) {
@@ -2002,6 +3074,15 @@ function CrewScheduler() {
                 : "Save & Email"}
             </button>
             <button
+              onClick={() => {
+                setShowManagePanel(true);
+                setManagePanelTab("jobs");
+              }}
+              className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+            >
+              Job Intake
+            </button>
+            <button
               onClick={() => setShowManagePanel(true)}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
               title="Manage Resources"
@@ -2052,308 +3133,217 @@ function CrewScheduler() {
 
         {/* ===== SCHEDULE VIEW ===== */}
         {activeTab === "schedule" && (
-          <div className="flex flex-1 overflow-hidden">
-            {/* --- Resource Sidebar --- */}
-            <div className="w-64 flex-shrink-0 overflow-y-auto border-r border-neutral-200 bg-neutral-50 p-3">
-              <input
-                type="text"
-                placeholder="Search resources..."
-                value={sidebarSearch}
-                onChange={(e) => setSidebarSearch(e.target.value)}
-                className="mb-3 w-full rounded-lg border border-neutral-300 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+          <div ref={printRef} className="flex-1 overflow-y-auto p-4">
+            <div className="mb-4 rounded-lg bg-[#0b2a5a] px-4 py-2.5">
+              <h2 className={`${lato.className} text-base font-bold text-white`}>
+                {formatDate(selectedDate)}
+              </h2>
+            </div>
 
-              {!activeRigId ? (
-                <div className="rounded-lg bg-neutral-100 px-3 py-4 text-center text-xs text-neutral-500">
-                  Click a rig card to start assigning
-                </div>
-              ) : (
-                <div className="mb-3 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs font-semibold text-blue-700">
-                  Assigning to: {getCategoryName(activeRigId)}
-                </div>
-              )}
+            <div className="print:hidden mb-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+              Quick flow: 1) pick job, superintendent, and truck for each rig card, 2) add crew
+              with the dropdown, 3) save with <span className="font-semibold">Save &amp; Email</span>.
+            </div>
 
-              {/* Workers */}
-              <div className="mt-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-neutral-700 uppercase tracking-wide">Workers</span>
-                  <span className="text-[10px] text-neutral-400">{filteredWorkers.length}</span>
+            <div className="print:hidden mb-3 rounded-xl border border-neutral-200 bg-white p-3 shadow-sm">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                  Rigs Planned:{" "}
+                  <span className="font-semibold text-neutral-900">
+                    {scheduleOverview.readyRigs}/{scheduleOverview.totalRigs}
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {filteredWorkers.map((w) => {
-                    const assignedCats = workerAssignmentMap[w.id] || [];
-                    const isOnActiveRig = activeRigId && assignedCats.includes(activeRigId);
-                    const isAssignedElsewhere = assignedCats.length > 0 && !isOnActiveRig;
-
-                    let chipClass = "";
-                    if (isOnActiveRig) {
-                      chipClass = "bg-blue-100 text-blue-700 border border-blue-300";
-                    } else if (isAssignedElsewhere) {
-                      chipClass = "bg-neutral-100 text-neutral-400 border border-neutral-200 cursor-not-allowed";
-                    } else if (activeRigId) {
-                      chipClass = "bg-white text-neutral-700 border border-neutral-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer";
-                    } else {
-                      chipClass = "bg-white text-neutral-600 border border-neutral-200";
-                    }
-
-                    return (
-                      <button
-                        key={w.id}
-                        onClick={() => handleSidebarClick("worker", w.id)}
-                        disabled={!activeRigId || isAssignedElsewhere}
-                        className={`rounded-full px-2.5 py-1 text-xs transition-colors ${chipClass}`}
-                        title={isAssignedElsewhere ? `Assigned to ${getCategoryName(assignedCats[0])}` : w.role || w.name}
-                      >
-                        {w.name}
-                        {isAssignedElsewhere && (
-                          <span className="ml-1 text-[10px]">({getCategoryName(assignedCats[0])})</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                  {filteredWorkers.length === 0 && (
-                    <span className="text-[10px] text-neutral-400 italic">No workers found</span>
-                  )}
+                <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                  Rigs With Job:{" "}
+                  <span className="font-semibold text-neutral-900">
+                    {scheduleOverview.rigsWithJob}
+                  </span>
                 </div>
+                <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                  Rigs Missing Crew:{" "}
+                  <span className="font-semibold text-neutral-900">
+                    {scheduleOverview.rigsMissingCrew}
+                  </span>
+                </div>
+                <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                  Available Crew:{" "}
+                  <span className="font-semibold text-neutral-900">
+                    {scheduleOverview.unassignedWorkers}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowManagePanel(true);
+                    setManagePanelTab("jobs");
+                  }}
+                  className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
+                >
+                  Add / Edit Jobs
+                </button>
               </div>
 
-              {/* Superintendents */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-neutral-700 uppercase tracking-wide">Supers</span>
-                  <span className="text-[10px] text-neutral-400">{filteredSuperintendents.length}</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {filteredSuperintendents.map((s) => {
-                    const assignedCat = superAssignmentMap[s.id];
-                    const isOnActiveRig = activeRigId && String(assignedCat) === String(activeRigId);
-                    const isAssignedElsewhere = assignedCat && !isOnActiveRig;
-
-                    let chipClass = "";
-                    if (isOnActiveRig) {
-                      chipClass = "bg-green-100 text-green-700 border border-green-300";
-                    } else if (isAssignedElsewhere) {
-                      chipClass = "bg-neutral-100 text-neutral-400 border border-neutral-200 cursor-not-allowed";
-                    } else if (activeRigId) {
-                      chipClass = "bg-white text-neutral-700 border border-neutral-300 hover:border-green-400 hover:bg-green-50 cursor-pointer";
-                    } else {
-                      chipClass = "bg-white text-neutral-600 border border-neutral-200";
-                    }
-
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => handleSidebarClick("super", s.id)}
-                        disabled={!activeRigId || isAssignedElsewhere}
-                        className={`rounded-full px-2.5 py-1 text-xs transition-colors ${chipClass}`}
-                        title={isAssignedElsewhere ? `Assigned to ${getCategoryName(assignedCat)}` : s.name}
-                      >
-                        {s.name}
-                        {isAssignedElsewhere && (
-                          <span className="ml-1 text-[10px]">({getCategoryName(assignedCat)})</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                  {filteredSuperintendents.length === 0 && (
-                    <span className="text-[10px] text-neutral-400 italic">No supers found</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Trucks */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-neutral-700 uppercase tracking-wide">Trucks</span>
-                  <span className="text-[10px] text-neutral-400">{filteredTrucks.length}</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {filteredTrucks.map((t) => {
-                    const assignedCat = truckAssignmentMap[t.id];
-                    const isOnActiveRig = activeRigId && String(assignedCat) === String(activeRigId);
-                    const isAssignedElsewhere = assignedCat && !isOnActiveRig;
-
-                    let chipClass = "";
-                    if (isOnActiveRig) {
-                      chipClass = "bg-orange-100 text-orange-700 border border-orange-300";
-                    } else if (isAssignedElsewhere) {
-                      chipClass = "bg-neutral-100 text-neutral-400 border border-neutral-200 cursor-not-allowed";
-                    } else if (activeRigId) {
-                      chipClass = "bg-white text-neutral-700 border border-neutral-300 hover:border-orange-400 hover:bg-orange-50 cursor-pointer";
-                    } else {
-                      chipClass = "bg-white text-neutral-600 border border-neutral-200";
-                    }
-
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => handleSidebarClick("truck", t.id)}
-                        disabled={!activeRigId || isAssignedElsewhere}
-                        className={`rounded-full px-2.5 py-1 text-xs transition-colors ${chipClass}`}
-                        title={isAssignedElsewhere ? `Assigned to ${getCategoryName(assignedCat)}` : `Truck #${t.truck_number}`}
-                      >
-                        #{t.truck_number}
-                        {isAssignedElsewhere && (
-                          <span className="ml-1 text-[10px]">({getCategoryName(assignedCat)})</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                  {filteredTrucks.length === 0 && (
-                    <span className="text-[10px] text-neutral-400 italic">No trucks found</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Jobs */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-neutral-700 uppercase tracking-wide">Jobs</span>
-                  <span className="text-[10px] text-neutral-400">{filteredJobs.length}</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {filteredJobs.map((j) => {
-                    let chipClass = "";
-                    if (activeRigId) {
-                      chipClass = "bg-white text-neutral-700 border border-neutral-300 hover:border-purple-400 hover:bg-purple-50 cursor-pointer";
-                    } else {
-                      chipClass = "bg-white text-neutral-600 border border-neutral-200";
-                    }
-
-                    return (
-                      <button
-                        key={j.id}
-                        onClick={() => handleSidebarClick("job", j.id)}
-                        disabled={!activeRigId}
-                        className={`rounded-full px-2.5 py-1 text-xs transition-colors ${chipClass}`}
-                        title={j.job_number ? `#${j.job_number} - ${j.job_name}` : j.job_name}
-                      >
-                        {j.job_name}
-                      </button>
-                    );
-                  })}
-                  {filteredJobs.length === 0 && (
-                    <span className="text-[10px] text-neutral-400 italic">No jobs found</span>
-                  )}
-                </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-[1fr,auto,auto]">
+                <input
+                  type="text"
+                  value={scheduleRigSearch}
+                  onChange={(e) => setScheduleRigSearch(e.target.value)}
+                  placeholder="Search rigs by name, job, location, superintendent..."
+                  className="h-9 rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <label className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
+                  <input
+                    type="checkbox"
+                    checked={scheduleNeedsAttentionOnly}
+                    onChange={(e) => setScheduleNeedsAttentionOnly(e.target.checked)}
+                    className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  Needs Attention Only
+                </label>
+                <button
+                  onClick={() => {
+                    setScheduleRigSearch("");
+                    setScheduleNeedsAttentionOnly(false);
+                  }}
+                  className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                >
+                  Reset Filters
+                </button>
               </div>
             </div>
 
-            {/* --- Schedule Board --- */}
-            <div ref={printRef} className="flex-1 overflow-y-auto p-4">
-              {/* Date header */}
-              <div className="mb-4 rounded-lg bg-[#0b2a5a] px-4 py-2.5">
-                <h2 className={`${lato.className} text-base font-bold text-white`}>
-                  {formatDate(selectedDate)}
-                </h2>
-              </div>
-
-              {/* Compact prepopulate section */}
-              <div className="print:hidden mb-3 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-xs font-bold text-neutral-700">Copy rig to range:</span>
+            <div className="print:hidden mb-3 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-xs font-bold text-neutral-700">Copy rig to range:</span>
+                <input
+                  type="date"
+                  value={copyStartDate}
+                  onChange={(e) => setCopyStartDate(e.target.value)}
+                  className="h-7 rounded border border-neutral-300 px-2 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+                <span className="text-xs text-neutral-400">to</span>
+                <input
+                  type="date"
+                  value={copyEndDate}
+                  onChange={(e) => setCopyEndDate(e.target.value)}
+                  className="h-7 rounded border border-neutral-300 px-2 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                />
+                <label className="flex items-center gap-1.5 text-xs text-neutral-600">
                   <input
-                    type="date"
-                    value={copyStartDate}
-                    onChange={(e) => setCopyStartDate(e.target.value)}
-                    className="h-7 rounded border border-neutral-300 px-2 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                    type="checkbox"
+                    checked={copyOverwrite}
+                    onChange={(e) => setCopyOverwrite(e.target.checked)}
+                    className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
                   />
-                  <span className="text-xs text-neutral-400">to</span>
-                  <input
-                    type="date"
-                    value={copyEndDate}
-                    onChange={(e) => setCopyEndDate(e.target.value)}
-                    className="h-7 rounded border border-neutral-300 px-2 text-xs focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  />
-                  <label className="flex items-center gap-1.5 text-xs text-neutral-600">
-                    <input
-                      type="checkbox"
-                      checked={copyOverwrite}
-                      onChange={(e) => setCopyOverwrite(e.target.checked)}
-                      className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
-                    />
-                    Overwrite
-                  </label>
-                  <span className="text-[10px] text-neutral-400">Use each rig&apos;s Copy button</span>
-                </div>
-                {copyStatus && (
-                  <div
-                    className={`mt-2 rounded px-3 py-1.5 text-xs font-semibold ${
-                      copyStatus.type === "success"
-                        ? "bg-green-50 text-green-700"
-                        : "bg-red-50 text-red-700"
-                    }`}
-                  >
-                    {copyStatus.message}
-                    <button onClick={() => setCopyStatus(null)} className="ml-2 font-bold">x</button>
-                  </div>
-                )}
+                  Overwrite
+                </label>
+                <span className="text-[10px] text-neutral-400">Use each rig&apos;s Copy button</span>
               </div>
-
-              {/* Recent schedules */}
-              {recentSchedules.length > 0 && (
-                <div className="print:hidden mb-3 flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-neutral-500">Recent:</span>
-                  {recentSchedules.map((sched) => {
-                    const isSelected = sched.schedule_date === selectedDate;
-                    return (
-                      <button
-                        key={sched.id}
-                        onClick={() => setSelectedDate(sched.schedule_date)}
-                        className={`rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors ${
-                          isSelected
-                            ? "border-[#0b2a5a] bg-[#0b2a5a] text-white"
-                            : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
-                        }`}
-                      >
-                        {formatShortDate(sched.schedule_date)}
-                        {sched.is_finalized && (
-                          <span className={`ml-1 text-[9px] uppercase ${isSelected ? "text-emerald-200" : "text-emerald-500"}`}>
-                            Sent
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+              {copyStatus && (
+                <div
+                  className={`mt-2 rounded px-3 py-1.5 text-xs font-semibold ${
+                    copyStatus.type === "success"
+                      ? "bg-green-50 text-green-700"
+                      : "bg-red-50 text-red-700"
+                  }`}
+                >
+                  {copyStatus.message}
+                  <button onClick={() => setCopyStatus(null)} className="ml-2 font-bold">
+                    x
+                  </button>
                 </div>
               )}
+            </div>
 
-              {/* Rig Cards */}
-              <div className="space-y-4">
-                {categories.map((category) => {
-                  const catAssignments = assignments.filter(
-                    (a) => a.category_id === category.id
-                  );
-                  const detail = rigDetails[category.id] || {};
-                  const isActive = activeRigId === category.id;
-                  const rigJob = catAssignments.find((a) => a.job_id);
-                  const rigJobObj = rigJob?.crew_jobs || null;
-                  const superObj = superintendents.find(
-                    (s) => String(s.id) === String(detail.superintendent_id)
-                  );
-                  const truckObj = trucks.find(
-                    (t) => String(t.id) === String(detail.truck_id)
-                  );
-
+            {recentSchedules.length > 0 && (
+              <div className="print:hidden mb-3 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-neutral-500">Recent:</span>
+                {recentSchedules.map((sched) => {
+                  const isSelected = sched.schedule_date === selectedDate;
                   return (
-                    <div
-                      key={category.id}
-                      onClick={() => setActiveRigId(category.id)}
-                      className={`rounded-xl border-2 bg-white shadow-sm overflow-hidden cursor-pointer transition-all ${
-                        isActive
-                          ? "border-blue-500 ring-2 ring-blue-200"
-                          : "border-neutral-200 hover:border-neutral-300"
+                    <button
+                      key={sched.id}
+                      onClick={() => setSelectedDate(sched.schedule_date)}
+                      className={`rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors ${
+                        isSelected
+                          ? "border-[#0b2a5a] bg-[#0b2a5a] text-white"
+                          : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
                       }`}
                     >
-                      {/* Card Header */}
-                      <div
-                        className="flex items-center justify-between px-4 py-2.5"
-                        style={{ backgroundColor: category.color }}
-                      >
-                        <h3 className={`${lato.className} font-bold text-white text-sm`}>
-                          {category.name}
-                        </h3>
-                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      {formatShortDate(sched.schedule_date)}
+                      {sched.is_finalized && (
+                        <span
+                          className={`ml-1 text-[9px] uppercase ${
+                            isSelected ? "text-emerald-200" : "text-emerald-500"
+                          }`}
+                        >
+                          Sent
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="grid gap-4 xl:grid-cols-2">
+              {visibleScheduleCategories.map((category) => {
+                const catAssignments = assignments.filter(
+                  (a) => a.category_id === category.id
+                );
+                const detail = rigDetails[category.id] || {};
+                const rigJob = catAssignments.find((a) => a.job_id);
+                const rigJobData = rigJob?.crew_jobs
+                  || (rigJob?.job_id
+                    ? jobs.find((job) => String(job.id) === String(rigJob.job_id))
+                    : null);
+                const crewAssignments = catAssignments.filter((a) => a.worker_id);
+                const status = scheduleRigStatusByCategoryId[category.id] || {
+                  completion: 0,
+                  ready: false,
+                  missing: ["Job", "Super", "Truck", "Crew"],
+                };
+                const availableWorkers = workers.filter((worker) => {
+                  const assignedCats = workerAssignmentMap[worker.id] || [];
+                  const alreadyOnThisRig = assignedCats.some(
+                    (catId) => String(catId) === String(category.id)
+                  );
+                  if (alreadyOnThisRig) return false;
+                  return assignedCats.length === 0;
+                });
+                const selectedWorkerForRig = rigWorkerDrafts[category.id] || "";
+
+                return (
+                  <div
+                    key={category.id}
+                    className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
+                  >
+                    <div
+                      className="px-4 py-2.5"
+                      style={{ backgroundColor: category.color }}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <h3 className={`${lato.className} font-bold text-white text-sm`}>
+                            {category.name}
+                          </h3>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-white/95">
+                            <span className="rounded-full bg-white/20 px-2 py-0.5">
+                              {status.ready
+                                ? "Ready to send"
+                                : `Missing: ${status.missing.join(", ")}`}
+                            </span>
+                            <span className="rounded-full bg-white/20 px-2 py-0.5">
+                              Crew: {crewAssignments.length}
+                            </span>
+                            {status.jobName && (
+                              <span className="rounded-full bg-white/20 px-2 py-0.5">
+                                {status.jobName}
+                                {status.jobNumber ? ` #${status.jobNumber}` : ""}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => handlePrintAllForCategory(category.id)}
                             className="rounded-md bg-white/20 px-2 py-1 text-[11px] font-semibold text-white hover:bg-white/30 transition-colors"
@@ -2376,149 +3366,531 @@ function CrewScheduler() {
                           >
                             Clear
                           </button>
-                          <button
-                            onClick={() => addAssignment(category.id)}
-                            className="rounded-md bg-white/20 px-2 py-1 text-[11px] font-semibold text-white hover:bg-white/30 transition-colors"
+                        </div>
+                      </div>
+                      <div className="mt-2 h-1.5 rounded-full bg-white/20">
+                        <div
+                          className={`h-1.5 rounded-full ${
+                            status.ready ? "bg-emerald-300" : "bg-amber-300"
+                          }`}
+                          style={{ width: `${status.completion}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="px-4 py-3">
+                      <div className="grid gap-3 md:grid-cols-3">
+                        <label className="text-xs font-semibold text-neutral-500">
+                          Job
+                          <select
+                            value={rigJob?.job_id || ""}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                assignJobToRig(category.id, e.target.value);
+                              } else {
+                                removeJobFromRig(category.id);
+                              }
+                            }}
+                            className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           >
-                            + Crew
+                            <option value="">No job assigned</option>
+                            {jobs.map((job) => (
+                              <option key={job.id} value={job.id}>
+                                {job.job_name}
+                                {job.job_number ? ` (#${job.job_number})` : ""}{" "}
+                                {[job.city, job.zip].filter(Boolean).join(" ")}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="text-xs font-semibold text-neutral-500">
+                          Superintendent
+                          <select
+                            value={detail.superintendent_id || ""}
+                            onChange={(e) =>
+                              updateRigDetail(
+                                category.id,
+                                "superintendent_id",
+                                e.target.value || null
+                              )
+                            }
+                            className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          >
+                            <option value="">No superintendent</option>
+                            {superintendents.map((superintendent) => (
+                              <option key={superintendent.id} value={superintendent.id}>
+                                {superintendent.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="text-xs font-semibold text-neutral-500">
+                          Truck
+                          <select
+                            value={detail.truck_id || ""}
+                            onChange={(e) =>
+                              updateRigDetail(
+                                category.id,
+                                "truck_id",
+                                e.target.value || null
+                              )
+                            }
+                            className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          >
+                            <option value="">No truck</option>
+                            {trucks.map((truck) => (
+                              <option key={truck.id} value={truck.id}>
+                                #{truck.truck_number}
+                                {truck.description ? ` - ${truck.description}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      {rigJobData && (
+                        <div className="mt-3 rounded-lg border border-purple-100 bg-purple-50 px-3 py-2 text-xs text-purple-900">
+                          <div className="font-semibold">
+                            Where is this rig going?{" "}
+                            {[rigJobData.address, rigJobData.city, rigJobData.zip]
+                              .filter(Boolean)
+                              .join(", ") || "Address not entered yet."}
+                          </div>
+                          <div className="mt-1 text-purple-700">
+                            {[rigJobData.hiring_contractor ? `Hiring: ${rigJobData.hiring_contractor}` : "", rigJobData.pm_name ? `PM: ${rigJobData.pm_name}` : ""]
+                              .filter(Boolean)
+                              .join(" • ")}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-3 grid gap-2 md:grid-cols-[1fr,auto]">
+                        <label className="text-xs font-semibold text-neutral-500">
+                          Add Crew Member
+                          <select
+                            value={selectedWorkerForRig}
+                            onChange={(e) => {
+                              setRigWorkerDraft(category.id, e.target.value);
+                            }}
+                            className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          >
+                            <option value="">
+                              {availableWorkers.length > 0
+                                ? "Select available worker..."
+                                : "All workers are already assigned"}
+                            </option>
+                            {availableWorkers.map((worker) => (
+                              <option key={worker.id} value={worker.id}>
+                                {formatWorkerOption(worker)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <div className="flex items-end">
+                          <button
+                            onClick={() => addDraftWorkerToRig(category.id)}
+                            disabled={!selectedWorkerForRig || saving}
+                            className="h-9 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            Add Crew
                           </button>
                         </div>
                       </div>
 
-                      {/* Card Body */}
-                      <div className="px-4 py-3 space-y-2.5" onClick={(e) => e.stopPropagation()}>
-                        {/* Job row */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-neutral-500 w-10 flex-shrink-0">Job</span>
-                          {rigJobObj ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 text-purple-700 border border-purple-200 px-2.5 py-1 text-xs font-medium">
-                              {rigJobObj.job_name}
-                              {rigJobObj.job_number && (
-                                <span className="text-purple-400 text-[10px]">#{rigJobObj.job_number}</span>
-                              )}
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {crewAssignments.length === 0 ? (
+                          <span className="text-xs text-neutral-400 italic">
+                            No crew assigned yet.
+                          </span>
+                        ) : (
+                          crewAssignments.map((assignment) => (
+                            <span
+                              key={assignment.id}
+                              className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 text-xs font-medium"
+                            >
+                              {formatWorkerLabel(assignment.crew_workers) || "Worker"}
                               <button
-                                onClick={() => removeJobFromRig(category.id)}
-                                className="ml-0.5 text-purple-400 hover:text-purple-700"
-                                title="Remove job"
+                                onClick={() => deleteAssignment(assignment.id)}
+                                className="ml-0.5 text-blue-400 hover:text-blue-700"
+                                title="Remove from rig"
                               >
-                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                <svg
+                                  className="h-3 w-3"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
                               </button>
                             </span>
-                          ) : (
-                            <span className="text-xs text-neutral-400 italic">
-                              {isActive ? "Click a job in sidebar" : "No job assigned"}
-                            </span>
-                          )}
-                        </div>
+                          ))
+                        )}
+                      </div>
 
-                        {/* Super + Truck row */}
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-neutral-500 w-10 flex-shrink-0">Supt</span>
-                            {superObj ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 border border-green-200 px-2.5 py-1 text-xs font-medium">
-                                {superObj.name}
-                                <button
-                                  onClick={() => updateRigDetail(category.id, "superintendent_id", null)}
-                                  className="ml-0.5 text-green-400 hover:text-green-700"
-                                  title="Remove superintendent"
-                                >
-                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                              </span>
-                            ) : (
-                              <span className="text-xs text-neutral-400 italic">None</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-neutral-500 flex-shrink-0">Truck</span>
-                            {truckObj ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 text-orange-700 border border-orange-200 px-2.5 py-1 text-xs font-medium">
-                                #{truckObj.truck_number}
-                                <button
-                                  onClick={() => updateRigDetail(category.id, "truck_id", null)}
-                                  className="ml-0.5 text-orange-400 hover:text-orange-700"
-                                  title="Remove truck"
-                                >
-                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                              </span>
-                            ) : (
-                              <span className="text-xs text-neutral-400 italic">None</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Crew row */}
-                        <div className="flex items-start gap-2">
-                          <span className="text-xs font-semibold text-neutral-500 w-10 flex-shrink-0 pt-1">Crew</span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {catAssignments.filter((a) => a.worker_id).length === 0 ? (
-                              <span className="text-xs text-neutral-400 italic pt-0.5">
-                                {isActive ? "Click workers in sidebar" : "No crew assigned"}
-                              </span>
-                            ) : (
-                              catAssignments
-                                .filter((a) => a.worker_id)
-                                .map((a) => (
-                                  <span
-                                    key={a.id}
-                                    className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 text-xs font-medium"
-                                  >
-                                    {formatWorkerLabel(a.crew_workers) || "Worker"}
-                                    <button
-                                      onClick={() => deleteAssignment(a.id)}
-                                      className="ml-0.5 text-blue-400 hover:text-blue-700"
-                                      title="Remove from rig"
-                                    >
-                                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                    </button>
-                                  </span>
-                                ))
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Crane + Notes row */}
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-neutral-500 w-10 flex-shrink-0">Crane</span>
-                            <input
-                              type="text"
-                              placeholder="Crane info..."
-                              defaultValue={detail.crane_info || ""}
-                              onBlur={(e) => updateRigDetail(category.id, "crane_info", e.target.value)}
-                              className="h-7 w-32 rounded border border-neutral-200 px-2 text-xs focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-                            />
-                          </div>
-                          <div className="flex items-center gap-2 flex-1">
-                            <span className="text-xs font-semibold text-neutral-500 flex-shrink-0">Notes</span>
-                            <input
-                              type="text"
-                              placeholder="Location / notes..."
-                              defaultValue={detail.notes || ""}
-                              onBlur={(e) => updateRigDetail(category.id, "notes", e.target.value)}
-                              className="h-7 flex-1 rounded border border-neutral-200 px-2 text-xs focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-                            />
-                          </div>
-                        </div>
+                      <div className="mt-3 grid gap-3 md:grid-cols-[220px,1fr]">
+                        <label className="text-xs font-semibold text-neutral-500">
+                          Crane Info
+                          <input
+                            type="text"
+                            placeholder="Crane info..."
+                            defaultValue={detail.crane_info || ""}
+                            onBlur={(e) =>
+                              updateRigDetail(category.id, "crane_info", e.target.value)
+                            }
+                            className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        </label>
+                        <label className="text-xs font-semibold text-neutral-500">
+                          Notes
+                          <input
+                            type="text"
+                            placeholder="Location / notes..."
+                            defaultValue={detail.notes || ""}
+                            onBlur={(e) =>
+                              updateRigDetail(category.id, "notes", e.target.value)
+                            }
+                            className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        </label>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
+            </div>
 
-              {categories.length === 0 && (
-                <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center">
-                  <p className="text-neutral-600">No categories created yet.</p>
+            {visibleScheduleCategories.length === 0 && categories.length > 0 && (
+              <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center">
+                <p className="text-neutral-600">
+                  No rigs match your current filters.
+                </p>
+                <button
+                  onClick={() => {
+                    setScheduleRigSearch("");
+                    setScheduleNeedsAttentionOnly(false);
+                  }}
+                  className="mt-2 text-sm font-semibold text-red-600 hover:text-red-700"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+
+            {categories.length === 0 && (
+              <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-12 text-center">
+                <p className="text-neutral-600">No categories created yet.</p>
+                <button
+                  onClick={() => {
+                    setShowManagePanel(true);
+                    setManagePanelTab("rigs");
+                  }}
+                  className="mt-2 text-sm font-semibold text-red-600 hover:text-red-700"
+                >
+                  Create your first category
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ===== PLANNER VIEW ===== */}
+        {activeTab === "planner" && (
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-4">
+              <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() =>
+                        setPlannerMonth((prev) => shiftMonthString(prev, -1))
+                      }
+                      className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                    >
+                      ◀
+                    </button>
+                    <input
+                      type="month"
+                      value={plannerMonth}
+                      onChange={(e) => setPlannerMonth(e.target.value)}
+                      className="h-9 rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={() =>
+                        setPlannerMonth((prev) => shiftMonthString(prev, 1))
+                      }
+                      className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                    >
+                      ▶
+                    </button>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={plannerSearch}
+                    onChange={(e) => setPlannerSearch(e.target.value)}
+                    placeholder="Filter by worker, rig, job, notes..."
+                    className="h-9 min-w-[240px] flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <label className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
+                    <input
+                      type="checkbox"
+                      checked={plannerFinalizedOnly}
+                      onChange={(e) => setPlannerFinalizedOnly(e.target.checked)}
+                      className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    Finalized only
+                  </label>
                   <button
-                    onClick={() => { setShowManagePanel(true); setManagePanelTab("rigs"); }}
-                    className="mt-2 text-sm font-semibold text-red-600 hover:text-red-700"
+                    onClick={() => {
+                      setPlannerSearch("");
+                      setPlannerFinalizedOnly(false);
+                    }}
+                    className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-600 hover:bg-neutral-50"
                   >
-                    Create your first category
+                    Reset
                   </button>
                 </div>
+
+                <div className="mt-3 flex flex-wrap gap-2 text-xs text-neutral-600">
+                  <span className="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700">
+                    {formatMonthLabel(plannerMonth)}
+                  </span>
+                  <span className="rounded-full bg-neutral-100 px-3 py-1 font-semibold text-neutral-700">
+                    Days with activity: {plannerSummary.days}
+                  </span>
+                  <span className="rounded-full bg-neutral-100 px-3 py-1 font-semibold text-neutral-700">
+                    Rigs shown: {plannerSummary.rigs}
+                  </span>
+                  <span className="rounded-full bg-neutral-100 px-3 py-1 font-semibold text-neutral-700">
+                    Crew slots: {plannerSummary.workers}
+                  </span>
+                  <span className="rounded-full bg-neutral-100 px-3 py-1 font-semibold text-neutral-700">
+                    Jobs assigned: {plannerSummary.jobs}
+                  </span>
+                </div>
+              </div>
+
+              {plannerError && (
+                <div className="rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                  {plannerError}
+                </div>
               )}
+
+              <div className="grid gap-4 xl:grid-cols-[2fr,1fr]">
+                <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                  <div className="grid grid-cols-7 border-b border-neutral-200 bg-neutral-50 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((weekday) => (
+                      <div key={weekday} className="px-3 py-2 text-center">
+                        {weekday}
+                      </div>
+                    ))}
+                  </div>
+                  {plannerLoading ? (
+                    <div className="flex items-center justify-center px-4 py-16">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-300 border-t-blue-600"></div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-7 gap-px bg-neutral-200">
+                      {plannerCalendarCells.map((cell, idx) => {
+                        if (!cell) {
+                          return (
+                            <div
+                              key={`planner-empty-${idx}`}
+                              className="min-h-[118px] bg-neutral-50"
+                            />
+                          );
+                        }
+
+                        const isSelected = cell.date === plannerSelectedDate;
+                        const dayData = cell.dayData;
+                        const rigs = dayData ? Array.from(dayData.rigs.values()) : [];
+                        return (
+                          <button
+                            key={cell.date}
+                            onClick={() => setPlannerSelectedDate(cell.date)}
+                            className={`min-h-[118px] bg-white p-2 text-left align-top transition-colors ${
+                              isSelected ? "ring-2 ring-blue-500" : "hover:bg-blue-50"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`text-xs font-bold ${
+                                  isSelected ? "text-blue-700" : "text-neutral-700"
+                                }`}
+                              >
+                                {cell.day}
+                              </span>
+                              {dayData && (
+                                <span
+                                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                                    dayData.finalized
+                                      ? "bg-emerald-100 text-emerald-700"
+                                      : "bg-blue-100 text-blue-700"
+                                  }`}
+                                >
+                                  {dayData.rigs.size} rig{dayData.rigs.size === 1 ? "" : "s"}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-1 space-y-1">
+                              {rigs.slice(0, 2).map((rig) => (
+                                <div
+                                  key={`${cell.date}-${rig.name}`}
+                                  className="truncate rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700"
+                                  title={rig.name}
+                                >
+                                  {rig.name}
+                                </div>
+                              ))}
+                              {rigs.length > 2 && (
+                                <div className="text-[10px] font-semibold text-neutral-500">
+                                  +{rigs.length - 2} more
+                                </div>
+                              )}
+                              {dayData?.finalized && (
+                                <div className="text-[10px] font-semibold text-emerald-600">
+                                  Finalized
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                    <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                      <h3 className={`${lato.className} text-sm font-bold text-neutral-900`}>
+                        {plannerSelectedDate
+                          ? formatDate(plannerSelectedDate)
+                          : "Select a day"}
+                      </h3>
+                    </div>
+                    <div className="p-3">
+                      <button
+                        onClick={() =>
+                          openScheduleForDate(
+                            plannerSelectedDate || `${plannerMonth}-01`
+                          )
+                        }
+                        className="mb-3 w-full rounded-lg bg-[#0b2a5a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#0a2350]"
+                      >
+                        Open Day in Scheduler
+                      </button>
+                      {!selectedPlannerDay ? (
+                        <p className="text-sm text-neutral-500">
+                          No entries match your filter for this day.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs font-semibold text-neutral-700">
+                            {selectedPlannerDay.finalized
+                              ? "This schedule is finalized."
+                              : "Draft schedule."}
+                          </div>
+                          {selectedPlannerRigs.length === 0 ? (
+                            <p className="text-xs text-neutral-500">
+                              Schedule exists for this day, but no rig rows match the current filter.
+                            </p>
+                          ) : (
+                            selectedPlannerRigs.map((rig) => (
+                              <div
+                                key={rig.name}
+                                className="rounded-lg border border-neutral-200 bg-white px-3 py-2"
+                              >
+                                <div className="text-sm font-semibold text-neutral-900">
+                                  {rig.name}
+                                </div>
+                                <div className="mt-1 text-xs text-neutral-600">
+                                  Jobs: {Array.from(rig.jobs).join(", ") || "None"}
+                                </div>
+                                <div className="mt-1 text-xs text-neutral-600">
+                                  Crew: {Array.from(rig.workers).join(", ") || "None"}
+                                </div>
+                                {(rig.superintendent || rig.truck || rig.crane) && (
+                                  <div className="mt-1 text-xs text-neutral-600">
+                                    {[rig.superintendent ? `Supt: ${rig.superintendent}` : "", rig.truck ? `Truck: ${rig.truck}` : "", rig.crane ? `Crane: ${rig.crane}` : ""]
+                                      .filter(Boolean)
+                                      .join(" • ")}
+                                  </div>
+                                )}
+                                {rig.notes.size > 0 && (
+                                  <div className="mt-1 text-xs text-neutral-500">
+                                    Notes: {Array.from(rig.notes).slice(0, 2).join(" / ")}
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                    <h3 className={`${lato.className} text-sm font-bold text-neutral-900`}>
+                      Crew Pattern Snapshot
+                    </h3>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      Uses the currently loaded month to surface repeat crew pairings and
+                      worker-to-rig habits.
+                    </p>
+
+                    <div className="mt-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                        Top Pairings
+                      </div>
+                      {plannerPatternSummary.topPairs.length === 0 ? (
+                        <p className="mt-1 text-xs text-neutral-500">Not enough crew data yet.</p>
+                      ) : (
+                        <div className="mt-1 space-y-1">
+                          {plannerPatternSummary.topPairs.map((pair) => (
+                            <div
+                              key={pair.label}
+                              className="flex items-center justify-between rounded bg-neutral-50 px-2 py-1 text-xs"
+                            >
+                              <span className="text-neutral-700">{pair.label}</span>
+                              <span className="font-semibold text-neutral-900">{pair.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                        Worker - Rig Frequency
+                      </div>
+                      {plannerPatternSummary.topWorkerRigs.length === 0 ? (
+                        <p className="mt-1 text-xs text-neutral-500">No worker assignments yet.</p>
+                      ) : (
+                        <div className="mt-1 space-y-1">
+                          {plannerPatternSummary.topWorkerRigs.map((item) => (
+                            <div
+                              key={`${item.worker}-${item.rig}`}
+                              className="flex items-center justify-between rounded bg-neutral-50 px-2 py-1 text-xs"
+                            >
+                              <span className="text-neutral-700">
+                                {item.worker} {"->"} {item.rig}
+                              </span>
+                              <span className="font-semibold text-neutral-900">{item.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -2708,6 +4080,235 @@ function CrewScheduler() {
                   })}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ===== HISTORY VIEW ===== */}
+        {activeTab === "history" && (
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-4">
+              <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={historyView}
+                    onChange={(e) => {
+                      setHistoryView(e.target.value);
+                      setHistorySearch("");
+                      setHistorySelectedDate("");
+                    }}
+                    className="h-9 rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="rig">Rigs</option>
+                    <option value="crew">Crew Members</option>
+                    <option value="job">Jobs</option>
+                  </select>
+                  <select
+                    value={historyEntityId}
+                    onChange={(e) => setHistoryEntityId(e.target.value)}
+                    className="h-9 min-w-[220px] rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    {historyEntityOptions.length === 0 ? (
+                      <option value="">No options</option>
+                    ) : (
+                      historyEntityOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <div className="ml-auto flex items-center gap-1">
+                    <button
+                      onClick={() =>
+                        setHistoryMonth((prev) => shiftMonthString(prev, -1))
+                      }
+                      className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                    >
+                      ◀
+                    </button>
+                    <input
+                      type="month"
+                      value={historyMonth}
+                      onChange={(e) => setHistoryMonth(e.target.value)}
+                      className="h-9 rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={() =>
+                        setHistoryMonth((prev) => shiftMonthString(prev, 1))
+                      }
+                      className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                    >
+                      ▶
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <input
+                    type="text"
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    placeholder="Filter notes, jobs, people..."
+                    className="h-9 min-w-[260px] flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <label className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
+                    <input
+                      type="checkbox"
+                      checked={historyFinalizedOnly}
+                      onChange={(e) => setHistoryFinalizedOnly(e.target.checked)}
+                      className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    Finalized only
+                  </label>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                    {formatMonthLabel(historyMonth)}
+                  </span>
+                  {selectedHistoryEntityLabel && (
+                    <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-700">
+                      {selectedHistoryEntityLabel}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-neutral-600 sm:grid-cols-4">
+                  <div className="rounded-lg bg-neutral-50 px-3 py-2">
+                    Days with entries:{" "}
+                    <span className="font-semibold text-neutral-900">{historySummary.days}</span>
+                  </div>
+                  <div className="rounded-lg bg-neutral-50 px-3 py-2">
+                    Assignments:{" "}
+                    <span className="font-semibold text-neutral-900">
+                      {historySummary.assignments}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-neutral-50 px-3 py-2">
+                    Unique jobs:{" "}
+                    <span className="font-semibold text-neutral-900">{historySummary.uniqueJobs}</span>
+                  </div>
+                  <div className="rounded-lg bg-neutral-50 px-3 py-2">
+                    Unique crew:{" "}
+                    <span className="font-semibold text-neutral-900">
+                      {historySummary.uniqueWorkers}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {historyError && (
+                <div className="rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                  {historyError}
+                </div>
+              )}
+
+              <div className="grid gap-4 xl:grid-cols-[2fr,1fr]">
+                <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                  <div className="grid grid-cols-7 border-b border-neutral-200 bg-neutral-50 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((weekday) => (
+                      <div key={weekday} className="px-3 py-2 text-center">
+                        {weekday}
+                      </div>
+                    ))}
+                  </div>
+                  {historyLoading ? (
+                    <div className="flex items-center justify-center px-4 py-16">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-300 border-t-blue-600"></div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-7 gap-px bg-neutral-200">
+                      {historyCalendarCells.map((cell, idx) => {
+                        if (!cell) {
+                          return (
+                            <div
+                              key={`empty-${idx}`}
+                              className="min-h-[112px] bg-neutral-50"
+                            />
+                          );
+                        }
+
+                        const isSelected = cell.date === historySelectedDate;
+                        return (
+                          <button
+                            key={cell.date}
+                            onClick={() => setHistorySelectedDate(cell.date)}
+                            className={`min-h-[112px] bg-white p-2 text-left align-top transition-colors ${
+                              isSelected ? "ring-2 ring-blue-500" : "hover:bg-blue-50"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`text-xs font-bold ${
+                                  isSelected ? "text-blue-700" : "text-neutral-700"
+                                }`}
+                              >
+                                {cell.day}
+                              </span>
+                              {cell.entries.length > 0 && (
+                                <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                                  {cell.entries.length}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-1 space-y-1">
+                              {cell.entries.slice(0, 2).map((entry) => (
+                                <div
+                                  key={entry.id}
+                                  className="truncate rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700"
+                                  title={getHistoryEntryHeadline(entry)}
+                                >
+                                  {getHistoryEntryHeadline(entry)}
+                                </div>
+                              ))}
+                              {cell.entries.length > 2 && (
+                                <div className="text-[10px] font-semibold text-neutral-500">
+                                  +{cell.entries.length - 2} more
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+                  <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+                    <h3 className={`${lato.className} text-sm font-bold text-neutral-900`}>
+                      {historySelectedDate
+                        ? formatDate(historySelectedDate)
+                        : "Select a day"}
+                    </h3>
+                  </div>
+                  <div className="max-h-[560px] overflow-y-auto p-3">
+                    {historyLoading ? (
+                      <p className="text-sm text-neutral-500">Loading entries...</p>
+                    ) : selectedHistoryAssignments.length === 0 ? (
+                      <p className="text-sm text-neutral-500">
+                        No matching assignments for this day.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {selectedHistoryAssignments.map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2"
+                          >
+                            <div className="text-sm font-semibold text-neutral-900">
+                              {getHistoryEntryHeadline(entry)}
+                            </div>
+                            {getHistoryEntrySubline(entry) && (
+                              <div className="mt-1 text-xs text-neutral-500">
+                                {getHistoryEntrySubline(entry)}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -3072,6 +4673,106 @@ function CrewScheduler() {
                 {/* ---- JOBS TAB ---- */}
                 {managePanelTab === "jobs" && (
                   <div className="space-y-4">
+                    {!jobProgressAvailable && (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                        Job progress tracking is unavailable right now. Run the scheduler
+                        migration for `crew_job_progress` to enable holes and ETA tracking.
+                      </div>
+                    )}
+                    {jobProgressStatus && (
+                      <div
+                        className={`rounded-xl px-4 py-3 text-sm font-semibold ${
+                          jobProgressStatus.type === "success"
+                            ? "border border-green-200 bg-green-50 text-green-700"
+                            : "border border-red-200 bg-red-50 text-red-700"
+                        }`}
+                      >
+                        {jobProgressStatus.message}
+                      </div>
+                    )}
+
+                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className={`${lato.className} text-base font-bold text-neutral-900`}>
+                            Quick Job Intake
+                          </h3>
+                          <p className="mt-1 text-sm text-neutral-600">
+                            Paste rows from Tatum&apos;s spreadsheet (CSV or tab-separated). Existing
+                            jobs match by job number, otherwise by job name.
+                          </p>
+                        </div>
+                        {jobIntakePreviewRows.length > 0 && (
+                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                            {jobIntakePreviewRows.length} parsed
+                          </span>
+                        )}
+                      </div>
+                      <textarea
+                        rows={6}
+                        value={jobIntakeText}
+                        onChange={(e) => setJobIntakeText(e.target.value)}
+                        placeholder="Job Name,Job Number,Customer,Hiring Contractor,Address,City,ZIP,PM Name,PM Phone,Crane Required&#10;Dock Repair A,24001,Port Owner,ABC Marine,123 Harbor Way,Houston,77001,Alex PM,713-555-0112,Yes"
+                        className="mt-3 w-full resize-y rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                      />
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={previewJobIntake}
+                          className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                        >
+                          Preview Rows
+                        </button>
+                        <button
+                          onClick={importJobIntake}
+                          disabled={jobIntakeImporting}
+                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {jobIntakeImporting ? "Importing..." : "Import Jobs"}
+                        </button>
+                        <button
+                          onClick={clearJobIntake}
+                          className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                        >
+                          Clear
+                        </button>
+                        <span className="text-xs text-neutral-500">
+                          Tip: The AI Assistant can also create jobs if you paste these rows in chat.
+                        </span>
+                      </div>
+                      {jobIntakeStatus && (
+                        <div
+                          className={`mt-3 rounded-lg px-3 py-2 text-sm font-semibold ${
+                            jobIntakeStatus.type === "success"
+                              ? "bg-green-50 text-green-700"
+                              : jobIntakeStatus.type === "error"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {jobIntakeStatus.message}
+                        </div>
+                      )}
+                      {jobIntakePreviewRows.length > 0 && (
+                        <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                          Preview:
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            {jobIntakePreviewRows.slice(0, 6).map((row, idx) => (
+                              <span key={`${row.job_name}-${idx}`} className="rounded-full bg-white px-2 py-1">
+                                {row.job_name}
+                                {row.job_number ? ` #${row.job_number}` : ""}
+                                {row.default_rig ? ` • ${row.default_rig}` : ""}
+                              </span>
+                            ))}
+                            {jobIntakePreviewRows.length > 6 && (
+                              <span className="text-neutral-500">
+                                +{jobIntakePreviewRows.length - 6} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Add Job Form */}
                     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
                       <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
@@ -3277,57 +4978,241 @@ function CrewScheduler() {
                             No active jobs. Add your first job above.
                           </div>
                         ) : (
-                          jobs.map((job) => (
-                            <div key={job.id} className="px-4 py-3 hover:bg-neutral-50">
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
+                          jobs.map((job) => {
+                            const progress = getJobProgress(job.id);
+                            const progressPercent = getProgressPercent(progress);
+                            const isEditingProgress = editingProgressJobId === job.id;
+
+                            return (
+                              <div key={job.id} className="px-4 py-3 hover:bg-neutral-50">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-neutral-900">
+                                        {job.job_name}
+                                      </span>
+                                      {job.job_number && (
+                                        <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                                          #{job.job_number}
+                                        </span>
+                                      )}
+                                      {job.crane_required && (
+                                        <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                                          Crane
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="mt-1 text-sm text-neutral-500">
+                                      {[job.address, job.city, job.zip]
+                                        .filter(Boolean)
+                                        .join(", ") || "No address"}
+                                    </div>
+                                    {(job.pm_name || job.pm_phone) && (
+                                      <div className="mt-1 text-sm text-neutral-500">
+                                        PM: {job.pm_name}
+                                        {job.pm_phone ? ` • ${job.pm_phone}` : ""}
+                                      </div>
+                                    )}
+                                    {job.dig_tess_number && (
+                                      <div className="mt-1 text-sm text-neutral-500">
+                                        Dig Tess #: {job.dig_tess_number}
+                                      </div>
+                                    )}
+                                    {(job.hiring_contractor ||
+                                      job.hiring_contact_name ||
+                                      job.hiring_contact_phone ||
+                                      job.hiring_contact_email) && (
+                                      <div className="mt-1 text-sm text-neutral-500">
+                                        {job.hiring_contractor
+                                          ? `Hiring: ${job.hiring_contractor}`
+                                          : "Hiring Contact"}{" "}
+                                        {[
+                                          job.hiring_contact_name,
+                                          job.hiring_contact_phone,
+                                          job.hiring_contact_email,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(" • ")}
+                                      </div>
+                                    )}
+                                    {job.customer_name && (
+                                      <div className="mt-1 text-sm text-neutral-500">
+                                        Customer: {job.customer_name}
+                                      </div>
+                                    )}
+
+                                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                                      <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-700">
+                                        {getProgressStatusLabel(progress?.status || "planned")}
+                                      </span>
+                                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                                        Holes:{" "}
+                                        {progress?.holes_completed ?? 0}
+                                        {progress?.holes_target
+                                          ? ` / ${progress.holes_target}`
+                                          : ""}
+                                        {progressPercent !== null
+                                          ? ` (${progressPercent}%)`
+                                          : ""}
+                                      </span>
+                                      {formatProgressDateRange(progress) && (
+                                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                          ETA: {formatProgressDateRange(progress)}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {progress?.notes && (
+                                      <div className="mt-1 text-xs text-neutral-500">
+                                        Progress note: {progress.notes}
+                                      </div>
+                                    )}
+                                  </div>
                                   <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-neutral-900">{job.job_name}</span>
-                                    {job.job_number && (
-                                      <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">#{job.job_number}</span>
+                                    {jobProgressAvailable && (
+                                      <button
+                                        onClick={() =>
+                                          isEditingProgress
+                                            ? cancelEditingProgress()
+                                            : startEditingProgress(job.id)
+                                        }
+                                        className="rounded-md px-3 py-1 text-sm text-blue-700 hover:bg-blue-50 transition-colors"
+                                      >
+                                        {isEditingProgress
+                                          ? "Close Progress"
+                                          : "Update Progress"}
+                                      </button>
                                     )}
-                                    {job.crane_required && (
-                                      <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">Crane</span>
-                                    )}
+                                    <button
+                                      onClick={() => startEditingJob(job)}
+                                      className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-neutral-100 transition-colors"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={() => deleteJob(job.id)}
+                                      className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                    >
+                                      Deactivate
+                                    </button>
                                   </div>
-                                  <div className="mt-1 text-sm text-neutral-500">
-                                    {[job.address, job.city, job.zip].filter(Boolean).join(", ") || "No address"}
+                                </div>
+
+                                {isEditingProgress && editingProgress && (
+                                  <div className="mt-3 rounded-lg border border-neutral-200 bg-white p-3">
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                      <label className="text-xs font-semibold text-neutral-500">
+                                        Status
+                                        <select
+                                          value={editingProgress.status}
+                                          onChange={(e) =>
+                                            setEditingProgress((prev) => ({
+                                              ...prev,
+                                              status: e.target.value,
+                                            }))
+                                          }
+                                          className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        >
+                                          {JOB_PROGRESS_STATUS_OPTIONS.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                              {option.label}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </label>
+                                      <label className="text-xs font-semibold text-neutral-500">
+                                        Holes Completed
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          value={editingProgress.holes_completed}
+                                          onChange={(e) =>
+                                            setEditingProgress((prev) => ({
+                                              ...prev,
+                                              holes_completed: e.target.value,
+                                            }))
+                                          }
+                                          className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        />
+                                      </label>
+                                      <label className="text-xs font-semibold text-neutral-500">
+                                        Total Holes (Estimate)
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          value={editingProgress.holes_target}
+                                          onChange={(e) =>
+                                            setEditingProgress((prev) => ({
+                                              ...prev,
+                                              holes_target: e.target.value,
+                                            }))
+                                          }
+                                          className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        />
+                                      </label>
+                                      <label className="text-xs font-semibold text-neutral-500">
+                                        Estimated Start
+                                        <input
+                                          type="date"
+                                          value={editingProgress.estimated_start_date}
+                                          onChange={(e) =>
+                                            setEditingProgress((prev) => ({
+                                              ...prev,
+                                              estimated_start_date: e.target.value,
+                                            }))
+                                          }
+                                          className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        />
+                                      </label>
+                                      <label className="text-xs font-semibold text-neutral-500 sm:col-span-2">
+                                        Estimated Finish
+                                        <input
+                                          type="date"
+                                          value={editingProgress.estimated_end_date}
+                                          onChange={(e) =>
+                                            setEditingProgress((prev) => ({
+                                              ...prev,
+                                              estimated_end_date: e.target.value,
+                                            }))
+                                          }
+                                          className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        />
+                                      </label>
+                                      <label className="text-xs font-semibold text-neutral-500 sm:col-span-2">
+                                        Progress Notes
+                                        <textarea
+                                          rows={2}
+                                          value={editingProgress.notes}
+                                          onChange={(e) =>
+                                            setEditingProgress((prev) => ({
+                                              ...prev,
+                                              notes: e.target.value,
+                                            }))
+                                          }
+                                          placeholder="Anything important from this update..."
+                                          className="mt-1 w-full rounded border border-neutral-300 px-2 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        />
+                                      </label>
+                                    </div>
+                                    <div className="mt-3 flex justify-end gap-2">
+                                      <button
+                                        onClick={cancelEditingProgress}
+                                        className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        onClick={() => saveJobProgress(job.id)}
+                                        disabled={savingProgress}
+                                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                                      >
+                                        {savingProgress ? "Saving..." : "Save Progress"}
+                                      </button>
+                                    </div>
                                   </div>
-                                  {(job.pm_name || job.pm_phone) && (
-                                    <div className="mt-1 text-sm text-neutral-500">
-                                      PM: {job.pm_name}{job.pm_phone ? ` • ${job.pm_phone}` : ""}
-                                    </div>
-                                  )}
-                                  {job.dig_tess_number && (
-                                    <div className="mt-1 text-sm text-neutral-500">Dig Tess #: {job.dig_tess_number}</div>
-                                  )}
-                                  {(job.hiring_contractor || job.hiring_contact_name || job.hiring_contact_phone || job.hiring_contact_email) && (
-                                    <div className="mt-1 text-sm text-neutral-500">
-                                      {job.hiring_contractor ? `Hiring: ${job.hiring_contractor}` : "Hiring Contact"}{" "}
-                                      {[job.hiring_contact_name, job.hiring_contact_phone, job.hiring_contact_email].filter(Boolean).join(" • ")}
-                                    </div>
-                                  )}
-                                  {job.customer_name && (
-                                    <div className="mt-1 text-sm text-neutral-500">Customer: {job.customer_name}</div>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => startEditingJob(job)}
-                                    className="rounded-md px-3 py-1 text-sm text-neutral-600 hover:bg-neutral-100 transition-colors"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={() => deleteJob(job.id)}
-                                    className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                                  >
-                                    Deactivate
-                                  </button>
-                                </div>
+                                )}
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
                     </div>

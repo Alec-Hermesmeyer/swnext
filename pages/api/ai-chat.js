@@ -23,7 +23,11 @@ const getDateRange = () => {
     d.setDate(d.getDate() + days);
     return fmt(d);
   };
-  return { today: fmt(today), weekAgo: offset(-7), weekAhead: offset(7) };
+  return {
+    today: fmt(today),
+    historyStart: offset(-120),
+    historyEnd: offset(30),
+  };
 };
 
 // ── Tool definitions for Groq function calling ──
@@ -91,9 +95,171 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "create_crew_job",
+      description:
+        "Create or update one crew scheduler job record. Use this when the user provides job data (often from spreadsheet rows).",
+      parameters: {
+        type: "object",
+        properties: {
+          job_name: { type: "string", description: "Job name/title" },
+          job_number: { type: "string", description: "Job number identifier" },
+          dig_tess_number: { type: "string", description: "Dig Tess number" },
+          customer_name: { type: "string", description: "Customer name" },
+          hiring_contractor: { type: "string", description: "Hiring contractor / GC name" },
+          hiring_contact_name: { type: "string", description: "Hiring contact person name" },
+          hiring_contact_phone: { type: "string", description: "Hiring contact phone number" },
+          hiring_contact_email: { type: "string", description: "Hiring contact email" },
+          address: { type: "string", description: "Street address" },
+          city: { type: "string", description: "City" },
+          zip: { type: "string", description: "ZIP / postal code" },
+          pm_name: { type: "string", description: "S&W PM name" },
+          pm_phone: { type: "string", description: "S&W PM phone" },
+          default_rig: { type: "string", description: "Default rig/category label" },
+          crane_required: { type: "boolean", description: "True if crane is required" },
+        },
+        required: ["job_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "bulk_create_crew_jobs",
+      description:
+        "Create or update many crew scheduler jobs in one call. Use when the user pastes multiple spreadsheet rows.",
+      parameters: {
+        type: "object",
+        properties: {
+          rows: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                job_name: { type: "string" },
+                job_number: { type: "string" },
+                dig_tess_number: { type: "string" },
+                customer_name: { type: "string" },
+                hiring_contractor: { type: "string" },
+                hiring_contact_name: { type: "string" },
+                hiring_contact_phone: { type: "string" },
+                hiring_contact_email: { type: "string" },
+                address: { type: "string" },
+                city: { type: "string" },
+                zip: { type: "string" },
+                pm_name: { type: "string" },
+                pm_phone: { type: "string" },
+                default_rig: { type: "string" },
+                crane_required: { type: "boolean" },
+              },
+              required: ["job_name"],
+            },
+            minItems: 1,
+          },
+        },
+        required: ["rows"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
+
+const cleanTextOrNull = (value) => {
+  const cleaned = String(value || "").trim();
+  return cleaned || null;
+};
+
+const normalizeCrewJobPayload = (input = {}) => ({
+  job_name: String(input.job_name || "").trim(),
+  job_number: cleanTextOrNull(input.job_number),
+  dig_tess_number: cleanTextOrNull(input.dig_tess_number),
+  customer_name: cleanTextOrNull(input.customer_name),
+  hiring_contractor: cleanTextOrNull(input.hiring_contractor),
+  hiring_contact_name: cleanTextOrNull(input.hiring_contact_name),
+  hiring_contact_phone: cleanTextOrNull(input.hiring_contact_phone),
+  hiring_contact_email: cleanTextOrNull(input.hiring_contact_email),
+  address: cleanTextOrNull(input.address),
+  city: cleanTextOrNull(input.city),
+  zip: cleanTextOrNull(input.zip),
+  pm_name: cleanTextOrNull(input.pm_name),
+  pm_phone: cleanTextOrNull(input.pm_phone),
+  default_rig: cleanTextOrNull(input.default_rig),
+  crane_required: !!input.crane_required,
+});
+
+async function ensureCustomerExists(name) {
+  const clean = String(name || "").trim();
+  if (!clean) return;
+  const { data: existing, error: findError } = await supabase
+    .from("Customer")
+    .select("id")
+    .ilike("name", clean)
+    .limit(1);
+  if (findError || (existing && existing.length > 0)) return;
+  await supabase.from("Customer").insert({ name: clean });
+}
+
+async function upsertCrewJob(rawInput) {
+  const payload = normalizeCrewJobPayload(rawInput);
+  if (!payload.job_name) {
+    return { success: false, error: "job_name is required for crew jobs" };
+  }
+
+  let match = null;
+  if (payload.job_number) {
+    const { data: numberMatch, error: numberError } = await supabase
+      .from("crew_jobs")
+      .select("id, job_name, job_number")
+      .eq("job_number", payload.job_number)
+      .limit(1);
+    if (numberError) return { success: false, error: numberError.message };
+    match = numberMatch?.[0] || null;
+  }
+
+  if (!match) {
+    const { data: nameMatch, error: nameError } = await supabase
+      .from("crew_jobs")
+      .select("id, job_name, job_number")
+      .ilike("job_name", payload.job_name)
+      .limit(1);
+    if (nameError) return { success: false, error: nameError.message };
+    match = nameMatch?.[0] || null;
+  }
+
+  if (match) {
+    const { error: updateError, data: updated } = await supabase
+      .from("crew_jobs")
+      .update({ ...payload, is_active: true })
+      .eq("id", match.id)
+      .select("id, job_name, job_number")
+      .single();
+    if (updateError) return { success: false, error: updateError.message };
+    await ensureCustomerExists(payload.hiring_contractor);
+    return {
+      success: true,
+      action: "updated",
+      message: `Updated crew job "${updated.job_name}"${updated.job_number ? ` (#${updated.job_number})` : ""}`,
+      job: updated,
+    };
+  }
+
+  const { error: insertError, data: inserted } = await supabase
+    .from("crew_jobs")
+    .insert(payload)
+    .select("id, job_name, job_number")
+    .single();
+  if (insertError) return { success: false, error: insertError.message };
+  await ensureCustomerExists(payload.hiring_contractor);
+  return {
+    success: true,
+    action: "created",
+    message: `Created crew job "${inserted.job_name}"${inserted.job_number ? ` (#${inserted.job_number})` : ""}`,
+    job: inserted,
+  };
+}
 
 async function executeTool(name, args) {
   switch (name) {
@@ -142,6 +308,40 @@ async function executeTool(name, args) {
       return { success: true, message: `Removed ${contact.name} from company contacts` };
     }
 
+    case "create_crew_job": {
+      return upsertCrewJob(args);
+    }
+
+    case "bulk_create_crew_jobs": {
+      const rows = Array.isArray(args?.rows) ? args.rows : [];
+      if (!rows.length) {
+        return { success: false, error: "rows is required and must include at least one job" };
+      }
+      let created = 0;
+      let updated = 0;
+      let failed = 0;
+      const failures = [];
+      const maxRows = 40;
+      for (const [index, row] of rows.slice(0, maxRows).entries()) {
+        const result = await upsertCrewJob(row);
+        if (!result.success) {
+          failed += 1;
+          failures.push(`Row ${index + 1}: ${result.error}`);
+          continue;
+        }
+        if (result.action === "updated") updated += 1;
+        else created += 1;
+      }
+      return {
+        success: failed === 0,
+        message: `Bulk crew job intake complete. Created: ${created}, Updated: ${updated}, Failed: ${failed}.`,
+        created,
+        updated,
+        failed,
+        failures: failures.slice(0, 5),
+      };
+    }
+
     default:
       return { success: false, error: `Unknown tool: ${name}` };
   }
@@ -149,8 +349,17 @@ async function executeTool(name, args) {
 
 // ── Data fetching ──
 
+const capLines = (lines, max) => {
+  if (!lines || lines.length <= max) return lines || [];
+  const omitted = lines.length - max;
+  return [...lines.slice(-max), `- ... ${omitted} older rows omitted from this context.`];
+};
+
+const linesOrFallback = (lines, fallback) =>
+  lines && lines.length ? lines.join("\n") : fallback;
+
 async function fetchDataContext() {
-  const { today, weekAgo, weekAhead } = getDateRange();
+  const { today, historyStart, historyEnd } = getDateRange();
 
   const [
     { data: workers },
@@ -161,49 +370,230 @@ async function fetchDataContext() {
     { data: schedules },
     { data: assignments },
     { data: rigDetails },
+    { data: jobProgress, error: jobProgressError },
+    { data: jobProgressUpdates, error: jobProgressUpdatesError },
     { data: jobPositions },
     { data: companyContacts },
     { data: contactSubmissions },
     { data: jobSubmissions },
   ] = await Promise.all([
     supabase.from("crew_workers").select("id, name, phone, role, is_active"),
-    supabase.from("crew_categories").select("id, name, color, sort_order").order("sort_order"),
-    supabase.from("crew_jobs").select("id, job_name, job_number, customer_name, address, city, pm_name, crane_required, is_active, default_rig"),
+    supabase
+      .from("crew_categories")
+      .select("id, name, color, sort_order")
+      .order("sort_order"),
+    supabase
+      .from("crew_jobs")
+      .select(
+        "id, job_name, job_number, customer_name, address, city, pm_name, crane_required, is_active, default_rig, hiring_contractor"
+      ),
     supabase.from("crew_superintendents").select("id, name, phone, is_active"),
     supabase.from("crew_trucks").select("id, truck_number, description, is_active"),
-    supabase.from("crew_schedules").select("id, schedule_date, is_finalized, finalized_at").gte("schedule_date", weekAgo).lte("schedule_date", weekAhead).order("schedule_date"),
-    supabase.from("crew_assignments").select("id, schedule_id, category_id, worker_id, job_id, job_name, notes, sort_order, crew_workers(name, role), crew_categories(name)").order("sort_order"),
-    supabase.from("schedule_rig_details").select("id, schedule_id, category_id, superintendent_id, truck_id, crane_info, notes, crew_superintendents(name), crew_trucks(truck_number)"),
+    supabase
+      .from("crew_schedules")
+      .select("id, schedule_date, is_finalized, finalized_at")
+      .gte("schedule_date", historyStart)
+      .lte("schedule_date", historyEnd)
+      .order("schedule_date"),
+    supabase
+      .from("crew_assignments")
+      .select(
+        "id, schedule_id, category_id, worker_id, job_id, job_name, notes, sort_order, crew_workers(name, role), crew_categories(name), crew_jobs(job_name, job_number), crew_schedules!inner(schedule_date, is_finalized)"
+      )
+      .gte("crew_schedules.schedule_date", historyStart)
+      .lte("crew_schedules.schedule_date", historyEnd)
+      .order("schedule_id", { ascending: true })
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("schedule_rig_details")
+      .select(
+        "id, notes, crane_info, crew_categories(name), crew_superintendents(name), crew_trucks(truck_number), crew_schedules!inner(schedule_date)"
+      )
+      .gte("crew_schedules.schedule_date", historyStart)
+      .lte("crew_schedules.schedule_date", historyEnd),
+    supabase
+      .from("crew_job_progress")
+      .select(
+        "job_id, status, holes_completed, holes_target, estimated_start_date, estimated_end_date, notes, updated_at"
+      )
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("crew_job_progress_updates")
+      .select("job_id, update_date, status, holes_completed, holes_target, notes, created_at")
+      .order("created_at", { ascending: false })
+      .limit(60),
     supabase.from("jobs").select("*").order("id", { ascending: false }),
     supabase.from("company_contacts").select("*").order("id", { ascending: false }),
-    supabase.from("contact_form").select("*").order("created_at", { ascending: false }).limit(20),
-    supabase.from("job_form").select("*").order("created_at", { ascending: false }).limit(30),
+    supabase
+      .from("contact_form")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("job_form")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(30),
   ]);
 
-  const scheduleMap = {};
-  for (const s of schedules || []) scheduleMap[s.id] = s;
+  const progressByJobId = {};
+  (jobProgress || []).forEach((row) => {
+    if (!row?.job_id) return;
+    progressByJobId[row.job_id] = row;
+  });
 
-  const enrichedAssignments = (assignments || [])
-    .filter((a) => scheduleMap[a.schedule_id])
-    .map((a) => ({
-      date: scheduleMap[a.schedule_id].schedule_date,
-      worker: a.crew_workers?.name || "Unassigned",
-      workerRole: a.crew_workers?.role || "",
-      job: a.job_name || "",
-      rig: a.crew_categories?.name || "",
-      notes: a.notes || "",
-    }));
+  const rigDetailLookup = {};
+  (rigDetails || []).forEach((row) => {
+    const date = row?.crew_schedules?.schedule_date;
+    const rigName = row?.crew_categories?.name || "";
+    if (!date || !rigName) return;
+    rigDetailLookup[`${date}::${rigName}`] = {
+      superintendent: row?.crew_superintendents?.name || "",
+      truck: row?.crew_trucks?.truck_number || "",
+      crane: row?.crane_info || "",
+      notes: row?.notes || "",
+    };
+  });
+
+  const normalizedAssignments = (assignments || [])
+    .map((row) => {
+      const date = row?.crew_schedules?.schedule_date || "";
+      const rig = row?.crew_categories?.name || "";
+      const rigDetail = rigDetailLookup[`${date}::${rig}`] || {};
+      return {
+        date,
+        finalized: !!row?.crew_schedules?.is_finalized,
+        worker: row?.crew_workers?.name || "Unassigned",
+        workerRole: row?.crew_workers?.role || "",
+        job: row?.crew_jobs?.job_name || row?.job_name || "",
+        jobNumber: row?.crew_jobs?.job_number || "",
+        rig,
+        notes: row?.notes || "",
+        rigNotes: rigDetail.notes || "",
+        superintendent: rigDetail.superintendent || "",
+        truck: rigDetail.truck || "",
+        crane: rigDetail.crane || "",
+      };
+    })
+    .filter((row) => row.date)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const dailyRigMap = new Map();
+  normalizedAssignments.forEach((entry) => {
+    if (!dailyRigMap.has(entry.date)) dailyRigMap.set(entry.date, new Map());
+    const rigMap = dailyRigMap.get(entry.date);
+    const rigKey = entry.rig || "Unassigned";
+    if (!rigMap.has(rigKey)) {
+      rigMap.set(rigKey, {
+        rig: rigKey,
+        finalized: false,
+        workers: new Set(),
+        jobs: new Set(),
+        notes: new Set(),
+        superintendent: "",
+        truck: "",
+      });
+    }
+    const aggregate = rigMap.get(rigKey);
+    aggregate.finalized = aggregate.finalized || entry.finalized;
+    if (entry.worker) {
+      aggregate.workers.add(
+        entry.workerRole ? `${entry.worker} (${entry.workerRole})` : entry.worker
+      );
+    }
+    if (entry.job) {
+      aggregate.jobs.add(
+        entry.jobNumber ? `${entry.job} #${entry.jobNumber}` : entry.job
+      );
+    }
+    if (entry.notes) aggregate.notes.add(entry.notes);
+    if (entry.rigNotes) aggregate.notes.add(entry.rigNotes);
+    if (!aggregate.superintendent && entry.superintendent) {
+      aggregate.superintendent = entry.superintendent;
+    }
+    if (!aggregate.truck && entry.truck) {
+      aggregate.truck = entry.truck;
+    }
+  });
+
+  const historyCalendarLines = Array.from(dailyRigMap.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, rigMap]) => {
+      const rigSegments = Array.from(rigMap.values())
+        .sort((a, b) => a.rig.localeCompare(b.rig))
+        .map((entry) => {
+          const parts = [
+            entry.rig,
+            `Jobs: ${Array.from(entry.jobs).join(", ") || "None"}`,
+            `Crew: ${Array.from(entry.workers).join(", ") || "None"}`,
+          ];
+          if (entry.superintendent) parts.push(`Supt: ${entry.superintendent}`);
+          if (entry.truck) parts.push(`Truck: ${entry.truck}`);
+          if (entry.notes.size) {
+            parts.push(`Notes: ${Array.from(entry.notes).slice(0, 2).join(" / ")}`);
+          }
+          parts.push(entry.finalized ? "FINALIZED" : "draft");
+          return parts.join(" | ");
+        });
+      return `- ${date}: ${rigSegments.join(" || ")}`;
+    });
+
+  const assignmentLookupLines = capLines(
+    normalizedAssignments.map(
+      (entry) =>
+        `- ${entry.date}: ${entry.worker}${entry.workerRole ? ` (${entry.workerRole})` : ""} -> ${entry.rig || "No rig"} -> ${entry.job || "No job"}${entry.jobNumber ? ` #${entry.jobNumber}` : ""}${entry.finalized ? " [FINALIZED]" : ""}`
+    ),
+    650
+  );
 
   const activeWorkers = (workers || []).filter((w) => w.is_active !== false);
   const inactiveWorkers = (workers || []).filter((w) => w.is_active === false);
   const activeCrewJobs = (crewJobs || []).filter((j) => j.is_active !== false);
 
+  const jobProgressLines = activeCrewJobs.map((job) => {
+    const progress = progressByJobId[job.id];
+    if (!progress) {
+      return `- ${job.job_name}${job.job_number ? ` #${job.job_number}` : ""}: no progress update yet`;
+    }
+    const done = progress.holes_completed;
+    const total = progress.holes_target;
+    const percent =
+      Number.isFinite(done) && Number.isFinite(total) && total > 0
+        ? ` (${Math.round((done / total) * 100)}%)`
+        : "";
+    const eta = progress.estimated_start_date || progress.estimated_end_date
+      ? ` | ETA: ${progress.estimated_start_date || "TBD"} -> ${
+          progress.estimated_end_date || "TBD"
+        }`
+      : "";
+    const updatedAt = progress.updated_at
+      ? ` | Updated: ${new Date(progress.updated_at).toLocaleDateString()}`
+      : "";
+    return `- ${job.job_name}${job.job_number ? ` #${job.job_number}` : ""}: ${progress.status || "planned"} | Holes: ${done ?? 0}${total !== null && total !== undefined ? ` / ${total}` : ""}${percent}${eta}${updatedAt}${progress.notes ? ` | Note: ${progress.notes}` : ""}`;
+  });
+
+  const jobProgressUpdateLines = capLines(
+    (jobProgressUpdates || []).map((row) => {
+      const relatedJob = activeCrewJobs.find((job) => job.id === row.job_id);
+      const label = relatedJob
+        ? `${relatedJob.job_name}${relatedJob.job_number ? ` #${relatedJob.job_number}` : ""}`
+        : row.job_id;
+      return `- ${row.update_date || "unknown date"}: ${label} | ${row.status || "planned"} | Holes: ${row.holes_completed ?? 0}${row.holes_target !== null && row.holes_target !== undefined ? ` / ${row.holes_target}` : ""}${row.notes ? ` | ${row.notes}` : ""}`;
+    }),
+    80
+  );
+
   return {
     today,
+    historyStart,
+    historyEnd,
+    progressTrackingEnabled: !jobProgressError,
+    progressUpdateHistoryEnabled: !jobProgressUpdatesError,
     summary: {
       totalActiveWorkers: activeWorkers.length,
       totalInactiveWorkers: inactiveWorkers.length,
       totalActiveCrewJobs: activeCrewJobs.length,
+      jobsWithProgress: Object.keys(progressByJobId).length,
       totalRigs: (categories || []).length,
       totalSuperintendents: (superintendents || []).filter((s) => s.is_active !== false).length,
       totalTrucks: (trucks || []).filter((t) => t.is_active !== false).length,
@@ -212,33 +602,63 @@ async function fetchDataContext() {
       totalCompanyContacts: (companyContacts || []).length,
       totalContactSubmissions: (contactSubmissions || []).length,
       totalJobApplications: (jobSubmissions || []).length,
+      totalSchedulesInWindow: (schedules || []).length,
     },
-    workers: activeWorkers.map((w) => ({ name: w.name, role: w.role || "", phone: w.phone || "" })),
+    workers: activeWorkers.map((w) => ({
+      name: w.name,
+      role: w.role || "",
+      phone: w.phone || "",
+    })),
     crewJobs: activeCrewJobs.map((j) => ({
-      name: j.job_name, number: j.job_number || "", customer: j.customer_name || "",
-      address: [j.address, j.city].filter(Boolean).join(", "), pm: j.pm_name || "",
+      name: j.job_name,
+      number: j.job_number || "",
+      customer: j.customer_name || "",
+      address: [j.address, j.city].filter(Boolean).join(", "),
+      pm: j.pm_name || "",
       crane: j.crane_required ? "Yes" : "No",
+      hiringContractor: j.hiring_contractor || "",
     })),
     rigs: (categories || []).map((c) => c.name),
-    superintendents: (superintendents || []).filter((s) => s.is_active !== false).map((s) => s.name),
-    trucks: (trucks || []).filter((t) => t.is_active !== false).map((t) => t.truck_number),
+    superintendents: (superintendents || [])
+      .filter((s) => s.is_active !== false)
+      .map((s) => s.name),
+    trucks: (trucks || [])
+      .filter((t) => t.is_active !== false)
+      .map((t) => t.truck_number),
     schedules: (schedules || []).map((s) => ({
-      date: s.schedule_date, dateFormatted: fmtDate(s.schedule_date), finalized: s.is_finalized || false,
+      date: s.schedule_date,
+      dateFormatted: fmtDate(s.schedule_date),
+      finalized: s.is_finalized || false,
     })),
-    assignments: enrichedAssignments,
+    historyCalendarLines,
+    assignmentLookupLines,
+    jobProgressLines,
+    jobProgressUpdateLines,
     jobPositions: (jobPositions || []).map((j) => ({
-      title: j.jobTitle, description: j.jobDesc || "", open: j.is_Open, created: j.created_at,
+      title: j.jobTitle,
+      description: j.jobDesc || "",
+      open: j.is_Open,
+      created: j.created_at,
     })),
     companyContacts: (companyContacts || []).map((c) => ({
-      name: c.name, title: c.job_title || "", email: c.email || "", phone: c.phone || "",
+      name: c.name,
+      title: c.job_title || "",
+      email: c.email || "",
+      phone: c.phone || "",
     })),
     contactSubmissions: (contactSubmissions || []).map((s) => ({
-      name: s.name || "", email: s.email || "", phone: s.number || "", message: s.message || "",
+      name: s.name || "",
+      email: s.email || "",
+      phone: s.number || "",
+      message: s.message || "",
       date: s.created_at ? new Date(s.created_at).toLocaleDateString() : "",
     })),
     jobApplications: (jobSubmissions || []).map((s) => ({
-      name: s.firstName || s.name || "", email: s.email || "", phone: s.number || s.phone || "",
-      position: s.position || "", date: s.created_at ? new Date(s.created_at).toLocaleDateString() : "",
+      name: s.firstName || s.name || "",
+      email: s.email || "",
+      phone: s.number || s.phone || "",
+      position: s.position || "",
+      date: s.created_at ? new Date(s.created_at).toLocaleDateString() : "",
     })),
   };
 }
@@ -248,63 +668,129 @@ async function fetchDataContext() {
 function buildSystemPrompt(data) {
   const positionCounts = {};
   for (const app of data.jobApplications) {
-    if (app.position) positionCounts[app.position] = (positionCounts[app.position] || 0) + 1;
+    if (app.position) {
+      positionCounts[app.position] = (positionCounts[app.position] || 0) + 1;
+    }
   }
 
-  return `You are the S&W Foundation Contractors assistant. You help the admin team with questions about crew schedules, jobs, workers, equipment, job postings, contacts, and form submissions. You are friendly, concise, and practical.
+  return `You are the S&W Foundation Contractors assistant. You help the admin team with questions about crew schedules, calendar history (rigs/crew/jobs), job progress, equipment, career postings, company contacts, and form submissions. You are concise and practical.
 
 Today is ${fmtDate(data.today)} (${data.today}).
+Schedule history window loaded: ${data.historyStart} through ${data.historyEnd}.
 
 OVERVIEW:
 - ${data.summary.totalActiveWorkers} active crew workers, ${data.summary.totalInactiveWorkers} inactive
 - ${data.summary.totalActiveCrewJobs} active crew jobs
+- ${data.summary.jobsWithProgress} jobs with saved progress updates
 - ${data.summary.totalRigs} rigs/categories
 - ${data.summary.totalSuperintendents} superintendents, ${data.summary.totalTrucks} trucks
+- ${data.summary.totalSchedulesInWindow} schedules in the loaded history window
 - ${data.summary.totalJobPositions} career positions (${data.summary.openJobPositions} open)
 - ${data.summary.totalCompanyContacts} company contacts
 - ${data.summary.totalContactSubmissions} recent contact form submissions
 - ${data.summary.totalJobApplications} recent job applications
 
 CREW WORKERS:
-${data.workers.map((w) => `- ${w.name}${w.role ? ` (${w.role})` : ""}${w.phone ? ` - ${w.phone}` : ""}`).join("\n") || "None"}
+${linesOrFallback(
+  data.workers.map(
+    (w) => `- ${w.name}${w.role ? ` (${w.role})` : ""}${w.phone ? ` - ${w.phone}` : ""}`
+  ),
+  "None"
+)}
 
 ACTIVE CREW JOBS:
-${data.crewJobs.map((j) => `- ${j.name}${j.number ? ` #${j.number}` : ""}${j.customer ? ` | Customer: ${j.customer}` : ""}${j.address ? ` | ${j.address}` : ""}${j.pm ? ` | PM: ${j.pm}` : ""}${j.crane === "Yes" ? " | CRANE REQUIRED" : ""}`).join("\n") || "None"}
+${linesOrFallback(
+  data.crewJobs.map(
+    (j) =>
+      `- ${j.name}${j.number ? ` #${j.number}` : ""}${j.customer ? ` | Customer: ${j.customer}` : ""}${j.address ? ` | ${j.address}` : ""}${j.pm ? ` | PM: ${j.pm}` : ""}${j.hiringContractor ? ` | Hiring: ${j.hiringContractor}` : ""}${j.crane === "Yes" ? " | CRANE REQUIRED" : ""}`
+  ),
+  "None"
+)}
 
 RIGS: ${data.rigs.join(", ") || "None"}
 SUPERINTENDENTS: ${data.superintendents.join(", ") || "None"}
 TRUCKS: ${data.trucks.join(", ") || "None"}
 
-SCHEDULES (recent & upcoming):
-${data.schedules.map((s) => `- ${s.dateFormatted} (${s.date})${s.finalized ? " - FINALIZED" : " - draft"}`).join("\n") || "No schedules in range."}
+SCHEDULES (history window):
+${linesOrFallback(
+  data.schedules.map(
+    (s) =>
+      `- ${s.dateFormatted} (${s.date})${s.finalized ? " - FINALIZED" : " - draft"}`
+  ),
+  "No schedules in range."
+)}
 
-CREW ASSIGNMENTS (recent & upcoming):
-${data.assignments.length > 0 ? data.assignments.map((a) => `- ${a.date}: ${a.worker}${a.workerRole ? ` (${a.workerRole})` : ""} → ${a.job || "No job"} [${a.rig}]${a.notes ? ` (${a.notes})` : ""}`).join("\n") : "No assignments in range."}
+CALENDAR HISTORY BY DATE (grouped by rig):
+${linesOrFallback(data.historyCalendarLines, "No calendar history in range.")}
+
+ASSIGNMENT LOOKUP (worker -> rig -> job):
+${linesOrFallback(data.assignmentLookupLines, "No assignment rows in range.")}
+
+JOB PROGRESS TRACKING:
+${
+  data.progressTrackingEnabled
+    ? linesOrFallback(data.jobProgressLines, "No active jobs found.")
+    : "Progress table is not available yet (migration not applied)."
+}
+
+RECENT JOB PROGRESS UPDATES:
+${
+  data.progressUpdateHistoryEnabled
+    ? linesOrFallback(data.jobProgressUpdateLines, "No saved progress update entries.")
+    : "Progress update history table is not available yet."
+}
 
 CAREER POSITIONS (job postings on the website):
-${data.jobPositions.map((j) => `- "${j.title}" - ${j.open ? "OPEN (visible)" : "CLOSED (hidden)"}${j.description ? ` | ${j.description.substring(0, 80)}` : ""}`).join("\n") || "No positions."}
+${linesOrFallback(
+  data.jobPositions.map(
+    (j) =>
+      `- "${j.title}" - ${j.open ? "OPEN (visible)" : "CLOSED (hidden)"}${j.description ? ` | ${j.description.substring(0, 80)}` : ""}`
+  ),
+  "No positions."
+)}
 
 COMPANY CONTACTS:
-${data.companyContacts.map((c) => `- ${c.name}${c.title ? ` (${c.title})` : ""}${c.email ? ` | ${c.email}` : ""}${c.phone ? ` | ${c.phone}` : ""}`).join("\n") || "None"}
+${linesOrFallback(
+  data.companyContacts.map(
+    (c) =>
+      `- ${c.name}${c.title ? ` (${c.title})` : ""}${c.email ? ` | ${c.email}` : ""}${c.phone ? ` | ${c.phone}` : ""}`
+  ),
+  "None"
+)}
 
 RECENT CONTACT FORM SUBMISSIONS (latest 20):
-${data.contactSubmissions.map((s) => `- ${s.date}: ${s.name}${s.email ? ` | ${s.email}` : ""}${s.phone ? ` | ${s.phone}` : ""}${s.message ? ` | "${s.message.substring(0, 60)}${s.message.length > 60 ? "..." : ""}"` : ""}`).join("\n") || "None"}
+${linesOrFallback(
+  data.contactSubmissions.map(
+    (s) =>
+      `- ${s.date}: ${s.name}${s.email ? ` | ${s.email}` : ""}${s.phone ? ` | ${s.phone}` : ""}${s.message ? ` | "${s.message.substring(0, 60)}${s.message.length > 60 ? "..." : ""}"` : ""}`
+  ),
+  "None"
+)}
 
 RECENT JOB APPLICATIONS (latest 30):
-${data.jobApplications.map((s) => `- ${s.date}: ${s.name} applied for ${s.position || "unknown"}${s.email ? ` | ${s.email}` : ""}${s.phone ? ` | ${s.phone}` : ""}`).join("\n") || "None"}
+${linesOrFallback(
+  data.jobApplications.map(
+    (s) =>
+      `- ${s.date}: ${s.name} applied for ${s.position || "unknown"}${s.email ? ` | ${s.email}` : ""}${s.phone ? ` | ${s.phone}` : ""}`
+  ),
+  "None"
+)}
 
-APPLICATIONS BY POSITION: ${Object.entries(positionCounts).map(([pos, count]) => `${pos}: ${count}`).join(", ") || "None"}
+APPLICATIONS BY POSITION: ${Object.entries(positionCounts)
+    .map(([pos, count]) => `${pos}: ${count}`)
+    .join(", ") || "None"}
 
 RULES:
-- For questions, ALWAYS answer directly from the data above. All the data you need is already here. Do NOT try to call a tool to look up or fetch data.
-- ONLY use tools for WRITE actions: creating a job position, toggling a position open/closed, adding a contact, or deleting a contact. That's it.
-- Keep answers short and direct. These are busy people.
-- When listing crew for a day, group by rig/category.
-- If asked about a date with no schedule, say there's no schedule created yet.
-- Use plain language. No jargon.
-- You CANNOT modify crew schedules or assignments - only provide info about them.
-- When you perform an action, confirm what you did clearly.
-- After any create/delete/update action, remind them to refresh the page if they have it open.`;
+- Answer directly from the data above.
+- If asked about a date outside ${data.historyStart} to ${data.historyEnd}, say that date is outside the loaded history window.
+- If asked about a date inside the window but there is no matching schedule/assignment, say no schedule is recorded for that date.
+- Use plain language and keep responses short.
+- When listing a day, group by rig/category.
+- ONLY use tools for WRITE actions: create/toggle career positions, add/delete company contacts, and create/update crew jobs.
+- If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
+- You cannot modify crew schedules or crew assignments.
+- If progress tracking tables are unavailable, say they are not configured yet.
+- After any write action, remind them to refresh if needed.`;
 }
 
 // ── Call Groq with tool support ──
