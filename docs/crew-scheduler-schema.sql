@@ -74,10 +74,15 @@ ALTER TABLE crew_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE crew_jobs ENABLE ROW LEVEL SECURITY;
 
 -- Policies (allow authenticated users full access)
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON crew_workers;
 CREATE POLICY "Allow all for authenticated users" ON crew_workers FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON crew_categories;
 CREATE POLICY "Allow all for authenticated users" ON crew_categories FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON crew_schedules;
 CREATE POLICY "Allow all for authenticated users" ON crew_schedules FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON crew_assignments;
 CREATE POLICY "Allow all for authenticated users" ON crew_assignments FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON crew_jobs;
 CREATE POLICY "Allow all for authenticated users" ON crew_jobs FOR ALL USING (true);
 
 -- Insert default categories (customize these)
@@ -155,11 +160,55 @@ ALTER TABLE crew_jobs ADD COLUMN IF NOT EXISTS hiring_contact_email TEXT;
 ALTER TABLE crew_superintendents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE crew_trucks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule_rig_details ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON crew_superintendents;
 CREATE POLICY "Allow all for authenticated users" ON crew_superintendents FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON crew_trucks;
 CREATE POLICY "Allow all for authenticated users" ON crew_trucks FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON schedule_rig_details;
 CREATE POLICY "Allow all for authenticated users" ON schedule_rig_details FOR ALL USING (true);
 
 CREATE INDEX IF NOT EXISTS idx_rig_details_schedule ON schedule_rig_details(schedule_id);
 CREATE INDEX IF NOT EXISTS idx_rig_details_category ON schedule_rig_details(category_id);
 CREATE INDEX IF NOT EXISTS idx_superintendents_active ON crew_superintendents(is_active);
 CREATE INDEX IF NOT EXISTS idx_trucks_active ON crew_trucks(is_active);
+
+-- ============================================
+-- Job progress tracking
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS crew_job_progress (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  job_id UUID NOT NULL UNIQUE REFERENCES crew_jobs(id) ON DELETE CASCADE,
+  status TEXT DEFAULT 'planned',
+  holes_completed INTEGER,
+  holes_target INTEGER,
+  estimated_start_date DATE,
+  estimated_end_date DATE,
+  notes TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS crew_job_progress_updates (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  job_id UUID NOT NULL REFERENCES crew_jobs(id) ON DELETE CASCADE,
+  update_date DATE DEFAULT CURRENT_DATE,
+  status TEXT DEFAULT 'planned',
+  holes_completed INTEGER,
+  holes_target INTEGER,
+  estimated_start_date DATE,
+  estimated_end_date DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE crew_job_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE crew_job_progress_updates ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON crew_job_progress;
+CREATE POLICY "Allow all for authenticated users" ON crew_job_progress FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON crew_job_progress_updates;
+CREATE POLICY "Allow all for authenticated users" ON crew_job_progress_updates FOR ALL USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_job_progress_job ON crew_job_progress(job_id);
+CREATE INDEX IF NOT EXISTS idx_job_progress_updates_job ON crew_job_progress_updates(job_id);
+CREATE INDEX IF NOT EXISTS idx_job_progress_updates_date ON crew_job_progress_updates(update_date);

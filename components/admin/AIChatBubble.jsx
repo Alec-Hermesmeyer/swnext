@@ -70,7 +70,7 @@ function FormattedMessage({ text }) {
 export default function AIChatBubble() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hey! I'm the S&W assistant. Ask me about the schedule, crew, jobs, submissions, or tell me to do something like create a job posting or add a contact." },
+    { role: "assistant", content: "Hey! I'm the S&W assistant. Ask me about schedules, live planner/history for rigs-crew-jobs, job progress, submissions, or paste spreadsheet rows and I can create crew jobs for you." },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -149,7 +149,7 @@ export default function AIChatBubble() {
               </div>
               <div>
                 <div className="text-sm font-bold text-white tracking-wide">S&W Assistant</div>
-                <div className="text-[11px] text-white/50">Schedules, crews, jobs & more</div>
+                <div className="text-[11px] text-white/50">Schedules, planner, progress, intake & more</div>
               </div>
             </div>
             <button

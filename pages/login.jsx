@@ -13,15 +13,36 @@ export default function LoginTW() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const normalizeEmail = (value) => String(value || "").trim().toLowerCase();
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
+    setNotice(null);
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
+      setError("Please enter your email.");
+      setLoading(false);
+      return;
+    }
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
       if (error) {
-        setError(error.message);
+        if (String(error.message || "").toLowerCase().includes("invalid login credentials")) {
+          setError(
+            "Invalid login credentials. Verify email/password, then try password reset below if needed."
+          );
+        } else {
+          setError(error.message);
+        }
       } else {
         await supabase.auth.getSession();
         router.replace("/admin");
@@ -30,6 +51,29 @@ export default function LoginTW() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
+      setError("Enter your email first, then click reset password.");
+      return;
+    }
+    setResetting(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
+      if (error) {
+        setError(error.message);
+      } else {
+        setNotice("Password reset link sent. Check your inbox.");
+      }
+    } catch (err) {
+      setError(err.message || "Failed to send reset email.");
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -56,7 +100,16 @@ export default function LoginTW() {
               <input type="password" required value={password} onChange={(e)=>setPassword(e.target.value)} className="h-11 w-full rounded-lg border border-neutral-300 bg-white px-3 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" />
             </div>
             {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
+            {notice && <p className="text-sm font-semibold text-green-700">{notice}</p>}
             <button type="submit" disabled={loading} className="mt-2 inline-flex h-11 w-full items-center justify-center rounded-lg bg-red-600 font-bold text-white shadow hover:bg-red-700">{loading?"Logging in...":"Login"}</button>
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={resetting}
+              className="mt-2 inline-flex h-10 w-full items-center justify-center rounded-lg border border-neutral-300 bg-white font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+            >
+              {resetting ? "Sending reset link..." : "Reset Password"}
+            </button>
           </div>
           </form>
         </div>
@@ -68,4 +121,3 @@ export default function LoginTW() {
 LoginTW.getLayout = function getLayout(page) {
   return <TWLayout>{page}</TWLayout>;
 };
-
