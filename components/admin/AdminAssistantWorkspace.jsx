@@ -12,6 +12,7 @@ const PROMPT_CARDS = [
     description: "Create the first job record so operations has a live job to build from.",
     prompt: "Start a new crew scheduler job for a commercial pier drilling project.",
     accent: "from-[#0b2a5a] via-[#2458a6] to-[#9bc7f7]",
+    module: "schedule",
   },
   {
     eyebrow: "Job Detail",
@@ -19,6 +20,7 @@ const PROMPT_CARDS = [
     description: "Add the next layer of job information as the project takes shape.",
     prompt: "Update an existing crew scheduler job with more field detail and requirements.",
     accent: "from-violet-700 via-violet-500 to-fuchsia-300",
+    module: "schedule",
   },
   {
     eyebrow: "Crew Scheduler",
@@ -26,6 +28,7 @@ const PROMPT_CARDS = [
     description: "Ask about tomorrow, this week, or a specific rig and crew.",
     prompt: "What is scheduled for the crew calendar tomorrow?",
     accent: "from-sky-700 via-sky-500 to-sky-300",
+    module: "schedule",
   },
   {
     eyebrow: "Automation",
@@ -33,6 +36,7 @@ const PROMPT_CARDS = [
     description: "Check the latest schedule and move the packet workflow forward faster.",
     prompt: "What jobs are ready for packet automation and what is missing?",
     accent: "from-emerald-600 via-emerald-500 to-emerald-300",
+    module: "schedule",
   },
   {
     eyebrow: "Assistant Profile",
@@ -40,6 +44,7 @@ const PROMPT_CARDS = [
     description: "Interview me about my role, blockers, and what can be automated without asking first.",
     prompt: "Interview me about my role and how you can help.",
     accent: "from-[#143a75] via-[#5574b8] to-[#d7e6fb]",
+    module: null,
   },
   {
     eyebrow: "Social Media",
@@ -47,6 +52,7 @@ const PROMPT_CARDS = [
     description: "Generate Facebook or LinkedIn copy from live business context.",
     prompt: "Draft a Facebook post about our latest foundation project.",
     accent: "from-rose-600 via-orange-400 to-amber-300",
+    module: "social",
   },
   {
     eyebrow: "Submissions",
@@ -54,6 +60,7 @@ const PROMPT_CARDS = [
     description: "Summarize fresh contact form submissions and job applications.",
     prompt: "Do we have any new leads or job applications this week?",
     accent: "from-amber-600 via-yellow-400 to-orange-300",
+    module: "submissions",
   },
 ];
 
