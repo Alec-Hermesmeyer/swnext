@@ -17,6 +17,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+// Legacy fallback for non-standard role values not yet migrated
 const READ_ONLY_ROLES = new Set(["viewer", "readonly", "read_only"]);
 
 const getRequestCookies = (req) => {
