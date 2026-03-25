@@ -309,6 +309,78 @@ const tools = [
       },
     },
   },
+  // ── Schedule builder tools ──
+  {
+    type: "function",
+    function: {
+      name: "assign_worker_to_rig",
+      description: "Assign a worker to a rig on a specific date. Creates the schedule for that date if needed. Use worker and rig names exactly as listed in context.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date (YYYY-MM-DD)" },
+          worker_name: { type: "string", description: "Worker name from the crew list" },
+          rig_name: { type: "string", description: "Rig/category name (e.g. 'Rig 1', 'Crane')" },
+          job_name: { type: "string", description: "Optional job name to set for this rig" },
+        },
+        required: ["schedule_date", "worker_name", "rig_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_worker_from_schedule",
+      description: "Remove a worker from a date's schedule. Optionally remove only from a specific rig.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date (YYYY-MM-DD)" },
+          worker_name: { type: "string", description: "Worker name to remove" },
+          rig_name: { type: "string", description: "Optional: only remove from this rig" },
+        },
+        required: ["schedule_date", "worker_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_rig_details",
+      description: "Set superintendent, truck, crane info, or notes for a rig on a specific date.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date (YYYY-MM-DD)" },
+          rig_name: { type: "string", description: "Rig/category name" },
+          superintendent_name: { type: "string", description: "Superintendent name" },
+          truck_number: { type: "string", description: "Truck number" },
+          crane_info: { type: "string", description: "Crane details" },
+          notes: { type: "string", description: "Rig notes" },
+        },
+        required: ["schedule_date", "rig_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "copy_schedule",
+      description: "Copy an entire day's schedule (workers, jobs, rig details) to one or more target dates. Skips dates that already have assignments.",
+      parameters: {
+        type: "object",
+        properties: {
+          source_date: { type: "string", description: "ISO date (YYYY-MM-DD) to copy from" },
+          target_dates: {
+            type: "array",
+            items: { type: "string" },
+            description: "Array of ISO dates to copy to (max 7)",
+          },
+        },
+        required: ["source_date", "target_dates"],
+      },
+    },
+  },
   // ── Social media tools ──
   {
     type: "function",
