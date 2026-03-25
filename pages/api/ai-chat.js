@@ -1303,15 +1303,29 @@ export default async function handler(req, res) {
 
     const rawReply = choice?.message?.content || "Sorry, I couldn't generate a response.";
     const actionsPerformed = rounds > 0;
-    const surface = buildAssistantSurface({
-      message,
-      data,
-      writeAccessEnabled,
-      actionsPerformed,
-      assistantProfile,
-    });
+
+    // Auto-attach schedule visual after schedule mutations
+    let surface = null;
+    if (actionsPerformed) {
+      const affectedDates = collectAffectedDates(messages);
+      if (affectedDates.length > 0) {
+        const freshData = await fetchDataContext(allowedModules);
+        surface = buildScheduleOverviewForDates(affectedDates, freshData);
+      }
+    }
+
+    if (!surface) {
+      surface = buildAssistantSurface({
+        message,
+        data,
+        writeAccessEnabled,
+        actionsPerformed,
+        assistantProfile,
+      });
+    }
+
     const reply = surface
-      ? `${rawReply}\n\nI opened a working surface below so you can complete that task here in the thread.`
+      ? `${rawReply}\n\nI opened a working surface below so you can see the current state.`
       : rawReply;
 
     if (sessionId) {
