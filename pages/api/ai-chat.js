@@ -263,7 +263,8 @@ const capLines = (lines, max) => {
 const linesOrFallback = (lines, fallback) =>
   lines && lines.length ? lines.join("\n") : fallback;
 
-async function fetchDataContext() {
+async function fetchDataContext(modules = []) {
+  const hasModule = (mod) => !modules.length || modules.includes(mod);
   const { today, historyStart, historyEnd } = getDateRange();
 
   const [
