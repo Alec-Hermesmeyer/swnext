@@ -1113,6 +1113,36 @@ async function callGroq(messages, useTools = true, filteredTools = tools) {
   return response.json();
 }
 
+const SCHEDULE_BUILDER_TOOLS = new Set([
+  "assign_worker_to_rig",
+  "remove_worker_from_schedule",
+  "set_rig_details",
+  "copy_schedule",
+  "finalize_schedule",
+]);
+
+function collectAffectedDates(messageHistory) {
+  const dates = new Set();
+  for (const msg of messageHistory) {
+    if (!msg?.tool_calls) continue;
+    for (const tc of msg.tool_calls) {
+      if (!SCHEDULE_BUILDER_TOOLS.has(tc.function?.name)) continue;
+      let args;
+      try {
+        args = typeof tc.function.arguments === "string"
+          ? JSON.parse(tc.function.arguments)
+          : tc.function.arguments;
+      } catch { continue; }
+      if (args?.schedule_date) dates.add(args.schedule_date);
+      if (args?.source_date) dates.add(args.source_date);
+      if (Array.isArray(args?.target_dates)) {
+        args.target_dates.forEach((d) => dates.add(d));
+      }
+    }
+  }
+  return Array.from(dates).sort();
+}
+
 // ── Main handler ──
 
 export default async function handler(req, res) {
