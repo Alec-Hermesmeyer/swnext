@@ -846,15 +846,15 @@ RULES:
 
 // ── Call Groq with tool support ──
 
-async function callGroq(messages, useTools = true) {
+async function callGroq(messages, useTools = true, filteredTools = tools) {
   const body = {
     model: "llama-3.1-8b-instant",
     messages,
     temperature: 0.3,
     max_tokens: 1024,
   };
-  if (useTools) {
-    body.tools = tools;
+  if (useTools && filteredTools.length > 0) {
+    body.tools = filteredTools;
     body.tool_choice = "auto";
   }
 
