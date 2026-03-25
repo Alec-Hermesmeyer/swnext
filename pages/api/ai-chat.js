@@ -963,6 +963,27 @@ APPLICATIONS BY POSITION: ${Object.entries(positionCounts)
     .map(([pos, count]) => `${pos}: ${count}`)
     .join(", ") || "None"}
 
+SOCIAL MEDIA:
+- ${data.summary.totalSocialPosts} total posts (${data.summary.pendingSocialPosts} pending, ${data.summary.scheduledSocialPosts} scheduled)
+${linesOrFallback(
+  data.socialPosts.map(
+    (p) =>
+      `- [${p.status}] ${p.platforms.join("/")} ${p.type}: "${p.content}${p.content.length >= 120 ? "..." : ""}"${p.scheduledFor ? ` | Scheduled: ${p.scheduledFor}` : ""}${p.date ? ` | Created: ${p.date}` : ""}`
+  ),
+  "No social posts."
+)}
+
+BRAND VOICE PROFILES:
+${Object.keys(data.brandVoice).length
+  ? Object.entries(data.brandVoice)
+      .map(([platform, bv]) => {
+        const tc = bv.toneControls || {};
+        return `- ${platform}: professional_casual=${tc.professional_casual || 5}, technical_accessible=${tc.technical_accessible || 5}, brevity_detail=${tc.brevity_detail || 5}, salesy_informative=${tc.salesy_informative || 5}`;
+      })
+      .join("\n")
+  : "No brand voice profiles configured yet."
+}
+
 RULES:
 - Answer directly from the data above.
 - Tailor suggestions to the current user's role, department, and saved workflow profile when it is useful.
