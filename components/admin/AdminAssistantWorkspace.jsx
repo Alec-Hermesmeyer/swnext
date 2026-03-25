@@ -854,7 +854,7 @@ export default function AdminAssistantWorkspace({
 
             <div className="flex flex-wrap items-center gap-2 lg:max-w-[40%] lg:justify-end">
               <span className="rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1.5 text-xs font-semibold text-neutral-600">
-                {WORKFLOW_MODULES.length} live workflows
+                {visibleWorkflowModules.length} live workflows
               </span>
               {hasUserMessages ? (
                 <span className="rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1.5 text-xs font-semibold text-neutral-600">
