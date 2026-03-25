@@ -3,24 +3,26 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { Lato } from "next/font/google";
 import AIChatBubble from "@/components/admin/AIChatBubble";
+import { useAuth } from "@/context/AuthContext";
+import { getVisibleNavLinks } from "@/lib/roles";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+
+const ROLE_LABELS = {
+  admin: "Admin",
+  operations: "Operations",
+  social_media: "Social Media",
+  hr: "HR",
+  sales: "Sales",
+  viewer: "Viewer",
+};
 
 export default function TWAdminLayout({ children }) {
   const router = useRouter();
   const currentPath = router.pathname;
+  const { role } = useAuth();
 
-  const navLinks = [
-    { href: "/admin", label: "Assistant" },
-    { href: "/admin/dashboard", label: "Dashboard" },
-    { href: "/admin/crew-scheduler", label: "Crew Scheduler" },
-    { href: "/admin/social-media", label: "Social Media" },
-    { href: "/admin/image-assignments", label: "Page Images" },
-    { href: "/admin/company-contacts", label: "Contacts" },
-    { href: "/admin/careers", label: "Careers" },
-    { href: "/admin/sales", label: "Sales" },
-    { href: "/admin/contact", label: "Submissions" },
-  ];
+  const navLinks = getVisibleNavLinks(role);
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-100">
