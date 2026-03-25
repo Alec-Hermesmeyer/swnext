@@ -446,6 +446,14 @@ async function fetchDataContext(modules = []) {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(30),
+    supabase
+      .from("social_posts")
+      .select("id, platforms, content, post_type, status, scheduled_for, published_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("brand_voice")
+      .select("platform, voice_profile, tone_controls, analyzed_at"),
   ]);
 
   const progressByJobId = {};
