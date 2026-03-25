@@ -1087,7 +1087,7 @@ export default function AdminAssistantWorkspace({
                   </div>
 
                   <div className="mx-auto mt-10 grid w-full max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {PROMPT_CARDS.map((card) => (
+                    {visiblePromptCards.map((card) => (
                       <button
                         key={card.title}
                         type="button"
