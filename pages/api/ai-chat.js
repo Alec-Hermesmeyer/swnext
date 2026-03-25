@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { routeAdminAssistantRequest } from "@/lib/admin-assistant-direct-router";
-import { buildAssistantSurface } from "@/lib/admin-assistant-surfaces";
+import { buildAssistantSurface, buildScheduleOverviewForDates } from "@/lib/admin-assistant-surfaces";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
 import { hasToolAccess, canWrite as roleCanWrite, getDataModules } from "@/lib/roles";
 
