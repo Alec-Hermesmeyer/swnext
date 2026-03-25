@@ -195,11 +195,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "sessionId, surfaceType, surfaceId, and values are required" });
     }
 
+    const userRole = String(userContext.role || "").trim().toLowerCase();
     const isWorkflowProfileSurface = surfaceType === "workflow_profile_intake";
-    if (
-      !isWorkflowProfileSurface &&
-      READ_ONLY_ROLES.has(String(userContext.role || "").trim().toLowerCase())
-    ) {
+    if (!isWorkflowProfileSurface && !roleCanWrite(userRole)) {
       return res.status(403).json({ error: "Write access is disabled for this role" });
     }
 
