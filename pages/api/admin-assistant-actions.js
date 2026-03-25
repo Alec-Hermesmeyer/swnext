@@ -242,6 +242,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Unsupported assistant surface type" });
     }
 
+    if (!hasToolAccess(userRole, config.mutation)) {
+      return res.status(403).json({ error: "Your role does not have permission for this action" });
+    }
+
     const result = await executeAdminAssistantMutation(supabase, config.mutation, config.args);
     if (!result.success) {
       return res.status(400).json({ error: result.error || "Could not complete assistant action" });
