@@ -1075,7 +1075,7 @@ export default function AdminAssistantWorkspace({
                   </div>
 
                   <div className="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-2">
-                    {WORKFLOW_MODULES.slice(0, 6).map((module) => (
+                    {visibleWorkflowModules.slice(0, 6).map((module) => (
                       <Link
                         key={module.href}
                         href={module.href}
