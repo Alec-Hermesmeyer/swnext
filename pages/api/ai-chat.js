@@ -984,7 +984,12 @@ export default async function handler(req, res) {
       { role: "user", content: message },
     ];
 
-    let result = await callGroq(messages, writeAccessEnabled);
+    // Filter tools to only those the user's role can access
+    const roleFilteredTools = writeAccessEnabled
+      ? tools.filter((t) => hasToolAccess(userRole, t.function.name))
+      : [];
+
+    let result = await callGroq(messages, roleFilteredTools.length > 0, roleFilteredTools);
     let choice = result.choices?.[0];
 
     let rounds = 0;
@@ -998,6 +1003,16 @@ export default async function handler(req, res) {
       messages.push(choice.message);
 
       for (const toolCall of choice.message.tool_calls) {
+        // Double-check permission at execution time
+        if (!hasToolAccess(userRole, toolCall.function.name)) {
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify({ success: false, error: "Your role does not have permission for this action." }),
+          });
+          continue;
+        }
+
         let toolArgs;
         try {
           toolArgs =
@@ -1020,7 +1035,7 @@ export default async function handler(req, res) {
         });
       }
 
-      result = await callGroq(messages, false);
+      result = await callGroq(messages, false, []);
       choice = result.choices?.[0];
     }
 
