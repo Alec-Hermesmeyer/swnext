@@ -700,7 +700,7 @@ function buildSystemPrompt(data, userContext, assistantProfile) {
   const department = userContext?.department || "unknown";
   const fullName =
     userContext?.fullName || userContext?.username || userContext?.email || "Current user";
-  const writeAllowed = !READ_ONLY_ROLES.has(String(role || "").trim().toLowerCase());
+  const writeAllowed = roleCanWrite(String(role || "").trim().toLowerCase());
   const workflowProfileSection = assistantProfile
     ? `USER WORKFLOW PROFILE:
 - Self-described role: ${assistantProfile.role_title || "Not provided"}
