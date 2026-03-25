@@ -872,6 +872,7 @@ OVERVIEW:
 - ${data.summary.totalCompanyContacts} company contacts
 - ${data.summary.totalContactSubmissions} recent contact form submissions
 - ${data.summary.totalJobApplications} recent job applications
+- ${data.summary.totalSocialPosts} social posts (${data.summary.pendingSocialPosts} pending review, ${data.summary.scheduledSocialPosts} scheduled)
 
 CREW WORKERS:
 ${linesOrFallback(
