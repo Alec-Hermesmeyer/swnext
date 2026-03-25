@@ -704,6 +704,23 @@ async function fetchDataContext(modules = []) {
       position: s.position || "",
       date: s.created_at ? new Date(s.created_at).toLocaleDateString() : "",
     })),
+    socialPosts: (socialPosts || []).map((p) => ({
+      id: p.id,
+      platforms: p.platforms || [],
+      content: (p.content || "").substring(0, 120),
+      type: p.post_type || "general",
+      status: p.status || "pending",
+      scheduledFor: p.scheduled_for || null,
+      publishedAt: p.published_at || null,
+      date: p.created_at ? new Date(p.created_at).toLocaleDateString() : "",
+    })),
+    brandVoice: (brandVoice || []).reduce((acc, bv) => {
+      acc[bv.platform] = {
+        toneControls: bv.tone_controls || {},
+        analyzedAt: bv.analyzed_at || null,
+      };
+      return acc;
+    }, {}),
   };
 }
 
