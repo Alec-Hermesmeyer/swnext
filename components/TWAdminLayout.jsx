@@ -11,7 +11,7 @@ export default function TWAdminLayout({ children }) {
   const currentPath = router.pathname;
 
   const navLinks = [
-    { href: "/admin", label: "Home" },
+    { href: "/admin", label: "Assistant" },
     { href: "/admin/dashboard", label: "Dashboard" },
     { href: "/admin/crew-scheduler", label: "Crew Scheduler" },
     { href: "/admin/social-media", label: "Social Media" },
@@ -94,5 +94,4 @@ export default function TWAdminLayout({ children }) {
     </div>
   );
 }
-
 

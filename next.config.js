@@ -5,6 +5,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 const nextConfig = {
   reactStrictMode: true,
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   typescript: {
     ignoreBuildErrors: true,
   },

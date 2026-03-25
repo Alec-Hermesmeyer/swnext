@@ -1,12 +1,95 @@
+import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
+import { routeAdminAssistantRequest } from "@/lib/admin-assistant-direct-router";
+import { buildAssistantSurface } from "@/lib/admin-assistant-surfaces";
+import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_ANON_KEY =
+  process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+const COOKIE_NAME = "sw-admin-auth";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
+
+const READ_ONLY_ROLES = new Set(["viewer", "readonly", "read_only"]);
+
+const getRequestCookies = (req) => {
+  if (req?.cookies && typeof req.cookies.getAll === "function") {
+    return req.cookies.getAll();
+  }
+
+  if (req?.cookies && typeof req.cookies === "object") {
+    return Object.entries(req.cookies).map(([name, value]) => ({ name, value }));
+  }
+
+  const rawCookie = req?.headers?.cookie || "";
+  return rawCookie
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const separatorIndex = part.indexOf("=");
+      if (separatorIndex === -1) {
+        return { name: part, value: "" };
+      }
+
+      return {
+        name: decodeURIComponent(part.slice(0, separatorIndex)),
+        value: decodeURIComponent(part.slice(separatorIndex + 1)),
+      };
+    });
+};
+
+const getAuthClient = (req) =>
+  createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+    cookieOptions: { name: COOKIE_NAME },
+    cookies: {
+      getAll() {
+        return getRequestCookies(req);
+      },
+    },
+  });
+
+async function getAuthenticatedUserContext(req) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error("Supabase auth is not configured");
+  }
+
+  const authClient = getAuthClient(req);
+  const {
+    data: { user },
+    error: authError,
+  } = await authClient.auth.getUser();
+
+  if (authError || !user) {
+    return null;
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, department, full_name, username")
+    .eq("id", user.id)
+    .single();
+
+  return {
+    id: user.id,
+    email: user.email || "",
+    fullName: profile?.full_name || user.user_metadata?.full_name || "",
+    username: profile?.username || "",
+    role: profile?.role || "",
+    department: profile?.department || "",
+  };
+}
 
 const fmtDate = (d) =>
   new Date(`${d}T12:00:00`).toLocaleDateString("en-US", {
@@ -166,186 +249,6 @@ const tools = [
 ];
 
 // ── Tool execution ──
-
-const cleanTextOrNull = (value) => {
-  const cleaned = String(value || "").trim();
-  return cleaned || null;
-};
-
-const normalizeCrewJobPayload = (input = {}) => ({
-  job_name: String(input.job_name || "").trim(),
-  job_number: cleanTextOrNull(input.job_number),
-  dig_tess_number: cleanTextOrNull(input.dig_tess_number),
-  customer_name: cleanTextOrNull(input.customer_name),
-  hiring_contractor: cleanTextOrNull(input.hiring_contractor),
-  hiring_contact_name: cleanTextOrNull(input.hiring_contact_name),
-  hiring_contact_phone: cleanTextOrNull(input.hiring_contact_phone),
-  hiring_contact_email: cleanTextOrNull(input.hiring_contact_email),
-  address: cleanTextOrNull(input.address),
-  city: cleanTextOrNull(input.city),
-  zip: cleanTextOrNull(input.zip),
-  pm_name: cleanTextOrNull(input.pm_name),
-  pm_phone: cleanTextOrNull(input.pm_phone),
-  default_rig: cleanTextOrNull(input.default_rig),
-  crane_required: !!input.crane_required,
-});
-
-async function ensureCustomerExists(name) {
-  const clean = String(name || "").trim();
-  if (!clean) return;
-  const { data: existing, error: findError } = await supabase
-    .from("Customer")
-    .select("id")
-    .ilike("name", clean)
-    .limit(1);
-  if (findError || (existing && existing.length > 0)) return;
-  await supabase.from("Customer").insert({ name: clean });
-}
-
-async function upsertCrewJob(rawInput) {
-  const payload = normalizeCrewJobPayload(rawInput);
-  if (!payload.job_name) {
-    return { success: false, error: "job_name is required for crew jobs" };
-  }
-
-  let match = null;
-  if (payload.job_number) {
-    const { data: numberMatch, error: numberError } = await supabase
-      .from("crew_jobs")
-      .select("id, job_name, job_number")
-      .eq("job_number", payload.job_number)
-      .limit(1);
-    if (numberError) return { success: false, error: numberError.message };
-    match = numberMatch?.[0] || null;
-  }
-
-  if (!match) {
-    const { data: nameMatch, error: nameError } = await supabase
-      .from("crew_jobs")
-      .select("id, job_name, job_number")
-      .ilike("job_name", payload.job_name)
-      .limit(1);
-    if (nameError) return { success: false, error: nameError.message };
-    match = nameMatch?.[0] || null;
-  }
-
-  if (match) {
-    const { error: updateError, data: updated } = await supabase
-      .from("crew_jobs")
-      .update({ ...payload, is_active: true })
-      .eq("id", match.id)
-      .select("id, job_name, job_number")
-      .single();
-    if (updateError) return { success: false, error: updateError.message };
-    await ensureCustomerExists(payload.hiring_contractor);
-    return {
-      success: true,
-      action: "updated",
-      message: `Updated crew job "${updated.job_name}"${updated.job_number ? ` (#${updated.job_number})` : ""}`,
-      job: updated,
-    };
-  }
-
-  const { error: insertError, data: inserted } = await supabase
-    .from("crew_jobs")
-    .insert(payload)
-    .select("id, job_name, job_number")
-    .single();
-  if (insertError) return { success: false, error: insertError.message };
-  await ensureCustomerExists(payload.hiring_contractor);
-  return {
-    success: true,
-    action: "created",
-    message: `Created crew job "${inserted.job_name}"${inserted.job_number ? ` (#${inserted.job_number})` : ""}`,
-    job: inserted,
-  };
-}
-
-async function executeTool(name, args) {
-  switch (name) {
-    case "create_job_position": {
-      const { jobTitle, jobDesc, is_Open = true } = args;
-      const { data, error } = await supabase
-        .from("jobs")
-        .insert([{ jobTitle, jobDesc, is_Open }])
-        .select("*");
-      if (error) return { success: false, error: error.message };
-      return { success: true, message: `Created job position "${jobTitle}" (${is_Open ? "Open" : "Closed"})`, job: data[0] };
-    }
-
-    case "toggle_job_position": {
-      const { jobTitle, setOpen } = args;
-      // Find the job by title (case-insensitive match)
-      const { data: matches } = await supabase.from("jobs").select("id, jobTitle, is_Open").ilike("jobTitle", jobTitle);
-      if (!matches || matches.length === 0) {
-        return { success: false, error: `No job position found matching "${jobTitle}"` };
-      }
-      const job = matches[0];
-      const { error } = await supabase.from("jobs").update({ is_Open: setOpen }).eq("id", job.id);
-      if (error) return { success: false, error: error.message };
-      return { success: true, message: `"${job.jobTitle}" is now ${setOpen ? "Open (visible on website)" : "Closed (hidden from website)"}` };
-    }
-
-    case "add_company_contact": {
-      const { name, job_title, email = "", phone = "" } = args;
-      const { data, error } = await supabase
-        .from("company_contacts")
-        .insert([{ name, job_title, email, phone }])
-        .select("*");
-      if (error) return { success: false, error: error.message };
-      return { success: true, message: `Added ${name} (${job_title}) to company contacts`, contact: data[0] };
-    }
-
-    case "delete_company_contact": {
-      const { name } = args;
-      const { data: matches } = await supabase.from("company_contacts").select("id, name").ilike("name", name);
-      if (!matches || matches.length === 0) {
-        return { success: false, error: `No contact found matching "${name}"` };
-      }
-      const contact = matches[0];
-      const { error } = await supabase.from("company_contacts").delete().eq("id", contact.id);
-      if (error) return { success: false, error: error.message };
-      return { success: true, message: `Removed ${contact.name} from company contacts` };
-    }
-
-    case "create_crew_job": {
-      return upsertCrewJob(args);
-    }
-
-    case "bulk_create_crew_jobs": {
-      const rows = Array.isArray(args?.rows) ? args.rows : [];
-      if (!rows.length) {
-        return { success: false, error: "rows is required and must include at least one job" };
-      }
-      let created = 0;
-      let updated = 0;
-      let failed = 0;
-      const failures = [];
-      const maxRows = 40;
-      for (const [index, row] of rows.slice(0, maxRows).entries()) {
-        const result = await upsertCrewJob(row);
-        if (!result.success) {
-          failed += 1;
-          failures.push(`Row ${index + 1}: ${result.error}`);
-          continue;
-        }
-        if (result.action === "updated") updated += 1;
-        else created += 1;
-      }
-      return {
-        success: failed === 0,
-        message: `Bulk crew job intake complete. Created: ${created}, Updated: ${updated}, Failed: ${failed}.`,
-        created,
-        updated,
-        failed,
-        failures: failures.slice(0, 5),
-      };
-    }
-
-    default:
-      return { success: false, error: `Unknown tool: ${name}` };
-  }
-}
 
 // ── Data fetching ──
 
@@ -546,6 +449,28 @@ async function fetchDataContext() {
     650
   );
 
+  const dailyScheduleBoards = (schedules || []).map((schedule) => {
+    const rigMap = dailyRigMap.get(schedule.schedule_date) || new Map();
+    const rigs = Array.from(rigMap.values())
+      .sort((a, b) => a.rig.localeCompare(b.rig))
+      .map((entry) => ({
+        rig: entry.rig,
+        finalized: entry.finalized,
+        workers: Array.from(entry.workers),
+        jobs: Array.from(entry.jobs),
+        notes: Array.from(entry.notes).slice(0, 3),
+        superintendent: entry.superintendent || "",
+        truck: entry.truck || "",
+      }));
+
+    return {
+      date: schedule.schedule_date,
+      dateFormatted: fmtDate(schedule.schedule_date),
+      finalized: !!schedule.is_finalized,
+      rigs,
+    };
+  });
+
   const activeWorkers = (workers || []).filter((w) => w.is_active !== false);
   const inactiveWorkers = (workers || []).filter((w) => w.is_active === false);
   const activeCrewJobs = (crewJobs || []).filter((j) => j.is_active !== false);
@@ -610,6 +535,7 @@ async function fetchDataContext() {
       phone: w.phone || "",
     })),
     crewJobs: activeCrewJobs.map((j) => ({
+      id: j.id,
       name: j.job_name,
       number: j.job_number || "",
       customer: j.customer_name || "",
@@ -630,6 +556,7 @@ async function fetchDataContext() {
       dateFormatted: fmtDate(s.schedule_date),
       finalized: s.is_finalized || false,
     })),
+    dailyScheduleBoards,
     historyCalendarLines,
     assignmentLookupLines,
     jobProgressLines,
@@ -663,9 +590,103 @@ async function fetchDataContext() {
   };
 }
 
+async function fetchStoredMessages(sessionId, userContext) {
+  if (!sessionId) return [];
+
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("role, content, metadata")
+    .eq("session_id", sessionId)
+    .filter("metadata->>user_id", "eq", userContext.id)
+    .order("created_at", { ascending: true })
+    .limit(80);
+
+  if (error) {
+    console.warn("Assistant history read failed:", error.message);
+    return [];
+  }
+
+  const completedSurfaceIds = new Set(
+    (data || [])
+      .map((message) => message?.metadata?.completedSurfaceId)
+      .filter(Boolean)
+      .map(String)
+  );
+
+  return (data || []).map((message) => ({
+    role: message.role,
+    content: message.content,
+    actionsPerformed: !!message?.metadata?.actionsPerformed,
+    surface: message?.metadata?.surface
+      ? {
+          ...message.metadata.surface,
+          completed: completedSurfaceIds.has(String(message.metadata.surface.id)),
+        }
+      : null,
+  }));
+}
+
+async function fetchLatestAssistantProfile(userContext) {
+  if (!userContext?.id) return null;
+
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("metadata")
+    .filter("metadata->>user_id", "eq", userContext.id)
+    .order("created_at", { ascending: false })
+    .limit(120);
+
+  if (error) {
+    console.warn("Assistant profile read failed:", error.message);
+    return null;
+  }
+
+  const match = (data || []).find((row) => row?.metadata?.assistantProfile);
+  return match?.metadata?.assistantProfile || null;
+}
+
+async function storeMessages(sessionId, userContext, entries) {
+  if (!sessionId || !Array.isArray(entries) || !entries.length) return;
+
+  const rows = entries
+    .filter((entry) => entry?.role && entry?.content)
+    .map((entry) => ({
+      session_id: sessionId,
+      role: entry.role,
+      content: entry.content,
+      metadata: {
+        user_id: userContext.id,
+        role: userContext.role || null,
+        department: userContext.department || null,
+        ...(entry.metadata || {}),
+      },
+    }));
+
+  if (!rows.length) return;
+
+  const { error } = await supabase.from("chat_messages").insert(rows);
+  if (error) {
+    console.warn("Assistant history write failed:", error.message);
+  }
+}
+
+async function clearStoredMessages(sessionId, userContext) {
+  if (!sessionId) return;
+
+  const { error } = await supabase
+    .from("chat_messages")
+    .delete()
+    .eq("session_id", sessionId)
+    .filter("metadata->>user_id", "eq", userContext.id);
+
+  if (error) {
+    console.warn("Assistant history delete failed:", error.message);
+  }
+}
+
 // ── System prompt ──
 
-function buildSystemPrompt(data) {
+function buildSystemPrompt(data, userContext, assistantProfile) {
   const positionCounts = {};
   for (const app of data.jobApplications) {
     if (app.position) {
@@ -673,10 +694,35 @@ function buildSystemPrompt(data) {
     }
   }
 
+  const role = userContext?.role || "unknown";
+  const department = userContext?.department || "unknown";
+  const fullName =
+    userContext?.fullName || userContext?.username || userContext?.email || "Current user";
+  const writeAllowed = !READ_ONLY_ROLES.has(String(role || "").trim().toLowerCase());
+  const workflowProfileSection = assistantProfile
+    ? `USER WORKFLOW PROFILE:
+- Self-described role: ${assistantProfile.role_title || "Not provided"}
+- Team focus: ${assistantProfile.department_name || "Not provided"}
+- Primary goals: ${assistantProfile.primary_goals || "Not provided"}
+- Repetitive tasks: ${assistantProfile.repetitive_tasks || "Not provided"}
+- Current tools: ${assistantProfile.current_tools || "Not provided"}
+- Biggest blockers: ${assistantProfile.biggest_blockers || "Not provided"}
+- Automation comfort: ${assistantProfile.automation_comfort || "Not provided"}`
+    : `USER WORKFLOW PROFILE:
+- No saved workflow interview yet. If the user wants more personalized automation or asks how you can help them specifically, suggest the workflow profile intake surface.`;
+
   return `You are the S&W Foundation Contractors assistant. You help the admin team with questions about crew schedules, calendar history (rigs/crew/jobs), job progress, equipment, career postings, company contacts, and form submissions. You are concise and practical.
 
 Today is ${fmtDate(data.today)} (${data.today}).
 Schedule history window loaded: ${data.historyStart} through ${data.historyEnd}.
+
+CURRENT USER:
+- Name: ${fullName}
+- Role: ${role}
+- Department: ${department}
+- Write access in chat: ${writeAllowed ? "enabled" : "disabled"}
+
+${workflowProfileSection}
 
 OVERVIEW:
 - ${data.summary.totalActiveWorkers} active crew workers, ${data.summary.totalInactiveWorkers} inactive
@@ -782,6 +828,8 @@ APPLICATIONS BY POSITION: ${Object.entries(positionCounts)
 
 RULES:
 - Answer directly from the data above.
+- Tailor suggestions to the current user's role, department, and saved workflow profile when it is useful.
+- Use the saved workflow profile to reduce repeated follow-up questions when that context is already known.
 - If asked about a date outside ${data.historyStart} to ${data.historyEnd}, say that date is outside the loaded history window.
 - If asked about a date inside the window but there is no matching schedule/assignment, say no schedule is recorded for that date.
 - Use plain language and keep responses short.
@@ -790,6 +838,7 @@ RULES:
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
 - You cannot modify crew schedules or crew assignments.
 - If progress tracking tables are unavailable, say they are not configured yet.
+- If write access in chat is disabled, do not offer or imply that you can make live data changes.
 - After any write action, remind them to refresh if needed.`;
 }
 
@@ -833,69 +882,184 @@ async function callGroq(messages, useTools = true) {
 // ── Main handler ──
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  if (!GROQ_API_KEY) {
-    return res.status(500).json({ error: "AI service not configured" });
-  }
-
-  const { message, history = [] } = req.body;
-
-  if (!message || typeof message !== "string") {
-    return res.status(400).json({ error: "Message is required" });
-  }
-
   try {
-    const data = await fetchDataContext();
-    const systemPrompt = buildSystemPrompt(data);
+    if (!SUPABASE_URL || !SUPABASE_KEY || !SUPABASE_ANON_KEY) {
+      return res.status(500).json({ error: "Supabase is not configured" });
+    }
+
+    const userContext = await getAuthenticatedUserContext(req);
+    if (!userContext) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    if (req.method === "GET") {
+      const sessionId = String(req.query?.session_id || "").trim();
+      if (!sessionId) {
+        return res.status(400).json({ error: "session_id is required" });
+      }
+
+      const messages = await fetchStoredMessages(sessionId, userContext);
+      return res.status(200).json({ messages });
+    }
+
+    if (req.method === "DELETE") {
+      const sessionId = String(req.query?.session_id || "").trim();
+      if (!sessionId) {
+        return res.status(400).json({ error: "session_id is required" });
+      }
+
+      await clearStoredMessages(sessionId, userContext);
+      return res.status(200).json({ success: true });
+    }
+
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    const { message, history = [], sessionId = "" } = req.body || {};
+
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    const writeAccessEnabled = !READ_ONLY_ROLES.has(
+      String(userContext.role || "").trim().toLowerCase()
+    );
+    const [data, assistantProfile] = await Promise.all([
+      fetchDataContext(),
+      fetchLatestAssistantProfile(userContext),
+    ]);
+    const directRoute = routeAdminAssistantRequest({
+      message,
+      data,
+      writeAccessEnabled,
+      assistantProfile,
+    });
+
+    if (directRoute?.handled) {
+      if (sessionId) {
+        await storeMessages(sessionId, userContext, [
+          { role: "user", content: message },
+          {
+            role: "assistant",
+            content: directRoute.reply,
+            metadata: {
+              actionsPerformed: !!directRoute.actionsPerformed,
+              surface: directRoute.surface || null,
+              responseMode: directRoute.mode || "direct",
+            },
+          },
+        ]);
+      }
+
+      return res.status(200).json({
+        reply: directRoute.reply,
+        actionsPerformed: !!directRoute.actionsPerformed,
+        surface: directRoute.surface || null,
+        responseMode: directRoute.mode || "direct",
+        userContext: {
+          role: userContext.role || "",
+          department: userContext.department || "",
+        },
+      });
+    }
+
+    if (!GROQ_API_KEY) {
+      return res.status(500).json({ error: "AI service not configured" });
+    }
+
+    const systemPrompt = buildSystemPrompt(data, userContext, assistantProfile);
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...history.slice(-20),
+      ...history
+        .filter((entry) => entry?.role && entry?.content)
+        .slice(-20)
+        .map((entry) => ({
+          role: entry.role,
+          content: entry.content,
+        })),
       { role: "user", content: message },
     ];
 
-    // First call - may include tool calls
-    let result = await callGroq(messages);
+    let result = await callGroq(messages, writeAccessEnabled);
     let choice = result.choices?.[0];
 
-    // Handle tool calls (up to 3 rounds to prevent loops)
     let rounds = 0;
-    while (choice?.finish_reason === "tool_calls" && choice?.message?.tool_calls && rounds < 3) {
-      rounds++;
-      // Add the assistant's tool call message
+    while (
+      writeAccessEnabled &&
+      choice?.finish_reason === "tool_calls" &&
+      choice?.message?.tool_calls &&
+      rounds < 3
+    ) {
+      rounds += 1;
       messages.push(choice.message);
 
-      // Execute each tool call and add results
-      for (const tc of choice.message.tool_calls) {
+      for (const toolCall of choice.message.tool_calls) {
         let toolArgs;
         try {
-          toolArgs = typeof tc.function.arguments === "string" ? JSON.parse(tc.function.arguments) : tc.function.arguments;
+          toolArgs =
+            typeof toolCall.function.arguments === "string"
+              ? JSON.parse(toolCall.function.arguments)
+              : toolCall.function.arguments;
         } catch {
           toolArgs = {};
         }
 
-        const toolResult = await executeTool(tc.function.name, toolArgs);
+        const toolResult = await executeAdminAssistantMutation(
+          supabase,
+          toolCall.function.name,
+          toolArgs
+        );
         messages.push({
           role: "tool",
-          tool_call_id: tc.id,
+          tool_call_id: toolCall.id,
           content: JSON.stringify(toolResult),
         });
       }
 
-      // Call Groq again with tool results (no tools this round to get final response)
       result = await callGroq(messages, false);
       choice = result.choices?.[0];
     }
 
-    const reply = choice?.message?.content || "Sorry, I couldn't generate a response.";
-
-    // Track if any actions were performed so the frontend knows
+    const rawReply = choice?.message?.content || "Sorry, I couldn't generate a response.";
     const actionsPerformed = rounds > 0;
+    const surface = buildAssistantSurface({
+      message,
+      data,
+      writeAccessEnabled,
+      actionsPerformed,
+      assistantProfile,
+    });
+    const reply = surface
+      ? `${rawReply}\n\nI opened a working surface below so you can complete that task here in the thread.`
+      : rawReply;
 
-    return res.status(200).json({ reply, actionsPerformed });
+    if (sessionId) {
+      await storeMessages(sessionId, userContext, [
+        { role: "user", content: message },
+        {
+          role: "assistant",
+          content: reply,
+          metadata: {
+            actionsPerformed,
+            surface,
+            responseMode: "llm",
+          },
+        },
+      ]);
+    }
+
+    return res.status(200).json({
+      reply,
+      actionsPerformed,
+      surface,
+      responseMode: "llm",
+      userContext: {
+        role: userContext.role || "",
+        department: userContext.department || "",
+      },
+    });
   } catch (error) {
     console.error("AI chat error:", error);
     return res.status(500).json({ error: "Something went wrong" });
