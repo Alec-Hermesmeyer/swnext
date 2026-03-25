@@ -644,6 +644,9 @@ async function fetchDataContext(modules = []) {
       totalCompanyContacts: (companyContacts || []).length,
       totalContactSubmissions: (contactSubmissions || []).length,
       totalJobApplications: (jobSubmissions || []).length,
+      totalSocialPosts: (socialPosts || []).length,
+      pendingSocialPosts: (socialPosts || []).filter((p) => p.status === "pending").length,
+      scheduledSocialPosts: (socialPosts || []).filter((p) => p.status === "scheduled").length,
       totalSchedulesInWindow: (schedules || []).length,
     },
     workers: activeWorkers.map((w) => ({
