@@ -248,6 +248,110 @@ const tools = [
       },
     },
   },
+  // ── Schedule automation tools ──
+  {
+    type: "function",
+    function: {
+      name: "finalize_schedule",
+      description: "Finalize a day's crew schedule, locking it in. Always confirm with the user before calling this.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date string (YYYY-MM-DD) of the schedule to finalize" },
+        },
+        required: ["schedule_date"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_schedule_email",
+      description: "Send the crew schedule email for a specific date to the operations team. The schedule should be finalized first.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date string (YYYY-MM-DD) of the schedule to email" },
+        },
+        required: ["schedule_date"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_packets",
+      description: "Generate and email DOCX cover sheet packets for a specific schedule date. The schedule should be finalized first.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date string (YYYY-MM-DD) of the schedule to generate packets for" },
+        },
+        required: ["schedule_date"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_job_progress",
+      description: "Update progress tracking for a crew job. Use when the user reports holes completed, status changes, or notes.",
+      parameters: {
+        type: "object",
+        properties: {
+          job_name: { type: "string", description: "Job name or job number to match" },
+          holes_completed: { type: "number", description: "Current number of holes completed" },
+          holes_target: { type: "number", description: "Total holes targeted for the job" },
+          status: { type: "string", description: "Job status: planned, active, on_hold, or complete" },
+          notes: { type: "string", description: "Progress notes or update comments" },
+        },
+        required: ["job_name"],
+      },
+    },
+  },
+  // ── Social media tools ──
+  {
+    type: "function",
+    function: {
+      name: "create_social_post",
+      description: "Create a social media post draft for review. Use the brand voice profile for the target platform when drafting content.",
+      parameters: {
+        type: "object",
+        properties: {
+          content: { type: "string", description: "The post content/copy" },
+          platforms: {
+            type: "array",
+            items: { type: "string", enum: ["facebook", "linkedin"] },
+            description: "Target platforms (defaults to facebook)",
+          },
+          post_type: {
+            type: "string",
+            enum: ["project_showcase", "hiring", "industry_tip", "company_update", "community", "general"],
+            description: "Type of social post",
+          },
+          scheduled_for: { type: "string", description: "ISO datetime to schedule the post for (optional)" },
+        },
+        required: ["content"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_social_post",
+      description: "Update an existing social post's content, status, or schedule.",
+      parameters: {
+        type: "object",
+        properties: {
+          post_id: { type: "string", description: "The UUID of the social post to update" },
+          content: { type: "string", description: "Updated post content" },
+          status: { type: "string", enum: ["pending", "approved", "rejected"], description: "New status for the post" },
+          scheduled_for: { type: "string", description: "Updated scheduled datetime (ISO format)" },
+        },
+        required: ["post_id"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
