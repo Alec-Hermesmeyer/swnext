@@ -924,11 +924,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    const writeAccessEnabled = !READ_ONLY_ROLES.has(
-      String(userContext.role || "").trim().toLowerCase()
-    );
+    const userRole = String(userContext.role || "").trim().toLowerCase();
+    const writeAccessEnabled = roleCanWrite(userRole);
+    const allowedModules = getDataModules(userRole);
     const [data, assistantProfile] = await Promise.all([
-      fetchDataContext(),
+      fetchDataContext(allowedModules),
       fetchLatestAssistantProfile(userContext),
     ]);
     const directRoute = routeAdminAssistantRequest({
