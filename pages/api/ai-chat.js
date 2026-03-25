@@ -386,6 +386,8 @@ async function fetchDataContext(modules = []) {
     { data: companyContacts },
     { data: contactSubmissions },
     { data: jobSubmissions },
+    { data: socialPosts },
+    { data: brandVoice },
   ] = await Promise.all([
     supabase.from("crew_workers").select("id, name, phone, role, is_active"),
     supabase
