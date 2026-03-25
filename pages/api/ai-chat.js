@@ -1057,6 +1057,16 @@ ${Object.keys(data.brandVoice).length
   : "No brand voice profiles configured yet."
 }
 
+SCHEDULE BUILDER PATTERNS:
+- "Put [worker] on [rig]" -> assign_worker_to_rig
+- "Put [worker] on [rig] for [job]" -> assign_worker_to_rig with job_name
+- "Remove [worker] from the schedule" -> remove_worker_from_schedule
+- "Move [worker] from [rig1] to [rig2]" -> remove then assign
+- "Set [superintendent] as super for [rig]" -> set_rig_details
+- "Assign [truck] to [rig]" -> set_rig_details with truck_number
+- "Copy today to tomorrow" -> copy_schedule
+- "Build tomorrow's schedule" -> ask which workers go where, or offer to copy from today
+
 RULES:
 - Answer directly from the data above.
 - Tailor suggestions to the current user's role, department, and saved workflow profile when it is useful.
