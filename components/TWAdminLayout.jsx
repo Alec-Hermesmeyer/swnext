@@ -39,6 +39,11 @@ export default function TWAdminLayout({ children }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {role && ROLE_LABELS[role] ? (
+              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/80">
+                {ROLE_LABELS[role]}
+              </span>
+            ) : null}
             <Link href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
               View Site
             </Link>
