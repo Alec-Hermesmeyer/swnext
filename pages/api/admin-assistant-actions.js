@@ -172,6 +172,20 @@ function getMutationConfig(surfaceType, values = {}) {
         mutation: "add_company_contact",
         args: values,
       };
+    case "social_post_create": {
+      const platforms = String(values.platforms || "facebook")
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      return {
+        mutation: "create_social_post",
+        args: {
+          content: values.content,
+          platforms,
+          post_type: values.post_type || "general",
+        },
+      };
+    }
     default:
       return null;
   }
