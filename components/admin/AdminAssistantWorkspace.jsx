@@ -1127,7 +1127,7 @@ export default function AdminAssistantWorkspace({
 
                 <div className="mx-auto w-full max-w-5xl rounded-[1.9rem] border border-white/90 bg-white/88 p-3 shadow-[0_20px_50px_rgba(11,42,90,0.1)]">
                   <div className="mb-3 flex flex-wrap gap-2 px-1">
-                    {PROMPT_CARDS.slice(0, 4).map((card) => (
+                    {visiblePromptCards.slice(0, 4).map((card) => (
                       <button
                         key={card.title}
                         type="button"
