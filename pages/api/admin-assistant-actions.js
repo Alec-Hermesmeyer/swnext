@@ -120,6 +120,8 @@ function summarizeUserSubmission(surfaceType, values) {
       return `Created a careers listing for ${values.jobTitle || "a new role"}.`;
     case "company_contact_create":
       return `Added ${values.name || "a new contact"} to the company directory.`;
+    case "social_post_create":
+      return `Created a social media post draft for ${values.platforms || "facebook"}.`;
     default:
       return "Submitted an assistant work surface.";
   }
