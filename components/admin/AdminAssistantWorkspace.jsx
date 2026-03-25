@@ -283,11 +283,33 @@ function getGreeting(name) {
   return name ? `${period}, ${name}` : `${period}`;
 }
 
+const MODULE_TO_PAGE = {
+  schedule: "/admin/crew-scheduler",
+  social: "/admin/social-media",
+  careers: "/admin/careers",
+  contacts: "/admin/company-contacts",
+  submissions: "/admin/contact",
+  sales: "/admin/sales",
+};
+
 export default function AdminAssistantWorkspace({
   variant = "page",
   onClose,
 }) {
   const { profile, role, department } = useAuth();
+
+  const visiblePromptCards = useMemo(
+    () =>
+      PROMPT_CARDS.filter(
+        (card) => !card.module || hasPageAccess(role, MODULE_TO_PAGE[card.module] || "")
+      ),
+    [role]
+  );
+
+  const visibleWorkflowModules = useMemo(
+    () => WORKFLOW_MODULES.filter((mod) => hasPageAccess(role, mod.href)),
+    [role]
+  );
   const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
