@@ -618,7 +618,7 @@ export default function AdminAssistantWorkspace({
                     Quick asks
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {PROMPT_CARDS.slice(0, 3).map((card) => (
+                    {visiblePromptCards.slice(0, 3).map((card) => (
                       <button
                         key={card.title}
                         type="button"
