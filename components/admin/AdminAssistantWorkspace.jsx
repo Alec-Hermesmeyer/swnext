@@ -774,7 +774,7 @@ export default function AdminAssistantWorkspace({
               Connected workflows
             </div>
             <div className="space-y-3">
-              {WORKFLOW_MODULES.map((module) => {
+              {visibleWorkflowModules.map((module) => {
                 const styles = getModulePriorityStyles(module.priority);
 
                 return (
