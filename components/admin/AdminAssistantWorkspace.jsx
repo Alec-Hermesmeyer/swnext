@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import AssistantTaskSurface from "@/components/admin/AssistantTaskSurface";
+import { hasPageAccess } from "@/lib/roles";
 
 const SESSION_STORAGE_KEY = "sw-admin-assistant-session";
 const PROMPT_CARDS = [
