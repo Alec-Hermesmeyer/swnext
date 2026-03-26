@@ -194,10 +194,138 @@ function renderScheduleOverview(surface) {
   );
 }
 
+function renderScheduleBuilderContext(surface) {
+  return (
+    <div className="px-4 py-4 md:px-5">
+      {surface.summary?.length ? (
+        <div className="mb-4 grid gap-3 md:grid-cols-4">
+          {surface.summary.map((item) => (
+            <div
+              key={`${surface.id}-${item.label}`}
+              className="rounded-[1.1rem] border border-[#e6edf5] bg-white/84 px-3 py-3 text-center"
+            >
+              <div className="text-lg font-bold text-[#0b2a5a]">{item.value}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-[1.2rem] border border-[#e6edf5] bg-white/84 p-4">
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Crew ({surface.crewList?.length || 0})
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {(surface.crewList || []).map((w) => (
+              <span
+                key={w.name}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                  w.scheduled
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-600"
+                    : "border border-[#dbe4f0] bg-[#f8fbff] text-neutral-700"
+                }`}
+              >
+                {w.name}
+                {w.role ? ` (${w.role})` : ""}
+                {w.scheduled ? " ✓" : ""}
+              </span>
+            ))}
+            {!surface.crewList?.length ? (
+              <span className="text-sm text-neutral-400">No active crew loaded</span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="rounded-[1.2rem] border border-[#e6edf5] bg-white/84 p-4">
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Active Jobs ({surface.jobList?.length || 0})
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {(surface.jobList || []).map((j) => (
+              <span
+                key={j.name}
+                className="rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-2.5 py-1 text-xs font-medium text-neutral-700"
+              >
+                {j.name}
+                {j.number ? ` #${j.number}` : ""}
+              </span>
+            ))}
+            {!surface.jobList?.length ? (
+              <span className="text-sm text-neutral-400">No active jobs loaded</span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {surface.existingRigs?.length ? (
+        <div className="mt-4 rounded-[1.2rem] border border-[#e6edf5] bg-white/84 p-4">
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Already scheduled for this date
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {surface.existingRigs.map((rig) => (
+              <div key={rig.rig} className="rounded-[1rem] border border-[#e6edf5] bg-white px-3 py-2.5">
+                <div className="text-xs font-bold text-[#0b2a5a]">{rig.rig}</div>
+                {rig.workers?.length ? (
+                  <div className="mt-1 text-xs text-neutral-600">Crew: {rig.workers.join(", ")}</div>
+                ) : null}
+                {rig.jobs?.length ? (
+                  <div className="mt-0.5 text-xs text-neutral-500">Jobs: {rig.jobs.join(", ")}</div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {surface.tips?.length ? (
+        <div className="mt-4 rounded-[1.15rem] border border-[#e6edf5] bg-white/72 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Tips
+          </div>
+          <div className="mt-2 space-y-1 text-sm leading-6 text-neutral-500">
+            {surface.tips.map((tip) => (
+              <div key={tip}>{tip}</div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function renderQuickActions(actions, onQuickAction) {
+  if (!actions?.length || !onQuickAction) return null;
+
+  return (
+    <div className="border-t border-[#e6edf5] px-4 py-3 md:px-5">
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+        Quick actions
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {actions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            onClick={() => onQuickAction(action.message)}
+            className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-all hover:border-[#0b2a5a]/30 hover:bg-[#f0f5ff]"
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AssistantTaskSurface({
   surface,
   sessionId,
   onComplete,
+  onQuickAction,
 }) {
   const [values, setValues] = useState(() => buildInitialValues(surface));
   const [submitting, setSubmitting] = useState(false);
