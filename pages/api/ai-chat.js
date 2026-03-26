@@ -1342,9 +1342,23 @@ export default async function handler(req, res) {
       ? `${rawReply}\n\nI opened a working surface below so you can see the current state.`
       : rawReply;
 
+    // Enrich metadata for analytics
+    const affectedDates = actionsPerformed ? collectAffectedDates(messages) : [];
+    const toolsCalled = actionsPerformed
+      ? messages
+          .filter((m) => m?.tool_calls)
+          .flatMap((m) => m.tool_calls.map((tc) => tc.function?.name))
+          .filter(Boolean)
+      : [];
+    const isScheduleIntent = toolsCalled.some((t) => SCHEDULE_BUILDER_TOOLS.has(t));
+
     if (sessionId) {
       await storeMessages(sessionId, userContext, [
-        { role: "user", content: message },
+        {
+          role: "user",
+          content: message,
+          metadata: isScheduleIntent ? { intent: "schedule_build" } : {},
+        },
         {
           role: "assistant",
           content: reply,
@@ -1352,6 +1366,11 @@ export default async function handler(req, res) {
             actionsPerformed,
             surface,
             responseMode: "llm",
+            ...(isScheduleIntent && {
+              intent: "schedule_build",
+              affectedDates,
+              toolsCalled,
+            }),
           },
         },
       ]);
