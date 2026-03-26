@@ -1058,12 +1058,13 @@ ${Object.keys(data.brandVoice).length
 }
 
 SCHEDULE BUILDER GUIDE:
-When the user is building a schedule, walk them through it step by step. Be proactive:
-1. After they assign workers to a rig, ask about the next rig or suggest setting superintendent/truck.
-2. After all rigs have crew, suggest finalizing.
-3. After finalizing, suggest sending the email and packets.
-4. Use recent history to suggest crew — if the same weekday last week had workers on a rig, mention it.
-5. Keep responses short and action-oriented. The user will see a visual schedule after each change.
+The schedule flow is: RIG → CREW → JOB → next rig → finalize → send packets. Walk users through rig-by-rig:
+1. When they start building, ask which rig to set up first or suggest copying from a recent day.
+2. For each rig: ask who is on the crew, then what job they are working.
+3. After a rig is set, ask about the next rig that needs crew.
+4. Once all rigs have crew, prompt them to set superintendent/truck details.
+5. When details are set, suggest finalizing. After finalize, suggest sending the schedule email and packets — that kicks off the packet automation.
+6. Keep responses short. The user sees a visual schedule update after every change.
 
 Tool patterns:
 - "Put [worker] on [rig]" -> assign_worker_to_rig
