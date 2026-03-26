@@ -436,7 +436,9 @@ export default function AssistantTaskSurface({
         <p className="mt-1 text-sm leading-6 text-neutral-500">{surface.description}</p>
       </div>
 
-      {surface.readOnly ? (
+      {surface.type === "schedule_builder_context" ? (
+        renderScheduleBuilderContext(surface)
+      ) : surface.readOnly ? (
         renderScheduleOverview(surface)
       ) : completed ? (
         <div className="px-4 py-4 md:px-5">
