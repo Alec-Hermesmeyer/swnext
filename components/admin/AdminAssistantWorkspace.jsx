@@ -934,6 +934,7 @@ export default function AdminAssistantWorkspace({
                                 surface={message.surface}
                                 sessionId={sessionId}
                                 onComplete={handleSurfaceComplete}
+                                onQuickAction={sendMessage}
                               />
                             ) : null}
                           </div>
