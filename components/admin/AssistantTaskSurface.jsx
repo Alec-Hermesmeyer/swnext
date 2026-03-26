@@ -503,6 +503,10 @@ export default function AssistantTaskSurface({
           </div>
         </form>
       )}
+
+      {!completed && surface.quickActions?.length ? (
+        renderQuickActions(surface.quickActions, onQuickAction)
+      ) : null}
     </div>
   );
 }
