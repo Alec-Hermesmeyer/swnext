@@ -59,13 +59,16 @@ function ChatTab() {
 
   const fetchChatHistory = async () => {
     try {
-      const res = await fetch(`${API_BASE}/chat/history?session_id=${sessionId}`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`${API_BASE}/chat/history?session_id=${sessionId}`, { signal: controller.signal });
+      clearTimeout(timeout);
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages || []);
       }
     } catch (err) {
-      console.error("Failed to fetch chat history:", err);
+      if (err.name !== "AbortError") console.error("Failed to fetch chat history:", err);
     } finally {
       setHistoryLoading(false);
     }
