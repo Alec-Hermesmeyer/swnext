@@ -528,7 +528,9 @@ export default function AssistantTaskSurface({
         <p className="mt-1 text-sm leading-6 text-neutral-500">{surface.description}</p>
       </div>
 
-      {surface.type === "schedule_builder_context" ? (
+      {surface.type === "job_intake_context" ? (
+        renderJobIntakeContext(surface)
+      ) : surface.type === "schedule_builder_context" ? (
         renderScheduleBuilderContext(surface)
       ) : surface.readOnly ? (
         renderScheduleOverview(surface)
