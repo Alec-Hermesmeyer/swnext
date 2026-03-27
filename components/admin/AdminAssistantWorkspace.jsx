@@ -830,7 +830,7 @@ export default function AdminAssistantWorkspace({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[2.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[320px_minmax(0,1fr)]">
+    <div className="relative overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[320px_minmax(0,1fr)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.18),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(215,82,74,0.08),_transparent_28%)]" />
 
       <aside className="relative z-10 flex flex-col border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfdff_0%,#f3f6fb_100%)] xl:border-b-0 xl:border-r">
