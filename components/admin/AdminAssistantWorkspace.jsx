@@ -213,8 +213,8 @@ function FormattedMessage({ text }) {
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    const orderedItem = line.match(/^\d+\.\s+(.+)/);
-    const unorderedItem = line.match(/^[-*]\s+(.+)/);
+    const orderedItem = line.match(/^\s*\d+\.\s+(.+)/);
+    const unorderedItem = line.match(/^\s*[-*]\s+(.+)/);
 
     if (orderedItem) {
       if (listType && listType !== "ol") flushList();
