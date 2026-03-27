@@ -6,8 +6,8 @@ import AssistantTaskSurface from "@/components/admin/AssistantTaskSurface";
 import { hasPageAccess } from "@/lib/roles";
 
 const WORKSPACE_URLS = {
-  scheduler: "/admin/crew-scheduler",
-  social: "/admin/social-media",
+  scheduler: "/admin/crew-scheduler?embedded=true",
+  social: "/admin/social-media?embedded=true",
 };
 
 const SESSION_STORAGE_KEY = "sw-admin-assistant-session";
