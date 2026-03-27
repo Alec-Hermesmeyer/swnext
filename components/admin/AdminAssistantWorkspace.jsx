@@ -801,21 +801,20 @@ export default function AdminAssistantWorkspace({
           </div>
         </div>
 
-        {/* Right: embedded workspace */}
+        {/* Right: embedded workspace (full width on mobile) */}
         <div className="relative z-10 overflow-y-auto">
-          <div className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-4 py-2 backdrop-blur">
-            <div className="text-sm font-semibold text-neutral-700">{workspaceLabel}</div>
+          <div className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-3 py-2 backdrop-blur">
             <button
               type="button"
               onClick={closeWorkspace}
-              className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
-              aria-label="Close workspace"
+              className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-[#0b2a5a] transition-colors hover:bg-neutral-100"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+                <polyline points="15 18 9 12 15 6" />
               </svg>
+              Back to chat
             </button>
+            <div className="text-sm font-semibold text-neutral-700">{workspaceLabel}</div>
           </div>
           {workspaceUrl ? (
             <iframe
