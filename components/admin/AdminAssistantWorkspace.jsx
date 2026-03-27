@@ -624,6 +624,7 @@ export default function AdminAssistantWorkspace({
                         sessionId={sessionId}
                         onComplete={handleSurfaceComplete}
                         onQuickAction={sendMessage}
+                        onOpenWorkspace={openWorkspace}
                       />
                     ) : null}
                   </div>
