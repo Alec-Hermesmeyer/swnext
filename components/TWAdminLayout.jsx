@@ -21,8 +21,20 @@ export default function TWAdminLayout({ children }) {
   const router = useRouter();
   const currentPath = router.pathname;
   const { role } = useAuth();
+  const isEmbedded = router.query?.embedded === "true";
 
   const navLinks = getVisibleNavLinks(role);
+
+  // Embedded mode: just the content, no chrome
+  if (isEmbedded) {
+    return (
+      <div className="min-h-screen bg-neutral-100">
+        <div className="mx-auto w-full max-w-[1400px] px-4 py-4 md:px-6">
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-100">
