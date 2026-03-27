@@ -717,9 +717,9 @@ export default function AdminAssistantWorkspace({
     const workspaceLabel = activeWorkspace === "scheduler" ? "Crew Scheduler" : activeWorkspace === "social" ? "Social Media" : "";
 
     return (
-      <div className="relative overflow-hidden rounded-[2.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[380px_minmax(0,1fr)]">
-        {/* Left: compact chat panel */}
-        <div className="relative z-10 flex flex-col border-r border-[#dbe4f0] bg-white">
+      <div className="relative overflow-hidden rounded-[1.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[380px_minmax(0,1fr)]">
+        {/* Left: compact chat panel — hidden on mobile, visible on xl */}
+        <div className="relative z-10 hidden flex-col border-r border-[#dbe4f0] bg-white xl:flex">
           <div className="flex items-center justify-between border-b border-neutral-200 bg-[#0b2a5a] px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white">
