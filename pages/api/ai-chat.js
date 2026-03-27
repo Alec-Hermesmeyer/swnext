@@ -424,6 +424,36 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "get_social_planning",
+      description: "Get the social media planning summary — upcoming posts, content calendar, and strategy overview from the social media workspace.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_social_library",
+      description: "Get stored social media post history from the library. Shows past posts, drafts, and their performance.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "social_strategy_chat",
+      description: "Ask the social media AI assistant for content strategy, post ideas, or brand voice guidance. Use this when the user wants help brainstorming social content.",
+      parameters: {
+        type: "object",
+        properties: {
+          message: { type: "string", description: "The social media question or request to send to the strategy assistant" },
+        },
+        required: ["message"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
