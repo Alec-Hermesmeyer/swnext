@@ -84,15 +84,22 @@ function ChatTab() {
     setLoading(true);
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input, session_id: sessionId }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       const data = await res.json();
       setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
     } catch (err) {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Error: Could not connect to the AI assistant." }]);
+      const msg = err.name === "AbortError"
+        ? "Error: Request timed out. The social media backend may not be running."
+        : "Error: Could not connect to the AI assistant.";
+      setMessages((prev) => [...prev, { role: "assistant", content: msg }]);
     } finally {
       setLoading(false);
     }
