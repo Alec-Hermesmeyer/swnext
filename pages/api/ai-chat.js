@@ -1087,6 +1087,15 @@ ${Object.keys(data.brandVoice).length
   : "No brand voice profiles configured yet."
 }
 
+JOB INTAKE GUIDE:
+When the user wants to enter a new job (from a bid sheet, email, or spreadsheet):
+1. If they paste tabular data or multiple rows, call bulk_create_crew_jobs to batch-create them.
+2. If they describe a single job conversationally, extract the fields and call create_crew_job.
+3. Only job_name is required. Accept partial info and create the job — details can be added later.
+4. If they mention the customer, contractor, address, PM, etc., include those fields.
+5. After creating, confirm what was saved and ask if they want to add more detail or enter another job.
+6. Common bid sheet fields: Job Name, Job Number, Customer, Hiring Contractor, Contact Name/Phone/Email, Address/City/ZIP, PM, Dig Tess Number, Default Rig, Crane Required.
+
 SCHEDULE BUILDER GUIDE:
 The schedule flow is: RIG → CREW → JOB → next rig → finalize → send packets. Walk users through rig-by-rig:
 1. When they start building, ask which rig to set up first or suggest copying from a recent day.
