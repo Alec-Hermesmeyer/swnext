@@ -712,7 +712,7 @@ export default function AdminAssistantWorkspace({
 
   // ── Workspace mode: split layout with embedded page ──
   if (activeWorkspace) {
-    const WorkspaceComponent = activeWorkspace === "scheduler" ? EmbeddedCrewScheduler : activeWorkspace === "social" ? EmbeddedSocialMedia : null;
+    const workspaceUrl = WORKSPACE_URLS[activeWorkspace] || "";
     const workspaceLabel = activeWorkspace === "scheduler" ? "Crew Scheduler" : activeWorkspace === "social" ? "Social Media" : "";
 
     return (
