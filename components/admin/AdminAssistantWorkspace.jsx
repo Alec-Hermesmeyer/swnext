@@ -13,10 +13,10 @@ const WORKSPACE_URLS = {
 const SESSION_STORAGE_KEY = "sw-admin-assistant-session";
 const PROMPT_CARDS = [
   {
-    eyebrow: "Crew Intake",
-    title: "Start a job",
-    description: "Create the first job record so operations has a live job to build from.",
-    prompt: "Start a new crew scheduler job for a commercial pier drilling project.",
+    eyebrow: "Job Intake",
+    title: "Enter a new job",
+    description: "Log a new job from a bid sheet — paste from Excel or enter the details.",
+    prompt: "I need to enter a new job from a bid sheet.",
     accent: "from-[#0b2a5a] via-[#2458a6] to-[#9bc7f7]",
     module: "schedule",
   },
