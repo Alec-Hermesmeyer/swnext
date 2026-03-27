@@ -320,6 +320,8 @@ export default function AdminAssistantWorkspace({
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState("");
+  const [activeWorkspace, setActiveWorkspace] = useState(null);
+  const [workspaceContext, setWorkspaceContext] = useState({});
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
