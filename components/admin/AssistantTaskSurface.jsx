@@ -194,6 +194,86 @@ function renderScheduleOverview(surface) {
   );
 }
 
+function renderJobIntakeContext(surface) {
+  return (
+    <div className="px-4 py-4 md:px-5">
+      {surface.summary?.length ? (
+        <div className="mb-4 grid gap-3 md:grid-cols-2">
+          {surface.summary.map((item) => (
+            <div
+              key={`${surface.id}-${item.label}`}
+              className="rounded-[1.1rem] border border-[#e6edf5] bg-white/84 px-3 py-3 text-center"
+            >
+              <div className="text-lg font-bold text-[#0b2a5a]">{item.value}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {surface.bidSheetFields?.length ? (
+        <div className="rounded-[1.2rem] border border-[#e6edf5] bg-white/84 p-4">
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Bid Sheet Fields
+          </div>
+          <div className="grid gap-2 md:grid-cols-2">
+            {surface.bidSheetFields.map((field) => (
+              <div
+                key={field.label}
+                className="flex items-start gap-2 rounded-lg border border-[#e6edf5] bg-[#f8fbff] px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-neutral-800">
+                    {field.label}
+                    {field.required ? (
+                      <span className="ml-1 text-red-500">*</span>
+                    ) : null}
+                  </div>
+                  <div className="text-[11px] text-neutral-500">{field.hint}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {surface.recentJobs?.length ? (
+        <div className="mt-4 rounded-[1.2rem] border border-[#e6edf5] bg-white/84 p-4">
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Recent Jobs
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {surface.recentJobs.map((j) => (
+              <span
+                key={j.name}
+                className="rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-2.5 py-1 text-xs font-medium text-neutral-700"
+              >
+                {j.name}
+                {j.number ? ` #${j.number}` : ""}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {surface.tips?.length ? (
+        <div className="mt-4 rounded-[1.15rem] border border-[#e6edf5] bg-white/72 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Tips
+          </div>
+          <div className="mt-2 space-y-1 text-sm leading-6 text-neutral-500">
+            {surface.tips.map((tip) => (
+              <div key={tip}>{tip}</div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function renderScheduleBuilderContext(surface) {
   return (
     <div className="px-4 py-4 md:px-5">
