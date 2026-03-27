@@ -16,4 +16,4 @@ ALTER TABLE public.profiles
   CHECK (role IS NULL OR role IN ('admin', 'operations', 'social_media', 'hr', 'sales', 'viewer'));
 
 -- Step 3: Create index on role for faster permission lookups
-CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles (role);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles (role);   
