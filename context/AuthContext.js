@@ -1,5 +1,5 @@
 // AuthContext.js
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import supabase from '@/components/Supabase';
 import { getPermissions } from '@/lib/roles';
@@ -13,8 +13,14 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const routerRef = useRef(router);
 
-  const fetchUserProfile = async (userId) => {
+  // Keep router ref current without triggering effect re-runs
+  useEffect(() => {
+    routerRef.current = router;
+  });
+
+  const fetchUserProfile = useCallback(async (userId) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -27,13 +33,13 @@ export function AuthProvider({ children }) {
       console.error('Profile fetch failed:', err);
       return null;
     }
-  };
+  }, []);
 
-  const applyProfile = (nextProfile) => {
+  const applyProfile = useCallback((nextProfile) => {
     setProfile(nextProfile);
     setRole(nextProfile ? nextProfile.role || 'user' : null);
     setDepartment(nextProfile?.department || null);
-  };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -87,8 +93,8 @@ export function AuthProvider({ children }) {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         applyProfile(null);
-        if (router.pathname.startsWith('/admin')) {
-          router.push('/login');
+        if (routerRef.current.pathname.startsWith('/admin')) {
+          routerRef.current.push('/login');
         }
         return;
       }
@@ -102,8 +108,8 @@ export function AuthProvider({ children }) {
       } else {
         applyProfile(null);
         // Only redirect to login if on an admin page
-        if (router.pathname.startsWith('/admin')) {
-          router.push('/login');
+        if (routerRef.current.pathname.startsWith('/admin')) {
+          routerRef.current.push('/login');
         }
       }
 
@@ -114,7 +120,7 @@ export function AuthProvider({ children }) {
       isMounted = false;
       authListener.subscription?.unsubscribe();
     };
-  }, [router]);
+  }, [fetchUserProfile, applyProfile]);
 
   const logout = async () => {
     await supabase.auth.signOut();
