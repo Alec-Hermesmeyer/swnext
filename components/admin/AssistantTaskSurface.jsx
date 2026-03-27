@@ -517,7 +517,7 @@ export default function AssistantTaskSurface({
       )}
 
       {!completed && surface.quickActions?.length ? (
-        renderQuickActions(surface.quickActions, onQuickAction)
+        renderQuickActions(surface.quickActions, onQuickAction, onOpenWorkspace)
       ) : null}
     </div>
   );
