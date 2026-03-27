@@ -1,8 +1,12 @@
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import AssistantTaskSurface from "@/components/admin/AssistantTaskSurface";
 import { hasPageAccess } from "@/lib/roles";
+
+const EmbeddedCrewScheduler = dynamic(() => import("@/pages/admin/crew-scheduler"), { ssr: false });
+const EmbeddedSocialMedia = dynamic(() => import("@/pages/admin/social-media"), { ssr: false });
 
 const SESSION_STORAGE_KEY = "sw-admin-assistant-session";
 const PROMPT_CARDS = [
