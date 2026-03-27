@@ -337,6 +337,7 @@ export default function AssistantTaskSurface({
   sessionId,
   onComplete,
   onQuickAction,
+  onOpenWorkspace,
 }) {
   const [values, setValues] = useState(() => buildInitialValues(surface));
   const [submitting, setSubmitting] = useState(false);
