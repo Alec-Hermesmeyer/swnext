@@ -45,7 +45,12 @@ export default async function handler(req, res) {
       }
     }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    fetchOptions.signal = controller.signal;
+
     const response = await fetch(fullUrl, fetchOptions);
+    clearTimeout(timeout);
 
     // Get response data
     const contentType = response.headers.get('content-type');
