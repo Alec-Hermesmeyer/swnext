@@ -816,10 +816,13 @@ export default function AdminAssistantWorkspace({
               </svg>
             </button>
           </div>
-          {WorkspaceComponent ? (
-            <Suspense fallback={<div className="flex items-center justify-center py-20 text-sm text-neutral-400">Loading {workspaceLabel}...</div>}>
-              <WorkspaceComponent />
-            </Suspense>
+          {workspaceUrl ? (
+            <iframe
+              src={workspaceUrl}
+              title={workspaceLabel}
+              className="h-[calc(100vh-7rem)] w-full border-0"
+              allow="clipboard-write"
+            />
           ) : null}
         </div>
       </div>
