@@ -535,6 +535,16 @@ export default function AdminAssistantWorkspace({
     }
   };
 
+  const openWorkspace = (workspace, context = {}) => {
+    setActiveWorkspace(workspace);
+    setWorkspaceContext(context);
+  };
+
+  const closeWorkspace = () => {
+    setActiveWorkspace(null);
+    setWorkspaceContext({});
+  };
+
   if (isPanel) {
     return (
       <div className="flex h-full flex-col overflow-hidden rounded-[1.25rem] bg-white">
