@@ -297,8 +297,8 @@ function renderScheduleBuilderContext(surface) {
   );
 }
 
-function renderQuickActions(actions, onQuickAction) {
-  if (!actions?.length || !onQuickAction) return null;
+function renderQuickActions(actions, onQuickAction, onOpenWorkspace) {
+  if (!actions?.length) return null;
 
   return (
     <div className="border-t border-[#e6edf5] px-4 py-3 md:px-5">
@@ -306,16 +306,27 @@ function renderQuickActions(actions, onQuickAction) {
         Quick actions
       </div>
       <div className="flex flex-wrap gap-2">
-        {actions.map((action) => (
-          <button
-            key={action.label}
-            type="button"
-            onClick={() => onQuickAction(action.message)}
-            className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-all hover:border-[#0b2a5a]/30 hover:bg-[#f0f5ff]"
-          >
-            {action.label}
-          </button>
-        ))}
+        {actions.map((action) => {
+          const isWorkspace = action.action === "workspace";
+          const handler = isWorkspace
+            ? () => onOpenWorkspace?.(action.workspace, action.context || {})
+            : () => onQuickAction?.(action.message);
+
+          return (
+            <button
+              key={action.label}
+              type="button"
+              onClick={handler}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                isWorkspace
+                  ? "border-[#0b2a5a]/20 bg-[#0b2a5a] text-white hover:bg-[#143a75]"
+                  : "border-[#dbe4f0] bg-white text-[#0b2a5a] hover:border-[#0b2a5a]/30 hover:bg-[#f0f5ff]"
+              }`}
+            >
+              {action.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
