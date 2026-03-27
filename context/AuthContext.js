@@ -1,29 +1,38 @@
 // AuthContext.js
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import supabase from '@/components/Supabase';
+import { getPermissions } from '@/lib/roles';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null); // store role here
+  const [department, setDepartment] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const fetchUserRole = async (userId) => {
+  const fetchUserProfile = async (userId) => {
     try {
-      const { data: profile, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, department, full_name, username')
         .eq('id', userId)
         .single();
-      if (error) console.error('Role fetch error:', error);
-      return profile?.role || 'user';
+      if (error) console.error('Profile fetch error:', error);
+      return data || null;
     } catch (err) {
-      console.error('Role fetch failed:', err);
-      return 'user';
+      console.error('Profile fetch failed:', err);
+      return null;
     }
+  };
+
+  const applyProfile = (nextProfile) => {
+    setProfile(nextProfile);
+    setRole(nextProfile ? nextProfile.role || 'user' : null);
+    setDepartment(nextProfile?.department || null);
   };
 
   useEffect(() => {
@@ -39,8 +48,8 @@ export function AuthProvider({ children }) {
           const { data: refreshData } = await supabase.auth.refreshSession();
           if (refreshData?.session && isMounted) {
             setUser(refreshData.session.user);
-            const userRole = await fetchUserRole(refreshData.session.user.id);
-            setRole(userRole);
+            const userProfile = await fetchUserProfile(refreshData.session.user.id);
+            if (isMounted) applyProfile(userProfile);
             setLoading(false);
             return;
           }
@@ -52,8 +61,10 @@ export function AuthProvider({ children }) {
         setUser(currentUser);
 
         if (currentUser) {
-          const userRole = await fetchUserRole(currentUser.id);
-          if (isMounted) setRole(userRole);
+          const userProfile = await fetchUserProfile(currentUser.id);
+          if (isMounted) applyProfile(userProfile);
+        } else if (isMounted) {
+          applyProfile(null);
         }
       } catch (err) {
         console.error('Session check failed:', err);
@@ -75,7 +86,7 @@ export function AuthProvider({ children }) {
 
       if (event === 'SIGNED_OUT') {
         setUser(null);
-        setRole(null);
+        applyProfile(null);
         if (router.pathname.startsWith('/admin')) {
           router.push('/login');
         }
@@ -86,10 +97,10 @@ export function AuthProvider({ children }) {
       setUser(currentUser);
 
       if (currentUser) {
-        const userRole = await fetchUserRole(currentUser.id);
-        if (isMounted) setRole(userRole);
+        const userProfile = await fetchUserProfile(currentUser.id);
+        if (isMounted) applyProfile(userProfile);
       } else {
-        setRole(null);
+        applyProfile(null);
         // Only redirect to login if on an admin page
         if (router.pathname.startsWith('/admin')) {
           router.push('/login');
@@ -108,12 +119,14 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    setRole(null);
+    applyProfile(null);
     router.push('/login');
   };
 
+  const permissions = useMemo(() => getPermissions(role), [role]);
+
   return (
-    <AuthContext.Provider value={{ user, role, loading, logout }}>
+    <AuthContext.Provider value={{ user, role, department, profile, permissions, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

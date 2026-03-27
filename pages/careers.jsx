@@ -1,14 +1,21 @@
 import Head from "next/head";
 import Link from "next/link";
-import Image from "next/image";
 import TWLayout from "@/components/TWLayout";
 import { GridPattern } from "@/components/GridPattern";
 import { FadeIn } from "@/components/FadeIn";
-import { useEffect, useState } from "react";
-import supabase from "@/components/Supabase";
+import { createClient } from "@supabase/supabase-js";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+
+function normalizeJob(job) {
+  return {
+    id: job.id,
+    jobTitle: job.jobTitle || job.title || "",
+    jobDesc: job.jobDesc || job.description || "",
+    location: job.location || "",
+  };
+}
 
 function Hero() {
   return (
@@ -110,7 +117,7 @@ function WhyWorkWithUs() {
   );
 }
 
-function JobListings({ jobs, loading }) {
+function JobListings({ jobs, hasLoadError }) {
   return (
     <section id="open-positions" className="mx-auto w-full max-w-7xl px-6 py-16">
       <div className="text-center mb-12">
@@ -122,11 +129,18 @@ function JobListings({ jobs, loading }) {
         </p>
       </div>
 
-      {loading ? (
+      {hasLoadError ? (
         <div className="text-center py-12">
-          <div className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500">
-            <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin mr-2"></div>
-            Loading opportunities...
+          <div className="bg-white rounded-xl p-8 shadow-lg max-w-2xl mx-auto">
+            <h3 className={`${lato.className} text-xl font-bold text-[#0b2a5a] mb-4`}>
+              Open Positions Temporarily Unavailable
+            </h3>
+            <p className="text-neutral-600 mb-6">
+              We could not load our current openings right now. Please contact us directly and we can help you find the right fit.
+            </p>
+            <Link href="/contact#jobForm" className="inline-flex items-center rounded-md bg-red-600 px-6 py-3 font-bold text-white shadow hover:bg-red-700 transition-colors">
+              Contact Our Team
+            </Link>
           </div>
         </div>
       ) : jobs.length === 0 ? (
@@ -159,9 +173,9 @@ function JobListings({ jobs, loading }) {
                       {job.location}
                     </p>
                   )}
-                  {job.description && (
+                  {job.jobDesc && (
                     <p className="text-neutral-600 text-sm leading-relaxed mb-4 line-clamp-3">
-                      {job.description}
+                      {job.jobDesc}
                     </p>
                   )}
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -205,18 +219,7 @@ function CallToAction() {
   );
 }
 
-export default function CareersTW() {
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(()=>{
-    const load = async ()=>{
-      const { data } = await supabase.from('jobs').select('*');
-      setJobs((data||[]).filter(j=>j.is_Open));
-      setLoading(false);
-    };
-    load();
-  },[]);
-
+export default function CareersTW({ jobs, hasLoadError }) {
   return (
     <>
       <Head>
@@ -244,7 +247,7 @@ export default function CareersTW() {
         </div>
         <Hero />
         <WhyWorkWithUs />
-        <JobListings jobs={jobs} loading={loading} />
+        <JobListings jobs={jobs} hasLoadError={hasLoadError} />
         <CallToAction />
       </main>
     </>
@@ -255,4 +258,50 @@ CareersTW.getLayout = function getLayout(page) {
   return <TWLayout>{page}</TWLayout>;
 };
 
+export async function getServerSideProps() {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Careers page is missing Supabase server configuration");
+    return {
+      props: {
+        jobs: [],
+        hasLoadError: true,
+      },
+    };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
+  const { data, error } = await supabase
+    .from("jobs")
+    .select("id, jobTitle, jobDesc, is_Open")
+    .eq("is_Open", true)
+    .order("id", { ascending: false });
+
+  if (error) {
+    console.error("Failed to load careers page jobs:", error.message);
+    return {
+      props: {
+        jobs: [],
+        hasLoadError: true,
+      },
+    };
+  }
+
+  return {
+    props: {
+      jobs: (data || []).map(normalizeJob),
+      hasLoadError: false,
+    },
+  };
+}

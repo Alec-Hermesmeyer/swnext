@@ -1,12 +1,97 @@
+import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
+import { routeAdminAssistantRequest } from "@/lib/admin-assistant-direct-router";
+import { buildAssistantSurface, buildScheduleOverviewForDates } from "@/lib/admin-assistant-surfaces";
+import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
+import { hasToolAccess, canWrite as roleCanWrite, getDataModules } from "@/lib/roles";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_ANON_KEY =
+  process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+const COOKIE_NAME = "sw-admin-auth";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
+
+// Legacy fallback for non-standard role values not yet migrated
+const READ_ONLY_ROLES = new Set(["viewer", "readonly", "read_only"]);
+
+const getRequestCookies = (req) => {
+  if (req?.cookies && typeof req.cookies.getAll === "function") {
+    return req.cookies.getAll();
+  }
+
+  if (req?.cookies && typeof req.cookies === "object") {
+    return Object.entries(req.cookies).map(([name, value]) => ({ name, value }));
+  }
+
+  const rawCookie = req?.headers?.cookie || "";
+  return rawCookie
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const separatorIndex = part.indexOf("=");
+      if (separatorIndex === -1) {
+        return { name: part, value: "" };
+      }
+
+      return {
+        name: decodeURIComponent(part.slice(0, separatorIndex)),
+        value: decodeURIComponent(part.slice(separatorIndex + 1)),
+      };
+    });
+};
+
+const getAuthClient = (req) =>
+  createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+    cookieOptions: { name: COOKIE_NAME },
+    cookies: {
+      getAll() {
+        return getRequestCookies(req);
+      },
+    },
+  });
+
+async function getAuthenticatedUserContext(req) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error("Supabase auth is not configured");
+  }
+
+  const authClient = getAuthClient(req);
+  const {
+    data: { user },
+    error: authError,
+  } = await authClient.auth.getUser();
+
+  if (authError || !user) {
+    return null;
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, department, full_name, username")
+    .eq("id", user.id)
+    .single();
+
+  return {
+    id: user.id,
+    email: user.email || "",
+    fullName: profile?.full_name || user.user_metadata?.full_name || "",
+    username: profile?.username || "",
+    role: profile?.role || "",
+    department: profile?.department || "",
+  };
+}
 
 const fmtDate = (d) =>
   new Date(`${d}T12:00:00`).toLocaleDateString("en-US", {
@@ -163,189 +248,215 @@ const tools = [
       },
     },
   },
+  // ── Schedule automation tools ──
+  {
+    type: "function",
+    function: {
+      name: "finalize_schedule",
+      description: "Finalize a day's crew schedule, locking it in. Always confirm with the user before calling this.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date string (YYYY-MM-DD) of the schedule to finalize" },
+        },
+        required: ["schedule_date"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_schedule_email",
+      description: "Send the crew schedule email for a specific date to the operations team. The schedule should be finalized first.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date string (YYYY-MM-DD) of the schedule to email" },
+        },
+        required: ["schedule_date"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_packets",
+      description: "Generate and email DOCX cover sheet packets for a specific schedule date. The schedule should be finalized first.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date string (YYYY-MM-DD) of the schedule to generate packets for" },
+        },
+        required: ["schedule_date"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_job_progress",
+      description: "Update progress tracking for a crew job. Use when the user reports holes completed, status changes, or notes.",
+      parameters: {
+        type: "object",
+        properties: {
+          job_name: { type: "string", description: "Job name or job number to match" },
+          holes_completed: { type: "number", description: "Current number of holes completed" },
+          holes_target: { type: "number", description: "Total holes targeted for the job" },
+          status: { type: "string", description: "Job status: planned, active, on_hold, or complete" },
+          notes: { type: "string", description: "Progress notes or update comments" },
+        },
+        required: ["job_name"],
+      },
+    },
+  },
+  // ── Schedule builder tools ──
+  {
+    type: "function",
+    function: {
+      name: "assign_worker_to_rig",
+      description: "Assign a worker to a rig on a specific date. Creates the schedule for that date if needed. Use worker and rig names exactly as listed in context.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date (YYYY-MM-DD)" },
+          worker_name: { type: "string", description: "Worker name from the crew list" },
+          rig_name: { type: "string", description: "Rig/category name (e.g. 'Rig 1', 'Crane')" },
+          job_name: { type: "string", description: "Optional job name to set for this rig" },
+        },
+        required: ["schedule_date", "worker_name", "rig_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_worker_from_schedule",
+      description: "Remove a worker from a date's schedule. Optionally remove only from a specific rig.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date (YYYY-MM-DD)" },
+          worker_name: { type: "string", description: "Worker name to remove" },
+          rig_name: { type: "string", description: "Optional: only remove from this rig" },
+        },
+        required: ["schedule_date", "worker_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_rig_details",
+      description: "Set superintendent, truck, crane info, or notes for a rig on a specific date.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date (YYYY-MM-DD)" },
+          rig_name: { type: "string", description: "Rig/category name" },
+          superintendent_name: { type: "string", description: "Superintendent name" },
+          truck_number: { type: "string", description: "Truck number" },
+          crane_info: { type: "string", description: "Crane details" },
+          notes: { type: "string", description: "Rig notes" },
+        },
+        required: ["schedule_date", "rig_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "copy_schedule",
+      description: "Copy an entire day's schedule (workers, jobs, rig details) to one or more target dates. Skips dates that already have assignments.",
+      parameters: {
+        type: "object",
+        properties: {
+          source_date: { type: "string", description: "ISO date (YYYY-MM-DD) to copy from" },
+          target_dates: {
+            type: "array",
+            items: { type: "string" },
+            description: "Array of ISO dates to copy to (max 7)",
+          },
+        },
+        required: ["source_date", "target_dates"],
+      },
+    },
+  },
+  // ── Social media tools ──
+  {
+    type: "function",
+    function: {
+      name: "create_social_post",
+      description: "Create a social media post draft for review. Use the brand voice profile for the target platform when drafting content.",
+      parameters: {
+        type: "object",
+        properties: {
+          content: { type: "string", description: "The post content/copy" },
+          platforms: {
+            type: "array",
+            items: { type: "string", enum: ["facebook", "linkedin"] },
+            description: "Target platforms (defaults to facebook)",
+          },
+          post_type: {
+            type: "string",
+            enum: ["project_showcase", "hiring", "industry_tip", "company_update", "community", "general"],
+            description: "Type of social post",
+          },
+          scheduled_for: { type: "string", description: "ISO datetime to schedule the post for (optional)" },
+        },
+        required: ["content"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_social_post",
+      description: "Update an existing social post's content, status, or schedule.",
+      parameters: {
+        type: "object",
+        properties: {
+          post_id: { type: "string", description: "The UUID of the social post to update" },
+          content: { type: "string", description: "Updated post content" },
+          status: { type: "string", enum: ["pending", "approved", "rejected"], description: "New status for the post" },
+          scheduled_for: { type: "string", description: "Updated scheduled datetime (ISO format)" },
+        },
+        required: ["post_id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_social_planning",
+      description: "Get the social media planning summary — upcoming posts, content calendar, and strategy overview from the social media workspace.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_social_library",
+      description: "Get stored social media post history from the library. Shows past posts, drafts, and their performance.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "social_strategy_chat",
+      description: "Ask the social media AI assistant for content strategy, post ideas, or brand voice guidance. Use this when the user wants help brainstorming social content.",
+      parameters: {
+        type: "object",
+        properties: {
+          message: { type: "string", description: "The social media question or request to send to the strategy assistant" },
+        },
+        required: ["message"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
-
-const cleanTextOrNull = (value) => {
-  const cleaned = String(value || "").trim();
-  return cleaned || null;
-};
-
-const normalizeCrewJobPayload = (input = {}) => ({
-  job_name: String(input.job_name || "").trim(),
-  job_number: cleanTextOrNull(input.job_number),
-  dig_tess_number: cleanTextOrNull(input.dig_tess_number),
-  customer_name: cleanTextOrNull(input.customer_name),
-  hiring_contractor: cleanTextOrNull(input.hiring_contractor),
-  hiring_contact_name: cleanTextOrNull(input.hiring_contact_name),
-  hiring_contact_phone: cleanTextOrNull(input.hiring_contact_phone),
-  hiring_contact_email: cleanTextOrNull(input.hiring_contact_email),
-  address: cleanTextOrNull(input.address),
-  city: cleanTextOrNull(input.city),
-  zip: cleanTextOrNull(input.zip),
-  pm_name: cleanTextOrNull(input.pm_name),
-  pm_phone: cleanTextOrNull(input.pm_phone),
-  default_rig: cleanTextOrNull(input.default_rig),
-  crane_required: !!input.crane_required,
-});
-
-async function ensureCustomerExists(name) {
-  const clean = String(name || "").trim();
-  if (!clean) return;
-  const { data: existing, error: findError } = await supabase
-    .from("Customer")
-    .select("id")
-    .ilike("name", clean)
-    .limit(1);
-  if (findError || (existing && existing.length > 0)) return;
-  await supabase.from("Customer").insert({ name: clean });
-}
-
-async function upsertCrewJob(rawInput) {
-  const payload = normalizeCrewJobPayload(rawInput);
-  if (!payload.job_name) {
-    return { success: false, error: "job_name is required for crew jobs" };
-  }
-
-  let match = null;
-  if (payload.job_number) {
-    const { data: numberMatch, error: numberError } = await supabase
-      .from("crew_jobs")
-      .select("id, job_name, job_number")
-      .eq("job_number", payload.job_number)
-      .limit(1);
-    if (numberError) return { success: false, error: numberError.message };
-    match = numberMatch?.[0] || null;
-  }
-
-  if (!match) {
-    const { data: nameMatch, error: nameError } = await supabase
-      .from("crew_jobs")
-      .select("id, job_name, job_number")
-      .ilike("job_name", payload.job_name)
-      .limit(1);
-    if (nameError) return { success: false, error: nameError.message };
-    match = nameMatch?.[0] || null;
-  }
-
-  if (match) {
-    const { error: updateError, data: updated } = await supabase
-      .from("crew_jobs")
-      .update({ ...payload, is_active: true })
-      .eq("id", match.id)
-      .select("id, job_name, job_number")
-      .single();
-    if (updateError) return { success: false, error: updateError.message };
-    await ensureCustomerExists(payload.hiring_contractor);
-    return {
-      success: true,
-      action: "updated",
-      message: `Updated crew job "${updated.job_name}"${updated.job_number ? ` (#${updated.job_number})` : ""}`,
-      job: updated,
-    };
-  }
-
-  const { error: insertError, data: inserted } = await supabase
-    .from("crew_jobs")
-    .insert(payload)
-    .select("id, job_name, job_number")
-    .single();
-  if (insertError) return { success: false, error: insertError.message };
-  await ensureCustomerExists(payload.hiring_contractor);
-  return {
-    success: true,
-    action: "created",
-    message: `Created crew job "${inserted.job_name}"${inserted.job_number ? ` (#${inserted.job_number})` : ""}`,
-    job: inserted,
-  };
-}
-
-async function executeTool(name, args) {
-  switch (name) {
-    case "create_job_position": {
-      const { jobTitle, jobDesc, is_Open = true } = args;
-      const { data, error } = await supabase
-        .from("jobs")
-        .insert([{ jobTitle, jobDesc, is_Open }])
-        .select("*");
-      if (error) return { success: false, error: error.message };
-      return { success: true, message: `Created job position "${jobTitle}" (${is_Open ? "Open" : "Closed"})`, job: data[0] };
-    }
-
-    case "toggle_job_position": {
-      const { jobTitle, setOpen } = args;
-      // Find the job by title (case-insensitive match)
-      const { data: matches } = await supabase.from("jobs").select("id, jobTitle, is_Open").ilike("jobTitle", jobTitle);
-      if (!matches || matches.length === 0) {
-        return { success: false, error: `No job position found matching "${jobTitle}"` };
-      }
-      const job = matches[0];
-      const { error } = await supabase.from("jobs").update({ is_Open: setOpen }).eq("id", job.id);
-      if (error) return { success: false, error: error.message };
-      return { success: true, message: `"${job.jobTitle}" is now ${setOpen ? "Open (visible on website)" : "Closed (hidden from website)"}` };
-    }
-
-    case "add_company_contact": {
-      const { name, job_title, email = "", phone = "" } = args;
-      const { data, error } = await supabase
-        .from("company_contacts")
-        .insert([{ name, job_title, email, phone }])
-        .select("*");
-      if (error) return { success: false, error: error.message };
-      return { success: true, message: `Added ${name} (${job_title}) to company contacts`, contact: data[0] };
-    }
-
-    case "delete_company_contact": {
-      const { name } = args;
-      const { data: matches } = await supabase.from("company_contacts").select("id, name").ilike("name", name);
-      if (!matches || matches.length === 0) {
-        return { success: false, error: `No contact found matching "${name}"` };
-      }
-      const contact = matches[0];
-      const { error } = await supabase.from("company_contacts").delete().eq("id", contact.id);
-      if (error) return { success: false, error: error.message };
-      return { success: true, message: `Removed ${contact.name} from company contacts` };
-    }
-
-    case "create_crew_job": {
-      return upsertCrewJob(args);
-    }
-
-    case "bulk_create_crew_jobs": {
-      const rows = Array.isArray(args?.rows) ? args.rows : [];
-      if (!rows.length) {
-        return { success: false, error: "rows is required and must include at least one job" };
-      }
-      let created = 0;
-      let updated = 0;
-      let failed = 0;
-      const failures = [];
-      const maxRows = 40;
-      for (const [index, row] of rows.slice(0, maxRows).entries()) {
-        const result = await upsertCrewJob(row);
-        if (!result.success) {
-          failed += 1;
-          failures.push(`Row ${index + 1}: ${result.error}`);
-          continue;
-        }
-        if (result.action === "updated") updated += 1;
-        else created += 1;
-      }
-      return {
-        success: failed === 0,
-        message: `Bulk crew job intake complete. Created: ${created}, Updated: ${updated}, Failed: ${failed}.`,
-        created,
-        updated,
-        failed,
-        failures: failures.slice(0, 5),
-      };
-    }
-
-    default:
-      return { success: false, error: `Unknown tool: ${name}` };
-  }
-}
 
 // ── Data fetching ──
 
@@ -358,7 +469,8 @@ const capLines = (lines, max) => {
 const linesOrFallback = (lines, fallback) =>
   lines && lines.length ? lines.join("\n") : fallback;
 
-async function fetchDataContext() {
+async function fetchDataContext(modules = []) {
+  const hasModule = (mod) => !modules.length || modules.includes(mod);
   const { today, historyStart, historyEnd } = getDateRange();
 
   const [
@@ -376,6 +488,8 @@ async function fetchDataContext() {
     { data: companyContacts },
     { data: contactSubmissions },
     { data: jobSubmissions },
+    { data: socialPosts },
+    { data: brandVoice },
   ] = await Promise.all([
     supabase.from("crew_workers").select("id, name, phone, role, is_active"),
     supabase
@@ -434,6 +548,14 @@ async function fetchDataContext() {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(30),
+    supabase
+      .from("social_posts")
+      .select("id, platforms, content, post_type, status, scheduled_for, published_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("brand_voice")
+      .select("platform, voice_profile, tone_controls, analyzed_at"),
   ]);
 
   const progressByJobId = {};
@@ -546,6 +668,28 @@ async function fetchDataContext() {
     650
   );
 
+  const dailyScheduleBoards = (schedules || []).map((schedule) => {
+    const rigMap = dailyRigMap.get(schedule.schedule_date) || new Map();
+    const rigs = Array.from(rigMap.values())
+      .sort((a, b) => a.rig.localeCompare(b.rig))
+      .map((entry) => ({
+        rig: entry.rig,
+        finalized: entry.finalized,
+        workers: Array.from(entry.workers),
+        jobs: Array.from(entry.jobs),
+        notes: Array.from(entry.notes).slice(0, 3),
+        superintendent: entry.superintendent || "",
+        truck: entry.truck || "",
+      }));
+
+    return {
+      date: schedule.schedule_date,
+      dateFormatted: fmtDate(schedule.schedule_date),
+      finalized: !!schedule.is_finalized,
+      rigs,
+    };
+  });
+
   const activeWorkers = (workers || []).filter((w) => w.is_active !== false);
   const inactiveWorkers = (workers || []).filter((w) => w.is_active === false);
   const activeCrewJobs = (crewJobs || []).filter((j) => j.is_active !== false);
@@ -602,6 +746,9 @@ async function fetchDataContext() {
       totalCompanyContacts: (companyContacts || []).length,
       totalContactSubmissions: (contactSubmissions || []).length,
       totalJobApplications: (jobSubmissions || []).length,
+      totalSocialPosts: (socialPosts || []).length,
+      pendingSocialPosts: (socialPosts || []).filter((p) => p.status === "pending").length,
+      scheduledSocialPosts: (socialPosts || []).filter((p) => p.status === "scheduled").length,
       totalSchedulesInWindow: (schedules || []).length,
     },
     workers: activeWorkers.map((w) => ({
@@ -610,6 +757,7 @@ async function fetchDataContext() {
       phone: w.phone || "",
     })),
     crewJobs: activeCrewJobs.map((j) => ({
+      id: j.id,
       name: j.job_name,
       number: j.job_number || "",
       customer: j.customer_name || "",
@@ -630,6 +778,7 @@ async function fetchDataContext() {
       dateFormatted: fmtDate(s.schedule_date),
       finalized: s.is_finalized || false,
     })),
+    dailyScheduleBoards,
     historyCalendarLines,
     assignmentLookupLines,
     jobProgressLines,
@@ -660,12 +809,123 @@ async function fetchDataContext() {
       position: s.position || "",
       date: s.created_at ? new Date(s.created_at).toLocaleDateString() : "",
     })),
+    socialPosts: (socialPosts || []).map((p) => ({
+      id: p.id,
+      platforms: p.platforms || [],
+      content: (p.content || "").substring(0, 120),
+      type: p.post_type || "general",
+      status: p.status || "pending",
+      scheduledFor: p.scheduled_for || null,
+      publishedAt: p.published_at || null,
+      date: p.created_at ? new Date(p.created_at).toLocaleDateString() : "",
+    })),
+    brandVoice: (brandVoice || []).reduce((acc, bv) => {
+      acc[bv.platform] = {
+        toneControls: bv.tone_controls || {},
+        analyzedAt: bv.analyzed_at || null,
+      };
+      return acc;
+    }, {}),
   };
+}
+
+async function fetchStoredMessages(sessionId, userContext) {
+  if (!sessionId) return [];
+
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("role, content, metadata")
+    .eq("session_id", sessionId)
+    .filter("metadata->>user_id", "eq", userContext.id)
+    .order("created_at", { ascending: true })
+    .limit(80);
+
+  if (error) {
+    console.warn("Assistant history read failed:", error.message);
+    return [];
+  }
+
+  const completedSurfaceIds = new Set(
+    (data || [])
+      .map((message) => message?.metadata?.completedSurfaceId)
+      .filter(Boolean)
+      .map(String)
+  );
+
+  return (data || []).map((message) => ({
+    role: message.role,
+    content: message.content,
+    actionsPerformed: !!message?.metadata?.actionsPerformed,
+    surface: message?.metadata?.surface
+      ? {
+          ...message.metadata.surface,
+          completed: completedSurfaceIds.has(String(message.metadata.surface.id)),
+        }
+      : null,
+  }));
+}
+
+async function fetchLatestAssistantProfile(userContext) {
+  if (!userContext?.id) return null;
+
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("metadata")
+    .filter("metadata->>user_id", "eq", userContext.id)
+    .order("created_at", { ascending: false })
+    .limit(120);
+
+  if (error) {
+    console.warn("Assistant profile read failed:", error.message);
+    return null;
+  }
+
+  const match = (data || []).find((row) => row?.metadata?.assistantProfile);
+  return match?.metadata?.assistantProfile || null;
+}
+
+async function storeMessages(sessionId, userContext, entries) {
+  if (!sessionId || !Array.isArray(entries) || !entries.length) return;
+
+  const rows = entries
+    .filter((entry) => entry?.role && entry?.content)
+    .map((entry) => ({
+      session_id: sessionId,
+      role: entry.role,
+      content: entry.content,
+      metadata: {
+        user_id: userContext.id,
+        role: userContext.role || null,
+        department: userContext.department || null,
+        ...(entry.metadata || {}),
+      },
+    }));
+
+  if (!rows.length) return;
+
+  const { error } = await supabase.from("chat_messages").insert(rows);
+  if (error) {
+    console.warn("Assistant history write failed:", error.message);
+  }
+}
+
+async function clearStoredMessages(sessionId, userContext) {
+  if (!sessionId) return;
+
+  const { error } = await supabase
+    .from("chat_messages")
+    .delete()
+    .eq("session_id", sessionId)
+    .filter("metadata->>user_id", "eq", userContext.id);
+
+  if (error) {
+    console.warn("Assistant history delete failed:", error.message);
+  }
 }
 
 // ── System prompt ──
 
-function buildSystemPrompt(data) {
+function buildSystemPrompt(data, userContext, assistantProfile) {
   const positionCounts = {};
   for (const app of data.jobApplications) {
     if (app.position) {
@@ -673,10 +933,35 @@ function buildSystemPrompt(data) {
     }
   }
 
+  const role = userContext?.role || "unknown";
+  const department = userContext?.department || "unknown";
+  const fullName =
+    userContext?.fullName || userContext?.username || userContext?.email || "Current user";
+  const writeAllowed = roleCanWrite(String(role || "").trim().toLowerCase());
+  const workflowProfileSection = assistantProfile
+    ? `USER WORKFLOW PROFILE:
+- Self-described role: ${assistantProfile.role_title || "Not provided"}
+- Team focus: ${assistantProfile.department_name || "Not provided"}
+- Primary goals: ${assistantProfile.primary_goals || "Not provided"}
+- Repetitive tasks: ${assistantProfile.repetitive_tasks || "Not provided"}
+- Current tools: ${assistantProfile.current_tools || "Not provided"}
+- Biggest blockers: ${assistantProfile.biggest_blockers || "Not provided"}
+- Automation comfort: ${assistantProfile.automation_comfort || "Not provided"}`
+    : `USER WORKFLOW PROFILE:
+- No saved workflow interview yet. If the user wants more personalized automation or asks how you can help them specifically, suggest the workflow profile intake surface.`;
+
   return `You are the S&W Foundation Contractors assistant. You help the admin team with questions about crew schedules, calendar history (rigs/crew/jobs), job progress, equipment, career postings, company contacts, and form submissions. You are concise and practical.
 
 Today is ${fmtDate(data.today)} (${data.today}).
 Schedule history window loaded: ${data.historyStart} through ${data.historyEnd}.
+
+CURRENT USER:
+- Name: ${fullName}
+- Role: ${role}
+- Department: ${department}
+- Write access in chat: ${writeAllowed ? "enabled" : "disabled"}
+
+${workflowProfileSection}
 
 OVERVIEW:
 - ${data.summary.totalActiveWorkers} active crew workers, ${data.summary.totalInactiveWorkers} inactive
@@ -689,6 +974,7 @@ OVERVIEW:
 - ${data.summary.totalCompanyContacts} company contacts
 - ${data.summary.totalContactSubmissions} recent contact form submissions
 - ${data.summary.totalJobApplications} recent job applications
+- ${data.summary.totalSocialPosts} social posts (${data.summary.pendingSocialPosts} pending review, ${data.summary.scheduledSocialPosts} scheduled)
 
 CREW WORKERS:
 ${linesOrFallback(
@@ -780,30 +1066,88 @@ APPLICATIONS BY POSITION: ${Object.entries(positionCounts)
     .map(([pos, count]) => `${pos}: ${count}`)
     .join(", ") || "None"}
 
+SOCIAL MEDIA:
+- ${data.summary.totalSocialPosts} total posts (${data.summary.pendingSocialPosts} pending, ${data.summary.scheduledSocialPosts} scheduled)
+${linesOrFallback(
+  data.socialPosts.map(
+    (p) =>
+      `- [${p.status}] ${p.platforms.join("/")} ${p.type}: "${p.content}${p.content.length >= 120 ? "..." : ""}"${p.scheduledFor ? ` | Scheduled: ${p.scheduledFor}` : ""}${p.date ? ` | Created: ${p.date}` : ""}`
+  ),
+  "No social posts."
+)}
+
+BRAND VOICE PROFILES:
+${Object.keys(data.brandVoice).length
+  ? Object.entries(data.brandVoice)
+      .map(([platform, bv]) => {
+        const tc = bv.toneControls || {};
+        return `- ${platform}: professional_casual=${tc.professional_casual || 5}, technical_accessible=${tc.technical_accessible || 5}, brevity_detail=${tc.brevity_detail || 5}, salesy_informative=${tc.salesy_informative || 5}`;
+      })
+      .join("\n")
+  : "No brand voice profiles configured yet."
+}
+
+JOB INTAKE GUIDE:
+When the user wants to enter a new job (from a bid sheet, email, or spreadsheet):
+1. If they paste tabular data or multiple rows, call bulk_create_crew_jobs to batch-create them.
+2. If they describe a single job conversationally, extract the fields and call create_crew_job.
+3. Only job_name is required. Accept partial info and create the job — details can be added later.
+4. If they mention the customer, contractor, address, PM, etc., include those fields.
+5. After creating, confirm what was saved and ask if they want to add more detail or enter another job.
+6. Common bid sheet fields: Job Name, Job Number, Customer, Hiring Contractor, Contact Name/Phone/Email, Address/City/ZIP, PM, Dig Tess Number, Default Rig, Crane Required.
+
+SCHEDULE BUILDER GUIDE:
+The schedule flow is: RIG → CREW → JOB → next rig → finalize → send packets. Walk users through rig-by-rig:
+1. When they start building, ask which rig to set up first or suggest copying from a recent day.
+2. For each rig: ask who is on the crew, then what job they are working.
+3. After a rig is set, ask about the next rig that needs crew.
+4. Once all rigs have crew, prompt them to set superintendent/truck details.
+5. When details are set, suggest finalizing. After finalize, suggest sending the schedule email and packets — that kicks off the packet automation.
+6. Keep responses short. The user sees a visual schedule update after every change.
+
+Tool patterns:
+- "Put [worker] on [rig]" -> assign_worker_to_rig
+- "Put [worker] on [rig] for [job]" -> assign_worker_to_rig with job_name
+- "Remove [worker]" -> remove_worker_from_schedule
+- "Move [worker] from [rig1] to [rig2]" -> remove then assign
+- "Set [super] as super for [rig]" -> set_rig_details
+- "Assign [truck] to [rig]" -> set_rig_details with truck_number
+- "Copy today to tomorrow" -> copy_schedule
+
 RULES:
 - Answer directly from the data above.
+- Tailor suggestions to the current user's role, department, and saved workflow profile when it is useful.
+- Use the saved workflow profile to reduce repeated follow-up questions when that context is already known.
 - If asked about a date outside ${data.historyStart} to ${data.historyEnd}, say that date is outside the loaded history window.
 - If asked about a date inside the window but there is no matching schedule/assignment, say no schedule is recorded for that date.
 - Use plain language and keep responses short.
 - When listing a day, group by rig/category.
-- ONLY use tools for WRITE actions: create/toggle career positions, add/delete company contacts, and create/update crew jobs.
+- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, and create/update social posts.
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
-- You cannot modify crew schedules or crew assignments.
+- You can finalize schedules, send schedule emails, send packets, and update job progress. Always confirm with the user before finalizing or sending emails/packets.
+- You CAN build crew schedules through conversation. Use assign_worker_to_rig to place workers on rigs, remove_worker_from_schedule to take them off, set_rig_details for superintendents/trucks/crane, and copy_schedule to duplicate a day.
+- When the user says "tomorrow", use the date ${new Date(new Date(data.today + "T12:00:00").getTime() + 86400000).toISOString().split("T")[0]}. When they say "today", use ${data.today}.
+- For schedule building, make multiple tool calls in one round when needed. "Put John and Mike on Rig 1" = two assign_worker_to_rig calls.
+- Use worker, rig, job, superintendent, and truck names exactly as listed in the context. The tools resolve names to IDs.
+- After schedule changes, briefly confirm what was done. The user will see an updated visual automatically.
+- When drafting social posts, use the brand voice profile for the target platform. Default posts to 'pending' status so the user can review before publishing.
 - If progress tracking tables are unavailable, say they are not configured yet.
-- After any write action, remind them to refresh if needed.`;
+- If write access in chat is disabled, do not offer or imply that you can make live data changes.
+- After any write action, remind them to refresh if needed.
+- The user's role is "${role}" which determines what actions are available. Only suggest actions the user can perform.`;
 }
 
 // ── Call Groq with tool support ──
 
-async function callGroq(messages, useTools = true) {
+async function callGroq(messages, useTools = true, filteredTools = tools) {
   const body = {
     model: "llama-3.1-8b-instant",
     messages,
     temperature: 0.3,
     max_tokens: 1024,
   };
-  if (useTools) {
-    body.tools = tools;
+  if (useTools && filteredTools.length > 0) {
+    body.tools = filteredTools;
     body.tool_choice = "auto";
   }
 
@@ -830,72 +1174,265 @@ async function callGroq(messages, useTools = true) {
   return response.json();
 }
 
+const SCHEDULE_BUILDER_TOOLS = new Set([
+  "assign_worker_to_rig",
+  "remove_worker_from_schedule",
+  "set_rig_details",
+  "copy_schedule",
+  "finalize_schedule",
+]);
+
+function collectAffectedDates(messageHistory) {
+  const dates = new Set();
+  for (const msg of messageHistory) {
+    if (!msg?.tool_calls) continue;
+    for (const tc of msg.tool_calls) {
+      if (!SCHEDULE_BUILDER_TOOLS.has(tc.function?.name)) continue;
+      let args;
+      try {
+        args = typeof tc.function.arguments === "string"
+          ? JSON.parse(tc.function.arguments)
+          : tc.function.arguments;
+      } catch { continue; }
+      if (args?.schedule_date) dates.add(args.schedule_date);
+      if (args?.source_date) dates.add(args.source_date);
+      if (Array.isArray(args?.target_dates)) {
+        args.target_dates.forEach((d) => dates.add(d));
+      }
+    }
+  }
+  return Array.from(dates).sort();
+}
+
 // ── Main handler ──
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  if (!GROQ_API_KEY) {
-    return res.status(500).json({ error: "AI service not configured" });
-  }
-
-  const { message, history = [] } = req.body;
-
-  if (!message || typeof message !== "string") {
-    return res.status(400).json({ error: "Message is required" });
-  }
-
   try {
-    const data = await fetchDataContext();
-    const systemPrompt = buildSystemPrompt(data);
+    if (!SUPABASE_URL || !SUPABASE_KEY || !SUPABASE_ANON_KEY) {
+      return res.status(500).json({ error: "Supabase is not configured" });
+    }
+
+    const userContext = await getAuthenticatedUserContext(req);
+    if (!userContext) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    if (req.method === "GET") {
+      const sessionId = String(req.query?.session_id || "").trim();
+      if (!sessionId) {
+        return res.status(400).json({ error: "session_id is required" });
+      }
+
+      const messages = await fetchStoredMessages(sessionId, userContext);
+      return res.status(200).json({ messages });
+    }
+
+    if (req.method === "DELETE") {
+      const sessionId = String(req.query?.session_id || "").trim();
+      if (!sessionId) {
+        return res.status(400).json({ error: "session_id is required" });
+      }
+
+      await clearStoredMessages(sessionId, userContext);
+      return res.status(200).json({ success: true });
+    }
+
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    const { message, history = [], sessionId = "" } = req.body || {};
+
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    const userRole = String(userContext.role || "").trim().toLowerCase();
+    const writeAccessEnabled = roleCanWrite(userRole);
+    const allowedModules = getDataModules(userRole);
+    const [data, assistantProfile] = await Promise.all([
+      fetchDataContext(allowedModules),
+      fetchLatestAssistantProfile(userContext),
+    ]);
+    const directRoute = routeAdminAssistantRequest({
+      message,
+      data,
+      writeAccessEnabled,
+      assistantProfile,
+    });
+
+    if (directRoute?.handled) {
+      if (sessionId) {
+        await storeMessages(sessionId, userContext, [
+          { role: "user", content: message },
+          {
+            role: "assistant",
+            content: directRoute.reply,
+            metadata: {
+              actionsPerformed: !!directRoute.actionsPerformed,
+              surface: directRoute.surface || null,
+              responseMode: directRoute.mode || "direct",
+            },
+          },
+        ]);
+      }
+
+      return res.status(200).json({
+        reply: directRoute.reply,
+        actionsPerformed: !!directRoute.actionsPerformed,
+        surface: directRoute.surface || null,
+        responseMode: directRoute.mode || "direct",
+        userContext: {
+          role: userContext.role || "",
+          department: userContext.department || "",
+        },
+      });
+    }
+
+    if (!GROQ_API_KEY) {
+      return res.status(500).json({ error: "AI service not configured" });
+    }
+
+    const systemPrompt = buildSystemPrompt(data, userContext, assistantProfile);
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...history.slice(-20),
+      ...history
+        .filter((entry) => entry?.role && entry?.content)
+        .slice(-20)
+        .map((entry) => ({
+          role: entry.role,
+          content: entry.content,
+        })),
       { role: "user", content: message },
     ];
 
-    // First call - may include tool calls
-    let result = await callGroq(messages);
+    // Filter tools to only those the user's role can access
+    const roleFilteredTools = writeAccessEnabled
+      ? tools.filter((t) => hasToolAccess(userRole, t.function.name))
+      : [];
+
+    let result = await callGroq(messages, roleFilteredTools.length > 0, roleFilteredTools);
     let choice = result.choices?.[0];
 
-    // Handle tool calls (up to 3 rounds to prevent loops)
     let rounds = 0;
-    while (choice?.finish_reason === "tool_calls" && choice?.message?.tool_calls && rounds < 3) {
-      rounds++;
-      // Add the assistant's tool call message
+    while (
+      writeAccessEnabled &&
+      choice?.finish_reason === "tool_calls" &&
+      choice?.message?.tool_calls &&
+      rounds < 3
+    ) {
+      rounds += 1;
       messages.push(choice.message);
 
-      // Execute each tool call and add results
-      for (const tc of choice.message.tool_calls) {
+      for (const toolCall of choice.message.tool_calls) {
+        // Double-check permission at execution time
+        if (!hasToolAccess(userRole, toolCall.function.name)) {
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify({ success: false, error: "Your role does not have permission for this action." }),
+          });
+          continue;
+        }
+
         let toolArgs;
         try {
-          toolArgs = typeof tc.function.arguments === "string" ? JSON.parse(tc.function.arguments) : tc.function.arguments;
+          toolArgs =
+            typeof toolCall.function.arguments === "string"
+              ? JSON.parse(toolCall.function.arguments)
+              : toolCall.function.arguments;
         } catch {
           toolArgs = {};
         }
 
-        const toolResult = await executeTool(tc.function.name, toolArgs);
+        const toolResult = await executeAdminAssistantMutation(
+          supabase,
+          toolCall.function.name,
+          toolArgs
+        );
         messages.push({
           role: "tool",
-          tool_call_id: tc.id,
+          tool_call_id: toolCall.id,
           content: JSON.stringify(toolResult),
         });
       }
 
-      // Call Groq again with tool results (no tools this round to get final response)
-      result = await callGroq(messages, false);
+      result = await callGroq(messages, false, []);
       choice = result.choices?.[0];
     }
 
-    const reply = choice?.message?.content || "Sorry, I couldn't generate a response.";
-
-    // Track if any actions were performed so the frontend knows
+    const rawReply = choice?.message?.content || "Sorry, I couldn't generate a response.";
     const actionsPerformed = rounds > 0;
 
-    return res.status(200).json({ reply, actionsPerformed });
+    // Auto-attach schedule visual after schedule mutations
+    let surface = null;
+    if (actionsPerformed) {
+      const affectedDates = collectAffectedDates(messages);
+      if (affectedDates.length > 0) {
+        const freshData = await fetchDataContext(allowedModules);
+        surface = buildScheduleOverviewForDates(affectedDates, freshData);
+      }
+    }
+
+    if (!surface) {
+      surface = buildAssistantSurface({
+        message,
+        data,
+        writeAccessEnabled,
+        actionsPerformed,
+        assistantProfile,
+      });
+    }
+
+    const reply = surface
+      ? `${rawReply}\n\nI opened a working surface below so you can see the current state.`
+      : rawReply;
+
+    // Enrich metadata for analytics
+    const affectedDates = actionsPerformed ? collectAffectedDates(messages) : [];
+    const toolsCalled = actionsPerformed
+      ? messages
+          .filter((m) => m?.tool_calls)
+          .flatMap((m) => m.tool_calls.map((tc) => tc.function?.name))
+          .filter(Boolean)
+      : [];
+    const isScheduleIntent = toolsCalled.some((t) => SCHEDULE_BUILDER_TOOLS.has(t));
+
+    if (sessionId) {
+      await storeMessages(sessionId, userContext, [
+        {
+          role: "user",
+          content: message,
+          metadata: isScheduleIntent ? { intent: "schedule_build" } : {},
+        },
+        {
+          role: "assistant",
+          content: reply,
+          metadata: {
+            actionsPerformed,
+            surface,
+            responseMode: "llm",
+            ...(isScheduleIntent && {
+              intent: "schedule_build",
+              affectedDates,
+              toolsCalled,
+            }),
+          },
+        },
+      ]);
+    }
+
+    return res.status(200).json({
+      reply,
+      actionsPerformed,
+      surface,
+      responseMode: "llm",
+      userContext: {
+        role: userContext.role || "",
+        department: userContext.department || "",
+      },
+    });
   } catch (error) {
     console.error("AI chat error:", error);
     return res.status(500).json({ error: "Something went wrong" });

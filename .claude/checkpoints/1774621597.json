@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260327-092637", "file": "/Users/alechermesmeyer/Desktop/final/swnext/components/TWAdminLayout.jsx", "timestamp": "2026-03-27T14:26:37Z", "type": "post-edit", "branch": "tailwind-only", "diff_summary": " .claude/checkpoints/task-1774621541.json |  1 +  components/TWAdminLayout.jsx             | 12 ++++++++++++  2 files changed, 13 insertions(+) "}

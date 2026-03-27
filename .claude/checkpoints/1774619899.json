@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260327-085819", "file": "/Users/alechermesmeyer/Desktop/final/swnext/lib/admin-assistant-surfaces.js", "timestamp": "2026-03-27T13:58:19Z", "type": "post-edit", "branch": "tailwind-only", "diff_summary": " .claude/checkpoints/task-1774619826.json |  1 +  lib/admin-assistant-surfaces.js          | 11 +++++++++++  2 files changed, 12 insertions(+) "}

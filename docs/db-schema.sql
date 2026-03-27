@@ -189,6 +189,7 @@ CREATE TABLE public.profiles (
   avatar_url text,
   website text,
   role text,
+  department text,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );

@@ -1,0 +1,247 @@
+[
+  {
+    "id": 36,
+    "created_at": "2026-03-13T19:11:23.898478+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": false
+  },
+  {
+    "id": 35,
+    "created_at": "2026-03-13T19:11:23.798261+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 34,
+    "created_at": "2026-03-13T19:11:23.70522+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 33,
+    "created_at": "2026-03-13T19:11:23.606813+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 32,
+    "created_at": "2026-03-13T19:11:23.349755+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 31,
+    "created_at": "2026-03-13T19:11:23.25133+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 30,
+    "created_at": "2026-03-13T19:11:23.158679+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 29,
+    "created_at": "2026-03-13T19:11:23.055317+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 28,
+    "created_at": "2026-03-13T19:11:22.951731+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 27,
+    "created_at": "2026-03-13T19:11:22.865532+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 26,
+    "created_at": "2026-03-13T19:11:22.770335+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 25,
+    "created_at": "2026-03-13T19:11:22.684724+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 24,
+    "created_at": "2026-03-13T19:11:22.601633+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 23,
+    "created_at": "2026-03-13T19:11:22.500246+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 22,
+    "created_at": "2026-03-13T19:11:22.40805+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 21,
+    "created_at": "2026-03-13T19:11:22.309852+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 20,
+    "created_at": "2026-03-13T19:11:22.215502+00:00",
+    "jobTitle": "Welder",
+    "jobDesc": "Perform welding tasks on construction sites.",
+    "is_Open": false
+  },
+  {
+    "id": 19,
+    "created_at": "2026-03-13T19:11:22.126102+00:00",
+    "jobTitle": "Mechanic",
+    "jobDesc": "Maintain and repair company equipment.",
+    "is_Open": false
+  },
+  {
+    "id": 18,
+    "created_at": "2026-03-13T19:11:22.033303+00:00",
+    "jobTitle": "Shop Manager",
+    "jobDesc": "Manage the company shop and equipment.",
+    "is_Open": false
+  },
+  {
+    "id": 17,
+    "created_at": "2026-03-13T19:11:21.913471+00:00",
+    "jobTitle": "Production Assistant",
+    "jobDesc": "Assist production teams with site operations and logistics.",
+    "is_Open": false
+  },
+  {
+    "id": 16,
+    "created_at": "2026-03-13T19:11:21.819987+00:00",
+    "jobTitle": "CDL Driver",
+    "jobDesc": "Drive company vehicles to transport personnel and equipment.",
+    "is_Open": false
+  },
+  {
+    "id": 15,
+    "created_at": "2026-03-13T19:11:21.724747+00:00",
+    "jobTitle": "Groundhand/General Laborer",
+    "jobDesc": "Perform general labor tasks on construction sites.",
+    "is_Open": true
+  },
+  {
+    "id": 14,
+    "created_at": "2026-03-13T19:11:21.630643+00:00",
+    "jobTitle": "Drill Rig Operator",
+    "jobDesc": "Operate drill rigs on construction sites.",
+    "is_Open": false
+  },
+  {
+    "id": 13,
+    "created_at": "2026-03-13T19:11:21.534714+00:00",
+    "jobTitle": "Crane Operator",
+    "jobDesc": "Operate cranes on construction sites.",
+    "is_Open": false
+  },
+  {
+    "id": 12,
+    "created_at": "2026-03-13T19:11:21.362205+00:00",
+    "jobTitle": "Project Manager Assistant",
+    "jobDesc": "Assist project managers with site operations and logistics.",
+    "is_Open": true
+  },
+  {
+    "id": 11,
+    "created_at": "2026-03-13T19:11:21.238692+00:00",
+    "jobTitle": "Drill Rig Operator",
+    "jobDesc": "Operate drill rigs on construction sites.",
+    "is_Open": false
+  },
+  {
+    "id": 9,
+    "created_at": "2024-04-06T13:04:33.744845+00:00",
+    "jobTitle": "CDL Driver",
+    "jobDesc": null,
+    "is_Open": true
+  },
+  {
+    "id": 8,
+    "created_at": "2024-04-06T12:51:57.121018+00:00",
+    "jobTitle": "Production Assistant",
+    "jobDesc": null,
+    "is_Open": false
+  },
+  {
+    "id": 7,
+    "created_at": "2024-04-06T12:51:35.676953+00:00",
+    "jobTitle": "Project Manager Assistant",
+    "jobDesc": null,
+    "is_Open": false
+  },
+  {
+    "id": 6,
+    "created_at": "2024-01-08T20:11:58.456482+00:00",
+    "jobTitle": "Shop Manager",
+    "jobDesc": null,
+    "is_Open": true
+  },
+  {
+    "id": 5,
+    "created_at": "2024-01-08T20:11:39.262058+00:00",
+    "jobTitle": "Mechanic",
+    "jobDesc": null,
+    "is_Open": true
+  },
+  {
+    "id": 4,
+    "created_at": "2023-07-31T19:53:28.109132+00:00",
+    "jobTitle": "Crane Operator",
+    "jobDesc": null,
+    "is_Open": true
+  },
+  {
+    "id": 3,
+    "created_at": "2023-07-31T19:53:14+00:00",
+    "jobTitle": "Drill Rig Operator",
+    "jobDesc": null,
+    "is_Open": true
+  },
+  {
+    "id": 2,
+    "created_at": "2023-07-31T19:52:59.316197+00:00",
+    "jobTitle": "Welder",
+    "jobDesc": "Mig welding with .045 flux core dual shield wire using 75/25 mixed gas, stick welding with 6010, 6011 & 7018 rods. Plasma cutter, oxy/acetlyne torch cutting, arc gouging & basic shop tools grinders, chop saws etc. The most common things done is repairing drill tools, welding casing together, trailer repair, drill rig repair, there are other welding things done but these are the most common. The pay rate is $20-$26 an depending on expierence.",
+    "is_Open": true
+  },
+  {
+    "id": 1,
+    "created_at": "2023-07-31T19:52:44.710304+00:00",
+    "jobTitle": "Ground Hand",
+    "jobDesc": null,
+    "is_Open": false
+  }
+]

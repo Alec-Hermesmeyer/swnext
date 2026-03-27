@@ -3,24 +3,38 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { Lato } from "next/font/google";
 import AIChatBubble from "@/components/admin/AIChatBubble";
+import { useAuth } from "@/context/AuthContext";
+import { getVisibleNavLinks } from "@/lib/roles";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+
+const ROLE_LABELS = {
+  admin: "Admin",
+  operations: "Operations",
+  social_media: "Social Media",
+  hr: "HR",
+  sales: "Sales",
+  viewer: "Viewer",
+};
 
 export default function TWAdminLayout({ children }) {
   const router = useRouter();
   const currentPath = router.pathname;
+  const { role } = useAuth();
+  const isEmbedded = router.query?.embedded === "true";
 
-  const navLinks = [
-    { href: "/admin", label: "Home" },
-    { href: "/admin/dashboard", label: "Dashboard" },
-    { href: "/admin/crew-scheduler", label: "Crew Scheduler" },
-    { href: "/admin/social-media", label: "Social Media" },
-    { href: "/admin/image-assignments", label: "Page Images" },
-    { href: "/admin/company-contacts", label: "Contacts" },
-    { href: "/admin/careers", label: "Careers" },
-    { href: "/admin/sales", label: "Sales" },
-    { href: "/admin/contact", label: "Submissions" },
-  ];
+  const navLinks = getVisibleNavLinks(role);
+
+  // Embedded mode: just the content, no chrome
+  if (isEmbedded) {
+    return (
+      <div className="min-h-screen bg-neutral-100">
+        <div className="mx-auto w-full max-w-[1400px] px-4 py-4 md:px-6">
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-100">
@@ -37,6 +51,11 @@ export default function TWAdminLayout({ children }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {role && ROLE_LABELS[role] ? (
+              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/80">
+                {ROLE_LABELS[role]}
+              </span>
+            ) : null}
             <Link href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
               View Site
             </Link>
@@ -94,5 +113,4 @@ export default function TWAdminLayout({ children }) {
     </div>
   );
 }
-
 

@@ -1,6 +1,7 @@
 // Proxy API requests to Flask backend to avoid CORS issues
 export default async function handler(req, res) {
   const FLASK_BACKEND = process.env.FLASK_BACKEND || 'http://localhost:5000';
+  const SOCIAL_WORKSPACE_TOKEN = process.env.SOCIAL_WORKSPACE_TOKEN || '';
 
   // Get the path from the catch-all route
   const { path } = req.query;
@@ -17,11 +18,23 @@ export default async function handler(req, res) {
   console.log(`[Proxy] ${req.method} ${fullUrl}`);
 
   try {
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    // Forward workspace auth token to Flask backend
+    if (SOCIAL_WORKSPACE_TOKEN) {
+      headers['Authorization'] = `Bearer ${SOCIAL_WORKSPACE_TOKEN}`;
+    }
+
+    // Also forward any Authorization header from the client
+    if (req.headers.authorization) {
+      headers['Authorization'] = req.headers.authorization;
+    }
+
     const fetchOptions = {
       method: req.method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     };
 
     // Forward body for POST/PUT/PATCH requests
