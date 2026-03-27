@@ -1882,7 +1882,10 @@ function ConnectionStatus() {
 
   const checkConnection = async () => {
     try {
-      const res = await fetch(`${API_BASE}/auth/status`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`${API_BASE}/auth/status`, { signal: controller.signal });
+      clearTimeout(timeout);
       if (res.ok) {
         const data = await res.json();
         setStatus({ accounts: data.accounts || [], loading: false });
