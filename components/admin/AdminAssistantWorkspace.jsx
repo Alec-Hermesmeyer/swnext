@@ -709,6 +709,122 @@ export default function AdminAssistantWorkspace({
     );
   }
 
+  // ── Workspace mode: split layout with embedded page ──
+  if (activeWorkspace) {
+    const WorkspaceComponent = activeWorkspace === "scheduler" ? EmbeddedCrewScheduler : activeWorkspace === "social" ? EmbeddedSocialMedia : null;
+    const workspaceLabel = activeWorkspace === "scheduler" ? "Crew Scheduler" : activeWorkspace === "social" ? "Social Media" : "";
+
+    return (
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[380px_minmax(0,1fr)]">
+        {/* Left: compact chat panel */}
+        <div className="relative z-10 flex flex-col border-r border-[#dbe4f0] bg-white">
+          <div className="flex items-center justify-between border-b border-neutral-200 bg-[#0b2a5a] px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white">
+                SW
+              </div>
+              <div className="text-sm font-bold text-white">Assistant</div>
+            </div>
+            <button
+              type="button"
+              onClick={closeWorkspace}
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              Back to chat
+            </button>
+          </div>
+
+          <div className="flex-1 space-y-3 overflow-y-auto bg-neutral-50 px-3 py-3">
+            {messages.map((message, index) => (
+              <div
+                key={`ws-${message.role}-${index}`}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[90%] rounded-2xl px-3 py-2 ${
+                    message.role === "user"
+                      ? "rounded-br-md bg-[#0b2a5a] text-white"
+                      : "rounded-bl-md border border-neutral-200 bg-white text-neutral-800"
+                  }`}
+                  style={{ wordBreak: "break-word" }}
+                >
+                  {message.role === "assistant" ? (
+                    <FormattedMessage text={message.content} />
+                  ) : (
+                    <span className="whitespace-pre-wrap text-xs leading-relaxed">
+                      {message.content}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="rounded-2xl rounded-bl-md border border-neutral-200 bg-white px-3 py-2">
+                  <div className="flex gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="border-t border-neutral-200 bg-white px-3 py-2">
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={inputRef}
+                rows={1}
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask anything..."
+                className="min-h-[40px] flex-1 resize-none rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-800 outline-none transition-all focus:border-[#0b2a5a] focus:bg-white focus:ring-1 focus:ring-[#0b2a5a]/10"
+                disabled={loading || historyLoading}
+              />
+              <button
+                type="button"
+                onClick={() => sendMessage()}
+                disabled={!input.trim() || loading || historyLoading}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0b2a5a] text-white transition-all hover:bg-[#143a75] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Send message"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: embedded workspace */}
+        <div className="relative z-10 overflow-y-auto">
+          <div className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-4 py-2 backdrop-blur">
+            <div className="text-sm font-semibold text-neutral-700">{workspaceLabel}</div>
+            <button
+              type="button"
+              onClick={closeWorkspace}
+              className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
+              aria-label="Close workspace"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          {WorkspaceComponent ? (
+            <Suspense fallback={<div className="flex items-center justify-center py-20 text-sm text-neutral-400">Loading {workspaceLabel}...</div>}>
+              <WorkspaceComponent />
+            </Suspense>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative overflow-hidden rounded-[2.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[320px_minmax(0,1fr)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.18),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(215,82,74,0.08),_transparent_28%)]" />
