@@ -137,6 +137,7 @@ function UserManagement() {
       username: user.username || "",
       role: user.role || "",
       department: user.department || "",
+      access_level: user.access_level || 3,
     });
     setSaveMessage("");
   };
