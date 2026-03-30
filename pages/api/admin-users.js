@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       const [{ data: authUsers, error: authErr }, { data: profiles, error: profErr }] =
         await Promise.all([
           supabase.auth.admin.listUsers({ perPage: 200 }),
-          supabase.from("profiles").select("id, full_name, username, role, department"),
+          supabase.from("profiles").select("id, full_name, username, role, department, access_level"),
         ]);
 
       if (authErr) {
