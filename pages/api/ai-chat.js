@@ -79,7 +79,7 @@ async function getAuthenticatedUserContext(req) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, department, full_name, username")
+    .select("role, department, full_name, username, access_level")
     .eq("id", user.id)
     .single();
 
@@ -90,6 +90,7 @@ async function getAuthenticatedUserContext(req) {
     username: profile?.username || "",
     role: profile?.role || "",
     department: profile?.department || "",
+    accessLevel: profile?.access_level || 3,
   };
 }
 
