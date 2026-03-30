@@ -44,45 +44,29 @@ const SEED_DATA = [
 
 async function ensureTable() {
   // Check if table exists by trying a select
-  const { error } = await supabase.from("gallery_images").select("id").limit(1);
-  if (error && error.code === "42P01") {
-    // Table doesn't exist — create it
-    const { error: createErr } = await supabase.rpc("exec_sql", {
-      sql: `
-        CREATE TABLE IF NOT EXISTS gallery_images (
-          id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-          filename text NOT NULL,
-          category text NOT NULL DEFAULT 'Uncategorized',
-          title text,
-          description text,
-          is_visible boolean NOT NULL DEFAULT true,
-          sort_order integer NOT NULL DEFAULT 0,
-          created_at timestamptz DEFAULT now()
-        );
-        ALTER TABLE gallery_images ENABLE ROW LEVEL SECURITY;
-        CREATE POLICY "Public read visible" ON gallery_images FOR SELECT USING (true);
-        CREATE POLICY "Service write" ON gallery_images FOR ALL USING (true);
-      `,
-    });
-    if (createErr) {
-      console.error("Could not auto-create gallery_images table:", createErr.message);
-      return false;
-    }
-    // Seed
-    await supabase.from("gallery_images").insert(
-      SEED_DATA.map((row) => ({ ...row, is_visible: true }))
+  const { data, error } = await supabase.from("gallery_images").select("id").limit(1);
+
+  if (error) {
+    // Table doesn't exist (42P01) or permissions issue
+    // Log it so the user knows to create the table
+    console.error(
+      "gallery_images table not accessible:",
+      error.message,
+      "— Run the SQL from docs/gallery-table.sql in the Supabase SQL editor to create it."
     );
-    return true;
+    return false;
   }
 
-  // Table exists — check if empty and seed
-  const { count } = await supabase
-    .from("gallery_images")
-    .select("id", { count: "exact", head: true });
-  if (count === 0) {
-    await supabase.from("gallery_images").insert(
-      SEED_DATA.map((row) => ({ ...row, is_visible: true }))
-    );
+  // Table exists — check if empty and seed with current hardcoded data
+  if (!data || data.length === 0) {
+    const { count } = await supabase
+      .from("gallery_images")
+      .select("id", { count: "exact", head: true });
+    if (count === 0) {
+      await supabase.from("gallery_images").insert(
+        SEED_DATA.map((row) => ({ ...row, is_visible: true }))
+      );
+    }
   }
   return true;
 }
