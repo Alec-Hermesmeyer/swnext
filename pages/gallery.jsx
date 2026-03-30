@@ -12,68 +12,12 @@ const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 // Gallery image base URL from Supabase
 const GALLERY_BASE = imageBaseUrls.gallery;
 
-// Organized project data with categories and descriptions
-const projectCategories = {
-  "Pier Drilling": {
-    description: "Commercial and industrial deep foundation drilling projects",
-    badge: "PIER DRILLING",
-    images: [
-      { src: "gal1.webp", title: "Commercial Pier Installation", description: "High-rise building foundation support" },
-      { src: "gal9.webp", title: "Industrial Pier Drilling", description: "Manufacturing facility foundation" },
-      { src: "gal15.webp", title: "Deep Foundation Project", description: "200+ foot pier installation" },
-      { src: "gal22.webp", title: "Urban Pier Drilling", description: "Downtown commercial development" },
-      { src: "gal28.webp", title: "Bridge Foundation Work", description: "Infrastructure pier drilling" },
-      { src: "gal35.webp", title: "Pier Drilling Operation", description: "Large-scale foundation project" }
-    ]
-  },
-  "Equipment & Operations": {
-    description: "Our state-of-the-art drilling equipment and professional crews in action",
-    badge: "EQUIPMENT",
-    images: [
-      { src: "gal5.webp", title: "Drilling Rig Operation", description: "Advanced hydraulic drilling equipment" },
-      { src: "gal12.webp", title: "Limited Access Equipment", description: "Specialized confined space drilling" },
-      { src: "gal18.webp", title: "Crane Operations", description: "Material handling and positioning" },
-      { src: "gal25.webp", title: "Site Preparation", description: "Project setup and mobilization" },
-      { src: "gal32.webp", title: "Quality Control", description: "Precision drilling operations" },
-      { src: "gal38.webp", title: "Team Collaboration", description: "Professional crew coordination" }
-    ]
-  },
-  "Infrastructure Projects": {
-    description: "Large-scale infrastructure and public works foundation projects",
-    badge: "INFRASTRUCTURE",
-    images: [
-      { src: "gal3.webp", title: "Highway Bridge Foundation", description: "DOT infrastructure project" },
-      { src: "gal10.webp", title: "Airport Expansion", description: "Runway foundation support" },
-      { src: "gal17.webp", title: "Water Treatment Facility", description: "Municipal infrastructure project" },
-      { src: "gal24.webp", title: "Power Plant Foundation", description: "Utility infrastructure support" },
-      { src: "gal31.webp", title: "Transportation Hub", description: "Transit facility foundation" },
-      { src: "gal39.webp", title: "Public Works Project", description: "Government facility foundation" }
-    ]
-  },
-  "Commercial Buildings": {
-    description: "Office buildings, retail centers, and commercial developments",
-    badge: "COMMERCIAL",
-    images: [
-      { src: "gal2.webp", title: "Office Tower Foundation", description: "Downtown high-rise project" },
-      { src: "gal8.webp", title: "Shopping Center", description: "Retail development foundation" },
-      { src: "gal14.webp", title: "Mixed-Use Development", description: "Residential/commercial complex" },
-      { src: "gal21.webp", title: "Corporate Campus", description: "Multi-building office complex" },
-      { src: "gal29.webp", title: "Hotel Foundation", description: "Hospitality industry project" },
-      { src: "gal36.webp", title: "Medical Facility", description: "Healthcare building foundation" }
-    ]
-  },
-  "Industrial Projects": {
-    description: "Manufacturing facilities, warehouses, and industrial complexes",
-    badge: "INDUSTRIAL",
-    images: [
-      { src: "gal4.webp", title: "Manufacturing Plant", description: "Heavy industrial foundation" },
-      { src: "gal11.webp", title: "Warehouse Complex", description: "Distribution facility foundation" },
-      { src: "gal19.webp", title: "Chemical Plant", description: "Process industry foundation" },
-      { src: "gal26.webp", title: "Steel Mill Foundation", description: "Heavy equipment support" },
-      { src: "gal33.webp", title: "Refinery Project", description: "Petroleum industry foundation" },
-      { src: "gal40.webp", title: "Processing Facility", description: "Industrial complex foundation" }
-    ]
-  }
+const CATEGORY_META = {
+  "Pier Drilling": { description: "Commercial and industrial deep foundation drilling projects", badge: "PIER DRILLING" },
+  "Equipment & Operations": { description: "Our state-of-the-art drilling equipment and professional crews in action", badge: "EQUIPMENT" },
+  "Infrastructure Projects": { description: "Large-scale infrastructure and public works foundation projects", badge: "INFRASTRUCTURE" },
+  "Commercial Buildings": { description: "Office buildings, retail centers, and commercial developments", badge: "COMMERCIAL" },
+  "Industrial Projects": { description: "Manufacturing facilities, warehouses, and industrial complexes", badge: "INDUSTRIAL" },
 };
 
 function Hero() {
