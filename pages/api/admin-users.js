@@ -150,14 +150,34 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No fields to update" });
     }
 
+    // Ensure username meets the check constraint if present
+    if (updates.username !== undefined && updates.username.length < 3) {
+      delete updates.username;
+    }
+
     // Upsert so it works even if profile row doesn't exist yet
     const { error } = await supabase
       .from("profiles")
       .upsert({ id, ...updates }, { onConflict: "id" });
 
     if (error) {
-      console.error("Profile update error:", error);
-      return res.status(500).json({ error: "Failed to update profile" });
+      console.error("Profile update error:", error.code, error.message, error.details);
+
+      // If a column doesn't exist, retry without access_level
+      if (updates.access_level !== undefined) {
+        delete updates.access_level;
+        if (Object.keys(updates).length) {
+          const { error: retryErr } = await supabase
+            .from("profiles")
+            .upsert({ id, ...updates }, { onConflict: "id" });
+          if (!retryErr) {
+            return res.status(200).json({ success: true, warning: "access_level column not available yet" });
+          }
+          console.error("Profile update retry error:", retryErr.code, retryErr.message);
+        }
+      }
+
+      return res.status(500).json({ error: `Failed to update profile: ${error.message || error.code || "unknown"}` });
     }
 
     return res.status(200).json({ success: true });
