@@ -1258,8 +1258,9 @@ export default async function handler(req, res) {
     }
 
     const userRole = String(userContext.role || "").trim().toLowerCase();
-    const writeAccessEnabled = roleCanWrite(userRole);
-    const allowedModules = getDataModules(userRole);
+    const userAccessLevel = userContext.accessLevel || 3;
+    const writeAccessEnabled = roleCanWrite(userRole, userAccessLevel);
+    const allowedModules = getDataModules(userRole, userAccessLevel);
     const [data, assistantProfile] = await Promise.all([
       fetchDataContext(allowedModules),
       fetchLatestAssistantProfile(userContext),
