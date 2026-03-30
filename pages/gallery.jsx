@@ -5,12 +5,10 @@ import TWLayout from "@/components/TWLayout";
 import { FadeIn, FadeInStagger } from "@/components/FadeIn";
 import { useState, useEffect } from "react";
 import { Lato } from "next/font/google";
-import { imageBaseUrls } from "@/config/imageConfig";
-
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-// Gallery image base URL from Supabase
-const GALLERY_BASE = imageBaseUrls.gallery;
+// Gallery images are served from public/galleryImages/
+const GALLERY_BASE = "/galleryImages";
 
 const CATEGORY_META = {
   "Pier Drilling": { description: "Commercial and industrial deep foundation drilling projects", badge: "PIER DRILLING" },
