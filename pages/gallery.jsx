@@ -95,8 +95,45 @@ function ProjectStats() {
 }
 
 function ProjectCategories() {
-  const [selectedCategory, setSelectedCategory] = useState("Pier Drilling");
+  const [galleryData, setGalleryData] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+
+  // Fetch gallery images from database
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/gallery-images");
+        const data = await res.json();
+        const images = data.images || [];
+
+        // Group by category
+        const grouped = {};
+        images.forEach((img) => {
+          const cat = img.category || "Uncategorized";
+          if (!grouped[cat]) grouped[cat] = [];
+          grouped[cat].push(img);
+        });
+
+        // Sort each category by sort_order
+        Object.values(grouped).forEach((arr) =>
+          arr.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        );
+
+        const catList = Object.keys(grouped);
+        setGalleryData(grouped);
+        setCategories(catList);
+        if (catList.length) setSelectedCategory(catList[0]);
+      } catch {
+        // Fallback empty
+      } finally {
+        setLoaded(true);
+      }
+    };
+    load();
+  }, []);
 
   // Close modal with Escape key
   useEffect(() => {
@@ -108,7 +145,7 @@ function ProjectCategories() {
 
     if (selectedImage) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -118,6 +155,9 @@ function ProjectCategories() {
       document.body.style.overflow = 'unset';
     };
   }, [selectedImage]);
+
+  const currentImages = galleryData[selectedCategory] || [];
+  const meta = CATEGORY_META[selectedCategory] || { description: "", badge: selectedCategory?.toUpperCase() };
 
   return (
     <section id="project-categories" className="mx-auto w-full max-w-7xl px-6 py-16">
@@ -132,7 +172,7 @@ function ProjectCategories() {
 
       {/* Category Filter Buttons */}
       <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-        {Object.keys(projectCategories).map((category) => (
+        {categories.map((category) => (
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
@@ -142,59 +182,65 @@ function ProjectCategories() {
                 : "bg-white text-[#0b2a5a] border border-gray-300 hover:bg-gray-50"
             }`}
           >
-            {projectCategories[category].badge}
+            {(CATEGORY_META[category]?.badge) || category.toUpperCase()}
           </button>
         ))}
       </div>
 
       {/* Selected Category Description */}
-      <div className="text-center mb-8">
-        <h3 className={`${lato.className} text-2xl font-bold text-[#0b2a5a] mb-3`}>
-          {selectedCategory}
-        </h3>
-        <p className="text-neutral-600 max-w-2xl mx-auto">
-          {projectCategories[selectedCategory].description}
-        </p>
-      </div>
+      {selectedCategory && (
+        <div className="text-center mb-8">
+          <h3 className={`${lato.className} text-2xl font-bold text-[#0b2a5a] mb-3`}>
+            {selectedCategory}
+          </h3>
+          {meta.description && (
+            <p className="text-neutral-600 max-w-2xl mx-auto">{meta.description}</p>
+          )}
+        </div>
+      )}
 
       {/* Project Images Grid */}
-      <div key={selectedCategory}>
-        <FadeInStagger>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projectCategories[selectedCategory].images.map((project, index) => (
-              <FadeIn key={`${selectedCategory}-${project.src}`}>
-                <div 
-                  className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
-                  onClick={() => setSelectedImage(project)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedImage(project);
-                    }
-                  }}
-                  aria-label="View project image"
-                >
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <Image
-                      src={`${GALLERY_BASE}/${project.src}`}
-                      alt="S&W Foundation project  "
-                      width={600}
-                      height={450}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      unoptimized
-                      loader={({ src }) => src}
-                    />
+      {!loaded ? (
+        <div className="text-center py-12 text-neutral-500">Loading gallery...</div>
+      ) : (
+        <div key={selectedCategory}>
+          <FadeInStagger>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentImages.map((project) => (
+                <FadeIn key={project.id || project.filename}>
+                  <div
+                    className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    onClick={() => setSelectedImage(project)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedImage(project);
+                      }
+                    }}
+                    aria-label="View project image"
+                  >
+                    <div className="aspect-[4/3] overflow-hidden">
+                      <Image
+                        src={`${GALLERY_BASE}/${project.filename}`}
+                        alt={project.title || "S&W Foundation project"}
+                        width={600}
+                        height={450}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        unoptimized
+                        loader={({ src }) => src}
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
                   </div>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </FadeInStagger>
-      </div>
+                </FadeIn>
+              ))}
+            </div>
+          </FadeInStagger>
+        </div>
+      )}
 
       {/* Image Modal */}
       {selectedImage && (
