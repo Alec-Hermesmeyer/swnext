@@ -1318,9 +1318,9 @@ export default async function handler(req, res) {
       { role: "user", content: message },
     ];
 
-    // Filter tools to only those the user's role can access
+    // Filter tools to only those the user's role + level can access
     const roleFilteredTools = writeAccessEnabled
-      ? tools.filter((t) => hasToolAccess(userRole, t.function.name))
+      ? tools.filter((t) => hasToolAccess(userRole, t.function.name, userAccessLevel))
       : [];
 
     let result = await callGroq(messages, roleFilteredTools.length > 0, roleFilteredTools);
