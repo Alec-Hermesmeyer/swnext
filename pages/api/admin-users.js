@@ -43,6 +43,7 @@ export default async function handler(req, res) {
           username: profile.username || "",
           role: profile.role || "",
           department: profile.department || "",
+          access_level: profile.access_level || 3,
           last_sign_in: u.last_sign_in_at || null,
           created_at: u.created_at || null,
         };
