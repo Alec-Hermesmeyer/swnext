@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
+import supabase from "@/components/Supabase";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 const GALLERY_BASE = "/galleryImages";
+const BUCKET_NAME = "Images";
+const STORAGE_BASE = "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images";
 
 const CATEGORIES = [
   "Pier Drilling",
