@@ -21,10 +21,10 @@ const ROLE_LABELS = {
 export default function TWAdminLayout({ children }) {
   const router = useRouter();
   const currentPath = router.pathname;
-  const { role } = useAuth();
+  const { role, accessLevel } = useAuth();
   const isEmbedded = router.query?.embedded === "true";
 
-  const navLinks = getVisibleNavLinks(role);
+  const navLinks = getVisibleNavLinks(role, accessLevel);
 
   // Embedded mode: just the content, no chrome
   if (isEmbedded) {
