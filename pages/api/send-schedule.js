@@ -40,6 +40,9 @@ export default async function handler(req, res) {
       const detail = (rigDetails || []).find((r) => r.category_id === cat.id);
 
       const detailLine = [
+        detail?.day_type && detail.day_type !== "working" && detail?.status_label
+          ? `Status: ${detail.status_label}`
+          : "",
         detail?.superintendent_name ? `Supt: ${detail.superintendent_name}` : "",
         detail?.truck_number ? `Truck: ${detail.truck_number}` : "",
         detail?.crane_info ? `Crane: ${detail.crane_info}` : "",
@@ -54,10 +57,16 @@ export default async function handler(req, res) {
                 (a) =>
                   `<tr>
                     <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;font-weight:600;">${a.worker_name || "Unassigned"}</td>
-                    <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;color:#6b7280;">${a.job_name || ""}</td>
+                    <td style="padding:6px 12px;border-bottom:1px solid #e5e7eb;color:#6b7280;">${
+                      detail?.day_type && detail.day_type !== "working"
+                        ? detail?.status_label || ""
+                        : a.job_name || ""
+                    }</td>
                   </tr>`
               )
               .join("")
+          : detail?.day_type && detail.day_type !== "working" && detail?.status_label
+          ? `<tr><td colspan="2" style="padding:8px 12px;color:#92400e;font-weight:600;background:#fffbeb;">${detail.status_label}</td></tr>`
           : `<tr><td colspan="2" style="padding:8px 12px;color:#9ca3af;font-style:italic;">No crew assigned</td></tr>`;
 
       return `

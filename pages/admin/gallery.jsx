@@ -481,6 +481,9 @@ function GalleryManagement() {
   );
 }
 
+// Named export for embedding as a component (no auth wrapper, no layout)
+export { GalleryManagement };
+
 GalleryManagement.getLayout = function getLayout(page) {
   return <TWAdminLayout>{page}</TWAdminLayout>;
 };

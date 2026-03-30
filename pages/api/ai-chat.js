@@ -509,6 +509,21 @@ const tools = [
       },
     },
   },
+  // ── Knowledge base RAG search ──
+  {
+    type: "function",
+    function: {
+      name: "search_knowledge_base",
+      description: "Search the company knowledge base for relevant context. Contains project history, client inquiries, team workflow profiles, company info, processes, and hiring data. Use this when the user asks about something that might have historical context, company background, past projects, client details, or process documentation that isn't in the live admin data above.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "The search query — describe what context you need" },
+        },
+        required: ["query"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
@@ -619,6 +634,22 @@ async function fetchDataContext(modules = []) {
     progressByJobId[row.job_id] = row;
   });
 
+  const parseRigDayType = (notes) => {
+    const raw = String(notes || "").trim();
+    if (!raw.startsWith("__rig_day_type__:")) return "working";
+    const value = raw.replace("__rig_day_type__:", "").trim().toLowerCase();
+    return value || "working";
+  };
+
+  const defaultRigStatusLabel = (dayType) => {
+    if (dayType === "mob") return "Mob Rig";
+    if (dayType === "down_day") return "Down Day";
+    if (dayType === "repairs") return "Repairs";
+    if (dayType === "shop") return "Shop / Yard";
+    if (dayType === "custom") return "Custom Status";
+    return "";
+  };
+
   const rigDetailLookup = {};
   (rigDetails || []).forEach((row) => {
     const date = row?.crew_schedules?.schedule_date;
@@ -632,17 +663,39 @@ async function fetchDataContext(modules = []) {
     };
   });
 
+  const rigStatusLookup = {};
+  (assignments || []).forEach((row) => {
+    const date = row?.crew_schedules?.schedule_date || "";
+    const rigName = row?.crew_categories?.name || "";
+    const dayType = parseRigDayType(row?.notes);
+    if (!date || !rigName || dayType === "working") return;
+    rigStatusLookup[`${date}::${rigName}`] = {
+      dayType,
+      statusLabel:
+        String(row?.job_name || "").trim() || defaultRigStatusLabel(dayType),
+    };
+  });
+
   const normalizedAssignments = (assignments || [])
     .map((row) => {
       const date = row?.crew_schedules?.schedule_date || "";
       const rig = row?.crew_categories?.name || "";
       const rigDetail = rigDetailLookup[`${date}::${rig}`] || {};
+      const rigStatus = rigStatusLookup[`${date}::${rig}`] || {
+        dayType: "working",
+        statusLabel: "",
+      };
+      const isStatusPlaceholder =
+        !row?.worker_id && parseRigDayType(row?.notes) !== "working";
       return {
         date,
         finalized: !!row?.crew_schedules?.is_finalized,
         worker: row?.crew_workers?.name || "Unassigned",
         workerRole: row?.crew_workers?.role || "",
-        job: row?.crew_jobs?.job_name || row?.job_name || "",
+        job:
+          rigStatus.statusLabel && !row?.job_id
+            ? ""
+            : row?.crew_jobs?.job_name || row?.job_name || "",
         jobNumber: row?.crew_jobs?.job_number || "",
         rig,
         notes: row?.notes || "",
@@ -650,6 +703,9 @@ async function fetchDataContext(modules = []) {
         superintendent: rigDetail.superintendent || "",
         truck: rigDetail.truck || "",
         crane: rigDetail.crane || "",
+        statusLabel: rigStatus.statusLabel || "",
+        dayType: rigStatus.dayType || "working",
+        isStatusPlaceholder,
       };
     })
     .filter((row) => row.date)
@@ -669,10 +725,17 @@ async function fetchDataContext(modules = []) {
         notes: new Set(),
         superintendent: "",
         truck: "",
+        statusLabel: "",
+        dayType: "working",
       });
     }
     const aggregate = rigMap.get(rigKey);
     aggregate.finalized = aggregate.finalized || entry.finalized;
+    if (entry.statusLabel) {
+      aggregate.statusLabel = entry.statusLabel;
+      aggregate.dayType = entry.dayType;
+    }
+    if (entry.isStatusPlaceholder) return;
     if (entry.worker) {
       aggregate.workers.add(
         entry.workerRole ? `${entry.worker} (${entry.workerRole})` : entry.worker
@@ -701,6 +764,7 @@ async function fetchDataContext(modules = []) {
         .map((entry) => {
           const parts = [
             entry.rig,
+            entry.statusLabel ? `Status: ${entry.statusLabel}` : "",
             `Jobs: ${Array.from(entry.jobs).join(", ") || "None"}`,
             `Crew: ${Array.from(entry.workers).join(", ") || "None"}`,
           ];
@@ -718,7 +782,9 @@ async function fetchDataContext(modules = []) {
   const assignmentLookupLines = capLines(
     normalizedAssignments.map(
       (entry) =>
-        `- ${entry.date}: ${entry.worker}${entry.workerRole ? ` (${entry.workerRole})` : ""} -> ${entry.rig || "No rig"} -> ${entry.job || "No job"}${entry.jobNumber ? ` #${entry.jobNumber}` : ""}${entry.finalized ? " [FINALIZED]" : ""}`
+        `- ${entry.date}: ${entry.worker}${entry.workerRole ? ` (${entry.workerRole})` : ""} -> ${entry.rig || "No rig"} -> ${
+          entry.statusLabel || entry.job || "No job"
+        }${entry.jobNumber ? ` #${entry.jobNumber}` : ""}${entry.finalized ? " [FINALIZED]" : ""}`
     ),
     650
   );
@@ -735,6 +801,8 @@ async function fetchDataContext(modules = []) {
         notes: Array.from(entry.notes).slice(0, 3),
         superintendent: entry.superintendent || "",
         truck: entry.truck || "",
+        statusLabel: entry.statusLabel || "",
+        dayType: entry.dayType || "working",
       }));
 
     return {
@@ -1170,13 +1238,29 @@ Tool patterns:
 - "Assign [truck] to [rig]" -> set_rig_details with truck_number
 - "Copy today to tomorrow" -> copy_schedule
 
+KNOWLEDGE BASE (RAG):
+You have access to a company knowledge base via the search_knowledge_base tool. It contains embedded documents about:
+- Project history (past and current jobs)
+- Client inquiries and contact form messages
+- Team workflow profiles (what people need and their blockers)
+- Company contacts, career positions, processes
+- Any manually added business context
+
+When the user asks about something that isn't fully covered by the live admin data above — like past project details, a specific client, company processes, or historical context — call search_knowledge_base with a descriptive query. The results come back ranked by relevance. Incorporate the most relevant context into your answer naturally.
+
 IMAGE MANAGEMENT GUIDE:
-- Use get_page_images to check what images are assigned to site pages (homepage, hero banners, service pages).
-- Use get_gallery_images to review gallery images by category and see which are visible or hidden.
-- Use toggle_gallery_image to hide or show a gallery image (e.g., "hide that image" or "that photo has a safety issue").
-- When the user asks about images, call the appropriate tool first, then summarize what you find.
-- If the safety manager asks to check images, proactively call get_gallery_images with include_hidden=true to give them the full picture.
+The S&W website has two types of managed images:
+1. **Page images** — hero banners, service cards, CTA backgrounds. Managed via the image_assignments table. Use get_page_images to see current assignments.
+2. **Gallery images** — the public project gallery at /gallery. 42 photos organized by category. Managed via the gallery_images table. Use get_gallery_images to see them.
+
+When the user asks about "images", "page images", "gallery", "photos", "what images are on the site", "check the gallery", etc.:
+- Call get_page_images or get_gallery_images (or both) FIRST, then summarize what you find.
+- Do NOT say you are unaware of images. You have tools to query them.
+- Use get_gallery_images with include_hidden=true when the user wants to see hidden images or is doing a safety review.
+- Use toggle_gallery_image to hide or show a gallery image by its ID.
+- If the safety manager asks to check images, proactively include hidden images.
 - After hiding/showing an image, remind the user the change is live on the public site immediately.
+- For page image changes, direct the user to /admin/image-assignments where they can visually browse and swap images.
 
 RULES:
 - Answer directly from the data above.

@@ -1,14 +1,44 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@/context/AuthContext";
 import AssistantTaskSurface from "@/components/admin/AssistantTaskSurface";
 import { hasPageAccess } from "@/lib/roles";
 
-const WORKSPACE_URLS = {
-  scheduler: "/admin/crew-scheduler?embedded=true",
-  social: "/admin/social-media?embedded=true",
+// Lazy-load workspace components — no iframes, no duplicate auth, no extra websockets
+const WORKSPACE_COMPONENTS = {
+  scheduler: dynamic(
+    () => import("@/pages/admin/crew-scheduler").then((mod) => ({ default: mod.CrewScheduler })),
+    { ssr: false, loading: () => <WorkspaceLoader /> }
+  ),
+  social: dynamic(
+    () => import("@/pages/admin/social-media").then((mod) => ({ default: mod.SocialMediaAdmin })),
+    { ssr: false, loading: () => <WorkspaceLoader /> }
+  ),
+  gallery: dynamic(
+    () => import("@/pages/admin/gallery").then((mod) => ({ default: mod.GalleryManagement })),
+    { ssr: false, loading: () => <WorkspaceLoader /> }
+  ),
+  images: dynamic(
+    () => import("@/pages/admin/image-assignments").then((mod) => ({ default: mod.ImageAssignmentsPage })),
+    { ssr: false, loading: () => <WorkspaceLoader /> }
+  ),
 };
+
+function WorkspaceLoader() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="flex items-center gap-3 text-neutral-500">
+        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        Loading...
+      </div>
+    </div>
+  );
+}
 
 const SESSION_STORAGE_KEY = "sw-admin-assistant-session";
 const PROMPT_CARDS = [
@@ -711,10 +741,11 @@ export default function AdminAssistantWorkspace({
     );
   }
 
-  // ── Workspace mode: split layout with embedded page ──
+  // ── Workspace mode: split layout with component (no iframe) ──
   if (activeWorkspace) {
-    const workspaceUrl = WORKSPACE_URLS[activeWorkspace] || "";
-    const workspaceLabel = activeWorkspace === "scheduler" ? "Crew Scheduler" : activeWorkspace === "social" ? "Social Media" : "";
+    const WORKSPACE_LABELS = { scheduler: "Crew Scheduler", social: "Social Media", gallery: "Gallery Images", images: "Page Images" };
+    const workspaceLabel = WORKSPACE_LABELS[activeWorkspace] || "";
+    const WorkspaceComponent = WORKSPACE_COMPONENTS[activeWorkspace] || null;
 
     return (
       <div className="relative overflow-hidden rounded-[1.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[380px_minmax(0,1fr)]">
@@ -801,7 +832,7 @@ export default function AdminAssistantWorkspace({
           </div>
         </div>
 
-        {/* Right: embedded workspace (full width on mobile) */}
+        {/* Right: workspace content */}
         <div className="relative z-10 overflow-y-auto">
           <div className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-3 py-2 backdrop-blur">
             <button
@@ -816,14 +847,9 @@ export default function AdminAssistantWorkspace({
             </button>
             <div className="text-sm font-semibold text-neutral-700">{workspaceLabel}</div>
           </div>
-          {workspaceUrl ? (
-            <iframe
-              src={workspaceUrl}
-              title={workspaceLabel}
-              className="h-[calc(100vh-7rem)] w-full border-0"
-              allow="clipboard-write"
-            />
-          ) : null}
+          <div className="p-4 md:p-6">
+            {WorkspaceComponent ? <WorkspaceComponent /> : null}
+          </div>
         </div>
       </div>
     );

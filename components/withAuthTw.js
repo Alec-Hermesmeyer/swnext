@@ -1,19 +1,29 @@
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 const withAuthTw = (WrappedComponent) => {
   const Wrapper = (props) => {
     const router = useRouter();
     const { user, loading } = useAuth();
+    const isEmbedded = router.query?.embedded === "true";
+    const [timedOut, setTimedOut] = useState(false);
+
+    // In embedded mode (iframe), give auth a few seconds then render anyway
+    // The parent page already authenticated — shared cookies mean the session exists
+    useEffect(() => {
+      if (!isEmbedded || !loading) return;
+      const timer = setTimeout(() => setTimedOut(true), 3000);
+      return () => clearTimeout(timer);
+    }, [isEmbedded, loading]);
 
     useEffect(() => {
-      if (!loading && !user) {
+      if (!loading && !user && !isEmbedded) {
         router.replace('/login');
       }
-    }, [user, loading, router]);
+    }, [user, loading, router, isEmbedded]);
 
-    if (loading) {
+    if (loading && !timedOut) {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="flex items-center gap-3">
@@ -27,7 +37,8 @@ const withAuthTw = (WrappedComponent) => {
       );
     }
 
-    if (!user) return null;
+    // In embedded mode, render even if user hasn't resolved yet
+    if (!user && !isEmbedded) return null;
 
     return <WrappedComponent {...props} />;
   };
