@@ -131,10 +131,10 @@ export function AuthProvider({ children }) {
     router.push('/login');
   };
 
-  const permissions = useMemo(() => getPermissions(role), [role]);
+  const permissions = useMemo(() => getPermissions(role, accessLevel), [role, accessLevel]);
 
   return (
-    <AuthContext.Provider value={{ user, role, department, profile, permissions, loading, logout }}>
+    <AuthContext.Provider value={{ user, role, accessLevel, department, profile, permissions, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
