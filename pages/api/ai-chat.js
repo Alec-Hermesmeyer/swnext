@@ -1338,7 +1338,7 @@ export default async function handler(req, res) {
 
       for (const toolCall of choice.message.tool_calls) {
         // Double-check permission at execution time
-        if (!hasToolAccess(userRole, toolCall.function.name)) {
+        if (!hasToolAccess(userRole, toolCall.function.name, userAccessLevel)) {
           messages.push({
             role: "tool",
             tool_call_id: toolCall.id,
