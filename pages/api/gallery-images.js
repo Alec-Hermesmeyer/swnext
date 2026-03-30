@@ -134,6 +134,11 @@ export default async function handler(req, res) {
     return res.status(200).json({ images: data || [] });
   }
 
+  // Write endpoints require the table to exist
+  if (!tableReady) {
+    return res.status(503).json({ error: "gallery_images table is not set up yet. Run scripts/gallery-table.sql in Supabase." });
+  }
+
   // POST — add a new gallery image
   if (req.method === "POST") {
     const { filename, category, title, description } = req.body || {};
