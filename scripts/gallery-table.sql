@@ -1,5 +1,6 @@
 -- Run this in the Supabase SQL Editor to create the gallery_images table.
--- After running, the API will auto-seed it with the existing hardcoded images.
+-- After creating, visit /admin/gallery or the public /gallery page —
+-- the API will auto-seed all 42 images from public/galleryImages/ on first load.
 
 CREATE TABLE IF NOT EXISTS gallery_images (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -12,7 +13,6 @@ CREATE TABLE IF NOT EXISTS gallery_images (
   created_at timestamptz DEFAULT now()
 );
 
--- Allow public reads (gallery page is public)
 ALTER TABLE gallery_images ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Public read" ON gallery_images
