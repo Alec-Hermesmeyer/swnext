@@ -388,6 +388,30 @@ function UserManagement() {
                             </span>
                           )}
                         </td>
+                        {/* Level */}
+                        <td className="px-4 py-3">
+                          {isEditing ? (
+                            <select
+                              value={editForm.access_level}
+                              onChange={(e) => setEditForm({ ...editForm, access_level: Number(e.target.value) })}
+                              className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-1 focus:ring-[#0b2a5a]/20"
+                            >
+                              {LEVEL_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                              (user.access_level || 3) === 3
+                                ? "bg-emerald-100 text-emerald-800"
+                                : (user.access_level || 3) === 2
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-neutral-100 text-neutral-600"
+                            }`}>
+                              {LEVEL_OPTIONS.find((o) => o.value === (user.access_level || 3))?.label || `${user.access_level || 3}`}
+                            </span>
+                          )}
+                        </td>
                         {/* Department */}
                         <td className="px-4 py-3">
                           {isEditing ? (
