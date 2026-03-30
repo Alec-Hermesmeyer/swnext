@@ -134,7 +134,7 @@ export default async function handler(req, res) {
 
   // PATCH — update a user's profile
   if (req.method === "PATCH") {
-    const { id, full_name, username, role, department } = req.body || {};
+    const { id, full_name, username, role, department, access_level } = req.body || {};
     if (!id) {
       return res.status(400).json({ error: "User id is required" });
     }
@@ -144,6 +144,7 @@ export default async function handler(req, res) {
     if (username !== undefined) updates.username = username;
     if (role !== undefined) updates.role = role;
     if (department !== undefined) updates.department = department;
+    if (access_level !== undefined) updates.access_level = Number(access_level) || 3;
 
     if (!Object.keys(updates).length) {
       return res.status(400).json({ error: "No fields to update" });
