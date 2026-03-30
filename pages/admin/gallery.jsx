@@ -4,10 +4,9 @@ import Image from "next/image";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import { Lato } from "next/font/google";
-import { imageBaseUrls } from "@/config/imageConfig";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
-const GALLERY_BASE = imageBaseUrls.gallery;
+const GALLERY_BASE = "/galleryImages";
 
 const CATEGORIES = [
   "Pier Drilling",
