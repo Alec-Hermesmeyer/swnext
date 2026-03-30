@@ -18,6 +18,20 @@ const ROLE_OPTIONS = [
   { value: "viewer", label: "Staff / Viewer" },
 ];
 
+function roleBadge(role) {
+  if (!role) return "bg-neutral-100 text-neutral-500";
+  if (role === "admin") return "bg-[#0b2a5a] text-white";
+  if (role === "operations" || role === "safety") return "bg-blue-100 text-blue-800";
+  if (role === "hr") return "bg-violet-100 text-violet-800";
+  if (role === "sales") return "bg-amber-100 text-amber-800";
+  if (role === "social_media") return "bg-rose-100 text-rose-800";
+  return "bg-neutral-100 text-neutral-600";
+}
+
+function roleLabel(role) {
+  return ROLE_OPTIONS.find((o) => o.value === role)?.label || role || "Unassigned";
+}
+
 function timeAgo(dateString) {
   if (!dateString) return "Never";
   const diff = Date.now() - new Date(dateString).getTime();
@@ -31,11 +45,24 @@ function timeAgo(dateString) {
   return new Date(dateString).toLocaleDateString();
 }
 
+const inputClass =
+  "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-2 focus:ring-[#0b2a5a]/20";
+const selectClass =
+  "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-2 focus:ring-[#0b2a5a]/20";
+
 function UserManagement() {
   const { role: currentRole } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Add user form
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addForm, setAddForm] = useState({ email: "", password: "", full_name: "", role: "viewer", department: "" });
+  const [addError, setAddError] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  // Edit
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -59,6 +86,43 @@ function UserManagement() {
       setLoading(false);
     }
   };
+
+  // ── Add user ──
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    if (adding) return;
+    setAddError("");
+
+    if (!addForm.email.trim()) { setAddError("Email is required"); return; }
+    if (!addForm.password || addForm.password.length < 6) {
+      setAddError("Password must be at least 6 characters");
+      return;
+    }
+
+    setAdding(true);
+    try {
+      const res = await fetch("/api/admin-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(addForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create user");
+
+      if (data.user) {
+        setUsers((prev) => [data.user, ...prev]);
+      }
+      setAddForm({ email: "", password: "", full_name: "", role: "viewer", department: "" });
+      setShowAddForm(false);
+    } catch (err) {
+      setAddError(err.message);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  // ── Edit user ──
 
   const startEdit = (user) => {
     setEditingId(user.id);
@@ -90,9 +154,7 @@ function UserManagement() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save");
       setUsers((prev) =>
-        prev.map((u) =>
-          u.id === editingId ? { ...u, ...editForm } : u
-        )
+        prev.map((u) => (u.id === editingId ? { ...u, ...editForm } : u))
       );
       setSaveMessage("Saved");
       setTimeout(() => {
@@ -109,10 +171,7 @@ function UserManagement() {
   if (currentRole !== "admin") {
     return (
       <>
-        <Head>
-          <title>Users | Admin</title>
-          <meta name="robots" content="noindex" />
-        </Head>
+        <Head><title>Users | Admin</title><meta name="robots" content="noindex" /></Head>
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-800">
           Only admins can manage users.
         </div>
@@ -122,28 +181,127 @@ function UserManagement() {
 
   return (
     <>
-      <Head>
-        <title>Users | Admin</title>
-        <meta name="robots" content="noindex" />
-      </Head>
+      <Head><title>Users | Admin</title><meta name="robots" content="noindex" /></Head>
       <div>
-        <div className="mb-6 flex items-center justify-between">
+        {/* Header */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>
               Team Members
             </h1>
             <p className="mt-1 text-sm text-neutral-600">
-              Manage names, roles, and access for all admin users
+              Add users, assign roles, and manage access
             </p>
           </div>
-          <button
-            onClick={fetchUsers}
-            disabled={loading}
-            className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchUsers}
+              disabled={loading}
+              className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={() => { setShowAddForm(!showAddForm); setAddError(""); }}
+              className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a75]"
+            >
+              {showAddForm ? "Cancel" : "+ Add User"}
+            </button>
+          </div>
         </div>
+
+        {/* Add user form */}
+        {showAddForm && (
+          <form
+            onSubmit={handleAdd}
+            className="mb-6 rounded-xl border border-[#dbe4f0] bg-[#f8fbff] p-5"
+          >
+            <div className="mb-4 text-sm font-bold text-[#0b2a5a]">New User</div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-neutral-600">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={addForm.email}
+                  onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
+                  placeholder="name@company.com"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-neutral-600">
+                  Temporary Password *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={addForm.password}
+                  onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
+                  placeholder="Min 6 characters"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-neutral-600">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={addForm.full_name}
+                  onChange={(e) => setAddForm({ ...addForm, full_name: e.target.value })}
+                  placeholder="John Smith"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-neutral-600">
+                  Role
+                </label>
+                <select
+                  value={addForm.role}
+                  onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}
+                  className={selectClass}
+                >
+                  {ROLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-neutral-600">
+                  Department
+                </label>
+                <input
+                  type="text"
+                  value={addForm.department}
+                  onChange={(e) => setAddForm({ ...addForm, department: e.target.value })}
+                  placeholder="e.g. Field, Office, Admin"
+                  className={inputClass}
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  disabled={adding}
+                  className="w-full rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a75] disabled:opacity-50"
+                >
+                  {adding ? "Creating..." : "Create User"}
+                </button>
+              </div>
+            </div>
+            {addError && (
+              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {addError}
+              </div>
+            )}
+            <p className="mt-3 text-xs text-neutral-500">
+              The user can log in immediately with this email and password. They can reset their password from the login page.
+            </p>
+          </form>
+        )}
 
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -151,6 +309,7 @@ function UserManagement() {
           </div>
         )}
 
+        {/* Users table */}
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <div className="flex items-center gap-3 text-neutral-500">
@@ -172,7 +331,6 @@ function UserManagement() {
                     <th className="px-4 py-3 font-semibold text-neutral-700">Role</th>
                     <th className="px-4 py-3 font-semibold text-neutral-700">Department</th>
                     <th className="px-4 py-3 font-semibold text-neutral-700">Last Login</th>
-                    <th className="px-4 py-3 font-semibold text-neutral-700">Created</th>
                     <th className="px-4 py-3 font-semibold text-neutral-700 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -186,106 +344,66 @@ function UserManagement() {
                           isEditing ? "bg-blue-50/50" : "hover:bg-neutral-50"
                         }`}
                       >
+                        {/* Name */}
                         <td className="px-4 py-3">
                           {isEditing ? (
                             <input
                               type="text"
                               value={editForm.full_name}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, full_name: e.target.value })
-                              }
+                              onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
                               placeholder="Full name"
                               className="w-full rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-1 focus:ring-[#0b2a5a]/20"
                             />
                           ) : (
-                            <div>
-                              <div className="font-medium text-neutral-900">
-                                {user.full_name || (
-                                  <span className="italic text-neutral-400">No name</span>
-                                )}
-                              </div>
-                              {user.username && (
-                                <div className="text-xs text-neutral-500">@{user.username}</div>
-                              )}
+                            <div className="font-medium text-neutral-900">
+                              {user.full_name || <span className="italic text-neutral-400">No name</span>}
                             </div>
                           )}
                         </td>
+                        {/* Email */}
                         <td className="px-4 py-3 text-neutral-600">{user.email}</td>
+                        {/* Role */}
                         <td className="px-4 py-3">
                           {isEditing ? (
                             <select
                               value={editForm.role}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, role: e.target.value })
-                              }
+                              onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                               className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-1 focus:ring-[#0b2a5a]/20"
                             >
                               {ROLE_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
                               ))}
                             </select>
-                          ) : user.role ? (
-                            <span
-                              className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                user.role === "admin"
-                                  ? "bg-[#0b2a5a] text-white"
-                                  : user.role === "operations" || user.role === "safety"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : user.role === "hr"
-                                  ? "bg-violet-100 text-violet-800"
-                                  : user.role === "sales"
-                                  ? "bg-amber-100 text-amber-800"
-                                  : user.role === "social_media"
-                                  ? "bg-rose-100 text-rose-800"
-                                  : "bg-neutral-100 text-neutral-600"
-                              }`}
-                            >
-                              {ROLE_OPTIONS.find((o) => o.value === user.role)?.label || user.role}
-                            </span>
                           ) : (
-                            <span className="text-xs italic text-neutral-400">Unassigned</span>
+                            <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${roleBadge(user.role)}`}>
+                              {roleLabel(user.role)}
+                            </span>
                           )}
                         </td>
+                        {/* Department */}
                         <td className="px-4 py-3">
                           {isEditing ? (
                             <input
                               type="text"
                               value={editForm.department}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, department: e.target.value })
-                              }
+                              onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
                               placeholder="Department"
                               className="w-full rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-1 focus:ring-[#0b2a5a]/20"
                             />
                           ) : (
                             <span className="text-neutral-600">
-                              {user.department || (
-                                <span className="text-xs italic text-neutral-400">—</span>
-                              )}
+                              {user.department || <span className="text-xs italic text-neutral-400">&mdash;</span>}
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-neutral-500">
-                          {timeAgo(user.last_sign_in)}
-                        </td>
-                        <td className="px-4 py-3 text-neutral-500">
-                          {user.created_at
-                            ? new Date(user.created_at).toLocaleDateString()
-                            : "—"}
-                        </td>
+                        {/* Last login */}
+                        <td className="px-4 py-3 text-neutral-500">{timeAgo(user.last_sign_in)}</td>
+                        {/* Actions */}
                         <td className="px-4 py-3 text-right">
                           {isEditing ? (
                             <div className="flex items-center justify-end gap-2">
                               {saveMessage && (
-                                <span
-                                  className={`text-xs font-medium ${
-                                    saveMessage === "Saved"
-                                      ? "text-green-600"
-                                      : "text-red-600"
-                                  }`}
-                                >
+                                <span className={`text-xs font-medium ${saveMessage === "Saved" ? "text-green-600" : "text-red-600"}`}>
                                   {saveMessage}
                                 </span>
                               )}
@@ -318,7 +436,7 @@ function UserManagement() {
                   })}
                   {!users.length && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-neutral-500">
+                      <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
                         No users found
                       </td>
                     </tr>
