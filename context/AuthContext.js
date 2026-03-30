@@ -8,7 +8,8 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null); // store role here
+  const [role, setRole] = useState(null);
+  const [accessLevel, setAccessLevel] = useState(3);
   const [department, setDepartment] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,7 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, department, full_name, username')
+        .select('role, department, full_name, username, access_level')
         .eq('id', userId)
         .single();
       if (error) console.error('Profile fetch error:', error);
@@ -38,6 +39,7 @@ export function AuthProvider({ children }) {
   const applyProfile = useCallback((nextProfile) => {
     setProfile(nextProfile);
     setRole(nextProfile ? nextProfile.role || 'user' : null);
+    setAccessLevel(nextProfile?.access_level || 3);
     setDepartment(nextProfile?.department || null);
   }, []);
 
@@ -129,10 +131,10 @@ export function AuthProvider({ children }) {
     router.push('/login');
   };
 
-  const permissions = useMemo(() => getPermissions(role), [role]);
+  const permissions = useMemo(() => getPermissions(role, accessLevel), [role, accessLevel]);
 
   return (
-    <AuthContext.Provider value={{ user, role, department, profile, permissions, loading, logout }}>
+    <AuthContext.Provider value={{ user, role, accessLevel, department, profile, permissions, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

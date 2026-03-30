@@ -79,7 +79,7 @@ async function getAuthenticatedUserContext(req) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, department, full_name, username")
+    .select("role, department, full_name, username, access_level")
     .eq("id", user.id)
     .single();
 
@@ -90,6 +90,7 @@ async function getAuthenticatedUserContext(req) {
     username: profile?.username || "",
     role: profile?.role || "",
     department: profile?.department || "",
+    accessLevel: profile?.access_level || 3,
   };
 }
 
@@ -451,6 +452,60 @@ const tools = [
           message: { type: "string", description: "The social media question or request to send to the strategy assistant" },
         },
         required: ["message"],
+      },
+    },
+  },
+  // ── Team insights tool (admin only) ──
+  {
+    type: "function",
+    function: {
+      name: "get_team_insights",
+      description: "Get workflow profiles submitted by team members through the 'Teach how I work' interview. Shows each person's role, goals, repetitive tasks, blockers, and automation comfort. Use this when the admin asks about what the team needs, what blockers exist, or what to build next.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  // ── Image management tools ──
+  {
+    type: "function",
+    function: {
+      name: "get_page_images",
+      description: "Get the current image assignments for site pages. Shows which image is assigned to each slot (homepage hero, service page backgrounds, etc). Use when the user asks about what images are on the site, which images are assigned, or wants to review page images.",
+      parameters: {
+        type: "object",
+        properties: {
+          page: { type: "string", description: "Filter to a specific page section: homepage, hero, or services. Omit to get all." },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_gallery_images",
+      description: "Get gallery images and their status. Shows which images are visible or hidden on the public gallery page, organized by category. Use when the user asks about gallery photos, wants to check which images are showing, or review gallery content.",
+      parameters: {
+        type: "object",
+        properties: {
+          category: { type: "string", description: "Filter to a specific category like 'Pier Drilling', 'Equipment & Operations', etc. Omit to get all." },
+          include_hidden: { type: "boolean", description: "Include hidden images in results. Default false." },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "toggle_gallery_image",
+      description: "Show or hide a gallery image on the public gallery page. Use when the user wants to hide an image (e.g. safety concern) or bring a hidden image back.",
+      parameters: {
+        type: "object",
+        properties: {
+          image_id: { type: "string", description: "The UUID of the gallery image to toggle" },
+          visible: { type: "boolean", description: "true to show, false to hide" },
+        },
+        required: ["image_id", "visible"],
       },
     },
   },
@@ -1048,7 +1103,7 @@ RECENT CONTACT FORM SUBMISSIONS (latest 20):
 ${linesOrFallback(
   data.contactSubmissions.map(
     (s) =>
-      `- ${s.date}: ${s.name}${s.email ? ` | ${s.email}` : ""}${s.phone ? ` | ${s.phone}` : ""}${s.message ? ` | "${s.message.substring(0, 60)}${s.message.length > 60 ? "..." : ""}"` : ""}`
+      `- ${s.date}: ${s.name}${s.email ? ` | ${s.email}` : ""}${s.phone ? ` | ${s.phone}` : ""}${s.message ? ` | "${s.message.substring(0, 200)}${s.message.length > 200 ? "..." : ""}"` : ""}`
   ),
   "None"
 )}
@@ -1089,12 +1144,13 @@ ${Object.keys(data.brandVoice).length
 
 JOB INTAKE GUIDE:
 When the user wants to enter a new job (from a bid sheet, email, or spreadsheet):
-1. If they paste tabular data or multiple rows, call bulk_create_crew_jobs to batch-create them.
-2. If they describe a single job conversationally, extract the fields and call create_crew_job.
-3. Only job_name is required. Accept partial info and create the job — details can be added later.
-4. If they mention the customer, contractor, address, PM, etc., include those fields.
-5. After creating, confirm what was saved and ask if they want to add more detail or enter another job.
-6. Common bid sheet fields: Job Name, Job Number, Customer, Hiring Contractor, Contact Name/Phone/Email, Address/City/ZIP, PM, Dig Tess Number, Default Rig, Crane Required.
+1. IMPORTANT: If the user says "I'm going to paste", "here is the data", "let me paste", or "pasting from a spreadsheet" but has NOT included actual tabular data in the same message, do NOT call any tools yet. Instead, reply "Go ahead and paste it — I'll process it when I see the data." and WAIT for the next message.
+2. If the message actually contains tabular data or multiple rows of job info, call bulk_create_crew_jobs to batch-create them.
+3. If they describe a single job conversationally, extract the fields and call create_crew_job.
+4. Only job_name is required. Accept partial info and create the job — details can be added later.
+5. If they mention the customer, contractor, address, PM, etc., include those fields.
+6. After creating, confirm what was saved and ask if they want to add more detail or enter another job.
+7. Common bid sheet fields: Job Name, Job Number, Customer, Hiring Contractor, Contact Name/Phone/Email, Address/City/ZIP, PM, Dig Tess Number, Default Rig, Crane Required.
 
 SCHEDULE BUILDER GUIDE:
 The schedule flow is: RIG → CREW → JOB → next rig → finalize → send packets. Walk users through rig-by-rig:
@@ -1113,6 +1169,14 @@ Tool patterns:
 - "Set [super] as super for [rig]" -> set_rig_details
 - "Assign [truck] to [rig]" -> set_rig_details with truck_number
 - "Copy today to tomorrow" -> copy_schedule
+
+IMAGE MANAGEMENT GUIDE:
+- Use get_page_images to check what images are assigned to site pages (homepage, hero banners, service pages).
+- Use get_gallery_images to review gallery images by category and see which are visible or hidden.
+- Use toggle_gallery_image to hide or show a gallery image (e.g., "hide that image" or "that photo has a safety issue").
+- When the user asks about images, call the appropriate tool first, then summarize what you find.
+- If the safety manager asks to check images, proactively call get_gallery_images with include_hidden=true to give them the full picture.
+- After hiding/showing an image, remind the user the change is live on the public site immediately.
 
 RULES:
 - Answer directly from the data above.
@@ -1248,8 +1312,9 @@ export default async function handler(req, res) {
     }
 
     const userRole = String(userContext.role || "").trim().toLowerCase();
-    const writeAccessEnabled = roleCanWrite(userRole);
-    const allowedModules = getDataModules(userRole);
+    const userAccessLevel = userContext.accessLevel || 3;
+    const writeAccessEnabled = roleCanWrite(userRole, userAccessLevel);
+    const allowedModules = getDataModules(userRole, userAccessLevel);
     const [data, assistantProfile] = await Promise.all([
       fetchDataContext(allowedModules),
       fetchLatestAssistantProfile(userContext),
@@ -1307,9 +1372,9 @@ export default async function handler(req, res) {
       { role: "user", content: message },
     ];
 
-    // Filter tools to only those the user's role can access
+    // Filter tools to only those the user's role + level can access
     const roleFilteredTools = writeAccessEnabled
-      ? tools.filter((t) => hasToolAccess(userRole, t.function.name))
+      ? tools.filter((t) => hasToolAccess(userRole, t.function.name, userAccessLevel))
       : [];
 
     let result = await callGroq(messages, roleFilteredTools.length > 0, roleFilteredTools);
@@ -1327,7 +1392,7 @@ export default async function handler(req, res) {
 
       for (const toolCall of choice.message.tool_calls) {
         // Double-check permission at execution time
-        if (!hasToolAccess(userRole, toolCall.function.name)) {
+        if (!hasToolAccess(userRole, toolCall.function.name, userAccessLevel)) {
           messages.push({
             role: "tool",
             tool_call_id: toolCall.id,

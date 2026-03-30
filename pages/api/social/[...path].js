@@ -45,7 +45,12 @@ export default async function handler(req, res) {
       }
     }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    fetchOptions.signal = controller.signal;
+
     const response = await fetch(fullUrl, fetchOptions);
+    clearTimeout(timeout);
 
     // Get response data
     const contentType = response.headers.get('content-type');
@@ -72,8 +77,9 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('[Proxy] Connection error:', error.message);
-    res.status(502).json({
-      error: 'Failed to connect to backend',
+    const status = error.name === 'AbortError' ? 504 : 502;
+    res.status(status).json({
+      error: status === 504 ? 'Backend request timed out' : 'Failed to connect to backend',
       message: error.message,
       target: fullUrl
     });

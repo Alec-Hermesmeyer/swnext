@@ -5,75 +5,17 @@ import TWLayout from "@/components/TWLayout";
 import { FadeIn, FadeInStagger } from "@/components/FadeIn";
 import { useState, useEffect } from "react";
 import { Lato } from "next/font/google";
-import { imageBaseUrls } from "@/config/imageConfig";
-
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-// Gallery image base URL from Supabase
-const GALLERY_BASE = imageBaseUrls.gallery;
+// Gallery images are served from public/galleryImages/
+const GALLERY_BASE = "/galleryImages";
 
-// Organized project data with categories and descriptions
-const projectCategories = {
-  "Pier Drilling": {
-    description: "Commercial and industrial deep foundation drilling projects",
-    badge: "PIER DRILLING",
-    images: [
-      { src: "gal1.webp", title: "Commercial Pier Installation", description: "High-rise building foundation support" },
-      { src: "gal9.webp", title: "Industrial Pier Drilling", description: "Manufacturing facility foundation" },
-      { src: "gal15.webp", title: "Deep Foundation Project", description: "200+ foot pier installation" },
-      { src: "gal22.webp", title: "Urban Pier Drilling", description: "Downtown commercial development" },
-      { src: "gal28.webp", title: "Bridge Foundation Work", description: "Infrastructure pier drilling" },
-      { src: "gal35.webp", title: "Pier Drilling Operation", description: "Large-scale foundation project" }
-    ]
-  },
-  "Equipment & Operations": {
-    description: "Our state-of-the-art drilling equipment and professional crews in action",
-    badge: "EQUIPMENT",
-    images: [
-      { src: "gal5.webp", title: "Drilling Rig Operation", description: "Advanced hydraulic drilling equipment" },
-      { src: "gal12.webp", title: "Limited Access Equipment", description: "Specialized confined space drilling" },
-      { src: "gal18.webp", title: "Crane Operations", description: "Material handling and positioning" },
-      { src: "gal25.webp", title: "Site Preparation", description: "Project setup and mobilization" },
-      { src: "gal32.webp", title: "Quality Control", description: "Precision drilling operations" },
-      { src: "gal38.webp", title: "Team Collaboration", description: "Professional crew coordination" }
-    ]
-  },
-  "Infrastructure Projects": {
-    description: "Large-scale infrastructure and public works foundation projects",
-    badge: "INFRASTRUCTURE",
-    images: [
-      { src: "gal3.webp", title: "Highway Bridge Foundation", description: "DOT infrastructure project" },
-      { src: "gal10.webp", title: "Airport Expansion", description: "Runway foundation support" },
-      { src: "gal17.webp", title: "Water Treatment Facility", description: "Municipal infrastructure project" },
-      { src: "gal24.webp", title: "Power Plant Foundation", description: "Utility infrastructure support" },
-      { src: "gal31.webp", title: "Transportation Hub", description: "Transit facility foundation" },
-      { src: "gal39.webp", title: "Public Works Project", description: "Government facility foundation" }
-    ]
-  },
-  "Commercial Buildings": {
-    description: "Office buildings, retail centers, and commercial developments",
-    badge: "COMMERCIAL",
-    images: [
-      { src: "gal2.webp", title: "Office Tower Foundation", description: "Downtown high-rise project" },
-      { src: "gal8.webp", title: "Shopping Center", description: "Retail development foundation" },
-      { src: "gal14.webp", title: "Mixed-Use Development", description: "Residential/commercial complex" },
-      { src: "gal21.webp", title: "Corporate Campus", description: "Multi-building office complex" },
-      { src: "gal29.webp", title: "Hotel Foundation", description: "Hospitality industry project" },
-      { src: "gal36.webp", title: "Medical Facility", description: "Healthcare building foundation" }
-    ]
-  },
-  "Industrial Projects": {
-    description: "Manufacturing facilities, warehouses, and industrial complexes",
-    badge: "INDUSTRIAL",
-    images: [
-      { src: "gal4.webp", title: "Manufacturing Plant", description: "Heavy industrial foundation" },
-      { src: "gal11.webp", title: "Warehouse Complex", description: "Distribution facility foundation" },
-      { src: "gal19.webp", title: "Chemical Plant", description: "Process industry foundation" },
-      { src: "gal26.webp", title: "Steel Mill Foundation", description: "Heavy equipment support" },
-      { src: "gal33.webp", title: "Refinery Project", description: "Petroleum industry foundation" },
-      { src: "gal40.webp", title: "Processing Facility", description: "Industrial complex foundation" }
-    ]
-  }
+const CATEGORY_META = {
+  "Pier Drilling": { description: "Commercial and industrial deep foundation drilling projects", badge: "PIER DRILLING" },
+  "Equipment & Operations": { description: "Our state-of-the-art drilling equipment and professional crews in action", badge: "EQUIPMENT" },
+  "Infrastructure Projects": { description: "Large-scale infrastructure and public works foundation projects", badge: "INFRASTRUCTURE" },
+  "Commercial Buildings": { description: "Office buildings, retail centers, and commercial developments", badge: "COMMERCIAL" },
+  "Industrial Projects": { description: "Manufacturing facilities, warehouses, and industrial complexes", badge: "INDUSTRIAL" },
 };
 
 function Hero() {
@@ -151,8 +93,45 @@ function ProjectStats() {
 }
 
 function ProjectCategories() {
-  const [selectedCategory, setSelectedCategory] = useState("Pier Drilling");
+  const [galleryData, setGalleryData] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+
+  // Fetch gallery images from database
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/api/gallery-images");
+        const data = await res.json();
+        const images = data.images || [];
+
+        // Group by category
+        const grouped = {};
+        images.forEach((img) => {
+          const cat = img.category || "Uncategorized";
+          if (!grouped[cat]) grouped[cat] = [];
+          grouped[cat].push(img);
+        });
+
+        // Sort each category by sort_order
+        Object.values(grouped).forEach((arr) =>
+          arr.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        );
+
+        const catList = Object.keys(grouped);
+        setGalleryData(grouped);
+        setCategories(catList);
+        if (catList.length) setSelectedCategory(catList[0]);
+      } catch {
+        // Fallback empty
+      } finally {
+        setLoaded(true);
+      }
+    };
+    load();
+  }, []);
 
   // Close modal with Escape key
   useEffect(() => {
@@ -164,7 +143,7 @@ function ProjectCategories() {
 
     if (selectedImage) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -174,6 +153,9 @@ function ProjectCategories() {
       document.body.style.overflow = 'unset';
     };
   }, [selectedImage]);
+
+  const currentImages = galleryData[selectedCategory] || [];
+  const meta = CATEGORY_META[selectedCategory] || { description: "", badge: selectedCategory?.toUpperCase() };
 
   return (
     <section id="project-categories" className="mx-auto w-full max-w-7xl px-6 py-16">
@@ -188,7 +170,7 @@ function ProjectCategories() {
 
       {/* Category Filter Buttons */}
       <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-        {Object.keys(projectCategories).map((category) => (
+        {categories.map((category) => (
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
@@ -198,59 +180,65 @@ function ProjectCategories() {
                 : "bg-white text-[#0b2a5a] border border-gray-300 hover:bg-gray-50"
             }`}
           >
-            {projectCategories[category].badge}
+            {(CATEGORY_META[category]?.badge) || category.toUpperCase()}
           </button>
         ))}
       </div>
 
       {/* Selected Category Description */}
-      <div className="text-center mb-8">
-        <h3 className={`${lato.className} text-2xl font-bold text-[#0b2a5a] mb-3`}>
-          {selectedCategory}
-        </h3>
-        <p className="text-neutral-600 max-w-2xl mx-auto">
-          {projectCategories[selectedCategory].description}
-        </p>
-      </div>
+      {selectedCategory && (
+        <div className="text-center mb-8">
+          <h3 className={`${lato.className} text-2xl font-bold text-[#0b2a5a] mb-3`}>
+            {selectedCategory}
+          </h3>
+          {meta.description && (
+            <p className="text-neutral-600 max-w-2xl mx-auto">{meta.description}</p>
+          )}
+        </div>
+      )}
 
       {/* Project Images Grid */}
-      <div key={selectedCategory}>
-        <FadeInStagger>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projectCategories[selectedCategory].images.map((project, index) => (
-              <FadeIn key={`${selectedCategory}-${project.src}`}>
-                <div 
-                  className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
-                  onClick={() => setSelectedImage(project)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedImage(project);
-                    }
-                  }}
-                  aria-label="View project image"
-                >
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <Image
-                      src={`${GALLERY_BASE}/${project.src}`}
-                      alt="S&W Foundation project  "
-                      width={600}
-                      height={450}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      unoptimized
-                      loader={({ src }) => src}
-                    />
+      {!loaded ? (
+        <div className="text-center py-12 text-neutral-500">Loading gallery...</div>
+      ) : (
+        <div key={selectedCategory}>
+          <FadeInStagger>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentImages.map((project) => (
+                <FadeIn key={project.id || project.filename}>
+                  <div
+                    className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    onClick={() => setSelectedImage(project)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedImage(project);
+                      }
+                    }}
+                    aria-label="View project image"
+                  >
+                    <div className="aspect-[4/3] overflow-hidden">
+                      <Image
+                        src={`${GALLERY_BASE}/${project.filename}`}
+                        alt={project.title || "S&W Foundation project"}
+                        width={600}
+                        height={450}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        unoptimized
+                        loader={({ src }) => src}
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
                   </div>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </FadeInStagger>
-      </div>
+                </FadeIn>
+              ))}
+            </div>
+          </FadeInStagger>
+        </div>
+      )}
 
       {/* Image Modal */}
       {selectedImage && (
@@ -274,8 +262,8 @@ function ProjectCategories() {
           >
             <div className="relative max-w-5xl w-full flex-1 flex items-center justify-center min-h-0">
               <Image
-                src={`${GALLERY_BASE}/${selectedImage.src}`}
-                alt="S&W Foundation project"
+                src={`${GALLERY_BASE}/${selectedImage.filename || selectedImage.src}`}
+                alt={selectedImage.title || "S&W Foundation project"}
                 width={1400}
                 height={1000}
                 className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-lg"
