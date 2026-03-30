@@ -454,6 +454,15 @@ const tools = [
       },
     },
   },
+  // ── Team insights tool (admin only) ──
+  {
+    type: "function",
+    function: {
+      name: "get_team_insights",
+      description: "Get workflow profiles submitted by team members through the 'Teach how I work' interview. Shows each person's role, goals, repetitive tasks, blockers, and automation comfort. Use this when the admin asks about what the team needs, what blockers exist, or what to build next.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
 ];
 
 // ── Tool execution ──
