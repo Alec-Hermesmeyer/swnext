@@ -55,6 +55,82 @@ export default async function handler(req, res) {
     }
   }
 
+  // POST — create a new user (auth + profile)
+  if (req.method === "POST") {
+    const { email, password, full_name, role, department } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    try {
+      const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: full_name || "" },
+      });
+
+      if (authErr) {
+        console.error("Create user auth error:", authErr);
+        // Supabase returns a message like "A user with this email address has already been registered"
+        return res.status(400).json({ error: authErr.message || "Could not create user" });
+      }
+
+      const userId = authData.user?.id;
+      if (!userId) {
+        return res.status(500).json({ error: "User created but no ID returned" });
+      }
+
+      // Create profile row
+      const profileRow = { id: userId };
+      if (full_name) profileRow.full_name = full_name;
+      if (role) profileRow.role = role;
+      if (department) profileRow.department = department;
+
+      const { error: profErr } = await supabase
+        .from("profiles")
+        .upsert(profileRow, { onConflict: "id" });
+
+      if (profErr) {
+        console.error("Profile create error (user auth was created):", profErr);
+        // User auth exists but profile failed — return success with warning
+        return res.status(200).json({
+          success: true,
+          warning: "User account created but profile save failed. Edit the user to fix.",
+          user: {
+            id: userId,
+            email,
+            full_name: full_name || "",
+            role: role || "",
+            department: department || "",
+            last_sign_in: null,
+            created_at: authData.user.created_at,
+          },
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        user: {
+          id: userId,
+          email,
+          full_name: full_name || "",
+          username: "",
+          role: role || "",
+          department: department || "",
+          last_sign_in: null,
+          created_at: authData.user.created_at,
+        },
+      });
+    } catch (err) {
+      console.error("Create user error:", err);
+      return res.status(500).json({ error: "Failed to create user" });
+    }
+  }
+
   // PATCH — update a user's profile
   if (req.method === "PATCH") {
     const { id, full_name, username, role, department } = req.body || {};
