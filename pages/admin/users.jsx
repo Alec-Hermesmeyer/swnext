@@ -336,6 +336,7 @@ function UserManagement() {
                     <th className="px-4 py-3 font-semibold text-neutral-700">Name</th>
                     <th className="px-4 py-3 font-semibold text-neutral-700">Email</th>
                     <th className="px-4 py-3 font-semibold text-neutral-700">Role</th>
+                    <th className="px-4 py-3 font-semibold text-neutral-700">Level</th>
                     <th className="px-4 py-3 font-semibold text-neutral-700">Department</th>
                     <th className="px-4 py-3 font-semibold text-neutral-700">Last Login</th>
                     <th className="px-4 py-3 font-semibold text-neutral-700 text-right">Actions</th>
