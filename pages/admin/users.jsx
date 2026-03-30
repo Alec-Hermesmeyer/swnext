@@ -18,6 +18,12 @@ const ROLE_OPTIONS = [
   { value: "viewer", label: "Staff / Viewer" },
 ];
 
+const LEVEL_OPTIONS = [
+  { value: 1, label: "1 — View", hint: "Read-only, can chat" },
+  { value: 2, label: "2 — Standard", hint: "Can write, core tools" },
+  { value: 3, label: "3 — Lead", hint: "Full access within role" },
+];
+
 function roleBadge(role) {
   if (!role) return "bg-neutral-100 text-neutral-500";
   if (role === "admin") return "bg-[#0b2a5a] text-white";
