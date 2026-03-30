@@ -89,10 +89,23 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Supabase not configured" });
   }
 
-  await ensureTable();
+  const tableReady = await ensureTable();
 
   // GET — list gallery images (public endpoint for gallery page + admin)
   if (req.method === "GET") {
+    // If the table isn't ready, return seed data so the gallery still works
+    if (!tableReady) {
+      const fallback = SEED_DATA.map((row, i) => ({
+        id: `seed-${i}`,
+        ...row,
+        title: null,
+        description: null,
+        is_visible: true,
+        created_at: null,
+      }));
+      return res.status(200).json({ images: fallback });
+    }
+
     const showAll = req.query.all === "true"; // admin wants hidden ones too
     let query = supabase
       .from("gallery_images")
@@ -106,7 +119,17 @@ export default async function handler(req, res) {
 
     const { data, error } = await query;
     if (error) {
-      return res.status(500).json({ error: "Failed to fetch gallery images" });
+      console.error("Gallery query error:", error);
+      // Fall back to seed data rather than breaking the gallery page
+      const fallback = SEED_DATA.map((row, i) => ({
+        id: `seed-${i}`,
+        ...row,
+        title: null,
+        description: null,
+        is_visible: true,
+        created_at: null,
+      }));
+      return res.status(200).json({ images: fallback });
     }
     return res.status(200).json({ images: data || [] });
   }
