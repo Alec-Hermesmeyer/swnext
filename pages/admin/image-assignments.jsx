@@ -657,6 +657,9 @@ function ImageAssignmentsPage() {
   );
 }
 
+// Named export for embedding as a component (no auth wrapper, no layout)
+export { ImageAssignmentsPage };
+
 ImageAssignmentsPage.getLayout = function getLayout(page) {
   return <TWAdminLayout>{page}</TWAdminLayout>;
 };

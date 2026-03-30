@@ -2068,6 +2068,8 @@ function SocialMediaAdmin() {
   );
 }
 
+export { SocialMediaAdmin };
+
 SocialMediaAdmin.getLayout = function getLayout(page) {
   return <TWAdminLayout>{page}</TWAdminLayout>;
 };

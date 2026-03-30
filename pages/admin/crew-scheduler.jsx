@@ -173,6 +173,68 @@ const JOB_INTAKE_HEADER_ALIASES = {
   crane_required: ["crane", "crane required", "needs crane", "crane?"],
 };
 
+const RIG_DAY_TYPE_OPTIONS = [
+  { value: "working", label: "Working Day", defaultLabel: "" },
+  { value: "mob", label: "Mob / Move", defaultLabel: "Mob Rig" },
+  { value: "down_day", label: "Down Day", defaultLabel: "Down Day" },
+  { value: "repairs", label: "Repairs", defaultLabel: "Repairs" },
+  { value: "shop", label: "Shop / Yard", defaultLabel: "Shop / Yard" },
+  { value: "custom", label: "Custom", defaultLabel: "Custom Status" },
+];
+
+const RIG_DAY_TYPE_LABELS = RIG_DAY_TYPE_OPTIONS.reduce(
+  (acc, option) => ({ ...acc, [option.value]: option.label }),
+  {}
+);
+
+const NON_WORKING_RIG_DAY_TYPES = new Set(
+  RIG_DAY_TYPE_OPTIONS.filter((option) => option.value !== "working").map(
+    (option) => option.value
+  )
+);
+
+const RIG_STATUS_NOTE_PREFIX = "__rig_day_type__:";
+
+const trimText = (value) => String(value || "").trim();
+
+const parseRigDayType = (notes) => {
+  const raw = trimText(notes);
+  if (!raw.startsWith(RIG_STATUS_NOTE_PREFIX)) return null;
+  const value = raw.slice(RIG_STATUS_NOTE_PREFIX.length).trim().toLowerCase();
+  return RIG_DAY_TYPE_LABELS[value] ? value : "custom";
+};
+
+const isRigStatusAssignment = (assignment) =>
+  !assignment?.worker_id && !!parseRigDayType(assignment?.notes);
+
+const isNonWorkingRigDayType = (dayType) =>
+  NON_WORKING_RIG_DAY_TYPES.has(dayType);
+
+const getDefaultRigDayLabel = (dayType) =>
+  RIG_DAY_TYPE_OPTIONS.find((option) => option.value === dayType)?.defaultLabel || "";
+
+const resolveRigDayStatusLabel = (dayType, label) => {
+  const clean = trimText(label);
+  if (clean) return clean;
+  return getDefaultRigDayLabel(dayType);
+};
+
+const buildRigDayTypeNote = (dayType) => `${RIG_STATUS_NOTE_PREFIX}${dayType}`;
+
+const getRigDayStatusFromAssignments = (assignmentRows = []) => {
+  const statusAssignment = assignmentRows.find(isRigStatusAssignment) || null;
+  const dayType = parseRigDayType(statusAssignment?.notes) || "working";
+  const statusLabel = resolveRigDayStatusLabel(dayType, statusAssignment?.job_name);
+
+  return {
+    dayType,
+    dayTypeLabel: RIG_DAY_TYPE_LABELS[dayType] || "Working Day",
+    isNonWorking: isNonWorkingRigDayType(dayType),
+    statusLabel,
+    statusAssignment,
+  };
+};
+
 function CrewScheduler() {
   const [activeTab, setActiveTab] = useState("schedule");
   const [selectedDate, setSelectedDate] = useState(toDateString(new Date()));
@@ -1305,18 +1367,26 @@ function CrewScheduler() {
         color: cat.color,
       }));
 
-      const emailAssignments = assignments.map((a) => ({
-        category_id: a.category_id,
-        worker_name: formatWorkerLabel(a.crew_workers) || "Unassigned",
-        job_name: a.crew_jobs?.job_name || a.job_name || "",
-      }));
+      const emailAssignments = assignments
+        .filter((assignment) => assignment.worker_id)
+        .map((a) => ({
+          category_id: a.category_id,
+          worker_name: formatWorkerLabel(a.crew_workers) || "Unassigned",
+          job_name: a.crew_jobs?.job_name || a.job_name || "",
+        }));
 
-      const emailRigDetails = Object.entries(rigDetails).map(([catId, detail]) => ({
-        category_id: catId,
-        superintendent_name: detail.superintendent_name || "",
-        truck_number: detail.truck_number || "",
-        crane_info: detail.crane_info || "",
-      }));
+      const emailRigDetails = categories.map((cat) => {
+        const detail = rigDetails[cat.id] || {};
+        const status = scheduleRigStatusByCategoryId[cat.id] || {};
+        return {
+          category_id: cat.id,
+          superintendent_name: detail.superintendent_name || "",
+          truck_number: detail.truck_number || "",
+          crane_info: detail.crane_info || "",
+          day_type: status.dayType || "working",
+          status_label: status.isNonWorking ? status.statusLabel || "" : "",
+        };
+      });
 
       const response = await fetch("/api/send-schedule", {
         method: "POST",
@@ -2022,8 +2092,13 @@ function CrewScheduler() {
             const catAssignments = assignments.filter(
               (a) => a.category_id === cat.id
             );
+            const crewAssignments = catAssignments.filter((assignment) => assignment.worker_id);
             const detail = rigDetails[cat.id] || {};
+            const status = scheduleRigStatusByCategoryId[cat.id] || {};
             const detailLine = [
+              status.isNonWorking && status.statusLabel
+                ? `Status: ${status.statusLabel}`
+                : "",
               detail.superintendent_name ? `Supt: ${detail.superintendent_name}` : "",
               detail.truck_number ? `Truck: ${detail.truck_number}` : "",
               detail.crane_info ? `Crane: ${detail.crane_info}` : "",
@@ -2039,19 +2114,25 @@ function CrewScheduler() {
                 ${detailLine ? `<div class="category-detail">${detailLine}</div>` : ""}
                 <div class="category-content">
                   ${
-                    catAssignments.length > 0
-                          ? catAssignments
+                    crewAssignments.length > 0
+                          ? crewAssignments
                           .map(
                             (a) => `
                         <div class="assignment">
                           <span class="worker-name">${
                             formatWorkerLabel(a.crew_workers) || "Unassigned"
                           }</span>
-                          <span class="job-name">${a.crew_jobs?.job_name || a.job_name || ""}</span>
+                          <span class="job-name">${
+                            status.isNonWorking
+                              ? status.statusLabel || ""
+                              : a.crew_jobs?.job_name || a.job_name || ""
+                          }</span>
                         </div>
                       `
                           )
                           .join("")
+                      : status.isNonWorking && status.statusLabel
+                      ? `<div class="empty">${status.statusLabel}</div>`
                       : '<div class="empty">No crew assigned</div>'
                   }
                 </div>
@@ -2121,6 +2202,7 @@ function CrewScheduler() {
       const catAssignments = assignments.filter(
         (assignment) => String(assignment.category_id) === String(category.id)
       );
+      const rigDayStatus = getRigDayStatusFromAssignments(catAssignments);
       const detail = rigDetails[category.id] || {};
       const rigJobAssignment = catAssignments.find((assignment) => assignment.job_id);
       const rigJob = rigJobAssignment?.crew_jobs
@@ -2140,17 +2222,29 @@ function CrewScheduler() {
       const hasSuper = !!detail.superintendent_id;
       const hasTruck = !!detail.truck_id;
       const hasCrew = crewAssignments.length > 0;
-      const completion = Math.round(
-        ((Number(hasJob) + Number(hasSuper) + Number(hasTruck) + Number(hasCrew)) / 4) *
-          100
-      );
       const missing = [];
-      if (!hasJob) missing.push("Job");
-      if (!hasSuper) missing.push("Super");
-      if (!hasTruck) missing.push("Truck");
-      if (!hasCrew) missing.push("Crew");
+      let completion = 0;
+
+      if (rigDayStatus.isNonWorking) {
+        const hasStatusLabel = !!rigDayStatus.statusLabel;
+        if (!hasStatusLabel) missing.push("Status");
+        completion = hasStatusLabel ? 100 : 0;
+      } else {
+        completion = Math.round(
+          ((Number(hasJob) + Number(hasSuper) + Number(hasTruck) + Number(hasCrew)) / 4) *
+            100
+        );
+        if (!hasJob) missing.push("Job");
+        if (!hasSuper) missing.push("Super");
+        if (!hasTruck) missing.push("Truck");
+        if (!hasCrew) missing.push("Crew");
+      }
 
       statusMap[category.id] = {
+        dayType: rigDayStatus.dayType,
+        dayTypeLabel: rigDayStatus.dayTypeLabel,
+        isNonWorking: rigDayStatus.isNonWorking,
+        statusLabel: rigDayStatus.statusLabel,
         hasJob,
         hasSuper,
         hasTruck,
@@ -2178,6 +2272,8 @@ function CrewScheduler() {
       if (!query) return true;
       return [
         category.name,
+        status.dayTypeLabel,
+        status.statusLabel,
         status.jobName,
         status.jobNumber,
         status.location,
@@ -2200,8 +2296,11 @@ function CrewScheduler() {
     const statuses = Object.values(scheduleRigStatusByCategoryId);
     const totalRigs = categories.length;
     const readyRigs = statuses.filter((status) => status.ready).length;
-    const rigsWithJob = statuses.filter((status) => status.hasJob).length;
-    const rigsMissingCrew = statuses.filter((status) => !status.hasCrew).length;
+    const workingRigs = statuses.filter((status) => !status.isNonWorking && status.hasJob).length;
+    const specialStatusRigs = statuses.filter((status) => status.isNonWorking).length;
+    const rigsMissingCrew = statuses.filter(
+      (status) => !status.isNonWorking && !status.hasCrew
+    ).length;
     const assignedWorkerIds = new Set(
       assignments.filter((assignment) => assignment.worker_id).map((assignment) => assignment.worker_id)
     );
@@ -2211,7 +2310,8 @@ function CrewScheduler() {
     return {
       totalRigs,
       readyRigs,
-      rigsWithJob,
+      workingRigs,
+      specialStatusRigs,
       rigsMissingCrew,
       unassignedWorkers,
     };
@@ -2242,6 +2342,10 @@ function CrewScheduler() {
     if (assignedElsewhere) return;
 
     setSaving(true);
+    const catAssignments = assignments.filter(
+      (assignment) => String(assignment.category_id) === String(categoryId)
+    );
+    const rigDayStatus = getRigDayStatusFromAssignments(catAssignments);
     const rigJob = getRigJobId(categoryId);
     const job = rigJob
       ? jobs.find((j) => String(j.id) === String(rigJob))
@@ -2250,8 +2354,10 @@ function CrewScheduler() {
       schedule_id: currentSchedule.id,
       category_id: categoryId,
       worker_id: workerId,
-      job_id: rigJob || null,
-      job_name: job?.job_name || "",
+      job_id: rigDayStatus.isNonWorking ? null : rigJob || null,
+      job_name: rigDayStatus.isNonWorking
+        ? rigDayStatus.statusLabel
+        : job?.job_name || "",
     });
     if (!error) fetchSchedule(selectedDate);
     setSaving(false);
@@ -2271,6 +2377,86 @@ function CrewScheduler() {
     setRigWorkerDraft(categoryId, "");
   };
 
+  const applyRigDayStatus = async (categoryId, dayType, labelOverride) => {
+    if (!currentSchedule) return;
+
+    const nextDayType = dayType || "working";
+    const nextLabel = resolveRigDayStatusLabel(nextDayType, labelOverride);
+    const catAssignments = assignments.filter(
+      (assignment) => String(assignment.category_id) === String(categoryId)
+    );
+    const statusAssignments = catAssignments.filter(isRigStatusAssignment);
+    const workingAssignments = catAssignments.filter(
+      (assignment) => !isRigStatusAssignment(assignment)
+    );
+
+    setSaving(true);
+
+    if (nextDayType === "working") {
+      await Promise.all(
+        workingAssignments.map((assignment) =>
+          supabase
+            .from("crew_assignments")
+            .update({ job_id: null, job_name: "" })
+            .eq("id", assignment.id)
+        )
+      );
+
+      if (statusAssignments.length > 0) {
+        await Promise.all(
+          statusAssignments.map((assignment) =>
+            supabase.from("crew_assignments").delete().eq("id", assignment.id)
+          )
+        );
+      }
+
+      await fetchSchedule(selectedDate);
+      setSaving(false);
+      return;
+    }
+
+    await Promise.all(
+      workingAssignments.map((assignment) =>
+        supabase
+          .from("crew_assignments")
+          .update({ job_id: null, job_name: nextLabel })
+          .eq("id", assignment.id)
+      )
+    );
+
+    if (statusAssignments.length === 0) {
+      await supabase.from("crew_assignments").insert({
+        schedule_id: currentSchedule.id,
+        category_id: categoryId,
+        worker_id: null,
+        job_id: null,
+        job_name: nextLabel,
+        notes: buildRigDayTypeNote(nextDayType),
+      });
+    } else {
+      const [firstStatusAssignment, ...extraStatusAssignments] = statusAssignments;
+      await supabase
+        .from("crew_assignments")
+        .update({
+          job_id: null,
+          job_name: nextLabel,
+          notes: buildRigDayTypeNote(nextDayType),
+        })
+        .eq("id", firstStatusAssignment.id);
+
+      if (extraStatusAssignments.length > 0) {
+        await Promise.all(
+          extraStatusAssignments.map((assignment) =>
+            supabase.from("crew_assignments").delete().eq("id", assignment.id)
+          )
+        );
+      }
+    }
+
+    await fetchSchedule(selectedDate);
+    setSaving(false);
+  };
+
   const assignJobToRig = async (categoryId, jobId) => {
     if (!currentSchedule) return;
     setSaving(true);
@@ -2278,7 +2464,20 @@ function CrewScheduler() {
     const catAssignments = assignments.filter(
       (a) => a.category_id === categoryId
     );
-    if (catAssignments.length === 0) {
+    const workingAssignments = catAssignments.filter(
+      (assignment) => !isRigStatusAssignment(assignment)
+    );
+    const statusAssignments = catAssignments.filter(isRigStatusAssignment);
+
+    if (statusAssignments.length > 0) {
+      await Promise.all(
+        statusAssignments.map((assignment) =>
+          supabase.from("crew_assignments").delete().eq("id", assignment.id)
+        )
+      );
+    }
+
+    if (workingAssignments.length === 0) {
       await supabase.from("crew_assignments").insert({
         schedule_id: currentSchedule.id,
         category_id: categoryId,
@@ -2287,7 +2486,7 @@ function CrewScheduler() {
         job_name: job?.job_name || "",
       });
     } else {
-      for (const a of catAssignments) {
+      for (const a of workingAssignments) {
         await supabase
           .from("crew_assignments")
           .update({ job_id: jobId, job_name: job?.job_name || "" })
@@ -2303,7 +2502,7 @@ function CrewScheduler() {
     const catAssignments = assignments.filter(
       (a) => a.category_id === categoryId
     );
-    for (const a of catAssignments) {
+    for (const a of catAssignments.filter((assignment) => !isRigStatusAssignment(assignment))) {
       await supabase
         .from("crew_assignments")
         .update({ job_id: null, job_name: "" })
@@ -2484,17 +2683,43 @@ function CrewScheduler() {
         return;
       }
 
-      const normalized = (data || []).map((row) => ({
-        id: row.id,
-        date: row.crew_schedules?.schedule_date || "",
-        finalized: !!row.crew_schedules?.is_finalized,
-        worker: formatWorkerLabel(row.crew_workers),
-        rig: row.crew_categories?.name || "",
-        rigColor: row.crew_categories?.color || "#6b7280",
-        job: row.crew_jobs?.job_name || row.job_name || "",
-        jobNumber: row.crew_jobs?.job_number || "",
-        notes: row.notes || "",
-      }));
+      const statusByDateRig = {};
+      (data || []).forEach((row) => {
+        const date = row.crew_schedules?.schedule_date || "";
+        const rig = row.crew_categories?.name || "";
+        if (!date || !rig) return;
+        const key = `${date}::${rig}`;
+        if (!statusByDateRig[key]) statusByDateRig[key] = [];
+        statusByDateRig[key].push(row);
+      });
+
+      const normalized = (data || []).map((row) => {
+        const date = row.crew_schedules?.schedule_date || "";
+        const rig = row.crew_categories?.name || "";
+        const rigDayStatus = getRigDayStatusFromAssignments(
+          statusByDateRig[`${date}::${rig}`] || []
+        );
+        const isStatusPlaceholder = isRigStatusAssignment(row);
+
+        return {
+          id: row.id,
+          date,
+          finalized: !!row.crew_schedules?.is_finalized,
+          worker: formatWorkerLabel(row.crew_workers),
+          rig,
+          rigColor: row.crew_categories?.color || "#6b7280",
+          job:
+            !rigDayStatus.isNonWorking && !isStatusPlaceholder
+              ? row.crew_jobs?.job_name || row.job_name || ""
+              : "",
+          jobNumber: row.crew_jobs?.job_number || "",
+          notes: row.notes || "",
+          statusLabel: rigDayStatus.isNonWorking ? rigDayStatus.statusLabel : "",
+          dayType: rigDayStatus.dayType,
+          isNonWorking: rigDayStatus.isNonWorking,
+          isStatusPlaceholder,
+        };
+      });
       setHistoryAssignments(normalized);
       setHistoryLoading(false);
     };
@@ -2515,6 +2740,8 @@ function CrewScheduler() {
         entry.worker,
         entry.rig,
         entry.job,
+        entry.statusLabel,
+        entry.dayType,
         entry.jobNumber,
         entry.notes,
       ]
@@ -2578,6 +2805,7 @@ function CrewScheduler() {
     const uniqueRigs = new Set();
     historyFilteredAssignments.forEach((entry) => {
       if (entry.job) uniqueJobs.add(entry.job);
+      if (entry.statusLabel) uniqueJobs.add(entry.statusLabel);
       if (entry.worker) uniqueWorkers.add(entry.worker);
       if (entry.rig) uniqueRigs.add(entry.rig);
     });
@@ -2591,11 +2819,15 @@ function CrewScheduler() {
   }, [historyAssignmentsByDate, historyFilteredAssignments]);
 
   const getHistoryEntryHeadline = (entry) => {
+    const targetLabel = entry.statusLabel || entry.job || "No job";
+    if (entry.isStatusPlaceholder && entry.statusLabel) {
+      return `Status: ${entry.statusLabel}`;
+    }
     if (historyView === "rig") {
-      return `${entry.worker || "Unassigned"} -> ${entry.job || "No job"}`;
+      return `${entry.worker || "Unassigned"} -> ${targetLabel}`;
     }
     if (historyView === "crew") {
-      return `${entry.rig || "No rig"} -> ${entry.job || "No job"}`;
+      return `${entry.rig || "No rig"} -> ${targetLabel}`;
     }
     return `${entry.rig || "No rig"} -> ${entry.worker || "Unassigned"}`;
   };
@@ -2603,6 +2835,9 @@ function CrewScheduler() {
   const getHistoryEntrySubline = (entry) => {
     const parts = [];
     if (entry.jobNumber) parts.push(`#${entry.jobNumber}`);
+    if (entry.isNonWorking && entry.dayType !== "custom") {
+      parts.push(RIG_DAY_TYPE_LABELS[entry.dayType] || "Special Status");
+    }
     if (entry.notes) parts.push(entry.notes);
     if (entry.finalized) parts.push("Finalized");
     return parts.join(" • ");
@@ -2699,27 +2934,57 @@ function CrewScheduler() {
     return map;
   }, [plannerSchedules]);
 
+  const plannerRigStatusByDateRig = useMemo(() => {
+    const grouped = {};
+    plannerAssignments.forEach((row) => {
+      const schedule = plannerScheduleById[row.schedule_id];
+      const date = schedule?.schedule_date || "";
+      const rig = row.crew_categories?.name || "";
+      if (!date || !rig) return;
+      const key = `${date}::${rig}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(row);
+    });
+
+    const statusMap = {};
+    Object.entries(grouped).forEach(([key, rows]) => {
+      statusMap[key] = getRigDayStatusFromAssignments(rows);
+    });
+    return statusMap;
+  }, [plannerAssignments, plannerScheduleById]);
+
   const plannerAssignmentRows = useMemo(
     () =>
       plannerAssignments
         .map((row) => {
           const schedule = plannerScheduleById[row.schedule_id];
           if (!schedule?.schedule_date) return null;
+          const rig = row.crew_categories?.name || "";
+          const rigDayStatus =
+            plannerRigStatusByDateRig[`${schedule.schedule_date}::${rig}`] ||
+            getRigDayStatusFromAssignments([row]);
+          const isStatusPlaceholder = isRigStatusAssignment(row);
           return {
             id: row.id,
             date: schedule.schedule_date,
             finalized: !!schedule.is_finalized,
             workerId: row.worker_id,
             worker: formatWorkerLabel(row.crew_workers) || "",
-            rig: row.crew_categories?.name || "",
+            rig,
             rigColor: row.crew_categories?.color || "#6b7280",
-            job: row.crew_jobs?.job_name || row.job_name || "",
+            job:
+              !rigDayStatus.isNonWorking && !isStatusPlaceholder
+                ? row.crew_jobs?.job_name || row.job_name || ""
+                : "",
             jobNumber: row.crew_jobs?.job_number || "",
             notes: row.notes || "",
+            statusLabel: rigDayStatus.isNonWorking ? rigDayStatus.statusLabel : "",
+            dayType: rigDayStatus.dayType,
+            isStatusPlaceholder,
           };
         })
         .filter(Boolean),
-    [plannerAssignments, plannerScheduleById]
+    [plannerAssignments, plannerRigStatusByDateRig, plannerScheduleById]
   );
 
   const plannerRigDetailRows = useMemo(
@@ -2765,6 +3030,8 @@ function CrewScheduler() {
         entry.worker,
         entry.rig,
         entry.job,
+        entry.statusLabel,
+        entry.dayType,
         entry.jobNumber,
         entry.notes,
       ]
@@ -2791,9 +3058,18 @@ function CrewScheduler() {
           superintendent: "",
           truck: "",
           crane: "",
+          statusLabel: "",
+          dayType: "working",
         });
       }
       const rig = day.rigs.get(rigName);
+      if (entry.statusLabel) {
+        rig.statusLabel = entry.statusLabel;
+        rig.dayType = entry.dayType;
+      }
+      if (entry.isStatusPlaceholder) {
+        return;
+      }
       if (entry.worker) rig.workers.add(entry.worker);
       if (entry.job) {
         rig.jobs.add(entry.jobNumber ? `${entry.job} #${entry.jobNumber}` : entry.job);
@@ -2836,6 +3112,10 @@ function CrewScheduler() {
           superintendent: "",
           truck: "",
           crane: "",
+          statusLabel:
+            plannerRigStatusByDateRig[`${detail.date}::${rigName}`]?.statusLabel || "",
+          dayType:
+            plannerRigStatusByDateRig[`${detail.date}::${rigName}`]?.dayType || "working",
         });
       }
       const rig = day.rigs.get(rigName);
@@ -2850,6 +3130,7 @@ function CrewScheduler() {
     plannerAssignmentRows,
     plannerFinalizedOnly,
     plannerRigDetailRows,
+    plannerRigStatusByDateRig,
     plannerSchedules,
     plannerSearch,
   ]);
@@ -3141,12 +3422,14 @@ function CrewScheduler() {
             </div>
 
             <div className="print:hidden mb-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-              Quick flow: 1) pick job, superintendent, and truck for each rig card, 2) add crew
-              with the dropdown, 3) save with <span className="font-semibold">Save &amp; Email</span>.
+              Quick flow: 1) set each rig to <span className="font-semibold">Working</span>,
+              <span className="font-semibold"> Down Day</span>, <span className="font-semibold">Mob</span>,
+              or another status, 2) add job/truck/super when it is a working day, 3) add crew, 4)
+              save with <span className="font-semibold">Save &amp; Email</span>.
             </div>
 
             <div className="print:hidden mb-3 rounded-xl border border-neutral-200 bg-white p-3 shadow-sm">
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
                 <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
                   Rigs Planned:{" "}
                   <span className="font-semibold text-neutral-900">
@@ -3154,9 +3437,15 @@ function CrewScheduler() {
                   </span>
                 </div>
                 <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
-                  Rigs With Job:{" "}
+                  Working Rigs:{" "}
                   <span className="font-semibold text-neutral-900">
-                    {scheduleOverview.rigsWithJob}
+                    {scheduleOverview.workingRigs}
+                  </span>
+                </div>
+                <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                  Special Status:{" "}
+                  <span className="font-semibold text-neutral-900">
+                    {scheduleOverview.specialStatusRigs}
                   </span>
                 </div>
                 <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
@@ -3187,7 +3476,7 @@ function CrewScheduler() {
                   type="text"
                   value={scheduleRigSearch}
                   onChange={(e) => setScheduleRigSearch(e.target.value)}
-                  placeholder="Search rigs by name, job, location, superintendent..."
+                  placeholder="Search rigs by name, job, status, location, superintendent..."
                   className="h-9 rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 <label className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
@@ -3311,6 +3600,11 @@ function CrewScheduler() {
                   return assignedCats.length === 0;
                 });
                 const selectedWorkerForRig = rigWorkerDrafts[category.id] || "";
+                const statusBadge = status.isNonWorking
+                  ? status.statusLabel || status.dayTypeLabel
+                  : status.ready
+                  ? "Ready to send"
+                  : `Missing: ${status.missing.join(", ")}`;
 
                 return (
                   <div
@@ -3328,14 +3622,12 @@ function CrewScheduler() {
                           </h3>
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-white/95">
                             <span className="rounded-full bg-white/20 px-2 py-0.5">
-                              {status.ready
-                                ? "Ready to send"
-                                : `Missing: ${status.missing.join(", ")}`}
+                              {statusBadge}
                             </span>
                             <span className="rounded-full bg-white/20 px-2 py-0.5">
                               Crew: {crewAssignments.length}
                             </span>
-                            {status.jobName && (
+                            {!status.isNonWorking && status.jobName && (
                               <span className="rounded-full bg-white/20 px-2 py-0.5">
                                 {status.jobName}
                                 {status.jobNumber ? ` #${status.jobNumber}` : ""}
@@ -3379,30 +3671,85 @@ function CrewScheduler() {
                     </div>
 
                     <div className="px-4 py-3">
-                      <div className="grid gap-3 md:grid-cols-3">
+                      <div className="grid gap-3 md:grid-cols-[180px,1fr]">
                         <label className="text-xs font-semibold text-neutral-500">
-                          Job
+                          Day Type
                           <select
-                            value={rigJob?.job_id || ""}
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                assignJobToRig(category.id, e.target.value);
-                              } else {
-                                removeJobFromRig(category.id);
-                              }
-                            }}
+                            value={status.dayType || "working"}
+                            onChange={(e) =>
+                              applyRigDayStatus(category.id, e.target.value)
+                            }
                             className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           >
-                            <option value="">No job assigned</option>
-                            {jobs.map((job) => (
-                              <option key={job.id} value={job.id}>
-                                {job.job_name}
-                                {job.job_number ? ` (#${job.job_number})` : ""}{" "}
-                                {[job.city, job.zip].filter(Boolean).join(" ")}
+                            {RIG_DAY_TYPE_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
                               </option>
                             ))}
                           </select>
                         </label>
+                        {status.isNonWorking ? (
+                          <label className="text-xs font-semibold text-neutral-500">
+                            Status Label
+                            <input
+                              key={`${category.id}-${status.dayType}-${status.statusLabel}`}
+                              type="text"
+                              placeholder="Down Day, Mob Rig, Repairs..."
+                              defaultValue={status.statusLabel || ""}
+                              onBlur={(e) =>
+                                applyRigDayStatus(
+                                  category.id,
+                                  status.dayType,
+                                  e.target.value
+                                )
+                              }
+                              className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                          </label>
+                        ) : (
+                          <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                            Working days require a job, superintendent, truck, and crew before the rig reads as ready.
+                          </div>
+                        )}
+                      </div>
+
+                      {status.isNonWorking && (
+                        <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                          This rig is marked as <span className="font-semibold">{status.statusLabel || status.dayTypeLabel}</span>.
+                          Job, superintendent, truck, and crew are optional for the day.
+                        </div>
+                      )}
+
+                      <div className="grid gap-3 md:grid-cols-3">
+                        {status.isNonWorking ? (
+                          <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                            Working job fields are hidden while this rig is in a special-status day.
+                          </div>
+                        ) : (
+                          <label className="text-xs font-semibold text-neutral-500">
+                            Job
+                            <select
+                              value={rigJob?.job_id || ""}
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  assignJobToRig(category.id, e.target.value);
+                                } else {
+                                  removeJobFromRig(category.id);
+                                }
+                              }}
+                              className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            >
+                              <option value="">No job assigned</option>
+                              {jobs.map((job) => (
+                                <option key={job.id} value={job.id}>
+                                  {job.job_name}
+                                  {job.job_number ? ` (#${job.job_number})` : ""}{" "}
+                                  {[job.city, job.zip].filter(Boolean).join(" ")}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
                         <label className="text-xs font-semibold text-neutral-500">
                           Superintendent
                           <select
@@ -3448,7 +3795,7 @@ function CrewScheduler() {
                         </label>
                       </div>
 
-                      {rigJobData && (
+                      {!status.isNonWorking && rigJobData && (
                         <div className="mt-3 rounded-lg border border-purple-100 bg-purple-50 px-3 py-2 text-xs text-purple-900">
                           <div className="font-semibold">
                             Where is this rig going?{" "}
@@ -3634,7 +3981,7 @@ function CrewScheduler() {
                     type="text"
                     value={plannerSearch}
                     onChange={(e) => setPlannerSearch(e.target.value)}
-                    placeholder="Filter by worker, rig, job, notes..."
+                    placeholder="Filter by worker, rig, job, status, notes..."
                     className="h-9 min-w-[240px] flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <label className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
@@ -3743,9 +4090,14 @@ function CrewScheduler() {
                                 <div
                                   key={`${cell.date}-${rig.name}`}
                                   className="truncate rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700"
-                                  title={rig.name}
+                                  title={
+                                    rig.statusLabel
+                                      ? `${rig.name} - ${rig.statusLabel}`
+                                      : rig.name
+                                  }
                                 >
                                   {rig.name}
+                                  {rig.statusLabel ? ` - ${rig.statusLabel}` : ""}
                                 </div>
                               ))}
                               {rigs.length > 2 && (
@@ -3810,6 +4162,11 @@ function CrewScheduler() {
                                 <div className="text-sm font-semibold text-neutral-900">
                                   {rig.name}
                                 </div>
+                                {rig.statusLabel && (
+                                  <div className="mt-1 text-xs font-semibold text-amber-700">
+                                    Status: {rig.statusLabel}
+                                  </div>
+                                )}
                                 <div className="mt-1 text-xs text-neutral-600">
                                   Jobs: {Array.from(rig.jobs).join(", ") || "None"}
                                 </div>
@@ -5292,6 +5649,8 @@ function CrewScheduler() {
     </>
   );
 }
+
+export { CrewScheduler };
 
 CrewScheduler.getLayout = function getLayout(page) {
   return <TWAdminLayout>{page}</TWAdminLayout>;
