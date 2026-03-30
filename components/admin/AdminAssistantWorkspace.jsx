@@ -1121,6 +1121,20 @@ export default function AdminAssistantWorkspace({
                 ) : null}
 
                 <div className="mx-auto w-full max-w-5xl rounded-[1.9rem] border border-white/90 bg-white/88 p-3 shadow-[0_20px_50px_rgba(11,42,90,0.1)]">
+                  {!loading && (
+                    <div className="mb-3 flex flex-wrap gap-2 px-1">
+                      {visiblePromptCards.map((card) => (
+                        <button
+                          key={card.title}
+                          type="button"
+                          onClick={() => sendMessage(card.prompt)}
+                          className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
+                        >
+                          {card.title}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex items-end gap-3 rounded-[1.5rem] border border-[#dbe4f0] bg-[#f7f9fc] p-2">
                     <textarea
                       ref={inputRef}
@@ -1143,9 +1157,6 @@ export default function AdminAssistantWorkspace({
                         <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                       </svg>
                     </button>
-                  </div>
-                  <div className="mt-2 px-1 text-center text-[11px] font-medium text-neutral-400">
-                    Assistant responses are grounded in current admin data and may need a refresh after write actions.
                   </div>
                 </div>
               </div>
