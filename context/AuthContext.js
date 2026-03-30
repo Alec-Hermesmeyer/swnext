@@ -8,7 +8,8 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null); // store role here
+  const [role, setRole] = useState(null);
+  const [accessLevel, setAccessLevel] = useState(3);
   const [department, setDepartment] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
