@@ -39,6 +39,7 @@ export function AuthProvider({ children }) {
   const applyProfile = useCallback((nextProfile) => {
     setProfile(nextProfile);
     setRole(nextProfile ? nextProfile.role || 'user' : null);
+    setAccessLevel(nextProfile?.access_level || 3);
     setDepartment(nextProfile?.department || null);
   }, []);
 
