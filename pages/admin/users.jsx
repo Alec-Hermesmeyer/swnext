@@ -468,7 +468,7 @@ function UserManagement() {
                   })}
                   {!users.length && (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
+                      <td colSpan={7} className="px-4 py-8 text-center text-neutral-500">
                         No users found
                       </td>
                     </tr>
