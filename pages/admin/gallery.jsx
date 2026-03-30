@@ -22,6 +22,198 @@ const CATEGORIES = [
 const inputClass =
   "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-2 focus:ring-[#0b2a5a]/20";
 
+function StoragePicker({ onAdd, adding, addError, categories, existingFilenames }) {
+  const [browserImages, setBrowserImages] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [currentFolder, setCurrentFolder] = useState("public");
+  const [browserLoading, setBrowserLoading] = useState(true);
+  const [filterText, setFilterText] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  const [justAdded, setJustAdded] = useState(new Set());
+
+  const fetchFolder = useCallback(async () => {
+    setBrowserLoading(true);
+    try {
+      const { data: files } = await supabase.storage
+        .from(BUCKET_NAME)
+        .list(currentFolder, { limit: 300, sortBy: { column: "name", order: "asc" } });
+
+      if (files) {
+        setFolders(files.filter((f) => f.id === null));
+        setBrowserImages(
+          files.filter((f) => f.id !== null && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name))
+        );
+      }
+    } finally {
+      setBrowserLoading(false);
+    }
+  }, [currentFolder]);
+
+  useEffect(() => {
+    fetchFolder();
+  }, [fetchFolder]);
+
+  const navigateTo = (folder) => {
+    setCurrentFolder(currentFolder ? `${currentFolder}/${folder}` : folder);
+  };
+
+  const navigateUp = () => {
+    const parts = currentFolder.split("/");
+    parts.pop();
+    setCurrentFolder(parts.join("/") || "");
+  };
+
+  const handlePickImage = async (file) => {
+    const success = await onAdd({
+      filename: file.name,
+      category: selectedCategory,
+      title: null,
+    });
+    if (success) {
+      setJustAdded((prev) => new Set(prev).add(file.name));
+    }
+  };
+
+  const filtered = filterText
+    ? browserImages.filter((f) => f.name.toLowerCase().includes(filterText.toLowerCase()))
+    : browserImages;
+
+  return (
+    <div className="mb-6 rounded-xl border border-[#dbe4f0] bg-[#f8fbff] p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm font-bold text-[#0b2a5a]">Browse Storage &mdash; click an image to add it</div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-semibold text-neutral-600">Add to:</label>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm"
+          >
+            {categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Folder nav */}
+      <div className="mb-3 flex items-center gap-2 text-sm">
+        <span className="font-semibold text-neutral-700">Path:</span>
+        <button onClick={() => setCurrentFolder("")} className="text-red-600 hover:underline">root</button>
+        {currentFolder.split("/").filter(Boolean).map((part, i, arr) => (
+          <span key={i} className="flex items-center gap-1">
+            <span className="text-neutral-400">/</span>
+            <button
+              onClick={() => setCurrentFolder(arr.slice(0, i + 1).join("/"))}
+              className="text-red-600 hover:underline"
+            >
+              {part}
+            </button>
+          </span>
+        ))}
+        {currentFolder && (
+          <button
+            onClick={navigateUp}
+            className="ml-auto rounded-lg bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-700 hover:bg-neutral-200"
+          >
+            &uarr; Up
+          </button>
+        )}
+      </div>
+
+      {/* Search */}
+      <input
+        type="text"
+        placeholder="Filter images in this folder..."
+        value={filterText}
+        onChange={(e) => setFilterText(e.target.value)}
+        className="mb-3 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+      />
+
+      {addError && (
+        <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{addError}</div>
+      )}
+
+      {/* Content */}
+      {browserLoading ? (
+        <div className="flex items-center justify-center py-12 text-neutral-500">
+          <svg className="mr-2 h-5 w-5 animate-spin" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          Loading...
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+          {/* Folders */}
+          {folders.map((folder) => (
+            <button
+              key={folder.name}
+              onClick={() => navigateTo(folder.name)}
+              className="flex flex-col items-center justify-center gap-1 rounded-lg border border-neutral-200 bg-white p-3 text-center hover:border-[#0b2a5a]/30 hover:bg-neutral-50"
+            >
+              <span className="text-2xl">📁</span>
+              <span className="truncate text-[11px] font-medium text-neutral-700 w-full">{folder.name}</span>
+            </button>
+          ))}
+
+          {/* Images */}
+          {filtered.map((file) => {
+            const imageUrl = `${STORAGE_BASE}/${currentFolder}/${file.name}`;
+            const alreadyInGallery = existingFilenames.has(file.name) || justAdded.has(file.name);
+
+            return (
+              <button
+                key={file.name}
+                onClick={() => !alreadyInGallery && !adding && handlePickImage(file)}
+                disabled={alreadyInGallery || adding}
+                className={`group relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
+                  alreadyInGallery
+                    ? "border-green-400 opacity-60 cursor-default"
+                    : "border-transparent hover:border-[#0b2a5a] cursor-pointer"
+                }`}
+              >
+                <Image
+                  src={imageUrl}
+                  alt={file.name}
+                  fill
+                  className="object-cover"
+                  sizes="120px"
+                  unoptimized
+                  loader={({ src }) => src}
+                />
+                {alreadyInGallery && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-green-600/30">
+                    <span className="rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+                      Added
+                    </span>
+                  </div>
+                )}
+                {!alreadyInGallery && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
+                    <span className="rounded-full bg-[#0b2a5a] px-2 py-0.5 text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity shadow">
+                      + Add
+                    </span>
+                  </div>
+                )}
+                <div className="absolute bottom-0 inset-x-0 bg-black/60 px-1 py-0.5">
+                  <span className="block truncate text-[9px] text-white">{file.name}</span>
+                </div>
+              </button>
+            );
+          })}
+
+          {!folders.length && !filtered.length && (
+            <div className="col-span-full py-8 text-center text-sm text-neutral-500">
+              No images in this folder.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GalleryManagement() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
