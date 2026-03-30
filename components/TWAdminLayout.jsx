@@ -11,10 +11,11 @@ const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 const ROLE_LABELS = {
   admin: "Admin",
   operations: "Operations",
+  safety: "Safety",
   social_media: "Social Media",
   hr: "HR",
   sales: "Sales",
-  viewer: "Viewer",
+  viewer: "Staff",
 };
 
 export default function TWAdminLayout({ children }) {
