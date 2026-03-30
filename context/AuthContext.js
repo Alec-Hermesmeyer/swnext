@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, department, full_name, username')
+        .select('role, department, full_name, username, access_level')
         .eq('id', userId)
         .single();
       if (error) console.error('Profile fetch error:', error);
