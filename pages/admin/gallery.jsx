@@ -162,59 +162,15 @@ function GalleryManagement() {
           </div>
         </div>
 
-        {/* Add form */}
+        {/* Add from storage browser */}
         {showAdd && (
-          <form onSubmit={handleAdd} className="mb-6 rounded-xl border border-[#dbe4f0] bg-[#f8fbff] p-5">
-            <div className="mb-4 text-sm font-bold text-[#0b2a5a]">Add Gallery Image</div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-neutral-600">Filename *</label>
-                <input
-                  type="text"
-                  required
-                  value={addForm.filename}
-                  onChange={(e) => setAddForm({ ...addForm, filename: e.target.value })}
-                  placeholder="gal41.webp"
-                  className={inputClass}
-                />
-                <p className="mt-1 text-[11px] text-neutral-500">Must exist in Supabase Storage galleryImages folder</p>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-neutral-600">Category</label>
-                <select
-                  value={addForm.category}
-                  onChange={(e) => setAddForm({ ...addForm, category: e.target.value })}
-                  className={inputClass}
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-neutral-600">Title (optional)</label>
-                <input
-                  type="text"
-                  value={addForm.title}
-                  onChange={(e) => setAddForm({ ...addForm, title: e.target.value })}
-                  placeholder="Project name"
-                  className={inputClass}
-                />
-              </div>
-              <div className="flex items-end">
-                <button
-                  type="submit"
-                  disabled={adding}
-                  className="w-full rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a75] disabled:opacity-50"
-                >
-                  {adding ? "Adding..." : "Add Image"}
-                </button>
-              </div>
-            </div>
-            {addError && (
-              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{addError}</div>
-            )}
-          </form>
+          <StoragePicker
+            onAdd={handleAdd}
+            adding={adding}
+            addError={addError}
+            categories={CATEGORIES}
+            existingFilenames={new Set(images.map((i) => i.filename))}
+          />
         )}
 
         {/* Filters */}
