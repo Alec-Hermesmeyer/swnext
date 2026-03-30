@@ -92,26 +92,25 @@ function GalleryManagement() {
     }
   };
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
+  const handleAdd = async ({ filename, category, title }) => {
     if (adding) return;
     setAddError("");
-    if (!addForm.filename.trim()) { setAddError("Filename is required"); return; }
+    if (!filename) { setAddError("Filename is required"); return; }
 
     setAdding(true);
     try {
       const res = await fetch("/api/gallery-images", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addForm),
+        body: JSON.stringify({ filename, category: category || CATEGORIES[0], title: title || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to add");
-      setImages((prev) => [...prev, data.image]);
-      setAddForm({ filename: "", category: CATEGORIES[0], title: "", description: "" });
-      setShowAdd(false);
+      if (data.image) setImages((prev) => [...prev, data.image]);
+      return true;
     } catch (err) {
       setAddError(err.message);
+      return false;
     } finally {
       setAdding(false);
     }
