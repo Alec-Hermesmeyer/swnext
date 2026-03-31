@@ -45,11 +45,26 @@ const formatDateTime = (value) => {
   });
 };
 
-// Format date for input
-const toDateString = (date) => {
-  const d = new Date(date);
-  return d.toISOString().split("T")[0];
+const formatDateInputValue = (date) => {
+  const d = toLocalDate(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
+
+// Format date for input
+const toDateString = (date) => formatDateInputValue(date);
+
+const shiftDateString = (value, days) => {
+  const base = toLocalDate(value);
+  base.setHours(12, 0, 0, 0);
+  base.setDate(base.getDate() + days);
+  return formatDateInputValue(base);
+};
+
+const getTodayScheduleDate = () => shiftDateString(new Date(), 0);
+const getTomorrowScheduleDate = () => shiftDateString(new Date(), 1);
 
 const formatWorkerLabel = (worker) => {
   if (!worker?.name) return "";
@@ -237,7 +252,7 @@ const getRigDayStatusFromAssignments = (assignmentRows = []) => {
 
 function CrewScheduler() {
   const [activeTab, setActiveTab] = useState("schedule");
-  const [selectedDate, setSelectedDate] = useState(toDateString(new Date()));
+  const [selectedDate, setSelectedDate] = useState(getTomorrowScheduleDate());
   const [workers, setWorkers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -307,10 +322,11 @@ function CrewScheduler() {
   const [packetsStatus, setPacketsStatus] = useState(null);
 
   // --- Schedule copy / prepopulate state ---
-  const [copyStartDate, setCopyStartDate] = useState(toDateString(new Date()));
-  const [copyEndDate, setCopyEndDate] = useState(toDateString(new Date()));
+  const [copyStartDate, setCopyStartDate] = useState(getTomorrowScheduleDate());
+  const [copyEndDate, setCopyEndDate] = useState(getTomorrowScheduleDate());
   const [copyOverwrite, setCopyOverwrite] = useState(false);
   const [copyingCategoryId, setCopyingCategoryId] = useState(null);
+  const [copyingDaySchedule, setCopyingDaySchedule] = useState(false);
   const [copyStatus, setCopyStatus] = useState(null);
   const [scheduleRigSearch, setScheduleRigSearch] = useState("");
   const [scheduleNeedsAttentionOnly, setScheduleNeedsAttentionOnly] = useState(false);
@@ -682,6 +698,26 @@ function CrewScheduler() {
     if (!error) setRecentSchedules(data || []);
   };
 
+  const getOrCreateSchedule = async (date) => {
+    let { data: schedule, error } = await supabase
+      .from("crew_schedules")
+      .select("*")
+      .eq("schedule_date", date)
+      .single();
+
+    if (error && error.code === "PGRST116") {
+      const { data: created, error: createError } = await supabase
+        .from("crew_schedules")
+        .insert({ schedule_date: date })
+        .select()
+        .single();
+      if (createError) return null;
+      schedule = created;
+    }
+
+    return schedule || null;
+  };
+
   const normalizeJobInput = (job) => ({
     job_name: String(job.job_name || "").trim(),
     job_number: String(job.job_number || "").trim() || null,
@@ -875,22 +911,7 @@ function CrewScheduler() {
   };
 
   const fetchSchedule = async (date) => {
-    // Get or create schedule for this date
-    let { data: schedule, error } = await supabase
-      .from("crew_schedules")
-      .select("*")
-      .eq("schedule_date", date)
-      .single();
-
-    if (error && error.code === "PGRST116") {
-      // No schedule exists, create one
-      const { data: newSchedule } = await supabase
-        .from("crew_schedules")
-        .insert({ schedule_date: date })
-        .select()
-        .single();
-      schedule = newSchedule;
-    }
+    const schedule = await getOrCreateSchedule(date);
 
     setCurrentSchedule(schedule);
 
@@ -1336,6 +1357,142 @@ function CrewScheduler() {
     }
 
     setCopyingCategoryId(null);
+  };
+
+  const handleCopyPreviousDayToSelectedDay = async () => {
+    const targetDate = selectedDate;
+    const sourceDate = shiftDateString(targetDate, -1);
+
+    if (sourceDate === targetDate) return;
+
+    setCopyingDaySchedule(true);
+    setCopyStatus(null);
+
+    try {
+      const { data: sourceSchedule } = await supabase
+        .from("crew_schedules")
+        .select("id")
+        .eq("schedule_date", sourceDate)
+        .limit(1)
+        .single();
+
+      if (!sourceSchedule) {
+        setCopyStatus({
+          type: "error",
+          message: `No schedule exists on ${formatShortDate(sourceDate)} to copy forward.`,
+        });
+        setCopyingDaySchedule(false);
+        return;
+      }
+
+      const [{ data: sourceAssignments }, { data: sourceDetails }] = await Promise.all([
+        supabase
+          .from("crew_assignments")
+          .select("category_id, worker_id, job_id, job_name, notes, sort_order")
+          .eq("schedule_id", sourceSchedule.id),
+        supabase
+          .from("schedule_rig_details")
+          .select("category_id, superintendent_id, truck_id, crane_info, notes")
+          .eq("schedule_id", sourceSchedule.id),
+      ]);
+
+      if (!sourceAssignments?.length && !sourceDetails?.length) {
+        setCopyStatus({
+          type: "error",
+          message: `The ${formatShortDate(sourceDate)} schedule has no rig data to copy.`,
+        });
+        setCopyingDaySchedule(false);
+        return;
+      }
+
+      const targetSchedule = await getOrCreateSchedule(targetDate);
+      if (!targetSchedule) {
+        setCopyStatus({
+          type: "error",
+          message: `Could not load the ${formatShortDate(targetDate)} schedule.`,
+        });
+        setCopyingDaySchedule(false);
+        return;
+      }
+
+      if (targetSchedule.is_finalized) {
+        setCopyStatus({
+          type: "error",
+          message: `${formatShortDate(targetDate)} is finalized. Unfinalize it before replacing the day.`,
+        });
+        setCopyingDaySchedule(false);
+        return;
+      }
+
+      const [{ count: existingAssignmentCount }, { count: existingDetailCount }] =
+        await Promise.all([
+          supabase
+            .from("crew_assignments")
+            .select("id", { count: "exact", head: true })
+            .eq("schedule_id", targetSchedule.id),
+          supabase
+            .from("schedule_rig_details")
+            .select("id", { count: "exact", head: true })
+            .eq("schedule_id", targetSchedule.id),
+        ]);
+
+      const targetHasData =
+        (existingAssignmentCount && existingAssignmentCount > 0) ||
+        (existingDetailCount && existingDetailCount > 0);
+
+      const confirmMessage = targetHasData
+        ? `${formatShortDate(targetDate)} already has schedule data. Replace it with ${formatShortDate(sourceDate)}?`
+        : `Copy ${formatShortDate(sourceDate)} into ${formatShortDate(targetDate)}?`;
+      if (!confirm(confirmMessage)) {
+        setCopyingDaySchedule(false);
+        return;
+      }
+
+      await Promise.all([
+        supabase.from("crew_assignments").delete().eq("schedule_id", targetSchedule.id),
+        supabase.from("schedule_rig_details").delete().eq("schedule_id", targetSchedule.id),
+      ]);
+
+      if (sourceAssignments?.length) {
+        await supabase.from("crew_assignments").insert(
+          sourceAssignments.map((assignment) => ({
+            schedule_id: targetSchedule.id,
+            category_id: assignment.category_id,
+            worker_id: assignment.worker_id || null,
+            job_id: assignment.job_id || null,
+            job_name: assignment.job_name || null,
+            notes: assignment.notes || null,
+            sort_order: assignment.sort_order || 0,
+          }))
+        );
+      }
+
+      if (sourceDetails?.length) {
+        await supabase.from("schedule_rig_details").insert(
+          sourceDetails.map((detail) => ({
+            schedule_id: targetSchedule.id,
+            category_id: detail.category_id,
+            superintendent_id: detail.superintendent_id || null,
+            truck_id: detail.truck_id || null,
+            crane_info: detail.crane_info || null,
+            notes: detail.notes || null,
+          }))
+        );
+      }
+
+      await fetchSchedule(targetDate);
+      setCopyStatus({
+        type: "success",
+        message: `Copied ${formatShortDate(sourceDate)} into ${formatShortDate(targetDate)}.`,
+      });
+    } catch (err) {
+      setCopyStatus({
+        type: "error",
+        message: "Could not copy the previous day into this schedule.",
+      });
+    }
+
+    setCopyingDaySchedule(false);
   };
 
   // --- Phase 5: Save & Email Schedule ---
@@ -2614,10 +2771,13 @@ function CrewScheduler() {
 
   const historyEntityOptions = useMemo(() => {
     if (historyView === "rig") {
-      return categories.map((category) => ({
-        id: category.id,
-        label: category.name,
-      }));
+      return [
+        { id: "all", label: "All Rigs" },
+        ...categories.map((category) => ({
+          id: category.id,
+          label: category.name,
+        })),
+      ];
     }
     if (historyView === "crew") {
       return workers.map((worker) => ({
@@ -2665,7 +2825,7 @@ function CrewScheduler() {
         .order("schedule_id", { ascending: true })
         .order("sort_order", { ascending: true });
 
-      if (historyView === "rig") {
+      if (historyView === "rig" && historyEntityId !== "all") {
         query = query.eq("category_id", historyEntityId);
       } else if (historyView === "crew") {
         query = query.eq("worker_id", historyEntityId);
@@ -2761,6 +2921,57 @@ function CrewScheduler() {
     return map;
   }, [historyFilteredAssignments]);
 
+  const showAllRigsHistory = historyView === "rig" && historyEntityId === "all";
+
+  const historyRigBoardsByDate = useMemo(() => {
+    if (!showAllRigsHistory) return {};
+
+    const boardsByDate = {};
+    Object.entries(historyAssignmentsByDate).forEach(([date, entries]) => {
+      const rigMap = new Map();
+
+      entries.forEach((entry) => {
+        const rigName = entry.rig || "No rig";
+        if (!rigMap.has(rigName)) {
+          rigMap.set(rigName, {
+            id: `${date}-${rigName}`,
+            rig: rigName,
+            rigColor: entry.rigColor || "#6b7280",
+            workers: new Set(),
+            jobs: new Set(),
+            notes: new Set(),
+            statusLabel: "",
+            finalized: false,
+          });
+        }
+
+        const rig = rigMap.get(rigName);
+        rig.finalized = rig.finalized || entry.finalized;
+        if (!rig.statusLabel && entry.statusLabel) {
+          rig.statusLabel = entry.statusLabel;
+        }
+        if (entry.worker) rig.workers.add(entry.worker);
+        if (entry.job) {
+          rig.jobs.add(entry.jobNumber ? `${entry.job} #${entry.jobNumber}` : entry.job);
+        }
+        if (entry.notes && !String(entry.notes).startsWith(RIG_STATUS_NOTE_PREFIX)) {
+          rig.notes.add(entry.notes);
+        }
+      });
+
+      boardsByDate[date] = Array.from(rigMap.values())
+        .map((rig) => ({
+          ...rig,
+          workers: Array.from(rig.workers),
+          jobs: Array.from(rig.jobs),
+          notes: Array.from(rig.notes),
+        }))
+        .sort((a, b) => a.rig.localeCompare(b.rig));
+    });
+
+    return boardsByDate;
+  }, [historyAssignmentsByDate, showAllRigsHistory]);
+
   const historyCalendarCells = useMemo(() => {
     const monthBounds = getMonthBounds(historyMonth);
     if (!monthBounds) return [];
@@ -2773,15 +2984,19 @@ function CrewScheduler() {
       cells.push({
         date,
         day,
-        entries: historyAssignmentsByDate[date] || [],
+        entries: showAllRigsHistory
+          ? historyRigBoardsByDate[date] || []
+          : historyAssignmentsByDate[date] || [],
       });
     }
     while (cells.length % 7 !== 0) cells.push(null);
     return cells;
-  }, [historyMonth, historyAssignmentsByDate]);
+  }, [historyMonth, historyAssignmentsByDate, historyRigBoardsByDate, showAllRigsHistory]);
 
   useEffect(() => {
-    const dayKeys = Object.keys(historyAssignmentsByDate).sort();
+    const dayKeys = Object.keys(
+      showAllRigsHistory ? historyRigBoardsByDate : historyAssignmentsByDate
+    ).sort();
     const fallbackDate = `${historyMonth}-01`;
     if (dayKeys.length === 0) {
       if (historySelectedDate !== fallbackDate) setHistorySelectedDate(fallbackDate);
@@ -2790,13 +3005,26 @@ function CrewScheduler() {
     const hasSelectedDate =
       !!historySelectedDate &&
       historySelectedDate.startsWith(historyMonth) &&
-      !!historyAssignmentsByDate[historySelectedDate];
+      !!(showAllRigsHistory
+        ? historyRigBoardsByDate[historySelectedDate]
+        : historyAssignmentsByDate[historySelectedDate]);
     if (!hasSelectedDate) setHistorySelectedDate(dayKeys[0]);
-  }, [historyAssignmentsByDate, historyMonth, historySelectedDate]);
+  }, [
+    historyAssignmentsByDate,
+    historyMonth,
+    historyRigBoardsByDate,
+    historySelectedDate,
+    showAllRigsHistory,
+  ]);
 
   const selectedHistoryAssignments = useMemo(
     () => historyAssignmentsByDate[historySelectedDate] || [],
     [historyAssignmentsByDate, historySelectedDate]
+  );
+
+  const selectedHistoryRigBoards = useMemo(
+    () => historyRigBoardsByDate[historySelectedDate] || [],
+    [historyRigBoardsByDate, historySelectedDate]
   );
 
   const historySummary = useMemo(() => {
@@ -2811,14 +3039,27 @@ function CrewScheduler() {
     });
     return {
       days: Object.keys(historyAssignmentsByDate).length,
-      assignments: historyFilteredAssignments.length,
+      assignments: showAllRigsHistory
+        ? Object.values(historyRigBoardsByDate).reduce(
+            (total, dayBoards) => total + dayBoards.length,
+            0
+          )
+        : historyFilteredAssignments.length,
       uniqueJobs: uniqueJobs.size,
       uniqueWorkers: uniqueWorkers.size,
       uniqueRigs: uniqueRigs.size,
     };
-  }, [historyAssignmentsByDate, historyFilteredAssignments]);
+  }, [
+    historyAssignmentsByDate,
+    historyFilteredAssignments,
+    historyRigBoardsByDate,
+    showAllRigsHistory,
+  ]);
 
   const getHistoryEntryHeadline = (entry) => {
+    if (showAllRigsHistory) {
+      return entry.statusLabel ? `${entry.rig} -> ${entry.statusLabel}` : entry.rig;
+    }
     const targetLabel = entry.statusLabel || entry.job || "No job";
     if (entry.isStatusPlaceholder && entry.statusLabel) {
       return `Status: ${entry.statusLabel}`;
@@ -2833,12 +3074,23 @@ function CrewScheduler() {
   };
 
   const getHistoryEntrySubline = (entry) => {
+    if (showAllRigsHistory) {
+      const parts = [];
+      if (entry.jobs?.length) parts.push(`Jobs: ${entry.jobs.join(", ")}`);
+      if (entry.workers?.length) parts.push(`Crew: ${entry.workers.join(", ")}`);
+      if (entry.notes?.length) parts.push(`Notes: ${entry.notes.slice(0, 2).join(" / ")}`);
+      if (entry.finalized) parts.push("Finalized");
+      return parts.join(" • ");
+    }
+
     const parts = [];
     if (entry.jobNumber) parts.push(`#${entry.jobNumber}`);
     if (entry.isNonWorking && entry.dayType !== "custom") {
       parts.push(RIG_DAY_TYPE_LABELS[entry.dayType] || "Special Status");
     }
-    if (entry.notes) parts.push(entry.notes);
+    if (entry.notes && !String(entry.notes).startsWith(RIG_STATUS_NOTE_PREFIX)) {
+      parts.push(entry.notes);
+    }
     if (entry.finalized) parts.push("Finalized");
     return parts.join(" • ");
   };
@@ -3241,6 +3493,14 @@ function CrewScheduler() {
     return { topPairs, topWorkerRigs };
   }, [plannerAssignmentRows, plannerFinalizedOnly]);
 
+  const todayScheduleDate = getTodayScheduleDate();
+  const tomorrowScheduleDate = getTomorrowScheduleDate();
+  const previousScheduleDate = shiftDateString(selectedDate, -1);
+  const isPlanningTomorrow = selectedDate === tomorrowScheduleDate;
+  const copyForwardLabel = isPlanningTomorrow
+    ? "Start Tomorrow From Today"
+    : `Copy ${formatShortDate(previousScheduleDate)} -> ${formatShortDate(selectedDate)}`;
+
   // --- View definitions ---
   const tabs = [
     { id: "schedule", label: "Schedule" },
@@ -3307,10 +3567,23 @@ function CrewScheduler() {
               </button>
             </div>
             <button
-              onClick={() => setSelectedDate(toDateString(new Date()))}
+              onClick={() => setSelectedDate(todayScheduleDate)}
               className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
             >
               Today
+            </button>
+            <button
+              onClick={() => setSelectedDate(tomorrowScheduleDate)}
+              className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+            >
+              Tomorrow
+            </button>
+            <button
+              onClick={handleCopyPreviousDayToSelectedDay}
+              disabled={copyingDaySchedule}
+              className="h-9 rounded-lg border border-blue-200 bg-blue-50 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+            >
+              {copyingDaySchedule ? "Copying..." : copyForwardLabel}
             </button>
             <button
               onClick={handlePrint}
@@ -3419,6 +3692,11 @@ function CrewScheduler() {
               <h2 className={`${lato.className} text-base font-bold text-white`}>
                 {formatDate(selectedDate)}
               </h2>
+            </div>
+
+            <div className="print:hidden mb-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+              The scheduler opens on <span className="font-semibold">tomorrow</span> by default.
+              Use <span className="font-semibold">{copyForwardLabel}</span> to pull the whole previous day forward before you edit.
             </div>
 
             <div className="print:hidden mb-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
@@ -4506,7 +4784,7 @@ function CrewScheduler() {
                     type="text"
                     value={historySearch}
                     onChange={(e) => setHistorySearch(e.target.value)}
-                    placeholder="Filter notes, jobs, people..."
+                    placeholder="Filter rigs, crew, jobs, notes..."
                     className="h-9 min-w-[260px] flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <label className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
@@ -4534,7 +4812,7 @@ function CrewScheduler() {
                     <span className="font-semibold text-neutral-900">{historySummary.days}</span>
                   </div>
                   <div className="rounded-lg bg-neutral-50 px-3 py-2">
-                    Assignments:{" "}
+                    {showAllRigsHistory ? "Rigs:" : "Assignments:"}{" "}
                     <span className="font-semibold text-neutral-900">
                       {historySummary.assignments}
                     </span>
@@ -4640,6 +4918,46 @@ function CrewScheduler() {
                   <div className="max-h-[560px] overflow-y-auto p-3">
                     {historyLoading ? (
                       <p className="text-sm text-neutral-500">Loading entries...</p>
+                    ) : showAllRigsHistory ? (
+                      selectedHistoryRigBoards.length === 0 ? (
+                        <p className="text-sm text-neutral-500">
+                          No rig schedules match this day.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {selectedHistoryRigBoards.map((rig) => (
+                            <div
+                              key={rig.id}
+                              className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2"
+                            >
+                              <div className="text-sm font-semibold text-neutral-900">
+                                {rig.rig}
+                              </div>
+                              {rig.statusLabel && (
+                                <div className="mt-1 text-xs font-semibold text-amber-700">
+                                  Status: {rig.statusLabel}
+                                </div>
+                              )}
+                              <div className="mt-1 text-xs text-neutral-500">
+                                Jobs: {rig.jobs.join(", ") || "None"}
+                              </div>
+                              <div className="mt-1 text-xs text-neutral-500">
+                                Crew: {rig.workers.join(", ") || "None"}
+                              </div>
+                              {rig.notes.length > 0 && (
+                                <div className="mt-1 text-xs text-neutral-500">
+                                  Notes: {rig.notes.slice(0, 2).join(" / ")}
+                                </div>
+                              )}
+                              {rig.finalized && (
+                                <div className="mt-1 text-xs font-semibold text-emerald-700">
+                                  Finalized
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )
                     ) : selectedHistoryAssignments.length === 0 ? (
                       <p className="text-sm text-neutral-500">
                         No matching assignments for this day.

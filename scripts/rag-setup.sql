@@ -1,5 +1,4 @@
 -- Run this in the Supabase SQL Editor to set up the RAG knowledge base.
--- Uses pgvector (built into Supabase) for similarity search.
 
 -- 1. Enable the vector extension
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -9,19 +8,19 @@ CREATE TABLE IF NOT EXISTS documents (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   content text NOT NULL,
   metadata jsonb DEFAULT '{}',
-  source text,           -- e.g. 'crew_jobs', 'manual', 'contact_form', 'backfill'
-  category text,         -- e.g. 'project_history', 'company_info', 'process', 'client'
-  embedding vector(1536), -- OpenAI text-embedding-3-small dimension
+  source text,
+  category text,
+  file_path text,
+  embedding vector(1536),
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
 
--- 3. Create an index for fast similarity search
+-- 3. HNSW index — works on empty tables (IVFFlat does not)
 CREATE INDEX IF NOT EXISTS documents_embedding_idx
-  ON documents USING ivfflat (embedding vector_cosine_ops)
-  WITH (lists = 100);
+  ON documents USING hnsw (embedding vector_cosine_ops);
 
--- 4. Create the similarity search function
+-- 4. Similarity search function
 CREATE OR REPLACE FUNCTION match_documents(
   query_embedding vector(1536),
   match_threshold float DEFAULT 0.7,
@@ -53,11 +52,20 @@ BEGIN
 END;
 $$;
 
--- 5. RLS policies
+-- 5. RLS
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public read documents" ON documents
-  FOR SELECT USING (true);
+DO $$ BEGIN
+  CREATE POLICY "Public read documents" ON documents FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Service write documents" ON documents
-  FOR ALL USING (true);
+DO $$ BEGIN
+  CREATE POLICY "Service write documents" ON documents FOR ALL USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- 6. Create a storage bucket for uploaded knowledge base files
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('knowledge-base', 'knowledge-base', false)
+ON CONFLICT (id) DO NOTHING;
