@@ -20,7 +20,11 @@ async function getEmbedding(text) {
       input: text.substring(0, 8000),
     }),
   });
-  if (!response.ok) throw new Error("Embedding failed");
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("Embedding API error:", response.status, errText);
+    throw new Error(`Embedding failed (${response.status}): ${errText.substring(0, 200)}`);
+  }
   const data = await response.json();
   return data.data[0].embedding;
 }
@@ -28,6 +32,7 @@ async function getEmbedding(text) {
 async function embedAndStore(docs) {
   let stored = 0;
   let failed = 0;
+  const errors = [];
   for (let i = 0; i < docs.length; i += 5) {
     const batch = docs.slice(i, i + 5);
     const rows = [];
@@ -35,17 +40,22 @@ async function embedAndStore(docs) {
       try {
         const embedding = await getEmbedding(doc.content);
         rows.push({ ...doc, embedding });
-      } catch {
+      } catch (err) {
         failed++;
+        errors.push(`Embed: ${err.message}`);
       }
     }
     if (rows.length) {
       const { error } = await supabase.from("documents").insert(rows);
-      if (error) failed += rows.length;
-      else stored += rows.length;
+      if (error) {
+        failed += rows.length;
+        errors.push(`Insert: ${error.message}`);
+      } else {
+        stored += rows.length;
+      }
     }
   }
-  return { stored, failed };
+  return { stored, failed, errors: errors.slice(0, 5) };
 }
 
 // Backfill builders — convert existing DB rows into RAG documents

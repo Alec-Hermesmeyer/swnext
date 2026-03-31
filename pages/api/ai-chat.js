@@ -249,6 +249,53 @@ const tools = [
       },
     },
   },
+  // ── Update existing crew job ──
+  {
+    type: "function",
+    function: {
+      name: "update_crew_job_detail",
+      description: "Update fields on an existing crew job by ID. Use when the user wants to edit a specific job's details like address, PM, customer, crane status, etc. Requires the job_id (UUID) — look it up from the ACTIVE CREW JOBS list in context.",
+      parameters: {
+        type: "object",
+        properties: {
+          job_id: { type: "string", description: "UUID of the crew job to update" },
+          job_name: { type: "string", description: "Updated job name" },
+          job_number: { type: "string", description: "Updated job number" },
+          dig_tess_number: { type: "string", description: "Dig Tess number" },
+          customer_name: { type: "string", description: "Customer name" },
+          hiring_contractor: { type: "string", description: "Hiring contractor / GC" },
+          hiring_contact_name: { type: "string", description: "Hiring contact person" },
+          hiring_contact_phone: { type: "string", description: "Hiring contact phone" },
+          hiring_contact_email: { type: "string", description: "Hiring contact email" },
+          address: { type: "string", description: "Street address" },
+          city: { type: "string", description: "City" },
+          zip: { type: "string", description: "ZIP code" },
+          pm_name: { type: "string", description: "S&W PM name" },
+          pm_phone: { type: "string", description: "S&W PM phone" },
+          default_rig: { type: "string", description: "Default rig label" },
+          crane_required: { type: "boolean", description: "Crane required flag" },
+        },
+        required: ["job_id"],
+      },
+    },
+  },
+  // ── Down day / schedule notes ──
+  {
+    type: "function",
+    function: {
+      name: "mark_down_day",
+      description: "Mark a schedule date as a down day (rain, holiday, no work). Creates the schedule if needed and adds a note. Also removes all crew assignments for that day if clear_assignments is true.",
+      parameters: {
+        type: "object",
+        properties: {
+          schedule_date: { type: "string", description: "ISO date (YYYY-MM-DD)" },
+          reason: { type: "string", description: "Reason for the down day (e.g. 'Rain day', 'Holiday', 'No work scheduled')" },
+          clear_assignments: { type: "boolean", description: "If true, remove all existing crew assignments for this day. Default false." },
+        },
+        required: ["schedule_date", "reason"],
+      },
+    },
+  },
   // ── Schedule automation tools ──
   {
     type: "function",
@@ -1107,11 +1154,11 @@ ${linesOrFallback(
   "None"
 )}
 
-ACTIVE CREW JOBS:
+ACTIVE CREW JOBS (id | name | details):
 ${linesOrFallback(
   data.crewJobs.map(
     (j) =>
-      `- ${j.name}${j.number ? ` #${j.number}` : ""}${j.customer ? ` | Customer: ${j.customer}` : ""}${j.address ? ` | ${j.address}` : ""}${j.pm ? ` | PM: ${j.pm}` : ""}${j.hiringContractor ? ` | Hiring: ${j.hiringContractor}` : ""}${j.crane === "Yes" ? " | CRANE REQUIRED" : ""}`
+      `- [${j.id}] ${j.name}${j.number ? ` #${j.number}` : ""}${j.customer ? ` | Customer: ${j.customer}` : ""}${j.address ? ` | ${j.address}` : ""}${j.pm ? ` | PM: ${j.pm}` : ""}${j.hiringContractor ? ` | Hiring: ${j.hiringContractor}` : ""}${j.crane === "Yes" ? " | CRANE REQUIRED" : ""}`
   ),
   "None"
 )}
@@ -1228,6 +1275,10 @@ The schedule flow is: RIG → CREW → JOB → next rig → finalize → send pa
 4. Once all rigs have crew, prompt them to set superintendent/truck details.
 5. When details are set, suggest finalizing. After finalize, suggest sending the schedule email and packets — that kicks off the packet automation.
 6. Keep responses short. The user sees a visual schedule update after every change.
+7. If the user gives you multiple workers and a rig in one message (e.g. "Put Mike, John, and Carlos on Rig 1 for Johnson"), make ALL the assign_worker_to_rig calls in ONE round — one call per worker. Do not split into separate rounds.
+8. If a day already has a schedule from a copy or previous build, show what's already there before asking what to change.
+9. After EVERY schedule change, briefly confirm what was done and ask what's next. Suggest the logical next step (next rig, set super/truck, finalize, etc.).
+10. The user builds on paper today. Make this feel faster than paper — be proactive, don't wait for them to ask for the next step.
 
 Tool patterns:
 - "Put [worker] on [rig]" -> assign_worker_to_rig
@@ -1237,6 +1288,12 @@ Tool patterns:
 - "Set [super] as super for [rig]" -> set_rig_details
 - "Assign [truck] to [rig]" -> set_rig_details with truck_number
 - "Copy today to tomorrow" -> copy_schedule
+- "Update the address on [job]" -> update_crew_job_detail with job_id from the ACTIVE CREW JOBS list
+- "Tomorrow is a rain day" -> mark_down_day with schedule_date and reason
+- "No work Friday" -> mark_down_day
+
+DOWN DAYS:
+When the user says a day is a down day (rain, weather, holiday, no work), call mark_down_day. This creates the schedule, marks it finalized, and adds the reason. If they say to clear the crew, set clear_assignments to true.
 
 KNOWLEDGE BASE (RAG):
 You have access to a company knowledge base via the search_knowledge_base tool. It contains embedded documents about:
@@ -1289,10 +1346,10 @@ RULES:
 
 async function callGroq(messages, useTools = true, filteredTools = tools) {
   const body = {
-    model: "llama-3.1-8b-instant",
+    model: "llama-3.3-70b-versatile",
     messages,
-    temperature: 0.3,
-    max_tokens: 1024,
+    temperature: 0.2,
+    max_tokens: 2048,
   };
   if (useTools && filteredTools.length > 0) {
     body.tools = filteredTools;
@@ -1469,7 +1526,7 @@ export default async function handler(req, res) {
       writeAccessEnabled &&
       choice?.finish_reason === "tool_calls" &&
       choice?.message?.tool_calls &&
-      rounds < 3
+      rounds < 5
     ) {
       rounds += 1;
       messages.push(choice.message);

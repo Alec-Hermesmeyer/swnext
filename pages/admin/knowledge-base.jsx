@@ -40,6 +40,7 @@ function KnowledgeBase() {
 
   // Backfill
   const [backfilling, setBackfilling] = useState({});
+  const [backfillingAll, setBackfillingAll] = useState(false);
 
   // Add manual
   const [showAdd, setShowAdd] = useState(false);
@@ -79,6 +80,34 @@ function KnowledgeBase() {
       const data = await res.json();
       setSources(data.sources || []);
     } catch {}
+  };
+
+  const handleBackfillAll = async () => {
+    if (backfillingAll) return;
+    setBackfillingAll(true);
+    const allSources = sources.map((s) => s.key);
+    let totalStored = 0;
+    let totalFailed = 0;
+
+    for (const sourceKey of allSources) {
+      try {
+        const res = await fetch("/api/rag-backfill", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source: sourceKey }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          totalStored += data.stored || 0;
+          totalFailed += data.failed || 0;
+        }
+      } catch {}
+    }
+
+    setBackfillingAll(false);
+    fetchDocuments();
+    fetchSources();
+    alert(`Sync complete: ${totalStored} documents embedded, ${totalFailed} failed`);
   };
 
   const handleBackfill = async (sourceKey) => {
@@ -141,6 +170,35 @@ function KnowledgeBase() {
     }
   };
 
+  // File upload
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || uploading) return;
+    setUploading(true);
+    setUploadResult(null);
+    setAddError("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("category", addForm.category || "general");
+
+    try {
+      const res = await fetch("/api/rag-upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setUploadResult(data);
+      fetchDocuments();
+    } catch (err) {
+      setAddError(err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!confirm("Remove this document from the knowledge base?")) return;
     await fetch("/api/rag", {
@@ -185,8 +243,11 @@ function KnowledgeBase() {
             <button onClick={fetchDocuments} disabled={loading} className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50">
               Refresh
             </button>
-            <button onClick={() => { setShowAdd(!showAdd); setAddError(""); }} className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a75]">
-              {showAdd ? "Cancel" : "+ Add Document"}
+            <button onClick={() => handleBackfillAll()} disabled={backfillingAll} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+              {backfillingAll ? "Syncing..." : "Sync All Data"}
+            </button>
+            <button onClick={() => { setShowAdd(!showAdd); setAddError(""); }} className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50">
+              {showAdd ? "Cancel" : "+ Manual"}
             </button>
           </div>
         </div>
@@ -238,38 +299,90 @@ function KnowledgeBase() {
 
         {/* Add document form */}
         {showAdd && (
-          <form onSubmit={handleAdd} className="mb-6 rounded-xl border border-[#dbe4f0] bg-[#f8fbff] p-5">
+          <div className="mb-6 rounded-xl border border-[#dbe4f0] bg-[#f8fbff] p-5">
             <div className="mb-4 text-sm font-bold text-[#0b2a5a]">Add to Knowledge Base</div>
-            <div className="space-y-3">
-              <textarea
-                value={addForm.content}
-                onChange={(e) => setAddForm({ ...addForm, content: e.target.value })}
-                placeholder="Paste any business context — project details, process documentation, client history, meeting notes, anything the chatbot should know..."
-                rows={4}
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-2 focus:ring-[#0b2a5a]/20"
-                required
-              />
-              <div className="flex gap-3">
-                <select
-                  value={addForm.category}
-                  onChange={(e) => setAddForm({ ...addForm, category: e.target.value })}
-                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-                >
-                  <option value="general">General</option>
-                  <option value="project_history">Project History</option>
-                  <option value="client_inquiry">Client / Lead</option>
-                  <option value="company_info">Company Info</option>
-                  <option value="process">Process / SOP</option>
-                  <option value="hiring">Hiring</option>
-                  <option value="team_insights">Team Insights</option>
-                </select>
-                <button type="submit" disabled={adding} className="rounded-lg bg-[#0b2a5a] px-5 py-2 text-sm font-semibold text-white hover:bg-[#143a75] disabled:opacity-50">
+
+            {/* Category selector shared by both methods */}
+            <div className="mb-4">
+              <label className="mb-1 block text-xs font-semibold text-neutral-600">Category</label>
+              <select
+                value={addForm.category}
+                onChange={(e) => setAddForm({ ...addForm, category: e.target.value })}
+                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              >
+                <option value="general">General</option>
+                <option value="project_history">Project History</option>
+                <option value="client_inquiry">Client / Lead</option>
+                <option value="company_info">Company Info</option>
+                <option value="process">Process / SOP</option>
+                <option value="hiring">Hiring</option>
+                <option value="team_insights">Team Insights</option>
+              </select>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Option 1: Upload a file */}
+              <div className="rounded-lg border border-neutral-200 bg-white p-4">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Upload a file
+                </div>
+                <p className="mb-3 text-xs text-neutral-500">
+                  .txt, .csv, .md, .json — text is extracted, chunked, and embedded automatically.
+                  File is stored in Supabase Storage.
+                </p>
+                <label className={`flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 transition-colors ${
+                  uploading ? "border-blue-300 bg-blue-50" : "border-neutral-300 hover:border-[#0b2a5a] hover:bg-neutral-50"
+                }`}>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".txt,.csv,.md,.json,.pdf,.doc,.docx"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                  />
+                  {uploading ? (
+                    <div className="flex items-center gap-2 text-sm text-blue-600">
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Uploading &amp; embedding...
+                    </div>
+                  ) : (
+                    <div className="text-center text-sm text-neutral-600">
+                      <span className="font-semibold text-[#0b2a5a]">Click to upload</span> or drag a file here
+                    </div>
+                  )}
+                </label>
+                {uploadResult && (
+                  <div className="mt-3 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-xs text-green-800">
+                    Uploaded {uploadResult.filename}: {uploadResult.stored} chunks embedded
+                    {uploadResult.failed > 0 ? `, ${uploadResult.failed} failed` : ""}
+                  </div>
+                )}
+              </div>
+
+              {/* Option 2: Paste text */}
+              <form onSubmit={handleAdd} className="rounded-lg border border-neutral-200 bg-white p-4">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Paste text
+                </div>
+                <textarea
+                  value={addForm.content}
+                  onChange={(e) => setAddForm({ ...addForm, content: e.target.value })}
+                  placeholder="Project details, process docs, client notes, meeting notes — anything the chatbot should know..."
+                  rows={5}
+                  className="mb-3 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-2 focus:ring-[#0b2a5a]/20"
+                  required
+                />
+                <button type="submit" disabled={adding} className="w-full rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a75] disabled:opacity-50">
                   {adding ? "Embedding..." : "Add & Embed"}
                 </button>
-              </div>
-              {addError && <p className="text-sm text-red-600">{addError}</p>}
+              </form>
             </div>
-          </form>
+
+            {addError && <p className="mt-3 text-sm text-red-600">{addError}</p>}
+          </div>
         )}
 
         {/* Backfill sources */}
