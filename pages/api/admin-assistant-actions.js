@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
+import { buildCrewJobActivitySurface } from "@/lib/admin-assistant-surfaces";
 import { canWrite as roleCanWrite, hasToolAccess } from "@/lib/roles";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -108,6 +109,34 @@ async function storeMessages(sessionId, userContext, entries) {
   }
 }
 
+async function fetchCrewJobActivitySurfaceData() {
+  const { data, error } = await supabase
+    .from("crew_jobs")
+    .select(
+      "id, job_name, job_number, customer_name, address, city, pm_name, crane_required, is_active, default_rig, hiring_contractor"
+    )
+    .order("job_name");
+
+  if (error) {
+    return { crewJobsAll: [] };
+  }
+
+  return {
+    crewJobsAll: (data || []).map((job) => ({
+      id: job.id,
+      name: job.job_name || "",
+      number: job.job_number || "",
+      customer: job.customer_name || "",
+      address: [job.address, job.city].filter(Boolean).join(", "),
+      pm: job.pm_name || "",
+      crane: job.crane_required ? "Yes" : "No",
+      hiringContractor: job.hiring_contractor || "",
+      defaultRig: job.default_rig || "",
+      isActive: job.is_active !== false,
+    })),
+  };
+}
+
 function summarizeUserSubmission(surfaceType, values) {
   switch (surfaceType) {
     case "workflow_profile_intake":
@@ -116,6 +145,8 @@ function summarizeUserSubmission(surfaceType, values) {
       return `Created a crew job draft for ${values.job_name || "a new job"}.`;
     case "crew_job_update":
       return `Updated crew job detail for job ${values.job_id || "selection"}.`;
+    case "crew_job_activity_list":
+      return `Set ${values.job_label || "selected crew job"} ${values.set_active ? "active" : "inactive"}.`;
     case "career_position_create":
       return `Created a careers listing for ${values.jobTitle || "a new role"}.`;
     case "company_contact_create":
@@ -157,6 +188,14 @@ function getMutationConfig(surfaceType, values = {}) {
       return {
         mutation: "update_crew_job_detail",
         args: values,
+      };
+    case "crew_job_activity_list":
+      return {
+        mutation: "toggle_crew_job_active",
+        args: {
+          job_id: values.job_id,
+          set_active: values.set_active === true,
+        },
       };
     case "career_position_create":
       return {
@@ -268,7 +307,18 @@ export default async function handler(req, res) {
     }
 
     const userMessage = summarizeUserSubmission(surfaceType, values);
-    const assistantMessage = `${result.message}. Refresh if the page view needs to catch up.`;
+    let nextSurface = null;
+    if (surfaceType === "crew_job_activity_list") {
+      const surfaceData = await fetchCrewJobActivitySurfaceData();
+      nextSurface = buildCrewJobActivitySurface(surfaceData, {
+        view: values.view,
+        canToggle: true,
+      });
+    }
+
+    const assistantMessage = nextSurface
+      ? `${result.message}. I refreshed the live job list below.`
+      : `${result.message}. Refresh if the page view needs to catch up.`;
 
     await storeMessages(sessionId, userContext, [
       {
@@ -286,6 +336,7 @@ export default async function handler(req, res) {
           actionsPerformed: true,
           completedSurfaceId: surfaceId,
           submittedSurfaceType: surfaceType,
+          ...(nextSurface ? { surface: nextSurface } : {}),
         },
       },
     ]);
@@ -295,6 +346,7 @@ export default async function handler(req, res) {
       assistantMessage,
       actionsPerformed: true,
       completedSurfaceId: surfaceId,
+      surface: nextSurface,
     });
   } catch (error) {
     console.error("Admin assistant action error:", error);

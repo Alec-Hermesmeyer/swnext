@@ -76,6 +76,55 @@ const formatWorkerOption = (worker) => {
   return worker.role ? `${worker.name} — ${worker.role}` : worker.name;
 };
 
+const createEmptyJobDraft = () => ({
+  job_name: "",
+  job_number: "",
+  dig_tess_number: "",
+  customer_name: "",
+  hiring_contractor: "",
+  hiring_contact_name: "",
+  hiring_contact_phone: "",
+  hiring_contact_email: "",
+  address: "",
+  city: "",
+  zip: "",
+  pm_name: "",
+  pm_phone: "",
+  default_rig: "",
+  crane_required: false,
+  is_active: true,
+});
+
+const isCrewJobActive = (job) => job?.is_active !== false;
+
+const normalizeJobText = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
+
+const sortCrewJobsForManagePanel = (rows = []) =>
+  [...rows].sort((a, b) => {
+    const activeDiff = Number(isCrewJobActive(b)) - Number(isCrewJobActive(a));
+    if (activeDiff) return activeDiff;
+
+    const nameDiff = String(a?.job_name || "").localeCompare(String(b?.job_name || ""), undefined, {
+      sensitivity: "base",
+    });
+    if (nameDiff) return nameDiff;
+
+    const numberDiff = String(a?.job_number || "").localeCompare(
+      String(b?.job_number || ""),
+      undefined,
+      {
+        numeric: true,
+        sensitivity: "base",
+      }
+    );
+    if (numberDiff) return numberDiff;
+
+    return Number(a?.id || 0) - Number(b?.id || 0);
+  });
+
 const buildDateRange = (start, end) => {
   if (!start || !end) return [];
   const startDate = new Date(`${start}T00:00:00`);
@@ -257,6 +306,7 @@ function CrewScheduler() {
   const [categories, setCategories] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [jobAdminRows, setJobAdminRows] = useState([]);
   const [customerNames, setCustomerNames] = useState([]);
   const [recentSchedules, setRecentSchedules] = useState([]);
   const [currentSchedule, setCurrentSchedule] = useState(null);
@@ -279,28 +329,14 @@ function CrewScheduler() {
   const [newCategoryColor, setNewCategoryColor] = useState("#6b7280");
 
   // New job form
-  const [newJob, setNewJob] = useState({
-    job_name: "",
-    job_number: "",
-    dig_tess_number: "",
-    customer_name: "",
-    hiring_contractor: "",
-    hiring_contact_name: "",
-    hiring_contact_phone: "",
-    hiring_contact_email: "",
-    address: "",
-    city: "",
-    zip: "",
-    pm_name: "",
-    pm_phone: "",
-    default_rig: "",
-    crane_required: false,
-  });
+  const [newJob, setNewJob] = useState(createEmptyJobDraft);
   const [editingJob, setEditingJob] = useState(null);
   const [jobIntakeText, setJobIntakeText] = useState("");
   const [jobIntakeStatus, setJobIntakeStatus] = useState(null);
   const [jobIntakePreviewRows, setJobIntakePreviewRows] = useState([]);
   const [jobIntakeImporting, setJobIntakeImporting] = useState(false);
+  const [jobListFilter, setJobListFilter] = useState("active");
+  const [jobListSearch, setJobListSearch] = useState("");
 
   // --- Phase 2: Superintendent & Truck state ---
   const [superintendents, setSuperintendents] = useState([]);
@@ -366,6 +402,34 @@ function CrewScheduler() {
   const [plannerFinalizedOnly, setPlannerFinalizedOnly] = useState(false);
   const [plannerSelectedDate, setPlannerSelectedDate] = useState("");
 
+  const activeJobCount = useMemo(
+    () => jobAdminRows.filter((job) => isCrewJobActive(job)).length,
+    [jobAdminRows]
+  );
+
+  const filteredJobAdminRows = useMemo(() => {
+    const query = normalizeJobText(jobListSearch);
+
+    return sortCrewJobsForManagePanel(jobAdminRows).filter((job) => {
+      const isActive = isCrewJobActive(job);
+
+      if (jobListFilter === "active" && !isActive) return false;
+      if (jobListFilter === "inactive" && isActive) return false;
+
+      if (!query) return true;
+
+      return [
+        job.job_name,
+        job.job_number,
+        job.customer_name,
+        job.hiring_contractor,
+        job.pm_name,
+        job.city,
+        job.address,
+      ].some((value) => normalizeJobText(value).includes(query));
+    });
+  }, [jobAdminRows, jobListFilter, jobListSearch]);
+
   // Fetch workers, categories, jobs, superintendents, trucks on mount
   useEffect(() => {
     fetchWorkers();
@@ -411,9 +475,12 @@ function CrewScheduler() {
     const { data, error } = await supabase
       .from("crew_jobs")
       .select("*")
-      .eq("is_active", true)
       .order("job_name");
-    if (!error) setJobs(data || []);
+    if (!error) {
+      const rows = sortCrewJobsForManagePanel(data || []);
+      setJobAdminRows(rows);
+      setJobs(rows.filter((job) => isCrewJobActive(job)));
+    }
   };
 
   const fetchJobProgress = async () => {
@@ -734,12 +801,10 @@ function CrewScheduler() {
     pm_phone: String(job.pm_phone || "").trim() || null,
     default_rig: String(job.default_rig || "").trim() || null,
     crane_required: !!job.crane_required,
+    is_active: job.is_active !== false,
   });
 
-  const normalizeJobMatchValue = (value) =>
-    String(value || "")
-      .trim()
-      .toLowerCase();
+  const normalizeJobMatchValue = (value) => normalizeJobText(value);
 
   const clearJobIntake = () => {
     setJobIntakeText("");
@@ -854,31 +919,15 @@ function CrewScheduler() {
     const { error } = await supabase.from("crew_jobs").insert(payload);
     if (!error) {
       await ensureCustomerExists(payload.hiring_contractor);
-      setNewJob({
-        job_name: "",
-        job_number: "",
-        dig_tess_number: "",
-        customer_name: "",
-        hiring_contractor: "",
-        hiring_contact_name: "",
-        hiring_contact_phone: "",
-        hiring_contact_email: "",
-        address: "",
-        city: "",
-        zip: "",
-        pm_name: "",
-        pm_phone: "",
-        default_rig: "",
-        crane_required: false,
-      });
-      fetchJobs();
+      setNewJob(createEmptyJobDraft());
+      await fetchJobs();
     }
     setSaving(false);
   };
 
   const updateJob = async (id, updates) => {
     await supabase.from("crew_jobs").update(updates).eq("id", id);
-    fetchJobs();
+    await fetchJobs();
     setEditingJob(null);
     await ensureCustomerExists(updates.hiring_contractor);
   };
@@ -901,13 +950,35 @@ function CrewScheduler() {
       pm_phone: job.pm_phone || "",
       default_rig: job.default_rig || "",
       crane_required: !!job.crane_required,
+      is_active: isCrewJobActive(job),
     });
   };
 
-  const deleteJob = async (id) => {
-    if (!confirm("Deactivate this job? It will no longer appear in the scheduler.")) return;
-    await supabase.from("crew_jobs").update({ is_active: false }).eq("id", id);
-    fetchJobs();
+  const toggleJobActive = async (job) => {
+    const nextIsActive = !isCrewJobActive(job);
+    const actionLabel = nextIsActive ? "activate" : "deactivate";
+    const impactLabel = nextIsActive
+      ? "It will appear in the scheduler again."
+      : "It will no longer appear in the scheduler.";
+
+    if (!confirm(`${actionLabel[0].toUpperCase()}${actionLabel.slice(1)} this job? ${impactLabel}`)) {
+      return;
+    }
+
+    await supabase.from("crew_jobs").update({ is_active: nextIsActive }).eq("id", job.id);
+
+    if (editingJob?.id === job.id) {
+      setEditingJob((current) =>
+        current
+          ? {
+              ...current,
+              is_active: nextIsActive,
+            }
+          : current
+      );
+    }
+
+    await fetchJobs();
   };
 
   const fetchSchedule = async (date) => {
@@ -5553,6 +5624,22 @@ function CrewScheduler() {
                           onChange={(e) => setNewJob({ ...newJob, default_rig: e.target.value })}
                           className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                         />
+                        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+                          <span>Status</span>
+                          <select
+                            value={newJob.is_active ? "active" : "inactive"}
+                            onChange={(e) =>
+                              setNewJob({
+                                ...newJob,
+                                is_active: e.target.value === "active",
+                              })
+                            }
+                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        </label>
                       </div>
                       <div className="mt-3 flex items-center justify-between">
                         <label className="flex items-center gap-2 text-sm text-neutral-600">
@@ -5610,6 +5697,22 @@ function CrewScheduler() {
                           <input type="text" placeholder="S&W PM Name" value={editingJob.pm_name} onChange={(e) => setEditingJob({ ...editingJob, pm_name: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
                           <input type="text" placeholder="PM Phone" value={editingJob.pm_phone} onChange={(e) => setEditingJob({ ...editingJob, pm_phone: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
                           <input type="text" placeholder="Default Rig" value={editingJob.default_rig} onChange={(e) => setEditingJob({ ...editingJob, default_rig: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+                            <span>Status</span>
+                            <select
+                              value={editingJob.is_active ? "active" : "inactive"}
+                              onChange={(e) =>
+                                setEditingJob({
+                                  ...editingJob,
+                                  is_active: e.target.value === "active",
+                                })
+                              }
+                              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                            >
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                            </select>
+                          </label>
                         </div>
                         <div className="mt-3 flex items-center justify-between">
                           <label className="flex items-center gap-2 text-sm text-neutral-600">
@@ -5643,23 +5746,63 @@ function CrewScheduler() {
                     {/* Jobs List */}
                     <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
                       <div className="border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-                        <h3 className={`${lato.className} font-bold text-neutral-900`}>
-                          Active Jobs ({jobs.length})
-                        </h3>
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                          <div>
+                            <h3 className={`${lato.className} font-bold text-neutral-900`}>
+                              Manage Jobs ({jobAdminRows.length})
+                            </h3>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-semibold">
+                              <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+                                Active: {activeJobCount}
+                              </span>
+                              <span className="rounded-full bg-neutral-200 px-2 py-1 text-neutral-700">
+                                Inactive: {jobAdminRows.length - activeJobCount}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+                            <input
+                              type="text"
+                              placeholder="Search jobs..."
+                              value={jobListSearch}
+                              onChange={(e) => setJobListSearch(e.target.value)}
+                              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 sm:w-64"
+                            />
+                            <select
+                              value={jobListFilter}
+                              onChange={(e) => setJobListFilter(e.target.value)}
+                              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                            >
+                              <option value="active">Active Only</option>
+                              <option value="inactive">Inactive Only</option>
+                              <option value="all">All Jobs</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                       <div className="divide-y">
-                        {jobs.length === 0 ? (
+                        {jobAdminRows.length === 0 ? (
                           <div className="px-4 py-8 text-center text-neutral-500">
-                            No active jobs. Add your first job above.
+                            No jobs yet. Add your first job above.
+                          </div>
+                        ) : filteredJobAdminRows.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-neutral-500">
+                            No jobs match the current filter.
                           </div>
                         ) : (
-                          jobs.map((job) => {
+                          filteredJobAdminRows.map((job) => {
                             const progress = getJobProgress(job.id);
                             const progressPercent = getProgressPercent(progress);
                             const isEditingProgress = editingProgressJobId === job.id;
+                            const isJobActive = isCrewJobActive(job);
 
                             return (
-                              <div key={job.id} className="px-4 py-3 hover:bg-neutral-50">
+                              <div
+                                key={job.id}
+                                className={`px-4 py-3 transition-colors ${
+                                  isJobActive ? "hover:bg-neutral-50" : "bg-neutral-50/70 hover:bg-neutral-100"
+                                }`}
+                              >
                                 <div className="flex items-start justify-between gap-4">
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2">
@@ -5676,6 +5819,15 @@ function CrewScheduler() {
                                           Crane
                                         </span>
                                       )}
+                                      <span
+                                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                          isJobActive
+                                            ? "bg-emerald-50 text-emerald-700"
+                                            : "bg-neutral-200 text-neutral-700"
+                                        }`}
+                                      >
+                                        {isJobActive ? "Active" : "Inactive"}
+                                      </span>
                                     </div>
                                     <div className="mt-1 text-sm text-neutral-500">
                                       {[job.address, job.city, job.zip]
@@ -5743,7 +5895,7 @@ function CrewScheduler() {
                                     )}
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    {jobProgressAvailable && (
+                                    {jobProgressAvailable && isJobActive && (
                                       <button
                                         onClick={() =>
                                           isEditingProgress
@@ -5764,10 +5916,14 @@ function CrewScheduler() {
                                       Edit
                                     </button>
                                     <button
-                                      onClick={() => deleteJob(job.id)}
-                                      className="rounded-md px-3 py-1 text-sm text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                      onClick={() => toggleJobActive(job)}
+                                      className={`rounded-md px-3 py-1 text-sm transition-colors ${
+                                        isJobActive
+                                          ? "text-neutral-500 hover:bg-red-50 hover:text-red-600"
+                                          : "text-emerald-700 hover:bg-emerald-50"
+                                      }`}
                                     >
-                                      Deactivate
+                                      {isJobActive ? "Set Inactive" : "Set Active"}
                                     </button>
                                   </div>
                                 </div>

@@ -532,6 +532,7 @@ export default function AdminAssistantWorkspace({
     userMessage,
     assistantMessage,
     actionsPerformed,
+    surface,
   }) => {
     setMessages((previous) => {
       const nextMessages = previous.map((message) => {
@@ -555,6 +556,7 @@ export default function AdminAssistantWorkspace({
           role: "assistant",
           content: assistantMessage,
           actionsPerformed: !!actionsPerformed,
+          surface: surface || null,
         },
       ];
     });

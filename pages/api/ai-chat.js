@@ -863,6 +863,7 @@ async function fetchDataContext(modules = []) {
   const activeWorkers = (workers || []).filter((w) => w.is_active !== false);
   const inactiveWorkers = (workers || []).filter((w) => w.is_active === false);
   const activeCrewJobs = (crewJobs || []).filter((j) => j.is_active !== false);
+  const inactiveCrewJobs = (crewJobs || []).filter((j) => j.is_active === false);
 
   const jobProgressLines = activeCrewJobs.map((job) => {
     const progress = progressByJobId[job.id];
@@ -907,6 +908,7 @@ async function fetchDataContext(modules = []) {
       totalActiveWorkers: activeWorkers.length,
       totalInactiveWorkers: inactiveWorkers.length,
       totalActiveCrewJobs: activeCrewJobs.length,
+      totalInactiveCrewJobs: inactiveCrewJobs.length,
       jobsWithProgress: Object.keys(progressByJobId).length,
       totalRigs: (categories || []).length,
       totalSuperintendents: (superintendents || []).filter((s) => s.is_active !== false).length,
@@ -935,6 +937,18 @@ async function fetchDataContext(modules = []) {
       pm: j.pm_name || "",
       crane: j.crane_required ? "Yes" : "No",
       hiringContractor: j.hiring_contractor || "",
+    })),
+    crewJobsAll: (crewJobs || []).map((j) => ({
+      id: j.id,
+      name: j.job_name,
+      number: j.job_number || "",
+      customer: j.customer_name || "",
+      address: [j.address, j.city].filter(Boolean).join(", "),
+      pm: j.pm_name || "",
+      crane: j.crane_required ? "Yes" : "No",
+      hiringContractor: j.hiring_contractor || "",
+      defaultRig: j.default_rig || "",
+      isActive: j.is_active !== false,
     })),
     rigs: (categories || []).map((c) => c.name),
     superintendents: (superintendents || [])

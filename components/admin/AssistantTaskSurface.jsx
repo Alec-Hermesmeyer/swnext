@@ -377,6 +377,112 @@ function renderScheduleBuilderContext(surface) {
   );
 }
 
+function renderCrewJobActivitySurface(surface, activeActionJobId, onToggle) {
+  return (
+    <div className="px-4 py-4 md:px-5">
+      {surface.summary?.length ? (
+        <div className="mb-4 grid gap-3 md:grid-cols-3">
+          {surface.summary.map((item) => (
+            <div
+              key={`${surface.id}-${item.label}`}
+              className="rounded-[1.1rem] border border-[#e6edf5] bg-white/84 px-3 py-3 text-center"
+            >
+              <div className="text-lg font-bold text-[#0b2a5a]">{item.value}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {surface.jobs?.length ? (
+        <div className="space-y-3">
+          {surface.jobs.map((job) => (
+            <div
+              key={`${surface.id}-${job.id}`}
+              className="rounded-[1.2rem] border border-[#e6edf5] bg-white/84 p-4"
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-sm font-bold tracking-tight text-neutral-950">
+                      {job.name}
+                    </div>
+                    {job.number ? (
+                      <span className="rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                        #{job.number}
+                      </span>
+                    ) : null}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                        job.isActive
+                          ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border border-neutral-200 bg-neutral-100 text-neutral-600"
+                      }`}
+                    >
+                      {job.isActive ? "Active" : "Inactive"}
+                    </span>
+                    {job.crane === "Yes" ? (
+                      <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                        Crane
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-2 space-y-1 text-sm leading-6 text-neutral-500">
+                    <div>{job.address || "No address saved"}</div>
+                    {job.customer ? <div>Customer: {job.customer}</div> : null}
+                    {job.hiringContractor ? <div>Hiring: {job.hiringContractor}</div> : null}
+                    {job.pm ? <div>PM: {job.pm}</div> : null}
+                    {job.defaultRig ? <div>Default rig: {job.defaultRig}</div> : null}
+                  </div>
+                </div>
+
+                {surface.canToggle ? (
+                  <button
+                    type="button"
+                    onClick={() => onToggle?.(job)}
+                    disabled={activeActionJobId === String(job.id)}
+                    className={`inline-flex min-w-[126px] items-center justify-center rounded-[0.95rem] px-3 py-2 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-55 ${
+                      job.isActive
+                        ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                        : "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    }`}
+                  >
+                    {activeActionJobId === String(job.id)
+                      ? "Updating..."
+                      : job.isActive
+                        ? "Set Inactive"
+                        : "Set Active"}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[1.2rem] border border-dashed border-[#dbe4f0] bg-white/80 px-4 py-4 text-sm text-neutral-500">
+          {surface.emptyMessage || "No crew jobs matched this request."}
+        </div>
+      )}
+
+      {surface.tips?.length ? (
+        <div className="mt-4 rounded-[1.15rem] border border-[#e6edf5] bg-white/72 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Why this surface exists
+          </div>
+          <div className="mt-2 space-y-1 text-sm leading-6 text-neutral-500">
+            {surface.tips.map((tip) => (
+              <div key={tip}>{tip}</div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function renderQuickActions(actions, onQuickAction, onOpenWorkspace) {
   if (!actions?.length) return null;
 
@@ -421,6 +527,7 @@ export default function AssistantTaskSurface({
 }) {
   const [values, setValues] = useState(() => buildInitialValues(surface));
   const [submitting, setSubmitting] = useState(false);
+  const [activeActionJobId, setActiveActionJobId] = useState("");
   const [error, setError] = useState("");
   const [completed, setCompleted] = useState(!!surface?.completed);
   const [completedMessage, setCompletedMessage] = useState(
@@ -430,6 +537,7 @@ export default function AssistantTaskSurface({
   useEffect(() => {
     setValues(buildInitialValues(surface));
     setSubmitting(false);
+    setActiveActionJobId("");
     setError("");
     setCompleted(!!surface?.completed);
     setCompletedMessage(
@@ -487,12 +595,59 @@ export default function AssistantTaskSurface({
           userMessage: data.userMessage,
           assistantMessage: data.assistantMessage,
           actionsPerformed: !!data.actionsPerformed,
+          surface: data.surface || null,
         });
       }
     } catch (submitError) {
       setError(submitError.message || "Could not complete assistant action.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCrewJobToggle = async (job) => {
+    if (!job?.id || !surface?.id || !sessionId || activeActionJobId) return;
+
+    setActiveActionJobId(String(job.id));
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin-assistant-actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          surfaceType: surface.type,
+          surfaceId: surface.id,
+          values: {
+            job_id: job.id,
+            job_label: `${job.name}${job.number ? ` (#${job.number})` : ""}`,
+            set_active: !job.isActive,
+            view: surface.view || "active",
+          },
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Could not complete assistant action.");
+      }
+
+      setCompleted(true);
+      setCompletedMessage(data.assistantMessage || "Job status updated.");
+      if (typeof onComplete === "function") {
+        onComplete({
+          surfaceId: surface.id,
+          userMessage: data.userMessage,
+          assistantMessage: data.assistantMessage,
+          actionsPerformed: !!data.actionsPerformed,
+          surface: data.surface || null,
+        });
+      }
+    } catch (submitError) {
+      setError(submitError.message || "Could not complete assistant action.");
+    } finally {
+      setActiveActionJobId("");
     }
   };
 
@@ -528,7 +683,24 @@ export default function AssistantTaskSurface({
         <p className="mt-1 text-sm leading-6 text-neutral-500">{surface.description}</p>
       </div>
 
-      {surface.type === "job_intake_context" ? (
+      {surface.type === "crew_job_activity_list" && completed ? (
+        <div className="px-4 py-4 md:px-5">
+          <div className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
+            {completedMessage}
+          </div>
+        </div>
+      ) : surface.type === "crew_job_activity_list" ? (
+        <>
+          {renderCrewJobActivitySurface(surface, activeActionJobId, handleCrewJobToggle)}
+          {error ? (
+            <div className="px-4 pb-4 md:px-5">
+              <div className="rounded-[1.1rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                {error}
+              </div>
+            </div>
+          ) : null}
+        </>
+      ) : surface.type === "job_intake_context" ? (
         renderJobIntakeContext(surface)
       ) : surface.type === "schedule_builder_context" ? (
         renderScheduleBuilderContext(surface)
