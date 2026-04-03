@@ -1199,30 +1199,32 @@ export default function AdminAssistantWorkspace({
                       Grounded in live admin workflows
                     </div>
                     <div className="relative mx-auto mb-9 flex w-full max-w-[34rem] justify-center">
+                      <div className="pointer-events-none absolute inset-x-8 top-1/2 h-28 -translate-y-1/2 rounded-full bg-gradient-to-r from-red-700/20 via-white/75 to-[#0b2a5a]/24 blur-3xl" />
                       <div className="pointer-events-none absolute inset-x-0 top-1/2 h-[19rem] -translate-y-1/2 overflow-hidden">
                         <GridPatternTailwind
                           yOffset={18}
                           className="h-[19rem] w-full opacity-[0.62] [mask-image:radial-gradient(circle_at_center,white,rgba(255,255,255,0.45)_54%,transparent_78%)]"
-                          patternStroke="#bed0ea"
-                          patternOpacity={0.7}
-                          blockFill="#9bc7f7"
-                          blockOpacity={0.14}
+                          patternStroke="#ffffff"
+                          patternOpacity={0.34}
+                          blockFill="#ffffff"
+                          blockOpacity={0.12}
                         />
                       </div>
-                      <div className="pointer-events-none absolute left-10 top-8 h-20 w-20 rounded-full bg-[#f0b3a8]/55 blur-3xl" />
-                      <div className="pointer-events-none absolute right-8 bottom-8 h-24 w-24 rounded-full bg-[#9bc7f7]/55 blur-3xl" />
-                      <div className="relative flex h-44 w-44 items-center justify-center rounded-[2.9rem] border border-white/72 bg-[linear-gradient(145deg,rgba(11,42,90,0.96)_0%,rgba(36,88,166,0.9)_54%,rgba(155,199,247,0.86)_100%)] shadow-[0_30px_90px_rgba(11,42,90,0.22)]">
-                        <div className="absolute inset-[1px] rounded-[2.8rem] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.34),_transparent_44%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
-                        <div className="absolute inset-3 overflow-hidden rounded-[2.2rem] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]">
+                      <div className="pointer-events-none absolute left-8 top-8 h-24 w-24 rounded-full bg-red-600/28 blur-3xl" />
+                      <div className="pointer-events-none absolute right-8 bottom-8 h-24 w-24 rounded-full bg-[#0b2a5a]/30 blur-3xl" />
+                      <div className="relative flex h-44 w-44 items-center justify-center rounded-[2.9rem] border border-white/72 bg-gradient-to-r from-red-700 via-white to-[#0b2a5a] shadow-[0_30px_90px_rgba(11,42,90,0.22)]">
+                        <div className="absolute inset-[1px] rounded-[2.8rem] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.34),_transparent_44%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]" />
+                        <div className="absolute inset-3 overflow-hidden rounded-[2.2rem] border border-white/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]">
                           <GridPatternTailwind
                             yOffset={28}
-                            className="h-full w-full opacity-[0.38]"
-                            patternStroke="#d7e6fb"
-                            patternOpacity={0.36}
+                            className="h-full w-full opacity-[0.52]"
+                            patternStroke="#ffffff"
+                            patternOpacity={0.42}
                             blockFill="#ffffff"
-                            blockOpacity={0.16}
+                            blockOpacity={0.18}
                           />
                         </div>
+                        <div className="absolute inset-0 rounded-[2.9rem] bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.42),transparent_30%),radial-gradient(circle_at_78%_78%,rgba(11,42,90,0.18),transparent_28%)]" />
                         <div className="absolute inset-x-8 bottom-5 h-7 rounded-full bg-[#071b3d]/38 blur-xl" />
                         <div className="relative flex h-28 w-28 items-center justify-center rounded-[2rem] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(237,244,255,0.9))] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_22px_40px_rgba(11,42,90,0.14)]">
                           <div className="absolute inset-4 rounded-full border border-[#0b2a5a]/8 bg-[radial-gradient(circle_at_top,_rgba(155,199,247,0.34),_transparent_72%)]" />
