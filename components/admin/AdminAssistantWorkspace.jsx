@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@/context/AuthContext";
 import AssistantTaskSurface from "@/components/admin/AssistantTaskSurface";
+import { GridPatternTailwind } from "@/components/GridPatternTailwind";
 import { hasPageAccess } from "@/lib/roles";
 
 // Lazy-load workspace components — no iframes, no duplicate auth, no extra websockets
@@ -1193,20 +1194,47 @@ export default function AdminAssistantWorkspace({
             <div className="relative flex h-full flex-col">
               <div className="flex-1 overflow-y-auto px-6 py-8 md:px-8">
                 <div className="mx-auto flex h-full max-w-6xl flex-col justify-center">
-                  <div className="mx-auto max-w-3xl text-center">
-                    <div className="mb-3 inline-flex rounded-full border border-[#dbe4f0] bg-white/82 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm">
+                  <div className="mx-auto max-w-4xl text-center">
+                    <div className="mb-4 inline-flex rounded-full border border-[#dbe4f0] bg-white/82 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm">
                       Grounded in live admin workflows
                     </div>
-                    <div className="relative mx-auto mb-8 flex h-36 w-36 items-center justify-center rounded-[2.4rem] border border-white/90 bg-white/94 shadow-[0_28px_80px_rgba(11,42,90,0.12)]">
-                      <div className="absolute inset-0 rounded-[2.4rem] bg-[radial-gradient(circle_at_center,_rgba(155,199,247,0.42),_transparent_62%)]" />
-                      <div className="absolute inset-x-6 bottom-4 h-6 rounded-full bg-[#0b2a5a]/8 blur-xl" />
-                      <img
-                        src="/att.png"
-                        alt="S&W Foundation"
-                        width="96"
-                        height="96"
-                        className="relative h-24 w-24 object-contain"
-                      />
+                    <div className="relative mx-auto mb-9 flex w-full max-w-[34rem] justify-center">
+                      <div className="pointer-events-none absolute inset-x-0 top-1/2 h-[19rem] -translate-y-1/2 overflow-hidden">
+                        <GridPatternTailwind
+                          yOffset={18}
+                          className="h-[19rem] w-full opacity-[0.62] [mask-image:radial-gradient(circle_at_center,white,rgba(255,255,255,0.45)_54%,transparent_78%)]"
+                          patternStroke="#bed0ea"
+                          patternOpacity={0.7}
+                          blockFill="#9bc7f7"
+                          blockOpacity={0.14}
+                        />
+                      </div>
+                      <div className="pointer-events-none absolute left-10 top-8 h-20 w-20 rounded-full bg-[#f0b3a8]/55 blur-3xl" />
+                      <div className="pointer-events-none absolute right-8 bottom-8 h-24 w-24 rounded-full bg-[#9bc7f7]/55 blur-3xl" />
+                      <div className="relative flex h-44 w-44 items-center justify-center rounded-[2.9rem] border border-white/72 bg-[linear-gradient(145deg,rgba(11,42,90,0.96)_0%,rgba(36,88,166,0.9)_54%,rgba(155,199,247,0.86)_100%)] shadow-[0_30px_90px_rgba(11,42,90,0.22)]">
+                        <div className="absolute inset-[1px] rounded-[2.8rem] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.34),_transparent_44%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
+                        <div className="absolute inset-3 overflow-hidden rounded-[2.2rem] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]">
+                          <GridPatternTailwind
+                            yOffset={28}
+                            className="h-full w-full opacity-[0.38]"
+                            patternStroke="#d7e6fb"
+                            patternOpacity={0.36}
+                            blockFill="#ffffff"
+                            blockOpacity={0.16}
+                          />
+                        </div>
+                        <div className="absolute inset-x-8 bottom-5 h-7 rounded-full bg-[#071b3d]/38 blur-xl" />
+                        <div className="relative flex h-28 w-28 items-center justify-center rounded-[2rem] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(237,244,255,0.9))] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_22px_40px_rgba(11,42,90,0.14)]">
+                          <div className="absolute inset-4 rounded-full border border-[#0b2a5a]/8 bg-[radial-gradient(circle_at_top,_rgba(155,199,247,0.34),_transparent_72%)]" />
+                          <img
+                            src="/att.png"
+                            alt="S&W Foundation"
+                            width="96"
+                            height="96"
+                            className="relative h-20 w-20 object-contain drop-shadow-[0_12px_20px_rgba(11,42,90,0.18)]"
+                          />
+                        </div>
+                      </div>
                     </div>
                     <h2 className="text-4xl font-black tracking-[-0.04em] text-neutral-950 md:text-[3.4rem]">
                       {getGreeting(displayName)}

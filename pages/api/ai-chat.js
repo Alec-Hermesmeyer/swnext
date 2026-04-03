@@ -1469,6 +1469,7 @@ export default async function handler(req, res) {
     const userRole = String(userContext.role || "").trim().toLowerCase();
     const userAccessLevel = userContext.accessLevel || 3;
     const writeAccessEnabled = roleCanWrite(userRole, userAccessLevel);
+    const canManageUsers = userRole === "admin";
     const allowedModules = getDataModules(userRole, userAccessLevel);
     const [data, assistantProfile] = await Promise.all([
       fetchDataContext(allowedModules),
@@ -1478,6 +1479,7 @@ export default async function handler(req, res) {
       message,
       data,
       writeAccessEnabled,
+      canManageUsers,
       assistantProfile,
     });
 
@@ -1600,6 +1602,7 @@ export default async function handler(req, res) {
         message,
         data,
         writeAccessEnabled,
+        canManageUsers,
         actionsPerformed,
         assistantProfile,
       });
