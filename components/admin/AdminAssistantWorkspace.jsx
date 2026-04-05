@@ -380,11 +380,16 @@ export default function AdminAssistantWorkspace({
   const welcomeContentRef = useRef(welcomeMessage.content);
   welcomeContentRef.current = welcomeMessage.content;
   const displayName = profile?.full_name || profile?.username || "there";
-  const hasUserMessages = messages.some((message) => message.role === "user");
-  const firstUserMessage = messages.find((message) => message.role === "user")?.content || "";
-  const conversationTitle = firstUserMessage
-    ? `${firstUserMessage.slice(0, 42)}${firstUserMessage.length > 42 ? "..." : ""}`
-    : "New conversation";
+  const hasUserMessages = useMemo(
+    () => messages.some((message) => message.role === "user"),
+    [messages]
+  );
+  const conversationTitle = useMemo(() => {
+    const first = messages.find((message) => message.role === "user")?.content || "";
+    return first
+      ? `${first.slice(0, 42)}${first.length > 42 ? "..." : ""}`
+      : "New conversation";
+  }, [messages]);
 
   useEffect(() => {
     setSessionId(getSessionId());
