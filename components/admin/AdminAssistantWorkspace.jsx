@@ -360,6 +360,8 @@ export default function AdminAssistantWorkspace({
 
   const isPanel = variant === "panel";
   const welcomeMessage = useMemo(() => buildWelcomeMessage(profile), [profile]);
+  const welcomeContentRef = useRef(welcomeMessage.content);
+  welcomeContentRef.current = welcomeMessage.content;
   const displayName = profile?.full_name || profile?.username || "there";
   const hasUserMessages = messages.some((message) => message.role === "user");
   const firstUserMessage = messages.find((message) => message.role === "user")?.content || "";
