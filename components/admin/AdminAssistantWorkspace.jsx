@@ -620,15 +620,15 @@ export default function AdminAssistantWorkspace({
     }
   }, [sendMessage]);
 
-  const openWorkspace = (workspace, context = {}) => {
+  const openWorkspace = useCallback((workspace, context = {}) => {
     setActiveWorkspace(workspace);
     setWorkspaceContext(context);
-  };
+  }, []);
 
-  const closeWorkspace = () => {
+  const closeWorkspace = useCallback(() => {
     setActiveWorkspace(null);
     setWorkspaceContext({});
-  };
+  }, []);
 
   if (isPanel) {
     return (
