@@ -929,7 +929,7 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
     80
   );
 
-  return {
+  const result = {
     today,
     historyStart,
     historyEnd,
