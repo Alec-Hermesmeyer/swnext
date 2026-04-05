@@ -531,6 +531,7 @@ export default function AdminAssistantWorkspace({
     try {
       const response = await fetch("/api/ai-chat", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
@@ -538,7 +539,13 @@ export default function AdminAssistantWorkspace({
           sessionId: sessionIdRef.current,
         }),
       });
-      const data = await response.json();
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("The assistant could not complete that request.");
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "The assistant could not complete that request.");
