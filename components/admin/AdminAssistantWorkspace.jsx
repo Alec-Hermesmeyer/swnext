@@ -393,6 +393,22 @@ export default function AdminAssistantWorkspace({
 
   const messageCount = messages.length;
   useEffect(() => {
+    if (!messageCount) return;
+
+    const prevCount = prevMessageCountRef.current;
+    prevMessageCountRef.current = messageCount;
+
+    // Skip scroll when count hasn't actually changed (e.g. content-only update)
+    if (messageCount === prevCount) return;
+
+    // On initial history hydration, jump instantly — no animation
+    if (!hasHydratedRef.current) {
+      hasHydratedRef.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+      return;
+    }
+
+    // New message added during conversation — smooth scroll
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messageCount]);
 
