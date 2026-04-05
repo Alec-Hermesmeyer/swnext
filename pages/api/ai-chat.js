@@ -956,12 +956,15 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
     return `- ${job.job_name}${job.job_number ? ` #${job.job_number}` : ""}: ${progress.status || "planned"} | Holes: ${done ?? 0}${total !== null && total !== undefined ? ` / ${total}` : ""}${percent}${eta}${updatedAt}${progress.notes ? ` | Note: ${progress.notes}` : ""}`;
   });
 
+  // Pre-build lookup map to avoid O(n*m) .find() inside .map()
+  const crewJobLabelById = {};
+  for (const job of activeCrewJobs) {
+    crewJobLabelById[job.id] = `${job.job_name}${job.job_number ? ` #${job.job_number}` : ""}`;
+  }
+
   const jobProgressUpdateLines = capLines(
     (jobProgressUpdates || []).map((row) => {
-      const relatedJob = activeCrewJobs.find((job) => job.id === row.job_id);
-      const label = relatedJob
-        ? `${relatedJob.job_name}${relatedJob.job_number ? ` #${relatedJob.job_number}` : ""}`
-        : row.job_id;
+      const label = crewJobLabelById[row.job_id] || row.job_id;
       return `- ${row.update_date || "unknown date"}: ${label} | ${row.status || "planned"} | Holes: ${row.holes_completed ?? 0}${row.holes_target !== null && row.holes_target !== undefined ? ` / ${row.holes_target}` : ""}${row.notes ? ` | ${row.notes}` : ""}`;
     }),
     80
