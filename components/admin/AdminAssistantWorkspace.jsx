@@ -499,17 +499,21 @@ export default function AdminAssistantWorkspace({
     setHistoryLoading(false);
   };
 
-  const sendMessage = async (presetMessage) => {
-    const text = String(presetMessage ?? input).trim();
+  const sendMessage = useCallback(async (presetMessage) => {
+    const text = typeof presetMessage === "string" ? presetMessage.trim() : input.trim();
 
-    if (!text || loading || !sessionId) return;
+    if (!text || loadingRef.current || !sessionIdRef.current) return;
 
-    const history = messages.slice(-20).map(({ role: messageRole, content }) => ({
-      role: messageRole,
-      content,
-    }));
-
-    setMessages((previous) => [...previous, { role: "user", content: text }]);
+    // Snapshot history from current state via functional updater — avoids
+    // needing `messages` in the dependency array
+    let history;
+    setMessages((previous) => {
+      history = previous.slice(-20).map(({ role: messageRole, content }) => ({
+        role: messageRole,
+        content,
+      }));
+      return [...previous, { role: "user", content: text }];
+    });
     setInput("");
     setLoading(true);
     setHistoryError("");
@@ -521,7 +525,7 @@ export default function AdminAssistantWorkspace({
         body: JSON.stringify({
           message: text,
           history,
-          sessionId,
+          sessionId: sessionIdRef.current,
         }),
       });
       const data = await response.json();
@@ -552,7 +556,7 @@ export default function AdminAssistantWorkspace({
     } finally {
       setLoading(false);
     }
-  };
+  }, [input]);
 
   const clearHistory = async () => {
     if (!sessionId || loading) return;
