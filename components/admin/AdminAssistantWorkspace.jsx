@@ -7,25 +7,40 @@ import AssistantTaskSurface from "@/components/admin/AssistantTaskSurface";
 import { GridPatternTailwind } from "@/components/GridPatternTailwind";
 import { hasPageAccess } from "@/lib/roles";
 
+// Workspace chunk loaders — extracted so they can be reused for both
+// dynamic() rendering and idle-time prefetching
+const WORKSPACE_LOADERS = {
+  scheduler: () => import("@/pages/admin/crew-scheduler").then((mod) => ({ default: mod.CrewScheduler })),
+  social: () => import("@/pages/admin/social-media").then((mod) => ({ default: mod.SocialMediaAdmin })),
+  gallery: () => import("@/pages/admin/gallery").then((mod) => ({ default: mod.GalleryManagement })),
+  images: () => import("@/pages/admin/image-assignments").then((mod) => ({ default: mod.ImageAssignmentsPage })),
+};
+
 // Lazy-load workspace components — no iframes, no duplicate auth, no extra websockets
 const WORKSPACE_COMPONENTS = {
-  scheduler: dynamic(
-    () => import("@/pages/admin/crew-scheduler").then((mod) => ({ default: mod.CrewScheduler })),
-    { ssr: false, loading: () => <WorkspaceLoader /> }
-  ),
-  social: dynamic(
-    () => import("@/pages/admin/social-media").then((mod) => ({ default: mod.SocialMediaAdmin })),
-    { ssr: false, loading: () => <WorkspaceLoader /> }
-  ),
-  gallery: dynamic(
-    () => import("@/pages/admin/gallery").then((mod) => ({ default: mod.GalleryManagement })),
-    { ssr: false, loading: () => <WorkspaceLoader /> }
-  ),
-  images: dynamic(
-    () => import("@/pages/admin/image-assignments").then((mod) => ({ default: mod.ImageAssignmentsPage })),
-    { ssr: false, loading: () => <WorkspaceLoader /> }
-  ),
+  scheduler: dynamic(WORKSPACE_LOADERS.scheduler, { ssr: false, loading: () => <WorkspaceLoader /> }),
+  social: dynamic(WORKSPACE_LOADERS.social, { ssr: false, loading: () => <WorkspaceLoader /> }),
+  gallery: dynamic(WORKSPACE_LOADERS.gallery, { ssr: false, loading: () => <WorkspaceLoader /> }),
+  images: dynamic(WORKSPACE_LOADERS.images, { ssr: false, loading: () => <WorkspaceLoader /> }),
 };
+
+// Prefetch all workspace chunks during browser idle time so they're warm
+// before the user clicks "Open Workspace". Fires once on module load.
+let prefetchScheduled = false;
+function prefetchWorkspaceChunks() {
+  if (prefetchScheduled || typeof window === "undefined") return;
+  prefetchScheduled = true;
+
+  const schedule = typeof requestIdleCallback === "function"
+    ? requestIdleCallback
+    : (cb) => setTimeout(cb, 2000);
+
+  schedule(() => {
+    Object.values(WORKSPACE_LOADERS).forEach((loader) => {
+      loader().catch(() => {});
+    });
+  });
+}
 
 function WorkspaceLoader() {
   return (
