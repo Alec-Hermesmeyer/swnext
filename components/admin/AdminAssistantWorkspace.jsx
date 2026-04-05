@@ -458,7 +458,7 @@ export default function AdminAssistantWorkspace({
 
     if (!text || loading || !sessionId) return;
 
-    const history = messages.map(({ role: messageRole, content }) => ({
+    const history = messages.slice(-20).map(({ role: messageRole, content }) => ({
       role: messageRole,
       content,
     }));
