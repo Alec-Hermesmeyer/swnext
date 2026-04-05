@@ -431,10 +431,20 @@ export default function AdminAssistantWorkspace({
       setHistoryError("");
 
       try {
-        const response = await fetch(`/api/ai-chat?session_id=${encodeURIComponent(sessionId)}`);
-        const data = await response.json();
+        const response = await fetch(
+          `/api/ai-chat?session_id=${encodeURIComponent(sessionId)}`,
+          { credentials: "same-origin" }
+        );
 
         if (!active) return;
+
+        // Guard against non-JSON responses (HTML error pages, network errors)
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Could not load assistant history.");
+        }
 
         if (!response.ok) {
           throw new Error(data.error || "Could not load assistant history.");
