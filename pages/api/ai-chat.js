@@ -577,6 +577,32 @@ const tools = [
 
 // ── Data fetching ──
 
+const DATA_CACHE = new Map();
+const DATA_CACHE_TTL = 45_000; // 45 seconds
+
+function getDataCacheKey(modules) {
+  return (modules || []).slice().sort().join(",") || "__all__";
+}
+
+function getCachedDataContext(modules) {
+  const key = getDataCacheKey(modules);
+  const entry = DATA_CACHE.get(key);
+  if (entry && Date.now() - entry.ts < DATA_CACHE_TTL) return entry.data;
+  return null;
+}
+
+function setCachedDataContext(modules, data) {
+  const key = getDataCacheKey(modules);
+  DATA_CACHE.set(key, { data, ts: Date.now() });
+  // Evict stale entries if map grows (prevents memory leak across many module combos)
+  if (DATA_CACHE.size > 20) {
+    const now = Date.now();
+    for (const [k, v] of DATA_CACHE) {
+      if (now - v.ts > DATA_CACHE_TTL) DATA_CACHE.delete(k);
+    }
+  }
+}
+
 const capLines = (lines, max) => {
   if (!lines || lines.length <= max) return lines || [];
   const omitted = lines.length - max;
@@ -586,7 +612,12 @@ const capLines = (lines, max) => {
 const linesOrFallback = (lines, fallback) =>
   lines && lines.length ? lines.join("\n") : fallback;
 
-async function fetchDataContext(modules = []) {
+async function fetchDataContext(modules = [], { skipCache = false } = {}) {
+  if (!skipCache) {
+    const cached = getCachedDataContext(modules);
+    if (cached) return cached;
+  }
+
   const hasModule = (mod) => !modules.length || modules.includes(mod);
   const { today, historyStart, historyEnd } = getDateRange();
 
