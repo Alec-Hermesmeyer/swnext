@@ -420,21 +420,21 @@ export default function AdminAssistantWorkspace({
 
   useEffect(() => {
     if (historyLoading) return;
-    if (!messages.length) {
-      setMessages([welcomeMessage]);
-      return;
-    }
 
-    const shouldRefreshWelcome =
-      !hasUserMessages &&
-      messages.length === 1 &&
-      messages[0]?.role === "assistant" &&
-      messages[0]?.content !== welcomeMessage.content;
+    setMessages((prev) => {
+      if (!prev.length) return [welcomeMessage];
 
-    if (shouldRefreshWelcome) {
-      setMessages([welcomeMessage]);
-    }
-  }, [hasUserMessages, historyLoading, messages, welcomeMessage]);
+      // Only refresh the welcome message if the user hasn't chatted yet
+      // and the profile-derived content actually changed
+      const isStaleWelcome =
+        prev.length === 1 &&
+        prev[0]?.role === "assistant" &&
+        !prev.some((m) => m.role === "user") &&
+        prev[0]?.content !== welcomeMessage.content;
+
+      return isStaleWelcome ? [welcomeMessage] : prev;
+    });
+  }, [historyLoading, welcomeMessage]);
 
   useEffect(() => {
     if (!isPanel) return undefined;
