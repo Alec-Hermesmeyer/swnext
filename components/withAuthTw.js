@@ -2,6 +2,8 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
+const AUTH_LOADING_TIMEOUT = 8000; // 8s — enough for slow networks, short enough to not feel stuck
+
 const withAuthTw = (WrappedComponent) => {
   const Wrapper = (props) => {
     const router = useRouter();
@@ -9,19 +11,21 @@ const withAuthTw = (WrappedComponent) => {
     const isEmbedded = router.query?.embedded === "true";
     const [timedOut, setTimedOut] = useState(false);
 
-    // In embedded mode (iframe), give auth a few seconds then render anyway
-    // The parent page already authenticated — shared cookies mean the session exists
+    // Safety timeout for ALL modes — if auth hasn't resolved after 8s,
+    // stop showing the spinner and let the redirect-to-login logic run.
+    // This prevents infinite loading spinners when Supabase session
+    // resolution hangs (cookie race, network issue, tab sleep, etc.).
     useEffect(() => {
-      if (!isEmbedded || !loading) return;
-      const timer = setTimeout(() => setTimedOut(true), 3000);
+      if (!loading) return;
+      const timer = setTimeout(() => setTimedOut(true), isEmbedded ? 3000 : AUTH_LOADING_TIMEOUT);
       return () => clearTimeout(timer);
     }, [isEmbedded, loading]);
 
     useEffect(() => {
-      if (!loading && !user && !isEmbedded) {
+      if ((!loading || timedOut) && !user && !isEmbedded) {
         router.replace('/login');
       }
-    }, [user, loading, router, isEmbedded]);
+    }, [user, loading, timedOut, router, isEmbedded]);
 
     if (loading && !timedOut) {
       return (
@@ -37,7 +41,7 @@ const withAuthTw = (WrappedComponent) => {
       );
     }
 
-    // In embedded mode, render even if user hasn't resolved yet
+    // If auth timed out or finished without a user, redirect (handled above)
     if (!user && !isEmbedded) return null;
 
     return <WrappedComponent {...props} />;
