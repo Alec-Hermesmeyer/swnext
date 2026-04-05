@@ -372,6 +372,8 @@ export default function AdminAssistantWorkspace({
   const [workspaceContext, setWorkspaceContext] = useState({});
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const prevMessageCountRef = useRef(0);
+  const hasHydratedRef = useRef(false);
 
   const isPanel = variant === "panel";
   const welcomeMessage = useMemo(() => buildWelcomeMessage(profile), [profile]);
