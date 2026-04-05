@@ -147,3 +147,31 @@ All three optimizations are implemented. Here's what changed:
 [2026-04-05T17:44:02.794Z] KNOXIS (dispatch): I'm having Claude investigate the issue with admin pages getting stuck loading in browsers outside of Safari.
 [2026-04-05T17:44:02.794Z] DISPATCH #4:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Investigate the issue with admin pages getting stuck loading in browsers outside of Safari. Check for any browser-specific caching issues, authentication token expiration, or other potential causes. When done, summarize what you found and propose a solution. Please include any relevant code changes or updates to `components/admin/AdminAssistantWorkspace.jsx` or other affected files.
+[2026-04-05T17:51:09.626Z] CLAUDE DONE (exit 0, 427s, 23 lines):
+## Investigation Summary
+
+### Root Cause
+
+The admin pages get stuck loading in Chrome, Firefox, and Edge because of a **race condition between service worker teardown and Supabase auth session resolution**. Here's the chain:
+
+1. **`pages/_app.js` (line 11-16)** ran `navigator.serviceWorker.getRegistrations().unregister()` **synchronously in the render body** — not in a `useEffect`. This fired on every component render, not just once.
+
+2. **Non-Safari browsers** (Chrome, Firefox, Edge) use `BroadcastChannel` and service workers more aggressively for cross-tab session sync and cookie persistence. Tearing down service workers during render disrupted Supabase's `createBrowserClient` cookie-based auth flow.
+
+3. **`AuthContext.js`** called `supabase.auth.getSession()` which internally relies on `localStorage` and `BroadcastChannel`. With the service worker being torn down concurrently, this call could **hang indefinitely** in Chrome/Firefox — the Promise never resolves.
+
+4. **`withAuthTw.js`** showed a spinner while `loading === true` and had **no timeout for non-embedded mode**. The embedded timeout (3s) only activated when `?embedded=true`. Normal page loads waited forever.
+
+5. **Safari was unaffected** because it has weaker service worker support and doesn't route auth persistence through them the same way.
+
+### Changes Made (4 files)
+
+**`pages/_app.js`** — lines 1, 10-26
+- Added `useEffect` and `useRef` imports
+- Moved service worker unregistration from synchronous render body into a `useEffect` with a `useRef` guard so it only fires once after mount, never during render
+
+**`context/AuthContext.js`** — lines 49-80
+- Added `withTimeout()` helper (6-second deadline) wrapping both `supabase.auth.getSession()` and `supabase.auth.refreshSession()`
+- If either call hangs, the timeout rejects, the `catch` block runs, and `setLoading(false)` fires in `finally` — so the app never gets stuck
+- `refreshSession()` failure is now caught independently (its own try/catch) so a refre
+[2026-04-05T17:51:10.603Z] KNOXIS (review): Claude has identified the root cause of the admin pages getting stuck loading in browsers outside of Safari. The issue was due to a race condition between service worker teardown and Supabase auth session resolution. Claude has made changes to 4 files: `pages/_app.js`, `context/AuthContext.js`, `components/withAuthTw.js`, and `components/admin/AdminAssistantWorkspace.jsx`. The changes include moving service worker unregistration to a `useEffect`, adding timeouts to auth session resolution and refresh, and ensuring cookies are sent with fetch calls. These changes should resolve the issue with admin pages getting stuck loading.
