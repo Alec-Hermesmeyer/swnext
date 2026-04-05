@@ -71,3 +71,45 @@ Which of these issues would you like to address first?
 [2026-04-05T03:20:19.548Z] KNOXIS (dispatch): I'm having Claude implement caching for `fetchDataContext()` with a short TTL, conditionally fetch data using the `modules` parameter, truncate chat history, optimize assignment processing, and reduce unnecessary re-renders in `admin/assistant/page.tsx`.
 [2026-04-05T03:20:19.549Z] DISPATCH #2:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Implement the following optimizations in `admin/assistant/page.tsx`: cache `fetchDataContext()` with a short TTL, use the `modules` parameter to conditionally fetch only needed data, truncate chat history before sending to the API, optimize assignment processing to avoid O(n^2) complexity, and reduce unnecessary re-renders triggered by `welcomeMessage` and `scrollIntoView`. When done, summarize what you changed (files, functions, lines).
+[2026-04-05T03:24:15.454Z] CLAUDE DONE (exit 0, 236s, 28 lines):
+All five optimizations are implemented. Here's a summary:
+
+---
+
+## Changes Summary
+
+### File 1: `pages/api/ai-chat.js`
+
+**1. TTL cache for `fetchDataContext()`** (lines 580-618)
+- Added `DATA_CACHE` Map with 45-second TTL
+- `getCachedDataContext()` / `setCachedDataContext()` manage cache keyed by sorted module list
+- `fetchDataContext()` now accepts `{ skipCache }` option — returns cached data when available
+- The post-mutation call at line ~1629 uses `{ skipCache: true }` to guarantee fresh data after writes
+- Stale entry eviction prevents memory leaks (cap at 20 entries)
+
+**2. Conditional data fetching by module** (lines 624-768)
+- Each of the 16 Supabase queries is now wrapped in `hasModule()` checks
+- Schedule queries (workers, categories, superintendents, trucks, schedules, assignments, rig details, progress) only fire when `modules` includes `"schedule"`
+- Careers, contacts, submissions, social queries are similarly gated
+- `crew_jobs` always loads since it's used across surfaces
+- Skipped queries return `{ data: null }` sentinels — downstream code already handles null arrays via `(data || [])`
+
+**3. O(n^2) → O(n) assignment processing** (lines ~963-975)
+- Replaced `activeCrewJobs.find()` inside `jobProgressUpdates.map()` with a pre-built `crewJobLabelById` lookup object
+- Eliminates repeated linear scans (was O(jobs * updates), now O(jobs + updates))
+
+### File 2: `components/admin/AdminAssistantWorkspace.jsx`
+
+**4. Chat history truncation** (line 461)
+- `messages.slice(-20).map(...)` — only the last 20 messages are sent in the POST body
+- Matches the server-side `.slice(-20)` that already existed at line 1524, but now reduces network payload size
+
+**5. Re-render reduction** (lines 3, 363-437)
+- Added `useCallback` to imports
+- **`scrollIntoView`**: Changed dependency from `[messages, loading]` to `[messageCount]` — now only fires when a message is added/removed, not on every loading toggle (was firing 3-4x per round-trip, now 1-2x)
+- **Welcome message effect*
+[2026-04-05T03:24:16.305Z] KNOXIS (review): Claude has implemented all five optimizations. The changes include: caching `fetchDataContext()` with a 45-second TTL, conditionally fetching data by module, truncating chat history to the last 20 messages, optimizing assignment processing from O(n^2) to O(n), and reducing unnecessary re-renders. The changes are in `pages/api/ai-chat.js` and `components/admin/AdminAssistantWorkspace.jsx`. Everything looks good, but let's verify the performance improvements. Would you like to run some tests or demo the updated admin pages?
+[2026-04-05T03:24:49.166Z] USER: can he continue with the other optimizations he identified?
+[2026-04-05T03:24:49.760Z] KNOXIS (dispatch): I'm having Claude continue with the remaining optimizations he identified, including eager loading of heavy workspace pages and optimizing `scrollIntoView` and loading state change handling.
+[2026-04-05T03:24:49.760Z] DISPATCH #3:
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Building on the previous optimizations, please implement eager loading of heavy workspace pages, optimize `scrollIntoView` to only fire when necessary, and improve handling of loading state changes in `admin/assistant/page.tsx`. When done, summarize what you changed (files, functions, lines).
