@@ -371,9 +371,10 @@ export default function AdminAssistantWorkspace({
     setSessionId(getSessionId());
   }, []);
 
+  const messageCount = messages.length;
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messageCount]);
 
   useEffect(() => {
     if (!sessionId) return;
