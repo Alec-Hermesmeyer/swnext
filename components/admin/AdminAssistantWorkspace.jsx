@@ -578,7 +578,7 @@ export default function AdminAssistantWorkspace({
     }
   };
 
-  const handleSurfaceComplete = ({
+  const handleSurfaceComplete = useCallback(({
     surfaceId,
     userMessage,
     assistantMessage,
@@ -611,14 +611,14 @@ export default function AdminAssistantWorkspace({
         },
       ];
     });
-  };
+  }, []);
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = useCallback((event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       sendMessage();
     }
-  };
+  }, [sendMessage]);
 
   const openWorkspace = (workspace, context = {}) => {
     setActiveWorkspace(workspace);
