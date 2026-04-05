@@ -581,8 +581,15 @@ export default function AdminAssistantWorkspace({
     try {
       const response = await fetch(`/api/ai-chat?session_id=${encodeURIComponent(sessionId)}`, {
         method: "DELETE",
+        credentials: "same-origin",
       });
-      const data = await response.json();
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("Could not clear assistant history.");
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Could not clear assistant history.");
