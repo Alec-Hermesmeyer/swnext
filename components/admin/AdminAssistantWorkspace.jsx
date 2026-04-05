@@ -1,31 +1,46 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@/context/AuthContext";
 import AssistantTaskSurface from "@/components/admin/AssistantTaskSurface";
 import { GridPatternTailwind } from "@/components/GridPatternTailwind";
 import { hasPageAccess } from "@/lib/roles";
 
+// Workspace chunk loaders — extracted so they can be reused for both
+// dynamic() rendering and idle-time prefetching
+const WORKSPACE_LOADERS = {
+  scheduler: () => import("@/pages/admin/crew-scheduler").then((mod) => ({ default: mod.CrewScheduler })),
+  social: () => import("@/pages/admin/social-media").then((mod) => ({ default: mod.SocialMediaAdmin })),
+  gallery: () => import("@/pages/admin/gallery").then((mod) => ({ default: mod.GalleryManagement })),
+  images: () => import("@/pages/admin/image-assignments").then((mod) => ({ default: mod.ImageAssignmentsPage })),
+};
+
 // Lazy-load workspace components — no iframes, no duplicate auth, no extra websockets
 const WORKSPACE_COMPONENTS = {
-  scheduler: dynamic(
-    () => import("@/pages/admin/crew-scheduler").then((mod) => ({ default: mod.CrewScheduler })),
-    { ssr: false, loading: () => <WorkspaceLoader /> }
-  ),
-  social: dynamic(
-    () => import("@/pages/admin/social-media").then((mod) => ({ default: mod.SocialMediaAdmin })),
-    { ssr: false, loading: () => <WorkspaceLoader /> }
-  ),
-  gallery: dynamic(
-    () => import("@/pages/admin/gallery").then((mod) => ({ default: mod.GalleryManagement })),
-    { ssr: false, loading: () => <WorkspaceLoader /> }
-  ),
-  images: dynamic(
-    () => import("@/pages/admin/image-assignments").then((mod) => ({ default: mod.ImageAssignmentsPage })),
-    { ssr: false, loading: () => <WorkspaceLoader /> }
-  ),
+  scheduler: dynamic(WORKSPACE_LOADERS.scheduler, { ssr: false, loading: () => <WorkspaceLoader /> }),
+  social: dynamic(WORKSPACE_LOADERS.social, { ssr: false, loading: () => <WorkspaceLoader /> }),
+  gallery: dynamic(WORKSPACE_LOADERS.gallery, { ssr: false, loading: () => <WorkspaceLoader /> }),
+  images: dynamic(WORKSPACE_LOADERS.images, { ssr: false, loading: () => <WorkspaceLoader /> }),
 };
+
+// Prefetch all workspace chunks during browser idle time so they're warm
+// before the user clicks "Open Workspace". Fires once on module load.
+let prefetchScheduled = false;
+function prefetchWorkspaceChunks() {
+  if (prefetchScheduled || typeof window === "undefined") return;
+  prefetchScheduled = true;
+
+  const schedule = typeof requestIdleCallback === "function"
+    ? requestIdleCallback
+    : (cb) => setTimeout(cb, 2000);
+
+  schedule(() => {
+    Object.values(WORKSPACE_LOADERS).forEach((loader) => {
+      loader().catch(() => {});
+    });
+  });
+}
 
 function WorkspaceLoader() {
   return (
@@ -357,23 +372,54 @@ export default function AdminAssistantWorkspace({
   const [workspaceContext, setWorkspaceContext] = useState({});
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const prevMessageCountRef = useRef(0);
+  const hasHydratedRef = useRef(false);
+  const loadingRef = useRef(false);
+  const sessionIdRef = useRef("");
+  loadingRef.current = loading;
+  sessionIdRef.current = sessionId;
 
   const isPanel = variant === "panel";
   const welcomeMessage = useMemo(() => buildWelcomeMessage(profile), [profile]);
+  const welcomeContentRef = useRef(welcomeMessage.content);
+  welcomeContentRef.current = welcomeMessage.content;
   const displayName = profile?.full_name || profile?.username || "there";
-  const hasUserMessages = messages.some((message) => message.role === "user");
-  const firstUserMessage = messages.find((message) => message.role === "user")?.content || "";
-  const conversationTitle = firstUserMessage
-    ? `${firstUserMessage.slice(0, 42)}${firstUserMessage.length > 42 ? "..." : ""}`
-    : "New conversation";
+  const hasUserMessages = useMemo(
+    () => messages.some((message) => message.role === "user"),
+    [messages]
+  );
+  const conversationTitle = useMemo(() => {
+    const first = messages.find((message) => message.role === "user")?.content || "";
+    return first
+      ? `${first.slice(0, 42)}${first.length > 42 ? "..." : ""}`
+      : "New conversation";
+  }, [messages]);
 
   useEffect(() => {
     setSessionId(getSessionId());
+    prefetchWorkspaceChunks();
   }, []);
 
+  const messageCount = messages.length;
   useEffect(() => {
+    if (!messageCount) return;
+
+    const prevCount = prevMessageCountRef.current;
+    prevMessageCountRef.current = messageCount;
+
+    // Skip scroll when count hasn't actually changed (e.g. content-only update)
+    if (messageCount === prevCount) return;
+
+    // On initial history hydration, jump instantly — no animation
+    if (!hasHydratedRef.current) {
+      hasHydratedRef.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+      return;
+    }
+
+    // New message added during conversation — smooth scroll
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messageCount]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -385,10 +431,20 @@ export default function AdminAssistantWorkspace({
       setHistoryError("");
 
       try {
-        const response = await fetch(`/api/ai-chat?session_id=${encodeURIComponent(sessionId)}`);
-        const data = await response.json();
+        const response = await fetch(
+          `/api/ai-chat?session_id=${encodeURIComponent(sessionId)}`,
+          { credentials: "same-origin" }
+        );
 
         if (!active) return;
+
+        // Guard against non-JSON responses (HTML error pages, network errors)
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Could not load assistant history.");
+        }
 
         if (!response.ok) {
           throw new Error(data.error || "Could not load assistant history.");
@@ -417,21 +473,21 @@ export default function AdminAssistantWorkspace({
 
   useEffect(() => {
     if (historyLoading) return;
-    if (!messages.length) {
-      setMessages([welcomeMessage]);
-      return;
-    }
 
-    const shouldRefreshWelcome =
-      !hasUserMessages &&
-      messages.length === 1 &&
-      messages[0]?.role === "assistant" &&
-      messages[0]?.content !== welcomeMessage.content;
+    setMessages((prev) => {
+      if (!prev.length) return [welcomeMessage];
 
-    if (shouldRefreshWelcome) {
-      setMessages([welcomeMessage]);
-    }
-  }, [hasUserMessages, historyLoading, messages, welcomeMessage]);
+      // Only refresh the welcome message if the user hasn't chatted yet
+      // and the profile-derived content actually changed
+      const isStaleWelcome =
+        prev.length === 1 &&
+        prev[0]?.role === "assistant" &&
+        !prev.some((m) => m.role === "user") &&
+        prev[0]?.content !== welcomeMessage.content;
+
+      return isStaleWelcome ? [welcomeMessage] : prev;
+    });
+  }, [historyLoading, welcomeMessage]);
 
   useEffect(() => {
     if (!isPanel) return undefined;
@@ -453,17 +509,21 @@ export default function AdminAssistantWorkspace({
     setHistoryLoading(false);
   };
 
-  const sendMessage = async (presetMessage) => {
-    const text = String(presetMessage ?? input).trim();
+  const sendMessage = useCallback(async (presetMessage) => {
+    const text = typeof presetMessage === "string" ? presetMessage.trim() : input.trim();
 
-    if (!text || loading || !sessionId) return;
+    if (!text || loadingRef.current || !sessionIdRef.current) return;
 
-    const history = messages.map(({ role: messageRole, content }) => ({
-      role: messageRole,
-      content,
-    }));
-
-    setMessages((previous) => [...previous, { role: "user", content: text }]);
+    // Snapshot history from current state via functional updater — avoids
+    // needing `messages` in the dependency array
+    let history;
+    setMessages((previous) => {
+      history = previous.slice(-20).map(({ role: messageRole, content }) => ({
+        role: messageRole,
+        content,
+      }));
+      return [...previous, { role: "user", content: text }];
+    });
     setInput("");
     setLoading(true);
     setHistoryError("");
@@ -471,14 +531,21 @@ export default function AdminAssistantWorkspace({
     try {
       const response = await fetch("/api/ai-chat", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
           history,
-          sessionId,
+          sessionId: sessionIdRef.current,
         }),
       });
-      const data = await response.json();
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("The assistant could not complete that request.");
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "The assistant could not complete that request.");
@@ -506,7 +573,7 @@ export default function AdminAssistantWorkspace({
     } finally {
       setLoading(false);
     }
-  };
+  }, [input]);
 
   const clearHistory = async () => {
     if (!sessionId || loading) return;
@@ -514,8 +581,15 @@ export default function AdminAssistantWorkspace({
     try {
       const response = await fetch(`/api/ai-chat?session_id=${encodeURIComponent(sessionId)}`, {
         method: "DELETE",
+        credentials: "same-origin",
       });
-      const data = await response.json();
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("Could not clear assistant history.");
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Could not clear assistant history.");
@@ -528,7 +602,7 @@ export default function AdminAssistantWorkspace({
     }
   };
 
-  const handleSurfaceComplete = ({
+  const handleSurfaceComplete = useCallback(({
     surfaceId,
     userMessage,
     assistantMessage,
@@ -561,24 +635,24 @@ export default function AdminAssistantWorkspace({
         },
       ];
     });
-  };
+  }, []);
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = useCallback((event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       sendMessage();
     }
-  };
+  }, [sendMessage]);
 
-  const openWorkspace = (workspace, context = {}) => {
+  const openWorkspace = useCallback((workspace, context = {}) => {
     setActiveWorkspace(workspace);
     setWorkspaceContext(context);
-  };
+  }, []);
 
-  const closeWorkspace = () => {
+  const closeWorkspace = useCallback(() => {
     setActiveWorkspace(null);
     setWorkspaceContext({});
-  };
+  }, []);
 
   if (isPanel) {
     return (

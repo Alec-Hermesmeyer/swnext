@@ -46,20 +46,36 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
 
+    // Guard against Supabase auth calls that never resolve — this happens in
+    // Chrome/Firefox when localStorage or BroadcastChannel is temporarily
+    // blocked (service worker teardown, aggressive tab throttling, etc.).
+    const withTimeout = (promise, ms = 6000) =>
+      Promise.race([
+        promise,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Auth call timed out')), ms)
+        ),
+      ]);
+
     const getInitialSession = async () => {
       try {
         // Try to get existing session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error } = await withTimeout(supabase.auth.getSession());
 
         // If error or no session, try refreshing
         if (error || !session) {
-          const { data: refreshData } = await supabase.auth.refreshSession();
-          if (refreshData?.session && isMounted) {
-            setUser(refreshData.session.user);
-            const userProfile = await fetchUserProfile(refreshData.session.user.id);
-            if (isMounted) applyProfile(userProfile);
-            setLoading(false);
-            return;
+          try {
+            const { data: refreshData } = await withTimeout(supabase.auth.refreshSession());
+            if (refreshData?.session && isMounted) {
+              setUser(refreshData.session.user);
+              const userProfile = await fetchUserProfile(refreshData.session.user.id);
+              if (isMounted) applyProfile(userProfile);
+              setLoading(false);
+              return;
+            }
+          } catch (refreshErr) {
+            // Refresh failed or timed out — fall through to no-session path
+            console.warn('Session refresh failed:', refreshErr.message);
           }
         }
 
