@@ -386,6 +386,7 @@ export default function AdminAssistantWorkspace({
 
   useEffect(() => {
     setSessionId(getSessionId());
+    prefetchWorkspaceChunks();
   }, []);
 
   const messageCount = messages.length;
