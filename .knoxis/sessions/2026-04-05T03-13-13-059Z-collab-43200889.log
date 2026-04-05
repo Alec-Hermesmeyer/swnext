@@ -113,3 +113,37 @@ All five optimizations are implemented. Here's a summary:
 [2026-04-05T03:24:49.760Z] KNOXIS (dispatch): I'm having Claude continue with the remaining optimizations he identified, including eager loading of heavy workspace pages and optimizing `scrollIntoView` and loading state change handling.
 [2026-04-05T03:24:49.760Z] DISPATCH #3:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Building on the previous optimizations, please implement eager loading of heavy workspace pages, optimize `scrollIntoView` to only fire when necessary, and improve handling of loading state changes in `admin/assistant/page.tsx`. When done, summarize what you changed (files, functions, lines).
+[2026-04-05T03:49:03.526Z] CLAUDE DONE (exit 0, 1454s, 24 lines):
+All three optimizations are implemented. Here's what changed:
+
+---
+
+## Changes Summary
+
+**File: `components/admin/AdminAssistantWorkspace.jsx`** (all changes in this one file)
+
+### 1. Workspace chunk prefetching (lines 10-43)
+
+- **Extracted `WORKSPACE_LOADERS` object** (lines 12-17) — the four `() => import(...)` functions are now shared between `dynamic()` rendering and prefetching, eliminating duplication.
+- **`WORKSPACE_COMPONENTS`** (lines 20-25) — refactored to reference `WORKSPACE_LOADERS` instead of inline import functions.
+- **`prefetchWorkspaceChunks()`** (lines 29-43) — fires once per page load via `requestIdleCallback` (falls back to `setTimeout(cb, 2000)` in Safari). Downloads all four workspace chunks (~394KB combined) during browser idle time, so when the user clicks "Open Workspace" the component renders instantly instead of showing the spinner while webpack fetches the chunk.
+- **Called in mount effect** (line 400) — `prefetchWorkspaceChunks()` triggers alongside session init.
+
+### 2. Smart `scrollIntoView` (lines 375-376, 403-422)
+
+- **Added `prevMessageCountRef` and `hasHydratedRef`** (lines 375-376) — track whether the initial history load has completed and what the previous message count was.
+- **Replaced the scroll effect** (lines 403-422):
+  - **Skips scroll entirely** when `messageCount` hasn't changed (content-only updates like surface completions no longer trigger scroll).
+  - **First render (history hydration)**: uses `behavior: "instant"` — jumps to the bottom immediately instead of slowly animating through 20+ messages.
+  - **Subsequent messages**: uses `behavior: "smooth"` as before.
+  - Removed the old `[loading]` dependency that was causing 2 extra scroll calls per message round-trip.
+
+### 3. Loading state & re-render reduction (lines 3, 377-380, 387-396, 502-559, 581-621)
+
+- **`useCallback` import** (line 3) — added to the React import.
+- **`loadingRef` / `sessionIdRef`** (lines 377-380) — mirror `loading` and `sessionId` into refs so
+[2026-04-05T03:49:04.243Z] KNOXIS (review): Claude has implemented the remaining optimizations, including eager loading of heavy workspace pages and optimizing `scrollIntoView` and loading state change handling. The changes are in `components/admin/AdminAssistantWorkspace.jsx`. Specifically, Claude has implemented workspace chunk prefetching, smart `scrollIntoView`, and reduced unnecessary re-renders. Everything looks good, but let's verify the performance improvements. Would you like to run some tests or demo the updated admin pages?
+[2026-04-05T17:44:00.993Z] USER: pretty good, i have noticed in browsers outside of safari that the admin pages can sometimes get stuck loading. like you have to clear the browser cache and sign back in and all that, can we look at that?
+[2026-04-05T17:44:02.794Z] KNOXIS (dispatch): I'm having Claude investigate the issue with admin pages getting stuck loading in browsers outside of Safari.
+[2026-04-05T17:44:02.794Z] DISPATCH #4:
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Investigate the issue with admin pages getting stuck loading in browsers outside of Safari. Check for any browser-specific caching issues, authentication token expiration, or other potential causes. When done, summarize what you found and propose a solution. Please include any relevant code changes or updates to `components/admin/AdminAssistantWorkspace.jsx` or other affected files.
