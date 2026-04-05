@@ -621,6 +621,9 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
   const hasModule = (mod) => !modules.length || modules.includes(mod);
   const { today, historyStart, historyEnd } = getDateRange();
 
+  const empty = { data: null };
+  const emptyWithError = { data: null, error: null };
+
   const [
     { data: workers },
     { data: categories },
@@ -639,71 +642,106 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
     { data: socialPosts },
     { data: brandVoice },
   ] = await Promise.all([
-    supabase.from("crew_workers").select("id, name, phone, role, is_active"),
-    supabase
-      .from("crew_categories")
-      .select("id, name, color, sort_order")
-      .order("sort_order"),
+    // ── Schedule module queries (workers, rigs, jobs, schedules, assignments) ──
+    hasModule("schedule")
+      ? supabase.from("crew_workers").select("id, name, phone, role, is_active")
+      : empty,
+    hasModule("schedule")
+      ? supabase
+          .from("crew_categories")
+          .select("id, name, color, sort_order")
+          .order("sort_order")
+      : empty,
     supabase
       .from("crew_jobs")
       .select(
         "id, job_name, job_number, customer_name, address, city, pm_name, crane_required, is_active, default_rig, hiring_contractor"
       ),
-    supabase.from("crew_superintendents").select("id, name, phone, is_active"),
-    supabase.from("crew_trucks").select("id, truck_number, description, is_active"),
-    supabase
-      .from("crew_schedules")
-      .select("id, schedule_date, is_finalized, finalized_at")
-      .gte("schedule_date", historyStart)
-      .lte("schedule_date", historyEnd)
-      .order("schedule_date"),
-    supabase
-      .from("crew_assignments")
-      .select(
-        "id, schedule_id, category_id, worker_id, job_id, job_name, notes, sort_order, crew_workers(name, role), crew_categories(name), crew_jobs(job_name, job_number), crew_schedules!inner(schedule_date, is_finalized)"
-      )
-      .gte("crew_schedules.schedule_date", historyStart)
-      .lte("crew_schedules.schedule_date", historyEnd)
-      .order("schedule_id", { ascending: true })
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("schedule_rig_details")
-      .select(
-        "id, notes, crane_info, crew_categories(name), crew_superintendents(name), crew_trucks(truck_number), crew_schedules!inner(schedule_date)"
-      )
-      .gte("crew_schedules.schedule_date", historyStart)
-      .lte("crew_schedules.schedule_date", historyEnd),
-    supabase
-      .from("crew_job_progress")
-      .select(
-        "job_id, status, holes_completed, holes_target, estimated_start_date, estimated_end_date, notes, updated_at"
-      )
-      .order("updated_at", { ascending: false }),
-    supabase
-      .from("crew_job_progress_updates")
-      .select("job_id, update_date, status, holes_completed, holes_target, notes, created_at")
-      .order("created_at", { ascending: false })
-      .limit(60),
-    supabase.from("jobs").select("*").order("id", { ascending: false }),
-    supabase.from("company_contacts").select("*").order("id", { ascending: false }),
-    supabase
-      .from("contact_form")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("job_form")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(30),
-    supabase
-      .from("social_posts")
-      .select("id, platforms, content, post_type, status, scheduled_for, published_at, created_at")
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("brand_voice")
-      .select("platform, voice_profile, tone_controls, analyzed_at"),
+    hasModule("schedule")
+      ? supabase.from("crew_superintendents").select("id, name, phone, is_active")
+      : empty,
+    hasModule("schedule")
+      ? supabase.from("crew_trucks").select("id, truck_number, description, is_active")
+      : empty,
+    hasModule("schedule")
+      ? supabase
+          .from("crew_schedules")
+          .select("id, schedule_date, is_finalized, finalized_at")
+          .gte("schedule_date", historyStart)
+          .lte("schedule_date", historyEnd)
+          .order("schedule_date")
+      : empty,
+    hasModule("schedule")
+      ? supabase
+          .from("crew_assignments")
+          .select(
+            "id, schedule_id, category_id, worker_id, job_id, job_name, notes, sort_order, crew_workers(name, role), crew_categories(name), crew_jobs(job_name, job_number), crew_schedules!inner(schedule_date, is_finalized)"
+          )
+          .gte("crew_schedules.schedule_date", historyStart)
+          .lte("crew_schedules.schedule_date", historyEnd)
+          .order("schedule_id", { ascending: true })
+          .order("sort_order", { ascending: true })
+      : empty,
+    hasModule("schedule")
+      ? supabase
+          .from("schedule_rig_details")
+          .select(
+            "id, notes, crane_info, crew_categories(name), crew_superintendents(name), crew_trucks(truck_number), crew_schedules!inner(schedule_date)"
+          )
+          .gte("crew_schedules.schedule_date", historyStart)
+          .lte("crew_schedules.schedule_date", historyEnd)
+      : empty,
+    hasModule("schedule")
+      ? supabase
+          .from("crew_job_progress")
+          .select(
+            "job_id, status, holes_completed, holes_target, estimated_start_date, estimated_end_date, notes, updated_at"
+          )
+          .order("updated_at", { ascending: false })
+      : emptyWithError,
+    hasModule("schedule")
+      ? supabase
+          .from("crew_job_progress_updates")
+          .select("job_id, update_date, status, holes_completed, holes_target, notes, created_at")
+          .order("created_at", { ascending: false })
+          .limit(60)
+      : emptyWithError,
+    // ── Careers module ──
+    hasModule("careers")
+      ? supabase.from("jobs").select("*").order("id", { ascending: false })
+      : empty,
+    // ── Contacts module ──
+    hasModule("contacts")
+      ? supabase.from("company_contacts").select("*").order("id", { ascending: false })
+      : empty,
+    // ── Submissions module ──
+    hasModule("submissions")
+      ? supabase
+          .from("contact_form")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(20)
+      : empty,
+    hasModule("submissions")
+      ? supabase
+          .from("job_form")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(30)
+      : empty,
+    // ── Social module ──
+    hasModule("social")
+      ? supabase
+          .from("social_posts")
+          .select("id, platforms, content, post_type, status, scheduled_for, published_at, created_at")
+          .order("created_at", { ascending: false })
+          .limit(20)
+      : empty,
+    hasModule("social")
+      ? supabase
+          .from("brand_voice")
+          .select("platform, voice_profile, tone_controls, analyzed_at")
+      : empty,
   ]);
 
   const progressByJobId = {};
