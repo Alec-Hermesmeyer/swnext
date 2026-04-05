@@ -1626,7 +1626,7 @@ export default async function handler(req, res) {
     if (actionsPerformed) {
       const affectedDates = collectAffectedDates(messages);
       if (affectedDates.length > 0) {
-        const freshData = await fetchDataContext(allowedModules);
+        const freshData = await fetchDataContext(allowedModules, { skipCache: true });
         surface = buildScheduleOverviewForDates(affectedDates, freshData);
       }
     }
