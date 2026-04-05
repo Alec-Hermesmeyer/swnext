@@ -1042,6 +1042,9 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
       return acc;
     }, {}),
   };
+
+  setCachedDataContext(modules, result);
+  return result;
 }
 
 async function fetchStoredMessages(sessionId, userContext) {
