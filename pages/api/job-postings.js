@@ -6,7 +6,6 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
-const COOKIE_NAME = "sw-admin-auth";
 const READ_ONLY_ROLES = new Set(["viewer", "readonly", "read_only"]);
 const ALLOWED_UPDATE_FIELDS = new Set(["jobTitle", "jobDesc", "is_Open"]);
 
@@ -77,7 +76,6 @@ const getAuthClient = (req, res) =>
       autoRefreshToken: false,
       detectSessionInUrl: false,
     },
-    cookieOptions: { name: COOKIE_NAME },
     cookies: {
       getAll() {
         return getRequestCookies(req);
