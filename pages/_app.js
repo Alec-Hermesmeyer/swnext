@@ -15,6 +15,10 @@ export default function App({ Component, pageProps, router }) {
   const swCleanedRef = useRef(false);
   useEffect(() => {
     if (swCleanedRef.current) return;
+    const pathname = router?.pathname || '';
+    const shouldCleanServiceWorker =
+      pathname.startsWith('/admin') || pathname === '/login';
+    if (!shouldCleanServiceWorker) return;
     swCleanedRef.current = true;
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -23,7 +27,7 @@ export default function App({ Component, pageProps, router }) {
         });
       });
     }
-  }, []);
+  }, [router?.pathname]);
 
   const getLayout = Component.getLayout || ((page) => page);
 

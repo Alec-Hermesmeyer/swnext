@@ -16,7 +16,12 @@ const withAuthTw = (WrappedComponent) => {
     // This prevents infinite loading spinners when Supabase session
     // resolution hangs (cookie race, network issue, tab sleep, etc.).
     useEffect(() => {
-      if (!loading) return;
+      if (!loading) {
+        setTimedOut(false);
+        return;
+      }
+      // Reset timeout state for each new loading cycle.
+      setTimedOut(false);
       const timer = setTimeout(() => setTimedOut(true), isEmbedded ? 3000 : AUTH_LOADING_TIMEOUT);
       return () => clearTimeout(timer);
     }, [isEmbedded, loading]);
