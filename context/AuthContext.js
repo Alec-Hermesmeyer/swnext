@@ -45,17 +45,31 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let isMounted = true;
+    const activeTimers = new Set();
 
     // Guard against Supabase auth calls that never resolve — this happens in
     // Chrome/Firefox when localStorage or BroadcastChannel is temporarily
     // blocked (service worker teardown, aggressive tab throttling, etc.).
     const withTimeout = (promise, ms = 6000) =>
-      Promise.race([
-        promise,
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth call timed out')), ms)
-        ),
-      ]);
+      new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          activeTimers.delete(timer);
+          reject(new Error('Auth call timed out'));
+        }, ms);
+        activeTimers.add(timer);
+
+        promise
+          .then((result) => {
+            clearTimeout(timer);
+            activeTimers.delete(timer);
+            resolve(result);
+          })
+          .catch((error) => {
+            clearTimeout(timer);
+            activeTimers.delete(timer);
+            reject(error);
+          });
+      });
 
     const getInitialSession = async () => {
       try {
@@ -136,6 +150,8 @@ export function AuthProvider({ children }) {
 
     return () => {
       isMounted = false;
+      activeTimers.forEach((timer) => clearTimeout(timer));
+      activeTimers.clear();
       authListener.subscription?.unsubscribe();
     };
   }, [fetchUserProfile, applyProfile]);
