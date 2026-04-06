@@ -11,7 +11,6 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
-const COOKIE_NAME = "sw-admin-auth";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -83,7 +82,6 @@ const getAuthClient = (req, res) =>
       autoRefreshToken: false,
       detectSessionInUrl: false,
     },
-    cookieOptions: { name: COOKIE_NAME },
     cookies: {
       getAll() {
         return getRequestCookies(req);
@@ -212,6 +210,59 @@ const tools = [
           name: { type: "string", description: "The exact name of the contact to delete" },
         },
         required: ["name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_spam_block_rule",
+      description: "Block a contact-form sender by exact email or by email domain. Blocked senders are silently accepted and no notification email is sent.",
+      parameters: {
+        type: "object",
+        properties: {
+          rule_type: { type: "string", enum: ["email", "domain"], description: "Type of block rule" },
+          rule_value: { type: "string", description: "Exact email (name@domain.com) or domain (domain.com)" },
+          reason: { type: "string", description: "Optional note for why this was blocked" },
+        },
+        required: ["rule_type", "rule_value"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_spam_block_rules",
+      description: "List current spam blocklist rules for contact-form submissions.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "toggle_spam_block_rule",
+      description: "Enable or disable a spam blocklist rule by its ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Rule ID" },
+          is_active: { type: "boolean", description: "True to enable, false to disable" },
+        },
+        required: ["id", "is_active"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_spam_block_rule",
+      description: "Delete a spam blocklist rule by its ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Rule ID" },
+        },
+        required: ["id"],
       },
     },
   },
@@ -1451,6 +1502,7 @@ RULES:
 - Use plain language and keep responses short.
 - When listing a day, group by rig/category.
 - Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, and create/update social posts.
+- For contact-form spam control, use add_spam_block_rule, list_spam_block_rules, toggle_spam_block_rule, and remove_spam_block_rule.
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
 - You can finalize schedules, send schedule emails, send packets, and update job progress. Always confirm with the user before finalizing or sending emails/packets.
 - You CAN build crew schedules through conversation. Use assign_worker_to_rig to place workers on rigs, remove_worker_from_schedule to take them off, set_rig_details for superintendents/trucks/crane, and copy_schedule to duplicate a day.

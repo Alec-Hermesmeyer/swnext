@@ -4,7 +4,6 @@ import { get } from '@vercel/edge-config';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const COOKIE_NAME = 'sw-admin-auth';
 
 export const config = {
   matcher: ['/welcome', '/admin/:path*', '/login'],
@@ -23,7 +22,6 @@ export async function proxy(req) {
 
   if (shouldRefreshSession(pathname) && SUPABASE_URL && SUPABASE_KEY) {
     const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
-      cookieOptions: { name: COOKIE_NAME },
       cookies: {
         getAll() {
           return req.cookies.getAll();

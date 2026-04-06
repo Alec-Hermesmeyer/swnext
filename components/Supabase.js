@@ -4,7 +4,6 @@ import { createBrowserClient } from '@supabase/auth-helpers-nextjs';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const COOKIE_NAME = 'sw-admin-auth';
 
 const createSupabaseClient = () => {
     if (typeof window === 'undefined') {
@@ -20,7 +19,6 @@ const createSupabaseClient = () => {
 
     return createBrowserClient(SUPABASE_URL, SUPABASE_KEY, {
         realtime: { enabled: true },
-        cookieOptions: { name: COOKIE_NAME },
         auth: {
             persistSession: true,
             autoRefreshToken: true,

@@ -9,7 +9,6 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
-const COOKIE_NAME = "sw-admin-auth";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -78,7 +77,6 @@ const getAuthClient = (req, res) =>
       autoRefreshToken: false,
       detectSessionInUrl: false,
     },
-    cookieOptions: { name: COOKIE_NAME },
     cookies: {
       getAll() {
         return getRequestCookies(req);
@@ -187,6 +185,8 @@ function summarizeUserSubmission(surfaceType, values) {
       return `Added ${values.name || "a new contact"} to the company directory.`;
     case "social_post_create":
       return `Created a social media post draft for ${values.platforms || "facebook"}.`;
+    case "spam_block_rule_create":
+      return `Blocked ${values.rule_type === "domain" ? `domain ${values.rule_value || ""}` : values.rule_value || "sender"} for contact submissions.`;
     default:
       return "Submitted an assistant work surface.";
   }
@@ -259,6 +259,15 @@ function getMutationConfig(surfaceType, values = {}) {
         },
       };
     }
+    case "spam_block_rule_create":
+      return {
+        mutation: "add_spam_block_rule",
+        args: {
+          rule_type: values.rule_type,
+          rule_value: values.rule_value,
+          reason: values.reason,
+        },
+      };
     default:
       return null;
   }
