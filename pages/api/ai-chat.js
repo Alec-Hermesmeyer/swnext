@@ -96,7 +96,7 @@ const getAuthClient = (req, res) =>
     },
   });
 
-async function getAuthenticatedUserContext(req) {
+async function getAuthenticatedUserContext(req, res) {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error("Supabase auth is not configured");
   }
@@ -1540,7 +1540,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Supabase is not configured" });
     }
 
-    const userContext = await getAuthenticatedUserContext(req);
+    const userContext = await getAuthenticatedUserContext(req, res);
     if (!userContext) {
       return res.status(401).json({ error: "Authentication required" });
     }

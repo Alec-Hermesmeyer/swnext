@@ -37,26 +37,40 @@ function ContactForm() {
   const [number, setNumber] = useState("");
   const [message, setMessage] = useState("");
   const [company, setCompany] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState("");
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitMessage("");
     
     // Track form submission in GA4
     if (typeof window !== 'undefined' && window.trackFormSubmit) {
       window.trackFormSubmit('contact_form');
     }
     
-    await supabase.from("contact_form").upsert({ name, email, number, message, company });
-    await fetch("/api/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        to: "mattm@swfoundation.com, colinw@swfoundation.com",
-        subject: "New Form Submission",
-        text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nCompany: ${company}\nMessage: ${message}`,
-      }),
-    });
-    setName(""); setEmail(""); setNumber(""); setMessage(""); setCompany("");
+    try {
+      const response = await fetch("/api/contact-submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, number, message, company }),
+      });
+      if (!response.ok) {
+        throw new Error("Submission failed");
+      }
+      setName("");
+      setEmail("");
+      setNumber("");
+      setMessage("");
+      setCompany("");
+      setSubmitMessage("Thanks. Your request has been received.");
+    } catch {
+      setSubmitMessage("We could not submit your request right now. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -84,8 +98,16 @@ function ContactForm() {
         <textarea aria-label="Project Details" className="w-full rounded-lg border border-neutral-300 bg-white p-3 h-32 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={message} onChange={(e)=>setMessage(e.target.value)} />
       </div>
       <div className="mt-5 flex justify-end">
-        <button className="inline-flex h-11 items-center justify-center rounded-lg bg-red-600 px-6 font-bold text-white shadow hover:bg-red-700">Submit</button>
+        <button
+          disabled={submitting}
+          className="inline-flex h-11 items-center justify-center rounded-lg bg-red-600 px-6 font-bold text-white shadow hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? "Submitting..." : "Submit"}
+        </button>
       </div>
+      {submitMessage ? (
+        <p className="mt-3 text-sm text-neutral-700">{submitMessage}</p>
+      ) : null}
     </form>
   );
 }
