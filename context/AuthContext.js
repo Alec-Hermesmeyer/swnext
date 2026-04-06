@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
     // Guard against Supabase auth calls that never resolve — this happens in
     // Chrome/Firefox when localStorage or BroadcastChannel is temporarily
     // blocked (service worker teardown, aggressive tab throttling, etc.).
-    const withTimeout = (promise, ms = 6000) =>
+    const withTimeout = (promise, ms = 15000) =>
       new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
           activeTimers.delete(timer);
@@ -74,12 +74,26 @@ export function AuthProvider({ children }) {
     const getInitialSession = async () => {
       try {
         // Try to get existing session
-        const { data: { session }, error } = await withTimeout(supabase.auth.getSession());
+        let { data: { session }, error } = await withTimeout(supabase.auth.getSession());
+
+        // Fallback: when session retrieval is flaky, ask Supabase for user directly.
+        // If a user exists, we keep them signed in instead of forcing an early logout.
+        if ((!session || error) && isMounted) {
+          try {
+            const { data: userData } = await withTimeout(supabase.auth.getUser(), 12000);
+            if (userData?.user) {
+              session = { user: userData.user };
+              error = null;
+            }
+          } catch {
+            // Ignore fallback errors and continue with normal resolution.
+          }
+        }
 
         // If error or no session, try refreshing
         if (error || !session) {
           try {
-            const { data: refreshData } = await withTimeout(supabase.auth.refreshSession());
+            const { data: refreshData } = await withTimeout(supabase.auth.refreshSession(), 12000);
             if (refreshData?.session && isMounted) {
               setUser(refreshData.session.user);
               const userProfile = await fetchUserProfile(refreshData.session.user.id);
