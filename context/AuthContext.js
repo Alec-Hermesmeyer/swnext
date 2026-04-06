@@ -46,27 +46,53 @@ export function AuthProvider({ children }) {
     let isMounted = true;
 
     // Bootstrap: recover the existing session on mount (page refresh / first load).
-    // This is critical in production where the middleware refreshes the cookie but
-    // onAuthStateChange may only fire TOKEN_REFRESHED (not INITIAL_SESSION).
+    // Uses getSession() first (fast, reads from storage) then validates with
+    // getUser() which forces a server round-trip and token refresh if expired.
+    // This is critical in production where access tokens expire between visits
+    // and onAuthStateChange fires TOKEN_REFRESHED instead of INITIAL_SESSION.
     const recoverSession = async () => {
       try {
+        // 1) Fast path: read session from cookie/storage (no network)
         const { data: { session } } = await supabase.auth.getSession();
         if (!isMounted) return;
 
-        const currentUser = session?.user || null;
-        setUser(currentUser);
+        if (session?.user) {
+          // Show the page immediately with the cached session
+          setUser(session.user);
+          const userProfile = await fetchUserProfile(session.user.id);
+          if (isMounted) applyProfile(userProfile);
+          if (isMounted) setLoading(false);
 
-        if (currentUser) {
-          const userProfile = await fetchUserProfile(currentUser.id);
+          // 2) Then validate server-side (triggers token refresh if expired).
+          // This keeps cookies fresh and fires onAuthStateChange if tokens change.
+          supabase.auth.getUser().catch(() => {});
+          return;
+        }
+
+        // No cached session — try server validation in case storage is stale
+        const { data: { user: validatedUser } } = await supabase.auth.getUser();
+        if (!isMounted) return;
+
+        if (validatedUser) {
+          setUser(validatedUser);
+          const userProfile = await fetchUserProfile(validatedUser.id);
           if (isMounted) applyProfile(userProfile);
         } else {
+          setUser(null);
           applyProfile(null);
           if (routerRef.current.pathname.startsWith('/admin')) {
             routerRef.current.push('/login');
           }
         }
       } catch (err) {
-        console.error('Session recovery failed:', err);
+        // If all recovery fails, clear state and redirect
+        if (isMounted) {
+          setUser(null);
+          applyProfile(null);
+          if (routerRef.current.pathname.startsWith('/admin')) {
+            routerRef.current.push('/login');
+          }
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
