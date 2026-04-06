@@ -16,7 +16,6 @@ export function AuthProvider({ children }) {
   const router = useRouter();
   const routerRef = useRef(router);
 
-  // Keep router ref current without triggering effect re-runs
   useEffect(() => {
     routerRef.current = router;
   });
@@ -45,94 +44,13 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let isMounted = true;
-    const activeTimers = new Set();
-
-    // Guard against Supabase auth calls that never resolve — this happens in
-    // Chrome/Firefox when localStorage or BroadcastChannel is temporarily
-    // blocked (service worker teardown, aggressive tab throttling, etc.).
-    const withTimeout = (promise, ms = 15000) =>
-      new Promise((resolve, reject) => {
-        const timer = setTimeout(() => {
-          activeTimers.delete(timer);
-          reject(new Error('Auth call timed out'));
-        }, ms);
-        activeTimers.add(timer);
-
-        promise
-          .then((result) => {
-            clearTimeout(timer);
-            activeTimers.delete(timer);
-            resolve(result);
-          })
-          .catch((error) => {
-            clearTimeout(timer);
-            activeTimers.delete(timer);
-            reject(error);
-          });
-      });
-
-    const getInitialSession = async () => {
-      try {
-        // Try to get existing session
-        let { data: { session }, error } = await withTimeout(supabase.auth.getSession());
-
-        // Fallback: when session retrieval is flaky, ask Supabase for user directly.
-        // If a user exists, we keep them signed in instead of forcing an early logout.
-        if ((!session || error) && isMounted) {
-          try {
-            const { data: userData } = await withTimeout(supabase.auth.getUser(), 12000);
-            if (userData?.user) {
-              session = { user: userData.user };
-              error = null;
-            }
-          } catch {
-            // Ignore fallback errors and continue with normal resolution.
-          }
-        }
-
-        // If error or no session, try refreshing
-        if (error || !session) {
-          try {
-            const { data: refreshData } = await withTimeout(supabase.auth.refreshSession(), 12000);
-            if (refreshData?.session && isMounted) {
-              setUser(refreshData.session.user);
-              const userProfile = await fetchUserProfile(refreshData.session.user.id);
-              if (isMounted) applyProfile(userProfile);
-              setLoading(false);
-              return;
-            }
-          } catch (refreshErr) {
-            // Refresh failed or timed out — fall through to no-session path
-            console.warn('Session refresh failed:', refreshErr.message);
-          }
-        }
-
-        if (!isMounted) return;
-
-        const currentUser = session?.user || null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          const userProfile = await fetchUserProfile(currentUser.id);
-          if (isMounted) applyProfile(userProfile);
-        } else if (isMounted) {
-          applyProfile(null);
-        }
-      } catch (err) {
-        console.error('Session check failed:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    getInitialSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
 
-      // Handle specific events
       if (event === 'TOKEN_REFRESHED' && session) {
         setUser(session.user);
+        if (isMounted) setLoading(false);
         return;
       }
 
@@ -142,6 +60,7 @@ export function AuthProvider({ children }) {
         if (routerRef.current.pathname.startsWith('/admin')) {
           routerRef.current.push('/login');
         }
+        setLoading(false);
         return;
       }
 
@@ -153,7 +72,6 @@ export function AuthProvider({ children }) {
         if (isMounted) applyProfile(userProfile);
       } else {
         applyProfile(null);
-        // Only redirect to login if on an admin page
         if (routerRef.current.pathname.startsWith('/admin')) {
           routerRef.current.push('/login');
         }
@@ -164,8 +82,6 @@ export function AuthProvider({ children }) {
 
     return () => {
       isMounted = false;
-      activeTimers.forEach((timer) => clearTimeout(timer));
-      activeTimers.clear();
       authListener.subscription?.unsubscribe();
     };
   }, [fetchUserProfile, applyProfile]);

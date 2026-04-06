@@ -44,8 +44,12 @@ export default function LoginTW() {
           setError(error.message);
         }
       } else {
-        await supabase.auth.getSession();
-        router.replace("/admin");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          router.replace("/admin");
+        } else {
+          setError("Session was not stored. Check browser cookie settings and try again.");
+        }
       }
     } catch (err) {
       setError(err.message);
