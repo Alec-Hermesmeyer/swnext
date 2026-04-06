@@ -9,7 +9,7 @@ import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-function SubmissionModal({ submission, type, onClose, onDelete }) {
+function SubmissionModal({ submission, type, onClose, onDelete, onBlockEmail }) {
   if (!submission) return null;
 
   return (
@@ -105,15 +105,25 @@ function SubmissionModal({ submission, type, onClose, onDelete }) {
         </div>
 
         <div className="flex items-center justify-between p-4 border-t border-neutral-200 bg-neutral-50">
-          <button
-            onClick={() => {
-              onDelete(submission.id);
-              onClose();
-            }}
-            className="rounded-lg bg-red-100 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-200 transition-colors"
-          >
-            Delete Submission
-          </button>
+          <div className="flex items-center gap-2">
+            {type === "contact" && submission?.email ? (
+              <button
+                onClick={() => onBlockEmail?.(submission.email)}
+                className="rounded-lg bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-200 transition-colors"
+              >
+                Block Sender
+              </button>
+            ) : null}
+            <button
+              onClick={() => {
+                onDelete(submission.id);
+                onClose();
+              }}
+              className="rounded-lg bg-red-100 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-200 transition-colors"
+            >
+              Delete Submission
+            </button>
+          </div>
           <button
             onClick={onClose}
             className="rounded-lg bg-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-300 transition-colors"
@@ -134,6 +144,11 @@ function ContactTW() {
   const [selectedPosition, setSelectedPosition] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [blockRules, setBlockRules] = useState([]);
+  const [newRuleType, setNewRuleType] = useState("email");
+  const [newRuleValue, setNewRuleValue] = useState("");
+  const [newRuleReason, setNewRuleReason] = useState("");
+  const [savingRule, setSavingRule] = useState(false);
   const pageSize = 10;
 
   useEffect(() => {
@@ -144,10 +159,87 @@ function ContactTW() {
       ]);
       if (!contactRes.error) setContactRows(contactRes.data || []);
       if (!jobRes.error) setJobRows(jobRes.data || []);
+      try {
+        const ruleResponse = await fetch("/api/spam-blocklist");
+        const ruleJson = await ruleResponse.json();
+        setBlockRules(Array.isArray(ruleJson?.rows) ? ruleJson.rows : []);
+      } catch {
+        setBlockRules([]);
+      }
       setLoading(false);
     };
     load();
   }, []);
+
+  const refreshBlockRules = async () => {
+    try {
+      const response = await fetch("/api/spam-blocklist");
+      const json = await response.json();
+      setBlockRules(Array.isArray(json?.rows) ? json.rows : []);
+    } catch {
+      setBlockRules([]);
+    }
+  };
+
+  const handleCreateRule = async () => {
+    const trimmedValue = newRuleValue.trim();
+    if (!trimmedValue || savingRule) return;
+    setSavingRule(true);
+    try {
+      const response = await fetch("/api/spam-blocklist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ruleType: newRuleType,
+          ruleValue: trimmedValue,
+          reason: newRuleReason.trim(),
+        }),
+      });
+      if (!response.ok) throw new Error("Could not save rule");
+      setNewRuleValue("");
+      setNewRuleReason("");
+      await refreshBlockRules();
+    } catch (error) {
+      alert(error.message || "Could not save block rule.");
+    } finally {
+      setSavingRule(false);
+    }
+  };
+
+  const handleToggleRule = async (id, isActive) => {
+    await fetch("/api/spam-blocklist", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, is_active: !isActive }),
+    });
+    await refreshBlockRules();
+  };
+
+  const handleDeleteRule = async (id) => {
+    if (!confirm("Delete this block rule?")) return;
+    await fetch("/api/spam-blocklist", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    await refreshBlockRules();
+  };
+
+  const handleBlockSender = async (email) => {
+    const normalized = String(email || "").trim().toLowerCase();
+    if (!normalized) return;
+    await fetch("/api/spam-blocklist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ruleType: "email",
+        ruleValue: normalized,
+        reason: "Blocked from submissions admin",
+      }),
+    });
+    await refreshBlockRules();
+    alert(`Blocked ${normalized}. Future submissions from this sender will be silently accepted but not emailed.`);
+  };
 
   const handleDeleteContact = async (id) => {
     if (!confirm("Delete this submission?")) return;
@@ -227,6 +319,79 @@ function ContactTW() {
               <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center text-xl">💼</div>
             </div>
           </button>
+        </div>
+
+        <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+          <div className="mb-3">
+            <h2 className={`${lato.className} text-lg font-bold text-[#0b2a5a]`}>Spam Blocklist</h2>
+            <p className="text-sm text-neutral-600">
+              Block specific emails or entire domains. Blocked senders are silently accepted but no notification email is sent.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-[130px_1fr_1fr_auto]">
+            <select
+              value={newRuleType}
+              onChange={(e) => setNewRuleType(e.target.value)}
+              className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
+            >
+              <option value="email">Email</option>
+              <option value="domain">Domain</option>
+            </select>
+            <input
+              value={newRuleValue}
+              onChange={(e) => setNewRuleValue(e.target.value)}
+              placeholder={newRuleType === "domain" ? "example.com" : "name@example.com"}
+              className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
+            />
+            <input
+              value={newRuleReason}
+              onChange={(e) => setNewRuleReason(e.target.value)}
+              placeholder="Reason (optional)"
+              className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleCreateRule}
+              disabled={savingRule || !newRuleValue.trim()}
+              className="h-10 rounded-lg bg-[#0b2a5a] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {savingRule ? "Saving..." : "Add rule"}
+            </button>
+          </div>
+          <div className="mt-3 space-y-2">
+            {blockRules.length === 0 ? (
+              <p className="text-sm text-neutral-500">No blocked senders yet.</p>
+            ) : (
+              blockRules.slice(0, 12).map((rule) => (
+                <div key={rule.id} className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-neutral-900">
+                      {rule.rule_type === "domain" ? `@${rule.rule_value}` : rule.rule_value}
+                    </div>
+                    <div className="text-xs text-neutral-500">
+                      {rule.reason || "No reason provided"} {rule.is_active ? "• active" : "• inactive"}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleRule(rule.id, rule.is_active)}
+                      className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700"
+                    >
+                      {rule.is_active ? "Disable" : "Enable"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRule(rule.id)}
+                      className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Filter for Job Applications */}
@@ -379,6 +544,7 @@ function ContactTW() {
             type={activeTab}
             onClose={() => setSelectedSubmission(null)}
             onDelete={activeTab === "contact" ? handleDeleteContact : handleDeleteJob}
+            onBlockEmail={handleBlockSender}
           />
         )}
       </div>
