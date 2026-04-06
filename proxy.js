@@ -12,13 +12,18 @@ export const config = {
 const shouldRefreshSession = (pathname) =>
   pathname.startsWith('/admin') || pathname === '/login';
 
+/**
+ * Next.js 16+: use `proxy.js` + `export function proxy` (middleware.ts is deprecated).
+ * Supabase cookie-based SSR requires this to refresh tokens; setAll must update both
+ * request and response cookies so refreshed Set-Cookie headers stay consistent.
+ */
 export async function proxy(req) {
   const { pathname } = req.nextUrl;
   const isWelcome = pathname === '/welcome';
 
   const response = isWelcome
     ? NextResponse.json(await get('greeting'))
-    : NextResponse.next();
+    : NextResponse.next({ request: req });
 
   if (shouldRefreshSession(pathname) && SUPABASE_URL && SUPABASE_KEY) {
     const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -28,13 +33,14 @@ export async function proxy(req) {
         },
         setAll(cookies) {
           cookies.forEach(({ name, value, options }) => {
+            req.cookies.set(name, value);
             response.cookies.set(name, value, options);
           });
         },
       },
     });
 
-    await supabase.auth.getSession();
+    await supabase.auth.getUser();
   }
 
   return response;
