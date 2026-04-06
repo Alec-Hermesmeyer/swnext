@@ -45,14 +45,37 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
 
+    // Bootstrap: recover the existing session on mount (page refresh / first load).
+    // This is critical in production where the middleware refreshes the cookie but
+    // onAuthStateChange may only fire TOKEN_REFRESHED (not INITIAL_SESSION).
+    const recoverSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
+        const currentUser = session?.user || null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          const userProfile = await fetchUserProfile(currentUser.id);
+          if (isMounted) applyProfile(userProfile);
+        } else {
+          applyProfile(null);
+          if (routerRef.current.pathname.startsWith('/admin')) {
+            routerRef.current.push('/login');
+          }
+        }
+      } catch (err) {
+        console.error('Session recovery failed:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    recoverSession();
+
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
-
-      if (event === 'TOKEN_REFRESHED' && session) {
-        setUser(session.user);
-        if (isMounted) setLoading(false);
-        return;
-      }
 
       if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -64,6 +87,8 @@ export function AuthProvider({ children }) {
         return;
       }
 
+      // For ALL other events (SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED, etc.)
+      // always update user AND fetch profile so role/permissions stay in sync.
       const currentUser = session?.user || null;
       setUser(currentUser);
 
