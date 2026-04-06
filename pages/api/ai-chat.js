@@ -47,7 +47,36 @@ const getRequestCookies = (req) => {
     });
 };
 
-const getAuthClient = (req) =>
+const serializeCookie = (name, value, options = {}) => {
+  const enc = encodeURIComponent;
+  const parts = [`${enc(name)}=${enc(value ?? "")}`];
+  parts.push(`Path=${options.path || "/"}`);
+  if (options.maxAge !== undefined) parts.push(`Max-Age=${Math.floor(options.maxAge)}`);
+  if (options.domain) parts.push(`Domain=${options.domain}`);
+  if (options.expires) parts.push(`Expires=${new Date(options.expires).toUTCString()}`);
+  if (options.httpOnly) parts.push("HttpOnly");
+  if (options.secure) parts.push("Secure");
+  if (options.sameSite) {
+    const sameSite = String(options.sameSite).toLowerCase();
+    if (sameSite === "lax") parts.push("SameSite=Lax");
+    else if (sameSite === "strict") parts.push("SameSite=Strict");
+    else if (sameSite === "none") parts.push("SameSite=None");
+  }
+  return parts.join("; ");
+};
+
+const appendResponseCookie = (res, name, value, options) => {
+  const serialized = serializeCookie(name, value, options);
+  const existing = res.getHeader("Set-Cookie");
+  if (!existing) {
+    res.setHeader("Set-Cookie", serialized);
+    return;
+  }
+  const list = Array.isArray(existing) ? existing : [String(existing)];
+  res.setHeader("Set-Cookie", [...list, serialized]);
+};
+
+const getAuthClient = (req, res) =>
   createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       persistSession: false,
@@ -59,6 +88,11 @@ const getAuthClient = (req) =>
       getAll() {
         return getRequestCookies(req);
       },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          appendResponseCookie(res, name, value, options);
+        });
+      },
     },
   });
 
@@ -67,7 +101,7 @@ async function getAuthenticatedUserContext(req) {
     throw new Error("Supabase auth is not configured");
   }
 
-  const authClient = getAuthClient(req);
+  const authClient = getAuthClient(req, res);
   const {
     data: { user },
     error: authError,
