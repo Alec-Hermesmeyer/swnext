@@ -724,7 +724,7 @@ export default function AdminAssistantWorkspace({
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
-                        Action completed. Refresh if the page view needs to catch up.
+                        Update completed. Refresh if this page does not reflect the latest data.
                       </div>
                     )}
                     {message.role === "assistant" && message.surface ? (
@@ -742,7 +742,7 @@ export default function AdminAssistantWorkspace({
               {!hasUserMessages && !loading && (
                 <div className="rounded-2xl border border-dashed border-neutral-200 bg-white px-3 py-3">
                   <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
-                    Quick asks
+                    Suggested prompts
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {visiblePromptCards.slice(0, 3).map((card) => (
@@ -781,7 +781,7 @@ export default function AdminAssistantWorkspace({
             </div>
           ) : null}
           <div className="mb-2 flex items-center justify-between px-1 text-[11px] font-medium text-neutral-500">
-            <span>Use plain English to create or summarize work.</span>
+            <span>Describe what you need, and the assistant will guide the next step.</span>
             <button
               type="button"
               onClick={clearHistory}
@@ -797,7 +797,7 @@ export default function AdminAssistantWorkspace({
               value={input}
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask the assistant..."
+              placeholder="Type your request..."
               className="min-h-[48px] flex-1 resize-none rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-800 outline-none transition-all focus:border-[#0b2a5a] focus:bg-white focus:ring-2 focus:ring-[#0b2a5a]/10"
               disabled={loading || historyLoading}
             />
@@ -840,7 +840,7 @@ export default function AdminAssistantWorkspace({
               onClick={closeWorkspace}
               className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:bg-white/10 hover:text-white"
             >
-              Back to chat
+              Return to assistant
             </button>
           </div>
 
@@ -890,7 +890,7 @@ export default function AdminAssistantWorkspace({
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask anything..."
+                placeholder="Type your request..."
                 className="min-h-[40px] flex-1 resize-none rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-800 outline-none transition-all focus:border-[#0b2a5a] focus:bg-white focus:ring-1 focus:ring-[#0b2a5a]/10"
                 disabled={loading || historyLoading}
               />
@@ -920,7 +920,7 @@ export default function AdminAssistantWorkspace({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
-              Back to chat
+              Return to assistant
             </button>
             <div className="text-sm font-semibold text-neutral-700">{workspaceLabel}</div>
           </div>
@@ -959,7 +959,7 @@ export default function AdminAssistantWorkspace({
                   S&W Assistant
                 </div>
                 <p className="mt-1 text-sm leading-6 text-neutral-500">
-                  Crew scheduling, content, hiring, contacts, and intake in one thread.
+                  Scheduling, communication, hiring, contacts, and intake in one workspace.
                 </p>
               </div>
             </div>
@@ -1001,10 +1001,10 @@ export default function AdminAssistantWorkspace({
             ) : (
               <div className="rounded-[1.45rem] border border-dashed border-[#dbe4f0] bg-white/70 px-4 py-5">
                 <div className="text-sm font-semibold text-neutral-900">
-                  No saved conversation yet.
+                  No conversation history yet.
                 </div>
                 <div className="mt-2 text-sm leading-6 text-neutral-500">
-                  Start with scheduling, role context, social content, job listings, contacts, or submissions.
+                  Ask about scheduling, social content, hiring, contacts, or submissions to get started.
                 </div>
               </div>
             )}
@@ -1086,16 +1086,16 @@ export default function AdminAssistantWorkspace({
                 Ask for the work. The assistant builds the surface.
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-neutral-500 md:text-base">
-                Crew Scheduler is the primary engine: one person starts the job, another layers in
-                detail, then scheduling and packet automation take over. Social Media is next, and
-                Careers, Contacts, Submissions, Images, and Sales become focused working components
-                when needed.
+                Use this assistant to organize field operations, scheduling, communications, and
+                follow-up work from one workspace. It helps your team move from intake to execution
+                with clear next steps, while keeping supporting tools like social, hiring, contacts,
+                submissions, images, and sales available when needed.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 lg:max-w-[40%] lg:justify-end">
               <span className="rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1.5 text-xs font-semibold text-neutral-600">
-                {visibleWorkflowModules.length} live workflows
+                {visibleWorkflowModules.length} available workflows
               </span>
               {hasUserMessages ? (
                 <span className="rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1.5 text-xs font-semibold text-neutral-600">
@@ -1108,7 +1108,7 @@ export default function AdminAssistantWorkspace({
                   onClick={clearHistory}
                   className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
                 >
-                  Clear thread
+                  Clear conversation
                 </button>
               ) : null}
             </div>
@@ -1166,7 +1166,7 @@ export default function AdminAssistantWorkspace({
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="20 6 9 17 4 12" />
                                 </svg>
-                                Action completed. Refresh if the page view needs to catch up.
+                                Update completed. Refresh if this page does not reflect the latest data.
                               </div>
                             )}
                             {message.surface ? (
@@ -1245,7 +1245,7 @@ export default function AdminAssistantWorkspace({
                       value={input}
                       onChange={(event) => setInput(event.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ask to start a job, add detail, check the crew plan, teach the assistant your role, or move packet automation forward..."
+                      placeholder="Ask to create a job, update details, review schedules, capture team context, or move work forward..."
                       className="min-h-[60px] flex-1 resize-none rounded-[1.25rem] border border-transparent bg-transparent px-4 py-3 text-sm text-neutral-800 outline-none transition-all placeholder:text-neutral-400 focus:border-[#dbe4f0] focus:bg-white"
                       disabled={loading || historyLoading}
                     />
@@ -1286,7 +1286,7 @@ export default function AdminAssistantWorkspace({
 
                     <div className="relative mx-auto max-w-4xl text-center">
                       <div className="mb-4 inline-flex rounded-full border border-white/60 bg-white/74 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm backdrop-blur-sm">
-                        Grounded in live admin workflows
+                        Built for real operations workflows
                       </div>
                       <div className="relative mx-auto mb-9 flex w-full max-w-[34rem] justify-center">
                         <div className="pointer-events-none absolute inset-x-12 top-1/2 h-24 -translate-y-1/2 rounded-full bg-gradient-to-r from-red-700/18 via-white/70 to-[#0b2a5a]/22 blur-3xl" />
@@ -1320,9 +1320,10 @@ export default function AdminAssistantWorkspace({
                         {getGreeting(displayName)}
                       </h2>
                       <p className="mt-4 text-sm leading-8 text-neutral-600 md:text-base">
-                        The main workflow is crew scheduling: start the job, add detail as it comes in,
-                        then hand it off to scheduling and packet automation. The assistant should make
-                        those handoffs feel like one conversation instead of a set of disconnected pages.
+                        Start with a request in plain language and the assistant will guide the work
+                        through each stage, from intake and planning to scheduling and downstream
+                        follow-up. The goal is a smooth, connected workflow so your team can stay
+                        focused without jumping between disconnected pages.
                       </p>
                     </div>
                   </div>
@@ -1334,11 +1335,11 @@ export default function AdminAssistantWorkspace({
                           Crew Scheduler priority flow
                         </div>
                         <div className="mt-2 text-xl font-bold tracking-tight text-neutral-950">
-                          Three inputs, one schedule, and packet automation at the end of the chain.
+                          Move from intake to scheduling with one coordinated process.
                         </div>
                       </div>
                       <div className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-4 py-2 text-sm font-semibold text-neutral-700">
-                        Packet automation already saves hours a day
+                        Automation reduces repetitive manual work
                       </div>
                     </div>
                   </div>
@@ -1434,7 +1435,7 @@ export default function AdminAssistantWorkspace({
                       value={input}
                       onChange={(event) => setInput(event.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Start a job, add more job detail, ask for the crew plan, or check packet readiness..."
+                      placeholder="Create a job, update details, review the schedule, or check readiness..."
                       className="min-h-[60px] flex-1 resize-none rounded-[1.25rem] border border-transparent bg-transparent px-4 py-3 text-sm text-neutral-800 outline-none transition-all placeholder:text-neutral-400 focus:border-[#dbe4f0] focus:bg-white"
                       disabled={loading || historyLoading}
                     />
@@ -1451,7 +1452,7 @@ export default function AdminAssistantWorkspace({
                     </button>
                   </div>
                   <div className="mt-2 px-1 text-center text-[11px] font-medium text-neutral-400">
-                    Start the job, add detail, then move into scheduling and packet automation. Social media, hiring, contacts, and submissions are pulled in when the thread needs them.
+                    Start work in one conversation and bring in related workflows as needed.
                   </div>
                 </div>
               </div>
