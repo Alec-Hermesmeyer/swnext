@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
-const AUTH_LOADING_TIMEOUT = 8000; // 8s — enough for slow networks, short enough to not feel stuck
+const AUTH_LOADING_TIMEOUT = 15000; // Allow slower browsers/devices more time on refresh
 
 const withAuthTw = (WrappedComponent) => {
   const Wrapper = (props) => {
@@ -11,10 +11,8 @@ const withAuthTw = (WrappedComponent) => {
     const isEmbedded = router.query?.embedded === "true";
     const [timedOut, setTimedOut] = useState(false);
 
-    // Safety timeout for ALL modes — if auth hasn't resolved after 8s,
-    // stop showing the spinner and let the redirect-to-login logic run.
-    // This prevents infinite loading spinners when Supabase session
-    // resolution hangs (cookie race, network issue, tab sleep, etc.).
+    // Safety timeout for ALL modes — keep showing an auth loader, but
+    // don't force logout redirects just because auth is slow to resolve.
     useEffect(() => {
       if (!loading) {
         setTimedOut(false);
@@ -27,12 +25,12 @@ const withAuthTw = (WrappedComponent) => {
     }, [isEmbedded, loading]);
 
     useEffect(() => {
-      if ((!loading || timedOut) && !user && !isEmbedded) {
+      if (!loading && !user && !isEmbedded) {
         router.replace('/login');
       }
-    }, [user, loading, timedOut, router, isEmbedded]);
+    }, [user, loading, router, isEmbedded]);
 
-    if (loading && !timedOut) {
+    if (loading) {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="flex items-center gap-3">
@@ -40,7 +38,7 @@ const withAuthTw = (WrappedComponent) => {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            <span className="text-neutral-600">Loading...</span>
+            <span className="text-neutral-600">{timedOut ? "Restoring session..." : "Loading..."}</span>
           </div>
         </div>
       );
