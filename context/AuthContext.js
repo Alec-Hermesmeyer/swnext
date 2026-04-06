@@ -6,6 +6,16 @@ import { getPermissions } from '@/lib/roles';
 
 const AuthContext = createContext();
 
+/** Sync access token to a simple cookie so API routes can read it. */
+function syncTokenCookie(session) {
+  if (typeof document === 'undefined') return;
+  if (session?.access_token) {
+    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600; SameSite=Lax`;
+  } else {
+    document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax';
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
@@ -59,6 +69,7 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           // Show the page immediately with the cached session
           setUser(session.user);
+          syncTokenCookie(session);
           const userProfile = await fetchUserProfile(session.user.id);
           if (isMounted) applyProfile(userProfile);
           if (isMounted) setLoading(false);
@@ -106,6 +117,7 @@ export function AuthProvider({ children }) {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         applyProfile(null);
+        syncTokenCookie(null);
         if (routerRef.current.pathname.startsWith('/admin')) {
           routerRef.current.push('/login');
         }
@@ -117,6 +129,7 @@ export function AuthProvider({ children }) {
       // always update user AND fetch profile so role/permissions stay in sync.
       const currentUser = session?.user || null;
       setUser(currentUser);
+      syncTokenCookie(session);
 
       if (currentUser) {
         const userProfile = await fetchUserProfile(currentUser.id);

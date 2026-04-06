@@ -99,11 +99,26 @@ async function getAuthenticatedUserContext(req, res) {
     throw new Error("Supabase auth is not configured");
   }
 
-  const authClient = getAuthClient(req, res);
-  const {
-    data: { user },
-    error: authError,
-  } = await authClient.auth.getUser();
+  // Read access token from simple cookie (synced by AuthContext) or Authorization header
+  const accessToken = req.cookies?.['sb-access-token'] ||
+    req.headers?.authorization?.replace('Bearer ', '');
+
+  let user = null;
+  let authError = null;
+
+  if (accessToken) {
+    const result = await supabase.auth.getUser(accessToken);
+    user = result.data?.user || null;
+    authError = result.error;
+  }
+
+  // Fall back to cookie-based auth (legacy chunked cookies)
+  if (!user) {
+    const authClient = getAuthClient(req, res);
+    const result = await authClient.auth.getUser();
+    user = result.data?.user || null;
+    authError = result.error;
+  }
 
   if (authError || !user) {
     return null;

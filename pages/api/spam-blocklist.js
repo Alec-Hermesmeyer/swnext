@@ -88,13 +88,25 @@ const getAuthClient = (req, res) =>
   });
 
 async function getAuthenticatedUserContext(req, res) {
-  const authClient = getAuthClient(req, res);
-  const {
-    data: { user },
-    error: authError,
-  } = await authClient.auth.getUser();
+  // Read access token from simple cookie (synced by AuthContext) or Authorization header
+  const accessToken = req.cookies?.['sb-access-token'] ||
+    req.headers?.authorization?.replace('Bearer ', '');
 
-  if (authError || !user) {
+  let user = null;
+
+  if (accessToken) {
+    const result = await supabase.auth.getUser(accessToken);
+    user = result.data?.user || null;
+  }
+
+  // Fall back to cookie-based auth (legacy chunked cookies)
+  if (!user) {
+    const authClient = getAuthClient(req, res);
+    const result = await authClient.auth.getUser();
+    user = result.data?.user || null;
+  }
+
+  if (!user) {
     return null;
   }
 
