@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { useRef, useEffect } from "react";
 import { Lato } from "next/font/google";
 import AIChatBubble from "@/components/admin/AIChatBubble";
 import { useAuth } from "@/context/AuthContext";
@@ -21,8 +22,33 @@ const ROLE_LABELS = {
 export default function TWAdminLayout({ children }) {
   const router = useRouter();
   const currentPath = router.pathname;
-  const { role, accessLevel } = useAuth();
+  const { role, accessLevel, logout } = useAuth();
   const isEmbedded = router.query?.embedded === "true";
+  const logoutBufferRef = useRef('');
+  const logoutTimerRef = useRef(null);
+
+  // Type "logout" anywhere (outside form fields) to sign out.
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+
+      clearTimeout(logoutTimerRef.current);
+      logoutTimerRef.current = setTimeout(() => { logoutBufferRef.current = ''; }, 2000);
+
+      logoutBufferRef.current = (logoutBufferRef.current + e.key).slice(-6);
+      if (logoutBufferRef.current === 'logout') {
+        logoutBufferRef.current = '';
+        logout();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(logoutTimerRef.current);
+    };
+  }, [logout]);
 
   const navLinks = getVisibleNavLinks(role, accessLevel);
 
@@ -60,6 +86,12 @@ export default function TWAdminLayout({ children }) {
             <Link href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
               View Site
             </Link>
+            <button
+              onClick={logout}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </header>

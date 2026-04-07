@@ -73,6 +73,8 @@ export function AuthProvider({ children }) {
     // Validate the JWT with the Supabase server first — getUser() checks
     // the token and triggers a refresh when it has expired, preventing the
     // flash of stale auth state that getSession() (localStorage-only) causes.
+    // Profile is fetched BEFORE finishLoading so role/department/profile are
+    // available when the page renders.
     const recoverSession = async () => {
       try {
         const { data: { user: validatedUser }, error: userError } = await supabase.auth.getUser();
@@ -82,13 +84,23 @@ export function AuthProvider({ children }) {
           setUser(validatedUser);
           const { data: { session } } = await supabase.auth.getSession();
           syncTokenCookie(session);
-          finishLoading();
           const userProfile = await fetchUserProfile(validatedUser.id);
           if (isMounted) applyProfile(userProfile);
           return;
         }
 
-        // Server validation failed — clear auth state.
+        // Server validation failed — fall back to local session (offline)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
+        if (session?.user) {
+          setUser(session.user);
+          syncTokenCookie(session);
+          const userProfile = await fetchUserProfile(session.user.id);
+          if (isMounted) applyProfile(userProfile);
+          return;
+        }
+
         clearAuthState();
       } catch (error) {
         console.error('Session recovery failed:', error);
@@ -107,6 +119,10 @@ export function AuthProvider({ children }) {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
+
+      // recoverSession already handles the initial load — skip to avoid a
+      // race condition where both paths fetch the profile concurrently.
+      if (event === 'INITIAL_SESSION') return;
 
       if (event === 'SIGNED_OUT') {
         clearAuthState();
@@ -144,16 +160,22 @@ export function AuthProvider({ children }) {
     };
   }, [fetchUserProfile, applyProfile]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await supabase.auth.signOut();
     } finally {
       syncTokenCookie(null);
       setUser(null);
       applyProfile(null);
+      // Remove any lingering Supabase localStorage keys
+      if (typeof window !== 'undefined') {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('sb-')) localStorage.removeItem(key);
+        });
+      }
       router.replace('/login');
     }
-  };
+  }, [router, applyProfile]);
 
   const permissions = useMemo(() => getPermissions(role, accessLevel), [role, accessLevel]);
 
