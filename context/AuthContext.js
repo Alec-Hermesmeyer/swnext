@@ -73,6 +73,8 @@ export function AuthProvider({ children }) {
     // Validate the JWT with the Supabase server first — getUser() checks
     // the token and triggers a refresh when it has expired, preventing the
     // flash of stale auth state that getSession() (localStorage-only) causes.
+    // Profile is fetched BEFORE finishLoading so role/department/profile are
+    // available when the page renders.
     const recoverSession = async () => {
       try {
         const { data: { user: validatedUser }, error: userError } = await supabase.auth.getUser();
@@ -82,13 +84,23 @@ export function AuthProvider({ children }) {
           setUser(validatedUser);
           const { data: { session } } = await supabase.auth.getSession();
           syncTokenCookie(session);
-          finishLoading();
           const userProfile = await fetchUserProfile(validatedUser.id);
           if (isMounted) applyProfile(userProfile);
           return;
         }
 
-        // Server validation failed — clear auth state.
+        // Server validation failed — fall back to local session (offline)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
+        if (session?.user) {
+          setUser(session.user);
+          syncTokenCookie(session);
+          const userProfile = await fetchUserProfile(session.user.id);
+          if (isMounted) applyProfile(userProfile);
+          return;
+        }
+
         clearAuthState();
       } catch (error) {
         console.error('Session recovery failed:', error);
