@@ -6,13 +6,16 @@ import { getPermissions } from '@/lib/roles';
 
 const AuthContext = createContext();
 
-/** Sync access token to a simple cookie so API routes can read it. */
+/** Sync access token to a cookie so legacy API routes can read it.
+ *  The middleware now sets proper HttpOnly session cookies — new API routes
+ *  should use createServerSupabase() from lib/supabase.js instead. */
 function syncTokenCookie(session) {
   if (typeof document === 'undefined') return;
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
   if (session?.access_token) {
-    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600; SameSite=Lax`;
+    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600; SameSite=Lax${secure}`;
   } else {
-    document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax${secure}`;
   }
 }
 
