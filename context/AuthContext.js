@@ -7,8 +7,8 @@ import { getPermissions } from '@/lib/roles';
 const AuthContext = createContext();
 
 /** Sync access token to a cookie so legacy API routes can read it.
- *  The middleware now sets proper HttpOnly session cookies — new API routes
- *  should use createServerSupabase() from lib/supabase.js instead. */
+ *  The proxy (proxy.js) now sets proper HttpOnly session cookies — new API
+ *  routes should use createServerSupabase() from lib/supabase.js instead. */
 function syncTokenCookie(session) {
   if (typeof document === 'undefined') return;
   const secure = window.location.protocol === 'https:' ? '; Secure' : '';
