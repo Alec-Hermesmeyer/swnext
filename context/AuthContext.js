@@ -6,13 +6,16 @@ import { getPermissions } from '@/lib/roles';
 
 const AuthContext = createContext();
 
-/** Sync access token to a simple cookie so API routes can read it. */
+/** Sync access token to a cookie so legacy API routes can read it.
+ *  The middleware now sets proper HttpOnly session cookies — new API routes
+ *  should use createServerSupabase() from lib/supabase.js instead. */
 function syncTokenCookie(session) {
   if (typeof document === 'undefined') return;
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
   if (session?.access_token) {
-    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600; SameSite=Lax`;
+    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600; SameSite=Lax${secure}`;
   } else {
-    document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax${secure}`;
   }
 }
 
@@ -54,107 +57,102 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let isMounted = true;
+    let authResolved = false;
 
-    // Bootstrap: recover the existing session on mount (page refresh / first load).
-    // Uses getSession() first (fast, reads from storage) then validates with
-    // getUser() which forces a server round-trip and token refresh if expired.
-    // This is critical in production where access tokens expire between visits
-    // and onAuthStateChange fires TOKEN_REFRESHED instead of INITIAL_SESSION.
+    const finishLoading = () => {
+      authResolved = true;
+      if (isMounted) setLoading(false);
+    };
+
+    const clearAuthState = () => {
+      setUser(null);
+      applyProfile(null);
+      syncTokenCookie(null);
+    };
+
+    // Validate the JWT with the Supabase server first — getUser() checks
+    // the token and triggers a refresh when it has expired, preventing the
+    // flash of stale auth state that getSession() (localStorage-only) causes.
     const recoverSession = async () => {
       try {
-        // 1) Fast path: read session from cookie/storage (no network)
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user: validatedUser }, error: userError } = await supabase.auth.getUser();
         if (!isMounted) return;
 
-        if (session?.user) {
-          // Show the page immediately with the cached session
-          setUser(session.user);
+        if (validatedUser && !userError) {
+          setUser(validatedUser);
+          const { data: { session } } = await supabase.auth.getSession();
           syncTokenCookie(session);
-          const userProfile = await fetchUserProfile(session.user.id);
+          finishLoading();
+          const userProfile = await fetchUserProfile(validatedUser.id);
           if (isMounted) applyProfile(userProfile);
-          if (isMounted) setLoading(false);
-
-          // 2) Then validate server-side (triggers token refresh if expired).
-          // This keeps cookies fresh and fires onAuthStateChange if tokens change.
-          supabase.auth.getUser().catch(() => {});
           return;
         }
 
-        // No cached session — try server validation in case storage is stale
-        const { data: { user: validatedUser } } = await supabase.auth.getUser();
-        if (!isMounted) return;
-
-        if (validatedUser) {
-          setUser(validatedUser);
-          const userProfile = await fetchUserProfile(validatedUser.id);
-          if (isMounted) applyProfile(userProfile);
-        } else {
-          setUser(null);
-          applyProfile(null);
-          if (routerRef.current.pathname.startsWith('/admin')) {
-            routerRef.current.push('/login');
-          }
-        }
-      } catch (err) {
-        // If all recovery fails, clear state and redirect
-        if (isMounted) {
-          setUser(null);
-          applyProfile(null);
-          if (routerRef.current.pathname.startsWith('/admin')) {
-            routerRef.current.push('/login');
-          }
-        }
+        // Server validation failed — clear auth state.
+        clearAuthState();
+      } catch (error) {
+        console.error('Session recovery failed:', error);
+        clearAuthState();
       } finally {
-        if (isMounted) setLoading(false);
+        finishLoading();
       }
     };
 
     recoverSession();
 
+    // SAFETY: never leave the app in a permanent loading state.
+    const safetyTimer = setTimeout(() => {
+      if (!authResolved) finishLoading();
+    }, 15000);
+
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
 
       if (event === 'SIGNED_OUT') {
-        setUser(null);
-        applyProfile(null);
-        syncTokenCookie(null);
+        clearAuthState();
+        finishLoading();
         if (routerRef.current.pathname.startsWith('/admin')) {
-          routerRef.current.push('/login');
+          routerRef.current.replace('/login');
         }
-        setLoading(false);
         return;
       }
 
-      // For ALL other events (SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED, etc.)
-      // always update user AND fetch profile so role/permissions stay in sync.
+      // Keep user and profile in sync for INITIAL_SESSION, SIGNED_IN,
+      // TOKEN_REFRESHED, and any later auth updates.
       const currentUser = session?.user || null;
       setUser(currentUser);
       syncTokenCookie(session);
 
       if (currentUser) {
-        const userProfile = await fetchUserProfile(currentUser.id);
-        if (isMounted) applyProfile(userProfile);
+        try {
+          const userProfile = await fetchUserProfile(currentUser.id);
+          if (isMounted) applyProfile(userProfile);
+        } catch {
+          // Profile fetch failed — still show the page with user, just no profile
+        }
       } else {
         applyProfile(null);
-        if (routerRef.current.pathname.startsWith('/admin')) {
-          routerRef.current.push('/login');
-        }
       }
 
-      if (isMounted) setLoading(false);
+      finishLoading();
     });
 
     return () => {
       isMounted = false;
+      clearTimeout(safetyTimer);
       authListener.subscription?.unsubscribe();
     };
   }, [fetchUserProfile, applyProfile]);
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    applyProfile(null);
-    router.push('/login');
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      syncTokenCookie(null);
+      setUser(null);
+      applyProfile(null);
+      router.replace('/login');
+    }
   };
 
   const permissions = useMemo(() => getPermissions(role, accessLevel), [role, accessLevel]);
