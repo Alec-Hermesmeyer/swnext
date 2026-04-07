@@ -21,10 +21,12 @@ const nextConfig = {
     ],
   },
   
+  // Proxy entry point: ./proxy.js (auto-detected by Next.js 16)
   // Performance optimizations
   experimental: {
     // optimizeCss: true, // Temporarily disabled due to critters dependency conflicts
-    optimizePackageImports: ['lucide-react', 'framer-motion', 'chart.js', 'react-chartjs-2']
+    optimizePackageImports: ['lucide-react', 'framer-motion', 'chart.js', 'react-chartjs-2'],
+    proxyPrefetch: 'flexible',
   },
   
   // Compiler optimizations
