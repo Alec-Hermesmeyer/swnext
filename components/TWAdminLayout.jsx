@@ -22,8 +22,33 @@ const ROLE_LABELS = {
 export default function TWAdminLayout({ children }) {
   const router = useRouter();
   const currentPath = router.pathname;
-  const { role, accessLevel } = useAuth();
+  const { role, accessLevel, logout } = useAuth();
   const isEmbedded = router.query?.embedded === "true";
+  const logoutBufferRef = useRef('');
+  const logoutTimerRef = useRef(null);
+
+  // Type "logout" anywhere (outside form fields) to sign out.
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+
+      clearTimeout(logoutTimerRef.current);
+      logoutTimerRef.current = setTimeout(() => { logoutBufferRef.current = ''; }, 2000);
+
+      logoutBufferRef.current = (logoutBufferRef.current + e.key).slice(-6);
+      if (logoutBufferRef.current === 'logout') {
+        logoutBufferRef.current = '';
+        logout();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(logoutTimerRef.current);
+    };
+  }, [logout]);
 
   const navLinks = getVisibleNavLinks(role, accessLevel);
 
