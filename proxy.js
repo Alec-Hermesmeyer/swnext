@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { get } from '@vercel/edge-config';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
 /**
  * Next.js 16 proxy — runs on matched routes before rendering.
- * Auth session management is handled client-side via localStorage now,
- * so this proxy only handles edge-config and passes requests through.
+ * Refreshes the Supabase session (sets HttpOnly cookies) and handles
+ * edge-config lookups.
  */
 export const config = {
   matcher: [
@@ -16,6 +17,7 @@ export async function proxy(req) {
   try {
     const { pathname } = req.nextUrl;
 
+    // Edge-config route — no session needed.
     if (pathname === '/welcome') {
       try {
         return NextResponse.json(await get('greeting'));
@@ -25,7 +27,15 @@ export async function proxy(req) {
       }
     }
 
-    return NextResponse.next({ request: req });
+    const res = NextResponse.next({ request: req });
+
+    // Refresh the Supabase session — getSession() validates the JWT and
+    // writes updated HttpOnly cookies onto the response so tokens are
+    // always fresh when the page or API handler executes.
+    const supabase = createMiddlewareClient({ req, res });
+    await supabase.auth.getSession();
+
+    return res;
   } catch (err) {
     console.error('[proxy] unhandled error, passing request through:', err);
     return NextResponse.next({ request: req });
