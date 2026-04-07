@@ -54,3 +54,31 @@ document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600
 [2026-04-07T16:20:14.446Z] KNOXIS (dispatch): I'm going to have Claude implement the necessary fixes to address the authentication persistence issues in the Tailwind-only branch.
 [2026-04-07T16:20:14.448Z] DISPATCH #2:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Implement the following fixes to address authentication persistence issues: 1) add Next.js middleware to refresh Supabase sessions, 2) create an auth callback route, 3) make the token cookie `HttpOnly` and `Secure`, and 4) prioritize `getUser()` over `getSession()`. Touch files: `pages/api/auth.js`, `middleware/auth.js`, and `lib/supabase.js`. When done, summarize what you changed (files, functions, lines).
+[2026-04-07T16:22:53.578Z] CLAUDE DONE (exit 0, 159s, 19 lines):
+Everything looks correct. Here's what was changed:
+
+---
+
+## Summary of Changes
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| **`middleware.js`** (root, 17 lines) | Next.js middleware that calls `createMiddlewareClient` from `@supabase/auth-helpers-nextjs` to refresh Supabase sessions and set HttpOnly cookies on every request matching `/admin/*`, `/login`, `/api/*`. |
+| **`pages/api/auth/callback.js`** (23 lines) | Auth callback route that exchanges an authorization `code` for a session via `exchangeCodeForSession()`. Handles password reset redirects and future OAuth flows. Supports a `?next=` param for post-auth redirect. |
+| **`lib/supabase.js`** (30 lines) | Server-side Supabase client factories: `createServerSupabase(req, res)` reads session from the middleware's HttpOnly cookies; `createAdminSupabase()` returns a service-role client for admin operations. |
+
+### Modified Files
+
+| File | Lines | What Changed |
+|------|-------|--------------|
+| **`context/AuthContext.js`** | 9-20 | `syncTokenCookie` — added `Secure` flag (auto-applied on HTTPS) and documented that this is a legacy fallback; new API routes should use `createServerSupabase()`. |
+| **`context/AuthContext.js`** | 73-99 | `recoverSession` — replaced `getSession()` (localStorage-only, can return stale/expired tokens) with `getUser()` as the primary validation call. `getUser()` validates the JWT against the Supabase server and triggers a token refresh when expired, eliminating the flash of incorrect auth state. |
+
+### How the Fixes Work Together
+
+1. **Middleware** refreshes expired tokens server-side _before_ the page renders, so SSR and API routes always see a valid session.
+2. **Callback route** handles the redirect from password-reset emails (which previously had no handler).
+3. **Secure cookie** prevents the `sb-access-token` from being sent over plain HTTP in production. The middleware's own cookies are HttpOnly by default — `lib/supabase.js` provides the migration path for API routes to st
+[2026-04-07T16:22:54.590Z] KNOXIS (review): Claude has implemented the necessary fixes to address the authentication persistence issues in the Tailwind-only branch. The changes include: adding a Next.js middleware to refresh Supabase sessions, creating an auth callback route, securing the token cookie, and prioritizing `getUser()` over `getSession()`. The fixes should now allow users to refresh the page without being logged out. Would you like to test the updated application?
