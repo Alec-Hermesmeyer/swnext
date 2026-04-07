@@ -1,23 +1,42 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import TWLayout from "@/components/TWLayout";
 import { GridPattern } from "@/components/GridPattern";
 import supabase from "@/components/Supabase";
+import { useAuth } from "@/context/AuthContext";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
+function getSafeNextPath(value) {
+  const nextPath = Array.isArray(value) ? value[0] : value;
+
+  if (typeof nextPath !== "string" || !nextPath.startsWith("/") || nextPath.startsWith("//")) {
+    return "/admin";
+  }
+
+  return nextPath;
+}
+
 export default function LoginTW() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const nextPath = useMemo(() => getSafeNextPath(router.query?.next), [router.query?.next]);
 
   const normalizeEmail = (value) => String(value || "").trim().toLowerCase();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace(nextPath);
+    }
+  }, [authLoading, user, router, nextPath]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -46,7 +65,7 @@ export default function LoginTW() {
       } else {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          router.replace("/admin");
+          router.replace(nextPath);
         } else {
           setError("Session was not stored. Check browser cookie settings and try again.");
         }
