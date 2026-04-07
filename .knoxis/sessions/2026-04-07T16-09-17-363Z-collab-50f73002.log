@@ -158,3 +158,30 @@ The auth session refresh now runs inside `proxy.js` on every matched request, us
 [2026-04-07T21:54:41.068Z] KNOXIS (dispatch): I'll have Claude investigate the issue with user information not being retrieved correctly and implement a logout feature.
 [2026-04-07T21:54:41.068Z] DISPATCH #6:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Investigate why user information is not being retrieved correctly after a page refresh. Implement a logout feature that includes a button and a command to type 'logout' to log out of the system. The logout feature should completely remove the user's session and redirect them to the login page. When done, summarize what you changed (files, functions, lines).
+[2026-04-07T21:57:49.569Z] CLAUDE DONE (exit 0, 188s, 16 lines):
+Both files look correct. Here's the summary.
+
+---
+
+## Summary of Changes
+
+### `context/AuthContext.js` — 3 fixes
+
+| Lines | Function | Change |
+|-------|----------|--------|
+| 76-111 | `recoverSession` | **Fixed profile ordering**: moved `finishLoading()` out of the success path into the `finally` block only. Profile is now fetched and applied *before* loading completes, so `role`/`department`/`profile` are available when the page renders. Added a localStorage session fallback (lines 92-102) for offline scenarios where `getUser()` fails. |
+| 123-125 | `onAuthStateChange` | **Fixed race condition**: added `if (event === 'INITIAL_SESSION') return;` — `recoverSession` handles initial load, so the listener no longer fires a competing concurrent profile fetch. |
+| 163-178 | `logout` | **Enhanced session cleanup**: converted to `useCallback`, added `localStorage` cleanup that removes all `sb-*` keys (lines 171-174) so no stale Supabase tokens survive logout. |
+
+### `components/TWAdminLayout.jsx` — 2 additions
+
+| Lines | What | Change |
+|-------|------|--------|
+| 4, 25, 27-51 | Keyboard command | Added `useRef`/`useEffect` imports; destructured `logout` from `useAuth()`; added a `keydown` listener that tracks typed keys in a 6-char buffer with a 2-second inactivity reset — typing `logout` anywhere outside form fields triggers sign-out. |
+| 89-94 | Logout button | Added a red `Logout` button in the admin header, next to "View Site", visible on all admin pages. Calls the same `logout()` from `useAuth()`. |
+
+### Root Cause of Refresh Bug
+
+`finishLoading()` was called on the line *before* `fetchUserProfile()`, so the page would render with `loading=false` + `user=<object>` but `profile=null`, `role=null`, `department=null`. Any component reading those values (like the role badge in the header) saw empty data until the `onAuthStateChange` listener independently re-fetched the profile — which itself raced with the recovery function.
+
+[2026-04-07T21:57:51.023Z] KNOXIS (review): Claude has finished investigating and implementing the fixes. The main issues were with the `recoverSession` function in `context/AuthContext.js`, where the profile ordering was incorrect, and a race condition in `onAuthStateChange`. These have been fixed, and a logout feature has been added, including a button and a keyboard command. The logout function now properly cleans up the session and removes all Supabase tokens from local storage. The root cause of the refresh bug was identified as a premature call to `finishLoading()` before the user profile was fetched, which has been corrected. You can now test the application to see if the issues are resolved.
