@@ -160,16 +160,22 @@ export function AuthProvider({ children }) {
     };
   }, [fetchUserProfile, applyProfile]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await supabase.auth.signOut();
     } finally {
       syncTokenCookie(null);
       setUser(null);
       applyProfile(null);
+      // Remove any lingering Supabase localStorage keys
+      if (typeof window !== 'undefined') {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('sb-')) localStorage.removeItem(key);
+        });
+      }
       router.replace('/login');
     }
-  };
+  }, [router, applyProfile]);
 
   const permissions = useMemo(() => getPermissions(role, accessLevel), [role, accessLevel]);
 
