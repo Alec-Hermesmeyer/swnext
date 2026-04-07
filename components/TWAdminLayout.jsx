@@ -86,6 +86,12 @@ export default function TWAdminLayout({ children }) {
             <Link href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
               View Site
             </Link>
+            <button
+              onClick={logout}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </header>
