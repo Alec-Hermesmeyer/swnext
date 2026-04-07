@@ -9,3 +9,48 @@
 [2026-04-07T16:14:06.866Z] KNOXIS (dispatch): I'm going to have Claude investigate the authentication persistence issue in the Tailwind-only branch.
 [2026-04-07T16:14:06.867Z] DISPATCH #1:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Investigate the authentication persistence issue in the Tailwind-only branch. Check Supabase authentication configuration and session management. Look for any discrepancies between the original auth routes and the new ones created for Tailwind. When done, summarize what you found and suggest potential fixes.
+[2026-04-07T16:17:17.957Z] CLAUDE DONE (exit 0, 191s, 61 lines):
+Now I have a complete picture. Here's my analysis:
+
+---
+
+## Authentication Persistence Investigation - Summary
+
+### Core Auth Files
+| File | Role |
+|------|------|
+| `components/Supabase.js` | Client creation (browser vs SSR) |
+| `context/AuthContext.js` | Session management, token cookie sync |
+| `components/withAuthTw.js` | Route protection HOC |
+| `pages/login.jsx` | Login form |
+| `pages/_app.js` | Wraps all pages with `AuthProvider` |
+
+### Issues Found
+
+**1. No Next.js Middleware (Critical)**
+There is **no `middleware.js`** at the project root. This means:
+- Supabase auth tokens are **never refreshed server-side** before a page loads
+- Expired JWTs won't be caught until after the client hydrates and runs `getSession()`
+- This causes a visible flash of "loading" or "unauthenticated" state on every hard refresh/navigation
+- SSR pages always render as unauthenticated since the SSR Supabase client has `persistSession: false`
+
+**2. Token Cookie is Client-Set, Not HttpOnly (`AuthContext.js:13`)**
+```js
+document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600; SameSite=Lax`;
+```
+- Set via `document.cookie` — accessible to any JS on the page (XSS risk)
+- Has a fixed 1-hour `max-age` that doesn't match the actual JWT expiry
+- Not `Secure` — will be sent over HTTP in development, but also in production if misconfigured
+
+**3. No Auth Callback Route**
+- No `pages/api/auth/callback` route exists. If password reset or OAuth flows redirect back, there's nothing to exchange the code for a session. The `resetPasswordForEmail` flow in `login.jsx:90` sends a link, but there's no handler for when the user clicks it.
+
+**4. `getSession()` vs `getUser()` Race Condition (`AuthContext.js:72-98`)**
+- `recoverSession()` calls `getSession()` first (reads from localStorage, no server validation)
+- Then calls `getUser()` in the background (line 88) which actually validates with Supabase
+- If the stored JWT is expired, `getSession()` returns stale data, the page rende
+[2026-04-07T16:17:19.813Z] KNOXIS (review): Claude's investigation found several issues with authentication persistence in the Tailwind-only branch. The main problems are: no Next.js middleware to refresh Supabase sessions, insecure token cookie setting, missing auth callback route, and a race condition between `getSession()` and `getUser()`. Claude suggests adding a middleware to refresh sessions, creating an auth callback route, making the token cookie `HttpOnly` and `Secure`, and prioritizing `getUser()` over `getSession()`. Would you like to implement any of these fixes?
+[2026-04-07T16:20:13.720Z] USER: all of them. the admin suite is unusable right now if the user refreshes
+[2026-04-07T16:20:14.446Z] KNOXIS (dispatch): I'm going to have Claude implement the necessary fixes to address the authentication persistence issues in the Tailwind-only branch.
+[2026-04-07T16:20:14.448Z] DISPATCH #2:
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Implement the following fixes to address authentication persistence issues: 1) add Next.js middleware to refresh Supabase sessions, 2) create an auth callback route, 3) make the token cookie `HttpOnly` and `Secure`, and 4) prioritize `getUser()` over `getSession()`. Touch files: `pages/api/auth.js`, `middleware/auth.js`, and `lib/supabase.js`. When done, summarize what you changed (files, functions, lines).
