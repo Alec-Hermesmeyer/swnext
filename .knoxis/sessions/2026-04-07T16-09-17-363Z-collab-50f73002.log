@@ -132,3 +132,23 @@ Done. Here's what changed:
 `proxy.js` at the root is the sole request interceptor. No `middleware.js` remains.
 
 [2026-04-07T17:27:24.519Z] KNOXIS (review): Claude has finished updating the code. The `middleware.js` file was removed to avoid conflicts with `proxy.js`, and `next.config.js` was updated to clarify the proxy entry point and enable flexible proxy prefetch mode. The `proxy.js` file is now the sole request interceptor. You can now test the application to see if the authentication persistence issues are resolved.
+[2026-04-07T17:27:38.692Z] CLAUDE DONE (exit 0, 124s, 12 lines):
+Done. Here's what changed:
+
+## Summary
+
+### Deleted
+- **`middleware.js`** (root) — removed entirely. Next.js 16 uses `proxy.js`, not `middleware.js`.
+
+### Modified
+
+| File | Lines | Change |
+|------|-------|--------|
+| **`proxy.js`** | 3 | Added `import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'` |
+| **`proxy.js`** | 5-8 | Updated JSDoc to describe auth session refresh responsibility |
+| **`proxy.js`** | 30-36 | Added Supabase session refresh: creates a `createMiddlewareClient`, calls `getSession()` to validate JWT and write HttpOnly cookies onto the response |
+| **`context/AuthContext.js`** | 10-11 | Updated comment from "The middleware" → "The proxy (proxy.js)" to reflect the correct file |
+
+The auth session refresh now runs inside `proxy.js` on every matched request, using the same `createMiddlewareClient` + `getSession()` pattern. The `/welcome` edge-config route short-circuits before the session refresh since it doesn't need auth.
+
+[2026-04-07T17:27:39.837Z] KNOXIS (review): Claude has finished updating the code. The `middleware.js` file was removed and its functionality was merged into `proxy.js`. The `proxy.js` file now handles Supabase authentication session refresh on every matched request. The changes include adding a `createMiddlewareClient` import, updating JSDoc comments, and implementing session refresh logic. The `context/AuthContext.js` file was also updated to reflect the changes. You can now test the application to see if the authentication persistence issues are resolved.
