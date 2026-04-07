@@ -120,6 +120,10 @@ export function AuthProvider({ children }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
 
+      // recoverSession already handles the initial load — skip to avoid a
+      // race condition where both paths fetch the profile concurrently.
+      if (event === 'INITIAL_SESSION') return;
+
       if (event === 'SIGNED_OUT') {
         clearAuthState();
         finishLoading();
