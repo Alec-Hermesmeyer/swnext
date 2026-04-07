@@ -70,28 +70,25 @@ export function AuthProvider({ children }) {
       syncTokenCookie(null);
     };
 
-    // Bootstrap from the locally persisted Supabase session first so refreshes
-    // restore immediately without waiting for auth events or a network round-trip.
+    // Validate the JWT with the Supabase server first — getUser() checks
+    // the token and triggers a refresh when it has expired, preventing the
+    // flash of stale auth state that getSession() (localStorage-only) causes.
     const recoverSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user: validatedUser }, error: userError } = await supabase.auth.getUser();
         if (!isMounted) return;
 
-        const currentUser = session?.user || null;
-        setUser(currentUser);
-        syncTokenCookie(session);
-
-        if (currentUser) {
+        if (validatedUser && !userError) {
+          setUser(validatedUser);
+          const { data: { session } } = await supabase.auth.getSession();
+          syncTokenCookie(session);
           finishLoading();
-          const userProfile = await fetchUserProfile(currentUser.id);
+          const userProfile = await fetchUserProfile(validatedUser.id);
           if (isMounted) applyProfile(userProfile);
-
-          // Revalidate in the background so expired tokens can refresh
-          // without blocking the initial page restore.
-          supabase.auth.getUser().catch(() => {});
           return;
         }
 
+        // Server validation failed — clear auth state.
         clearAuthState();
       } catch (error) {
         console.error('Session recovery failed:', error);
