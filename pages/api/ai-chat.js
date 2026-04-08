@@ -1649,6 +1649,12 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "GET") {
+      // List all conversation threads for this user
+      if (req.query?.list === "threads") {
+        const threads = await fetchSessionList(userContext);
+        return res.status(200).json({ threads });
+      }
+
       const sessionId = String(req.query?.session_id || "").trim();
       if (!sessionId) {
         return res.status(400).json({ error: "session_id is required" });
