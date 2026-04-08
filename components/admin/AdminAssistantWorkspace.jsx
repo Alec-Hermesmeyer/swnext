@@ -1324,17 +1324,63 @@ export default function AdminAssistantWorkspace({
             );
           })()}
 
-          {/* Solutions link — now displayed in main content area */}
+          {/* ── Solutions sidebar slider ── */}
           {visibleFeatures.length > 0 && (
             <section>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
                 Solutions
               </div>
-              <div className="rounded-[1.45rem] border border-[#dbe4f0] bg-white/80 px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-                <div className="text-sm font-semibold text-neutral-900">{visibleFeatures.length} tools available</div>
-                <div className="mt-1 text-xs leading-5 text-neutral-500">
-                  View and manage solutions in the main workspace area.
+              <div className="relative overflow-hidden rounded-[1.55rem] border border-[#dbe4f0] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+                <div
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${sliderIndex * 100}%)` }}
+                >
+                  {visibleFeatures.map((feature) => {
+                    const priorityColor = feature.priority === "primary"
+                      ? "from-[#0b2a5a] to-[#2458a6]"
+                      : feature.priority === "secondary"
+                        ? "from-[#cc574d] to-[#e8877f]"
+                        : "from-neutral-500 to-neutral-400";
+                    return (
+                      <Link
+                        key={feature.slug}
+                        href={feature.href || "#"}
+                        className="block w-full flex-shrink-0 px-5 py-5"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${priorityColor} text-white shadow-sm`}>
+                            <span className="text-sm font-bold">{feature.title.charAt(0)}</span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-semibold text-neutral-900">{feature.title}</div>
+                              {feature.status === "coming_soon" && (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">Soon</span>
+                              )}
+                              {feature.status === "beta" && (
+                                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-violet-700">Beta</span>
+                              )}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">{feature.description}</div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
+                {visibleFeatures.length > 1 && (
+                  <div className="flex items-center justify-center gap-1.5 pb-3">
+                    {visibleFeatures.map((feature, i) => (
+                      <button
+                        key={feature.slug}
+                        type="button"
+                        onClick={() => setSliderIndex(i)}
+                        className={`h-1.5 rounded-full transition-all ${i === sliderIndex ? "w-5 bg-[#0b2a5a]" : "w-1.5 bg-neutral-300 hover:bg-neutral-400"}`}
+                        aria-label={`Go to ${feature.title}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           )}
@@ -1658,28 +1704,112 @@ export default function AdminAssistantWorkspace({
                     </div>
                   </div>
 
-                  {/* ── Solutions showcase ── */}
-                  <div className="mx-auto mt-8 w-full max-w-5xl rounded-[1.7rem] border border-white/90 bg-white/84 p-5 shadow-[0_16px_42px_rgba(15,23,42,0.05)]">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
+                  {/* ── Solutions slider ── */}
+                  {visibleFeatures.length > 0 && (
+                    <div className="mx-auto mt-8 w-full max-w-5xl">
+                      <div className="mb-3 flex items-center justify-between px-1">
                         <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a]/55">
-                          Solutions & Tools
+                          Solutions
                         </div>
-                        <div className="mt-2 text-xl font-bold tracking-tight text-neutral-950">
-                          Tools, automation, and workflows built for your operations.
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => { setShowAddForm(true); setEditingFeature(null); }}
+                            className="rounded-full border border-[#dbe4f0] bg-white/84 px-3 py-1 text-[11px] font-semibold text-[#0b2a5a] transition-colors hover:bg-white hover:border-[#0b2a5a]/20"
+                          >
+                            + Add
+                          </button>
+                          {visibleFeatures.length > 1 && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setSliderIndex((i) => (i - 1 + visibleFeatures.length) % visibleFeatures.length)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full border border-[#dbe4f0] bg-white/84 text-neutral-500 transition-colors hover:text-[#0b2a5a]"
+                                aria-label="Previous solution"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSliderIndex((i) => (i + 1) % visibleFeatures.length)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full border border-[#dbe4f0] bg-white/84 text-neutral-500 transition-colors hover:text-[#0b2a5a]"
+                                aria-label="Next solution"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => { setShowAddForm(true); setEditingFeature(null); }}
-                        className="flex items-center gap-2 rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-4 py-2 text-sm font-semibold text-[#0b2a5a] transition-colors hover:bg-white hover:border-[#0b2a5a]/20"
-                      >
-                        <span className="text-lg leading-none">+</span> Add solution
-                      </button>
+                      <div className="relative overflow-hidden rounded-[1.55rem] border border-white/90 bg-white/84 shadow-[0_14px_38px_rgba(15,23,42,0.05)]">
+                        <div
+                          className="flex transition-transform duration-500 ease-in-out"
+                          style={{ transform: `translateX(-${sliderIndex * 100}%)` }}
+                        >
+                          {visibleFeatures.map((feature) => {
+                            const priorityColor = feature.priority === "primary"
+                              ? "from-[#0b2a5a] to-[#2458a6]"
+                              : feature.priority === "secondary"
+                                ? "from-[#cc574d] to-[#e8877f]"
+                                : "from-neutral-500 to-neutral-400";
+                            return (
+                              <div key={feature.slug} className="w-full flex-shrink-0 px-6 py-5">
+                                <div className="flex items-start gap-4">
+                                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${priorityColor} text-white shadow-sm`}>
+                                    <span className="text-sm font-bold">{feature.title.charAt(0)}</span>
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <div className="text-sm font-semibold text-neutral-900">{feature.title}</div>
+                                      {feature.status === "coming_soon" && (
+                                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">Soon</span>
+                                      )}
+                                      {feature.status === "beta" && (
+                                        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-violet-700">Beta</span>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => { setEditingFeature(feature); setShowAddForm(false); }}
+                                        className="ml-auto rounded-lg p-1 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+                                        aria-label={`Edit ${feature.title}`}
+                                      >
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                    <div className="mt-1 text-xs leading-5 text-neutral-500">{feature.description}</div>
+                                    {feature.status_note && (
+                                      <div className="mt-2 rounded-lg border border-[#dbe4f0] bg-[#f7f9fc] px-2.5 py-1.5 text-[11px] leading-4 text-neutral-600">
+                                        <span className="font-semibold text-[#0b2a5a]">Update:</span> {feature.status_note}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Slider dots */}
+                        {visibleFeatures.length > 1 && (
+                          <div className="flex items-center justify-center gap-1.5 pb-3">
+                            {visibleFeatures.map((feature, i) => (
+                              <button
+                                key={feature.slug}
+                                type="button"
+                                onClick={() => setSliderIndex(i)}
+                                className={`h-1.5 rounded-full transition-all ${i === sliderIndex ? "w-5 bg-[#0b2a5a]" : "w-1.5 bg-neutral-300 hover:bg-neutral-400"}`}
+                                aria-label={`Go to ${feature.title}`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Add / Edit form */}
+                  {/* Add / Edit form (slides open below the slider) */}
                   {(showAddForm || editingFeature) && (
                     <div className="mx-auto mt-4 w-full max-w-5xl rounded-[1.55rem] border border-[#0b2a5a]/14 bg-white p-6 shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
                       <div className="mb-4 flex items-center justify-between">
@@ -1700,88 +1830,6 @@ export default function AdminAssistantWorkspace({
                         onSave={saveFeature}
                         onDelete={editingFeature ? () => deleteFeature(editingFeature.id) : null}
                       />
-                    </div>
-                  )}
-
-                  {/* Solutions grid */}
-                  <div className="mx-auto mt-4 grid w-full max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {solutionFeatures.map((feature) => {
-                      const priorityColor = feature.priority === "primary"
-                        ? "from-[#0b2a5a] to-[#2458a6]"
-                        : feature.priority === "secondary"
-                          ? "from-[#cc574d] to-[#e8877f]"
-                          : "from-neutral-500 to-neutral-400";
-                      const statusBadge = feature.status === "coming_soon"
-                        ? { bg: "bg-amber-100", text: "text-amber-700", label: "Coming soon" }
-                        : feature.status === "beta"
-                          ? { bg: "bg-violet-100", text: "text-violet-700", label: "Beta" }
-                          : feature.status === "hidden"
-                            ? { bg: "bg-neutral-100", text: "text-neutral-500", label: "Hidden" }
-                            : { bg: "bg-emerald-100", text: "text-emerald-700", label: "Active" };
-
-                      return (
-                        <div
-                          key={feature.slug}
-                          className="group relative overflow-hidden rounded-[1.55rem] border border-white/90 bg-white/84 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(11,42,90,0.1)]"
-                        >
-                          <div className={`pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${priorityColor}`} />
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-start gap-3">
-                              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${priorityColor} text-white shadow-sm`}>
-                                <span className="text-sm font-bold">{feature.title.charAt(0)}</span>
-                              </div>
-                              <div>
-                                <div className="text-sm font-semibold text-neutral-900">{feature.title}</div>
-                                <div className="mt-0.5 flex items-center gap-2">
-                                  <span className={`rounded-full ${statusBadge.bg} px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${statusBadge.text}`}>
-                                    {statusBadge.label}
-                                  </span>
-                                  <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-400">
-                                    {feature.priority}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => { setEditingFeature(feature); setShowAddForm(false); }}
-                              className="rounded-lg p-1.5 text-neutral-400 opacity-0 transition-all hover:bg-neutral-100 hover:text-neutral-700 group-hover:opacity-100"
-                              aria-label={`Edit ${feature.title}`}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                              </svg>
-                            </button>
-                          </div>
-                          <div className="mt-2 text-sm leading-6 text-neutral-500">
-                            {feature.description}
-                          </div>
-                          {feature.status_note && (
-                            <div className="mt-3 rounded-xl border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-2 text-xs leading-5 text-neutral-600">
-                              <span className="font-semibold text-[#0b2a5a]">Status:</span> {feature.status_note}
-                            </div>
-                          )}
-                          {feature.href && feature.href !== "#" && (
-                            <Link
-                              href={feature.href}
-                              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#0b2a5a] hover:underline"
-                            >
-                              Open tool
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="9 18 15 12 9 6" />
-                              </svg>
-                            </Link>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {solutionFeatures.length === 0 && (
-                    <div className="mx-auto mt-4 w-full max-w-5xl rounded-[1.55rem] border border-dashed border-[#dbe4f0] bg-white/60 p-8 text-center">
-                      <div className="text-sm font-semibold text-neutral-700">No solutions yet</div>
-                      <div className="mt-1 text-xs text-neutral-500">Add your first solution to get started.</div>
                     </div>
                   )}
 
