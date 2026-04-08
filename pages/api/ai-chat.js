@@ -741,6 +741,7 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
     { data: jobSubmissions },
     { data: socialPosts },
     { data: brandVoice },
+    { data: solutionFeatures },
   ] = await Promise.all([
     // ── Schedule module queries (workers, rigs, jobs, schedules, assignments) ──
     hasModule("schedule")
@@ -842,6 +843,11 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
           .from("brand_voice")
           .select("platform, voice_profile, tone_controls, analyzed_at")
       : empty,
+    // ── Solutions catalog ──
+    supabase
+      .from("admin_features")
+      .select("slug, title, description, priority, status, status_note, href")
+      .order("sort_order", { ascending: true }),
   ]);
 
   const progressByJobId = {};
@@ -1182,6 +1188,15 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
       };
       return acc;
     }, {}),
+    solutionFeatures: (solutionFeatures || []).map((f) => ({
+      slug: f.slug,
+      title: f.title,
+      description: f.description || "",
+      priority: f.priority || "support",
+      status: f.status || "active",
+      statusNote: f.status_note || "",
+      href: f.href || "",
+    })),
   };
 
   setCachedDataContext(modules, result);
@@ -1481,6 +1496,15 @@ ${Object.keys(data.brandVoice).length
       .join("\n")
   : "No brand voice profiles configured yet."
 }
+
+SOLUTIONS & TOOLS CATALOG:
+These are the solutions and tools available or in development for the workspace. When users ask about solutions, tools, available features, or what is being built, reference this catalog.
+${linesOrFallback(
+  data.solutionFeatures.map(
+    (f) => `- ${f.title} [${f.status}${f.priority === "primary" ? " | PRIMARY" : ""}]: ${f.description}${f.statusNote ? ` — Status update: ${f.statusNote}` : ""}${f.href && f.href !== "#" ? ` | Link: ${f.href}` : ""}`
+  ),
+  "No solutions configured yet."
+)}
 
 JOB INTAKE GUIDE:
 When the user wants to enter a new job (from a bid sheet, email, or spreadsheet):
