@@ -1130,16 +1130,29 @@ export default function AdminAssistantWorkspace({
             )}
           </section>
 
-          {threads.length > 0 && (
-            <section>
-              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
-                Previous conversations
-              </div>
-              <div className="space-y-2">
-                {threads
-                  .filter((t) => t.sessionId !== sessionId)
-                  .slice(0, 10)
-                  .map((thread) => (
+          {/* ── Previous conversations accordion ── */}
+          {(() => {
+            const otherThreads = threads.filter((t) => t.sessionId !== sessionId);
+            if (!otherThreads.length) return null;
+            const collapsed = otherThreads.slice(0, 3);
+            const shown = threadsExpanded ? otherThreads : collapsed;
+            return (
+              <section>
+                <button
+                  type="button"
+                  onClick={() => setThreadsExpanded((v) => !v)}
+                  className="mb-3 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400 hover:text-neutral-600"
+                >
+                  <span>Previous conversations</span>
+                  <svg
+                    width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    className={`transition-transform ${threadsExpanded ? "rotate-180" : ""}`}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                <div className="space-y-2">
+                  {shown.map((thread) => (
                     <button
                       key={thread.sessionId}
                       type="button"
@@ -1159,13 +1172,86 @@ export default function AdminAssistantWorkspace({
                       </div>
                     </button>
                   ))}
+                </div>
+                {otherThreads.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setThreadsExpanded((v) => !v)}
+                    className="mt-2 w-full text-center text-xs font-semibold text-[#0b2a5a]/60 hover:text-[#0b2a5a]"
+                  >
+                    {threadsExpanded ? "Show less" : `Show all ${otherThreads.length} conversations`}
+                  </button>
+                )}
+                {threadsLoading && (
+                  <div className="mt-2 text-center text-xs text-neutral-400">Loading threads...</div>
+                )}
+              </section>
+            );
+          })()}
+
+          {/* ── Solutions feature slider ── */}
+          {visibleFeatures.length > 0 && (
+            <section>
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                Solutions
               </div>
-              {threadsLoading && (
-                <div className="mt-2 text-center text-xs text-neutral-400">Loading threads...</div>
-              )}
+              <div className="relative overflow-hidden rounded-[1.55rem] border border-[#dbe4f0] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+                <div
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${sliderIndex * 100}%)` }}
+                >
+                  {visibleFeatures.map((feature) => {
+                    const priorityColor = feature.priority === "primary"
+                      ? "from-[#0b2a5a] to-[#2458a6]"
+                      : feature.priority === "secondary"
+                        ? "from-[#cc574d] to-[#e8877f]"
+                        : "from-neutral-500 to-neutral-400";
+                    return (
+                      <Link
+                        key={feature.slug}
+                        href={feature.href || "#"}
+                        className="block w-full flex-shrink-0 px-5 py-5"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${priorityColor} text-white shadow-sm`}>
+                            <span className="text-sm font-bold">{feature.title.charAt(0)}</span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-semibold text-neutral-900">{feature.title}</div>
+                              {feature.status === "coming_soon" && (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">Soon</span>
+                              )}
+                              {feature.status === "beta" && (
+                                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-violet-700">Beta</span>
+                              )}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">{feature.description}</div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+                {/* Slider dots */}
+                {visibleFeatures.length > 1 && (
+                  <div className="flex items-center justify-center gap-1.5 pb-3">
+                    {visibleFeatures.map((feature, i) => (
+                      <button
+                        key={feature.slug}
+                        type="button"
+                        onClick={() => setSliderIndex(i)}
+                        className={`h-1.5 rounded-full transition-all ${i === sliderIndex ? "w-5 bg-[#0b2a5a]" : "w-1.5 bg-neutral-300 hover:bg-neutral-400"}`}
+                        aria-label={`Go to ${feature.title}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </section>
           )}
 
+          {/* ── Connected workflows ── */}
           <section>
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
               Connected workflows
