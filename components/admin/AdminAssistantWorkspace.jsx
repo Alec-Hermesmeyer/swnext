@@ -1022,7 +1022,7 @@ export default function AdminAssistantWorkspace({
               <button
                 type="button"
                 onClick={() => inputRef.current?.focus()}
-                className="w-full rounded-[1.45rem] border border-[#dbe4f0] bg-white/90 px-4 py-4 text-left shadow-[0_14px_34px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:border-[#0b2a5a]/14 hover:shadow-[0_18px_38px_rgba(11,42,90,0.08)]"
+                className="w-full rounded-[1.45rem] border border-[#0b2a5a]/20 bg-white px-4 py-4 text-left shadow-[0_14px_34px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(11,42,90,0.08)]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="truncate text-sm font-semibold text-neutral-900">{conversationTitle}</div>
@@ -1045,6 +1045,42 @@ export default function AdminAssistantWorkspace({
               </div>
             )}
           </section>
+
+          {threads.length > 0 && (
+            <section>
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                Previous conversations
+              </div>
+              <div className="space-y-2">
+                {threads
+                  .filter((t) => t.sessionId !== sessionId)
+                  .slice(0, 10)
+                  .map((thread) => (
+                    <button
+                      key={thread.sessionId}
+                      type="button"
+                      onClick={() => switchThread(thread.sessionId)}
+                      className="w-full rounded-xl border border-[#dbe4f0] bg-white/80 px-3 py-3 text-left transition-all hover:border-[#0b2a5a]/14 hover:bg-white"
+                    >
+                      <div className="truncate text-sm font-medium text-neutral-800">
+                        {thread.title.length > 50 ? `${thread.title.slice(0, 50)}...` : thread.title}
+                      </div>
+                      <div className="mt-1 text-[11px] text-neutral-400">
+                        {new Date(thread.lastActivity).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    </button>
+                  ))}
+              </div>
+              {threadsLoading && (
+                <div className="mt-2 text-center text-xs text-neutral-400">Loading threads...</div>
+              )}
+            </section>
+          )}
 
           <section>
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
