@@ -58,6 +58,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
     let authResolved = false;
+    // Gate: onAuthStateChange must not process events (except SIGNED_OUT)
+    // until recoverSession() completes.  Without this, getUser() can
+    // internally refresh an expired token, which fires TOKEN_REFRESHED
+    // on the listener while recoverSession is still mid-flight — causing
+    // two concurrent fetchUserProfile calls and interleaved state updates
+    // that leave the page in a half-authed / hanging state.
+    let recoveryDone = false;
 
     const finishLoading = () => {
       authResolved = true;
@@ -106,6 +113,7 @@ export function AuthProvider({ children }) {
         console.error('Session recovery failed:', error);
         clearAuthState();
       } finally {
+        recoveryDone = true;
         finishLoading();
       }
     };
@@ -114,16 +122,17 @@ export function AuthProvider({ children }) {
 
     // SAFETY: never leave the app in a permanent loading state.
     const safetyTimer = setTimeout(() => {
-      if (!authResolved) finishLoading();
+      if (!authResolved) {
+        recoveryDone = true;
+        finishLoading();
+      }
     }, 15000);
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
 
-      // recoverSession already handles the initial load — skip to avoid a
-      // race condition where both paths fetch the profile concurrently.
-      if (event === 'INITIAL_SESSION') return;
-
+      // SIGNED_OUT must always be processed immediately regardless of
+      // recovery state — the user explicitly logged out.
       if (event === 'SIGNED_OUT') {
         clearAuthState();
         finishLoading();
@@ -133,8 +142,15 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Keep user and profile in sync for INITIAL_SESSION, SIGNED_IN,
-      // TOKEN_REFRESHED, and any later auth updates.
+      // Skip ALL other events until recoverSession() completes.
+      // recoverSession uses getUser() for server-side JWT validation,
+      // which is more authoritative than the localStorage-based session
+      // in the event payload. Processing events during recovery causes
+      // duplicate profile fetches and interleaved state updates.
+      if (!recoveryDone) return;
+
+      // Keep user and profile in sync for SIGNED_IN, TOKEN_REFRESHED,
+      // and any later auth updates.
       const currentUser = session?.user || null;
       setUser(currentUser);
       syncTokenCookie(session);
