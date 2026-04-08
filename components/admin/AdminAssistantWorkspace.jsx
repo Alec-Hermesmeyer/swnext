@@ -609,7 +609,7 @@ export default function AdminAssistantWorkspace({
     } finally {
       setLoading(false);
     }
-  }, [input]);
+  }, [input, logout]);
 
   const clearHistory = async () => {
     if (!sessionId || loading) return;
