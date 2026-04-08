@@ -314,3 +314,47 @@ The demo script is at `scripts/admin-demo-script.md`. Here's a summary of what i
 [2026-04-08T13:50:10.826Z] KNOXIS (dispatch): I'll have Claude work on implementing an accordion for the previous conversations and a feature slider for the chat interface.
 [2026-04-08T13:50:10.827Z] DISPATCH #10:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Implement an accordion to display the last three conversations by default in the previous conversations section. Also, create a feature slider that showcases the Crew Scheduler Priority Flow, Social Media tool, and other features as they are developed. The slider should be data-driven, using SQL to fetch the features and their descriptions. The goal is to create a solutions area where S&W can easily access all the tools and features. When done, summarize the changes made to the code, including any new files, functions, or database schema updates.
+[2026-04-08T13:55:42.665Z] CLAUDE DONE (exit 0, 332s, 37 lines):
+## Summary of Changes
+
+### New Files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| **`scripts/admin-features-schema.sql`** | 61 | SQL migration to create the `admin_features` table, seed 9 features, add indexes, and configure RLS |
+| **`pages/api/admin-features.js`** | 32 | GET endpoint that returns all non-hidden features ordered by `sort_order` |
+
+### Database Schema: `admin_features`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid (PK) | Auto-generated |
+| `slug` | text (unique) | URL-safe key, e.g. `crew-scheduler` |
+| `title` | text | Display name |
+| `description` | text | One-line description shown in the slider |
+| `priority` | text | `primary`, `secondary`, or `support` — drives card color |
+| `href` | text | Link to the admin page |
+| `icon` | text | Lucide icon name (for future icon rendering) |
+| `status` | text | `active`, `coming_soon`, `beta`, or `hidden` |
+| `sort_order` | integer | Lower = first in slider |
+| `created_at` / `updated_at` | timestamptz | Auto-managed |
+
+Seeded with 9 features: AI Assistant, Crew Scheduler, Daily Packets, Social Media, Careers, Contacts, Submissions, Page Images, Sales.
+
+### Modified File: `components/admin/AdminAssistantWorkspace.jsx`
+
+**New state (line 375-378):**
+- `threadsExpanded` / `panelThreadsExpanded` — accordion open/closed for sidebar and panel
+- `solutionFeatures` — feature catalog from the API
+- `sliderIndex` — current slide in the feature carousel
+
+**New effects (lines 526-547):**
+- `fetchFeatures` — loads `/api/admin-features` on mount, populates `solutionFeatures`
+- `visibleFeatures` memo — filters out hidden features
+- Auto-advance timer — rotates the slider every 5 seconds
+
+**Panel accordion (lines 855-900):** Replaced the flat `Previous threads` list with an accordion that shows 3 threads by default, a chevron toggle, and a "Show all N threads" / "Show less" button. Expanded state scrolls in a 192px container.
+
+**Sidebar accordion (lines 1133-1190):** Replace
+[2026-04-08T13:55:44.254Z] KNOXIS (review): Claude has implemented the requested changes. The previous conversations are now displayed in an accordion format, showing the last three conversations by default. A feature slider has been added to the chat interface, which showcases various features such as the Crew Scheduler, Social Media tool, and more. The slider is data-driven, using a new `admin_features` table in the database to store information about each feature. The table includes columns for the feature's title, description, priority, and status, among others. Nine features have been seeded into the table, including the AI Assistant, Crew Scheduler, and Social Media tool. The feature slider auto-advances every 5 seconds and can be manually navigated using clickable dot indicators. Let me know if you'd like to review the changes or if you have any further requests.
+[2026-04-08T14:06:01.310Z] SESSION END (stdin closed)
