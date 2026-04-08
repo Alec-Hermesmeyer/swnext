@@ -1389,13 +1389,12 @@ export default function AdminAssistantWorkspace({
                 S&W Operations Copilot
               </div>
               <h1 className="mt-3 text-2xl font-black tracking-[-0.04em] text-neutral-950 md:text-[2.35rem]">
-                Ask for the work. The assistant builds the surface.
+                Your crew, your jobs, one place to run it.
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-neutral-500 md:text-base">
-                Use this assistant to organize field operations, scheduling, communications, and
-                follow-up work from one workspace. It helps your team move from intake to execution
-                with clear next steps, while keeping supporting tools like social, hiring, contacts,
-                submissions, images, and sales available when needed.
+                Tell the assistant what you need and it pulls from live job data, schedules,
+                contacts, and submissions to get it done. No switching tabs, no re-entering
+                information. Just say what you need.
               </p>
             </div>
 
@@ -1592,7 +1591,7 @@ export default function AdminAssistantWorkspace({
 
                     <div className="relative mx-auto max-w-4xl text-center">
                       <div className="mb-4 inline-flex rounded-full border border-white/60 bg-white/74 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm backdrop-blur-sm">
-                        Built for real operations workflows
+                        S&W Operations Hub
                       </div>
                       <div className="relative mx-auto mb-9 flex w-full max-w-[34rem] justify-center">
                         <div className="pointer-events-none absolute inset-x-12 top-1/2 h-24 -translate-y-1/2 rounded-full bg-gradient-to-r from-red-700/18 via-white/70 to-[#0b2a5a]/22 blur-3xl" />
@@ -1626,10 +1625,8 @@ export default function AdminAssistantWorkspace({
                         {getGreeting(displayName)}
                       </h2>
                       <p className="mt-4 text-sm leading-8 text-neutral-600 md:text-base">
-                        Start with a request in plain language and the assistant will guide the work
-                        through each stage, from intake and planning to scheduling and downstream
-                        follow-up. The goal is a smooth, connected workflow so your team can stay
-                        focused without jumping between disconnected pages.
+                        Everything your team touches — jobs, crews, schedules, contacts, hiring,
+                        and packets — lives here. Type what you need and the assistant handles the rest.
                       </p>
                     </div>
                   </div>
