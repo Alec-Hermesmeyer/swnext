@@ -51,6 +51,14 @@ ON CONFLICT (slug) DO UPDATE SET
   sort_order  = EXCLUDED.sort_order,
   updated_at  = now();
 
+-- Add status_note column if it doesn't exist (safe to run on existing tables)
+DO $$ BEGIN
+  ALTER TABLE public.admin_features ADD COLUMN IF NOT EXISTS status_note text NOT NULL DEFAULT '';
+EXCEPTION WHEN others THEN NULL;
+END $$;
+
+COMMENT ON COLUMN public.admin_features.status_note IS 'Free-text status update shown on the solution card (e.g. "In development — targeting Friday launch").';
+
 -- RLS — readable by any authenticated user, writable only by service role
 ALTER TABLE public.admin_features ENABLE ROW LEVEL SECURITY;
 
