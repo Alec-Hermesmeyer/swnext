@@ -34,18 +34,20 @@ export function AuthProvider({ children }) {
   });
 
   const fetchUserProfile = useCallback(async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role, department, full_name, username, access_level')
-        .eq('id', userId)
-        .single();
-      if (error) console.error('Profile fetch error:', error);
-      return data || null;
-    } catch (err) {
-      console.error('Profile fetch failed:', err);
-      return null;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role, department, full_name, username, access_level')
+      .eq('id', userId)
+      .single();
+
+    // PGRST116 = "no rows returned" — the profile row genuinely doesn't
+    // exist yet (e.g. new user before the insert trigger runs).
+    if (error && error.code !== 'PGRST116') {
+      console.error('Profile fetch error:', error);
+      throw error;
     }
+
+    return data || null;
   }, []);
 
   const applyProfile = useCallback((nextProfile) => {
