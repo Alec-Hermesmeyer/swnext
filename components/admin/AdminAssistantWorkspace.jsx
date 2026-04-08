@@ -633,6 +633,7 @@ export default function AdminAssistantWorkspace({
 
       setMessages([welcomeMessage]);
       setHistoryError("");
+      fetchThreads();
     } catch (error) {
       setHistoryError(error.message || "Could not clear assistant history.");
     }
