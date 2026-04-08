@@ -523,6 +523,29 @@ export default function AdminAssistantWorkspace({
     if (!historyLoading) fetchThreads();
   }, [historyLoading, fetchThreads]);
 
+  // Fetch data-driven feature catalog for the Solutions slider
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin-features", { credentials: "same-origin" })
+      .then((r) => r.json())
+      .then((d) => { if (active && d?.features) setSolutionFeatures(d.features); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  // Auto-advance the feature slider every 5 seconds
+  const visibleFeatures = useMemo(
+    () => solutionFeatures.filter((f) => f.status !== "hidden"),
+    [solutionFeatures]
+  );
+  useEffect(() => {
+    if (visibleFeatures.length < 2) return;
+    const timer = setInterval(() => {
+      setSliderIndex((i) => (i + 1) % visibleFeatures.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [visibleFeatures.length]);
+
   const startNewConversation = () => {
     const nextSessionId = createSessionId();
     setStoredSessionId(nextSessionId);
