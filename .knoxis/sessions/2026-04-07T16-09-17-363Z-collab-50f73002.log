@@ -224,3 +224,40 @@ Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Implement a feature 
 [2026-04-08T12:46:04.152Z] KNOXIS (dispatch): I'll have Claude design a database schema to store chat history in Supabase and generate the necessary SQL to create the tables.
 [2026-04-08T12:46:04.153Z] DISPATCH #8:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Design a database schema to store chat history, including user IDs, message text, and timestamps. Generate the SQL to create the tables in Supabase. When done, summarize the schema and SQL changes.
+[2026-04-08T12:48:16.658Z] CLAUDE DONE (exit 0, 132s, 32 lines):
+## Schema Summary
+
+### New table: `chat_threads`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid (PK) | Auto-generated primary key |
+| `session_id` | text (unique) | Client-generated session ID, matches existing `chat_messages.session_id` |
+| `user_id` | uuid (FK → auth.users) | Thread owner, enables fast per-user lookups |
+| `title` | text | Derived from the first user message (max 80 chars) |
+| `created_at` | timestamptz | When the thread started |
+| `updated_at` | timestamptz | Auto-updated by trigger on every new message |
+
+### Modified table: `chat_messages`
+
+| New Column | Type | Description |
+|------------|------|-------------|
+| `user_id` | uuid (FK → auth.users) | Promoted from `metadata->>'user_id'` to a proper indexed column |
+| `thread_id` | uuid (FK → chat_threads) | Links each message to its thread row |
+
+Existing columns (`session_id`, `role`, `content`, `metadata`, `created_at`) are untouched.
+
+### SQL file: `scripts/chat-history-schema.sql`
+
+The migration has 8 sections, all idempotent (safe to run multiple times):
+
+| Section | What it does |
+|---------|--------------|
+| 1 | Creates `chat_threads` table |
+| 2 | Adds `user_id` and `thread_id` columns to `chat_messages` |
+| 3 | **Backfills** all existing data — extracts `user_id` from metadata, creates thread rows from existing sessions, links messages to threads |
+| 4 | Creates 6 indexes: `chat_threads(user_id)`, `chat_threads(user_id, updated_at)`, `chat_messages(user_id)`, `chat_messages(session_id, created_at)`, `chat_messages(thread_id)`, and a GIN index on `metadata` for JSONB filters |
+| 5 | Trigger `trg_chat_message_update_thread` — auto-updates `chat_threads.updated_at` whenever a message is inserted |
+| 6 | Trigger `trg_chat_message_ensure_thread` — auto-creates a `chat_threads` row on first message insert for a session (so existing app code keeps working without changes) |
+| 7 | Trigger `trg_chat_message_populate_user` — auto-copies `metadata->>'user_id'` into
+[2026-04-08T12:48:17.754Z] KNOXIS (review): Claude has designed a database schema to store chat history in Supabase. The new schema includes a `chat_threads` table to store thread metadata and a modified `chat_messages` table to store individual messages. The schema includes foreign keys to link messages to threads and users, as well as indexes for efficient querying. The migration script is idempotent and includes triggers to auto-update thread metadata and populate user IDs. This design allows for efficient querying of chat threads and messages, and enables row-level security policies to control access to threads and messages. You can now review the schema and migration script to ensure it meets your requirements.
