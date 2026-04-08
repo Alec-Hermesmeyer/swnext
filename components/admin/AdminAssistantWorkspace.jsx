@@ -372,6 +372,10 @@ export default function AdminAssistantWorkspace({
   const [workspaceContext, setWorkspaceContext] = useState({});
   const [threads, setThreads] = useState([]);
   const [threadsLoading, setThreadsLoading] = useState(false);
+  const [threadsExpanded, setThreadsExpanded] = useState(false);
+  const [panelThreadsExpanded, setPanelThreadsExpanded] = useState(false);
+  const [solutionFeatures, setSolutionFeatures] = useState([]);
+  const [sliderIndex, setSliderIndex] = useState(0);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const prevMessageCountRef = useRef(0);
@@ -518,6 +522,29 @@ export default function AdminAssistantWorkspace({
   useEffect(() => {
     if (!historyLoading) fetchThreads();
   }, [historyLoading, fetchThreads]);
+
+  // Fetch data-driven feature catalog for the Solutions slider
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin-features", { credentials: "same-origin" })
+      .then((r) => r.json())
+      .then((d) => { if (active && d?.features) setSolutionFeatures(d.features); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  // Auto-advance the feature slider every 5 seconds
+  const visibleFeatures = useMemo(
+    () => solutionFeatures.filter((f) => f.status !== "hidden"),
+    [solutionFeatures]
+  );
+  useEffect(() => {
+    if (visibleFeatures.length < 2) return;
+    const timer = setInterval(() => {
+      setSliderIndex((i) => (i + 1) % visibleFeatures.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [visibleFeatures.length]);
 
   const startNewConversation = () => {
     const nextSessionId = createSessionId();
@@ -828,28 +855,51 @@ export default function AdminAssistantWorkspace({
               {historyError}
             </div>
           ) : null}
-          {threads.filter((t) => t.sessionId !== sessionId).length > 0 && (
-            <div className="mb-2 max-h-32 overflow-y-auto rounded-xl border border-neutral-100 bg-neutral-50 px-2 py-1.5">
-              <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
-                Previous threads
-              </div>
-              {threads
-                .filter((t) => t.sessionId !== sessionId)
-                .slice(0, 5)
-                .map((thread) => (
-                  <button
-                    key={thread.sessionId}
-                    type="button"
-                    onClick={() => switchThread(thread.sessionId)}
-                    className="w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white"
+          {(() => {
+            const panelOtherThreads = threads.filter((t) => t.sessionId !== sessionId);
+            if (!panelOtherThreads.length) return null;
+            const panelVisible = panelThreadsExpanded ? panelOtherThreads : panelOtherThreads.slice(0, 3);
+            return (
+              <div className="mb-2 rounded-xl border border-neutral-100 bg-neutral-50 px-2 py-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPanelThreadsExpanded((v) => !v)}
+                  className="mb-1 flex w-full items-center justify-between px-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-400 hover:text-neutral-600"
+                >
+                  <span>Previous threads</span>
+                  <svg
+                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    className={`transition-transform ${panelThreadsExpanded ? "rotate-180" : ""}`}
                   >
-                    <div className="truncate text-xs font-medium text-neutral-700">
-                      {thread.title.length > 40 ? `${thread.title.slice(0, 40)}...` : thread.title}
-                    </div>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                <div className={panelThreadsExpanded ? "max-h-48 overflow-y-auto" : ""}>
+                  {panelVisible.map((thread) => (
+                    <button
+                      key={thread.sessionId}
+                      type="button"
+                      onClick={() => switchThread(thread.sessionId)}
+                      className="w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white"
+                    >
+                      <div className="truncate text-xs font-medium text-neutral-700">
+                        {thread.title.length > 40 ? `${thread.title.slice(0, 40)}...` : thread.title}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {panelOtherThreads.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setPanelThreadsExpanded((v) => !v)}
+                    className="mt-1 w-full px-1 text-center text-[10px] font-semibold text-[#0b2a5a]/60 hover:text-[#0b2a5a]"
+                  >
+                    {panelThreadsExpanded ? "Show less" : `Show all ${panelOtherThreads.length} threads`}
                   </button>
-                ))}
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
           <div className="mb-2 flex items-center justify-between px-1 text-[11px] font-medium text-neutral-500">
             <span>Describe what you need, and the assistant will guide the next step.</span>
             <button
@@ -1080,16 +1130,29 @@ export default function AdminAssistantWorkspace({
             )}
           </section>
 
-          {threads.length > 0 && (
-            <section>
-              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
-                Previous conversations
-              </div>
-              <div className="space-y-2">
-                {threads
-                  .filter((t) => t.sessionId !== sessionId)
-                  .slice(0, 10)
-                  .map((thread) => (
+          {/* ── Previous conversations accordion ── */}
+          {(() => {
+            const otherThreads = threads.filter((t) => t.sessionId !== sessionId);
+            if (!otherThreads.length) return null;
+            const collapsed = otherThreads.slice(0, 3);
+            const shown = threadsExpanded ? otherThreads : collapsed;
+            return (
+              <section>
+                <button
+                  type="button"
+                  onClick={() => setThreadsExpanded((v) => !v)}
+                  className="mb-3 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400 hover:text-neutral-600"
+                >
+                  <span>Previous conversations</span>
+                  <svg
+                    width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    className={`transition-transform ${threadsExpanded ? "rotate-180" : ""}`}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                <div className="space-y-2">
+                  {shown.map((thread) => (
                     <button
                       key={thread.sessionId}
                       type="button"
@@ -1109,13 +1172,86 @@ export default function AdminAssistantWorkspace({
                       </div>
                     </button>
                   ))}
+                </div>
+                {otherThreads.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setThreadsExpanded((v) => !v)}
+                    className="mt-2 w-full text-center text-xs font-semibold text-[#0b2a5a]/60 hover:text-[#0b2a5a]"
+                  >
+                    {threadsExpanded ? "Show less" : `Show all ${otherThreads.length} conversations`}
+                  </button>
+                )}
+                {threadsLoading && (
+                  <div className="mt-2 text-center text-xs text-neutral-400">Loading threads...</div>
+                )}
+              </section>
+            );
+          })()}
+
+          {/* ── Solutions feature slider ── */}
+          {visibleFeatures.length > 0 && (
+            <section>
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                Solutions
               </div>
-              {threadsLoading && (
-                <div className="mt-2 text-center text-xs text-neutral-400">Loading threads...</div>
-              )}
+              <div className="relative overflow-hidden rounded-[1.55rem] border border-[#dbe4f0] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+                <div
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${sliderIndex * 100}%)` }}
+                >
+                  {visibleFeatures.map((feature) => {
+                    const priorityColor = feature.priority === "primary"
+                      ? "from-[#0b2a5a] to-[#2458a6]"
+                      : feature.priority === "secondary"
+                        ? "from-[#cc574d] to-[#e8877f]"
+                        : "from-neutral-500 to-neutral-400";
+                    return (
+                      <Link
+                        key={feature.slug}
+                        href={feature.href || "#"}
+                        className="block w-full flex-shrink-0 px-5 py-5"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${priorityColor} text-white shadow-sm`}>
+                            <span className="text-sm font-bold">{feature.title.charAt(0)}</span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-semibold text-neutral-900">{feature.title}</div>
+                              {feature.status === "coming_soon" && (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">Soon</span>
+                              )}
+                              {feature.status === "beta" && (
+                                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-violet-700">Beta</span>
+                              )}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">{feature.description}</div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+                {/* Slider dots */}
+                {visibleFeatures.length > 1 && (
+                  <div className="flex items-center justify-center gap-1.5 pb-3">
+                    {visibleFeatures.map((feature, i) => (
+                      <button
+                        key={feature.slug}
+                        type="button"
+                        onClick={() => setSliderIndex(i)}
+                        className={`h-1.5 rounded-full transition-all ${i === sliderIndex ? "w-5 bg-[#0b2a5a]" : "w-1.5 bg-neutral-300 hover:bg-neutral-400"}`}
+                        aria-label={`Go to ${feature.title}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </section>
           )}
 
+          {/* ── Connected workflows ── */}
           <section>
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
               Connected workflows
