@@ -542,6 +542,14 @@ export default function AdminAssistantWorkspace({
 
     if (!text || loadingRef.current || !sessionIdRef.current) return;
 
+    // Intercept logout commands — actually sign the user out instead of
+    // sending to the LLM (which would just echo a fake success message).
+    const cmd = text.toLowerCase().replace(/[^a-z]/g, "");
+    if (cmd === "logout" || cmd === "logmeout" || cmd === "signout" || cmd === "signmeout") {
+      logout();
+      return;
+    }
+
     // Snapshot history from current state via functional updater — avoids
     // needing `messages` in the dependency array
     let history;
