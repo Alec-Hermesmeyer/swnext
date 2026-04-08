@@ -376,6 +376,9 @@ export default function AdminAssistantWorkspace({
   const [panelThreadsExpanded, setPanelThreadsExpanded] = useState(false);
   const [solutionFeatures, setSolutionFeatures] = useState([]);
   const [sliderIndex, setSliderIndex] = useState(0);
+  const [editingFeature, setEditingFeature] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [featureSaving, setFeatureSaving] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const prevMessageCountRef = useRef(0);
@@ -665,6 +668,52 @@ export default function AdminAssistantWorkspace({
       setHistoryError(error.message || "Could not clear assistant history.");
     }
   };
+
+  const refreshFeatures = useCallback(async () => {
+    try {
+      const r = await fetch("/api/admin-features", { credentials: "same-origin" });
+      const d = await r.json();
+      if (d?.features) setSolutionFeatures(d.features);
+    } catch { /* non-critical */ }
+  }, []);
+
+  const saveFeature = useCallback(async (featureData) => {
+    setFeatureSaving(true);
+    try {
+      const isNew = !featureData.id;
+      const res = await fetch("/api/admin-features", {
+        method: isNew ? "POST" : "PUT",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(featureData),
+      });
+      if (res.ok) {
+        await refreshFeatures();
+        setEditingFeature(null);
+        setShowAddForm(false);
+      }
+    } catch { /* handled */ } finally {
+      setFeatureSaving(false);
+    }
+  }, [refreshFeatures]);
+
+  const deleteFeature = useCallback(async (id) => {
+    setFeatureSaving(true);
+    try {
+      const res = await fetch("/api/admin-features", {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        await refreshFeatures();
+        setEditingFeature(null);
+      }
+    } catch { /* handled */ } finally {
+      setFeatureSaving(false);
+    }
+  }, [refreshFeatures]);
 
   const handleSurfaceComplete = useCallback(({
     surfaceId,
@@ -1523,40 +1572,132 @@ export default function AdminAssistantWorkspace({
                     </div>
                   </div>
 
+                  {/* ── Solutions showcase ── */}
                   <div className="mx-auto mt-8 w-full max-w-5xl rounded-[1.7rem] border border-white/90 bg-white/84 p-5 shadow-[0_16px_42px_rgba(15,23,42,0.05)]">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
                         <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a]/55">
-                          Crew Scheduler priority flow
+                          Solutions & Tools
                         </div>
                         <div className="mt-2 text-xl font-bold tracking-tight text-neutral-950">
-                          Move from intake to scheduling with one coordinated process.
+                          Tools, automation, and workflows built for your operations.
                         </div>
                       </div>
-                      <div className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-4 py-2 text-sm font-semibold text-neutral-700">
-                        Automation reduces repetitive manual work
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setShowAddForm(true); setEditingFeature(null); }}
+                        className="flex items-center gap-2 rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-4 py-2 text-sm font-semibold text-[#0b2a5a] transition-colors hover:bg-white hover:border-[#0b2a5a]/20"
+                      >
+                        <span className="text-lg leading-none">+</span> Add solution
+                      </button>
                     </div>
                   </div>
 
-                  <div className="mx-auto mt-4 grid w-full max-w-5xl gap-4 md:grid-cols-3">
-                    {FOCUS_AREAS.map((area) => (
-                      <div
-                        key={area.label}
-                        className="rounded-[1.55rem] border border-white/90 bg-white/84 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.05)]"
-                      >
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a]/55">
-                          {area.eyebrow}
+                  {/* Add / Edit form */}
+                  {(showAddForm || editingFeature) && (
+                    <div className="mx-auto mt-4 w-full max-w-5xl rounded-[1.55rem] border border-[#0b2a5a]/14 bg-white p-6 shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
+                      <div className="mb-4 flex items-center justify-between">
+                        <div className="text-sm font-bold text-neutral-900">
+                          {editingFeature ? "Edit solution" : "New solution"}
                         </div>
-                        <div className="mt-2 text-lg font-bold tracking-tight text-neutral-950">
-                          {area.label}
-                        </div>
-                        <div className="mt-2 text-sm leading-6 text-neutral-500">
-                          {area.description}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setShowAddForm(false); setEditingFeature(null); }}
+                          className="text-xs font-semibold text-neutral-500 hover:text-neutral-800"
+                        >
+                          Cancel
+                        </button>
                       </div>
-                    ))}
+                      <SolutionForm
+                        initial={editingFeature}
+                        saving={featureSaving}
+                        onSave={saveFeature}
+                        onDelete={editingFeature ? () => deleteFeature(editingFeature.id) : null}
+                      />
+                    </div>
+                  )}
+
+                  {/* Solutions grid */}
+                  <div className="mx-auto mt-4 grid w-full max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {solutionFeatures.map((feature) => {
+                      const priorityColor = feature.priority === "primary"
+                        ? "from-[#0b2a5a] to-[#2458a6]"
+                        : feature.priority === "secondary"
+                          ? "from-[#cc574d] to-[#e8877f]"
+                          : "from-neutral-500 to-neutral-400";
+                      const statusBadge = feature.status === "coming_soon"
+                        ? { bg: "bg-amber-100", text: "text-amber-700", label: "Coming soon" }
+                        : feature.status === "beta"
+                          ? { bg: "bg-violet-100", text: "text-violet-700", label: "Beta" }
+                          : feature.status === "hidden"
+                            ? { bg: "bg-neutral-100", text: "text-neutral-500", label: "Hidden" }
+                            : { bg: "bg-emerald-100", text: "text-emerald-700", label: "Active" };
+
+                      return (
+                        <div
+                          key={feature.slug}
+                          className="group relative overflow-hidden rounded-[1.55rem] border border-white/90 bg-white/84 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(11,42,90,0.1)]"
+                        >
+                          <div className={`pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${priorityColor}`} />
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-start gap-3">
+                              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${priorityColor} text-white shadow-sm`}>
+                                <span className="text-sm font-bold">{feature.title.charAt(0)}</span>
+                              </div>
+                              <div>
+                                <div className="text-sm font-semibold text-neutral-900">{feature.title}</div>
+                                <div className="mt-0.5 flex items-center gap-2">
+                                  <span className={`rounded-full ${statusBadge.bg} px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${statusBadge.text}`}>
+                                    {statusBadge.label}
+                                  </span>
+                                  <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-400">
+                                    {feature.priority}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => { setEditingFeature(feature); setShowAddForm(false); }}
+                              className="rounded-lg p-1.5 text-neutral-400 opacity-0 transition-all hover:bg-neutral-100 hover:text-neutral-700 group-hover:opacity-100"
+                              aria-label={`Edit ${feature.title}`}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="mt-2 text-sm leading-6 text-neutral-500">
+                            {feature.description}
+                          </div>
+                          {feature.status_note && (
+                            <div className="mt-3 rounded-xl border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-2 text-xs leading-5 text-neutral-600">
+                              <span className="font-semibold text-[#0b2a5a]">Status:</span> {feature.status_note}
+                            </div>
+                          )}
+                          {feature.href && feature.href !== "#" && (
+                            <Link
+                              href={feature.href}
+                              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#0b2a5a] hover:underline"
+                            >
+                              Open tool
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="9 18 15 12 9 6" />
+                              </svg>
+                            </Link>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  {solutionFeatures.length === 0 && (
+                    <div className="mx-auto mt-4 w-full max-w-5xl rounded-[1.55rem] border border-dashed border-[#dbe4f0] bg-white/60 p-8 text-center">
+                      <div className="text-sm font-semibold text-neutral-700">No solutions yet</div>
+                      <div className="mt-1 text-xs text-neutral-500">Add your first solution to get started.</div>
+                    </div>
+                  )}
 
                   <div className="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-2">
                     {visibleWorkflowModules.slice(0, 6).map((module) => (
