@@ -84,6 +84,27 @@ export function AuthProvider({ children }) {
     // flash of stale auth state that getSession() (localStorage-only) causes.
     // Profile is fetched BEFORE finishLoading so role/department/profile are
     // available when the page renders.
+    // Fetch profile with a single retry. On permanent failure, return null
+    // so the caller can apply a safe fallback instead of clearing auth state.
+    const fetchProfileWithRetry = async (userId) => {
+      try {
+        return await fetchUserProfile(userId);
+      } catch (err) {
+        console.warn('Profile fetch failed, retrying once…', err.message);
+        try {
+          return await fetchUserProfile(userId);
+        } catch (retryErr) {
+          console.error('Profile fetch failed after retry:', retryErr);
+          return null;
+        }
+      }
+    };
+
+    // When the profile DB query fails but the user JWT is valid, apply
+    // minimum-privilege defaults so the user stays authenticated rather
+    // than being kicked to the login page.
+    const FALLBACK_PROFILE = { role: 'user', access_level: 3, department: null, full_name: null, username: null };
+
     const recoverSession = async () => {
       try {
         const { data: { user: validatedUser }, error: userError } = await supabase.auth.getUser();
@@ -93,8 +114,8 @@ export function AuthProvider({ children }) {
           setUser(validatedUser);
           const { data: { session } } = await supabase.auth.getSession();
           syncTokenCookie(session);
-          const userProfile = await fetchUserProfile(validatedUser.id);
-          if (isMounted) applyProfile(userProfile);
+          const userProfile = await fetchProfileWithRetry(validatedUser.id);
+          if (isMounted) applyProfile(userProfile || FALLBACK_PROFILE);
           return;
         }
 
@@ -105,8 +126,8 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           setUser(session.user);
           syncTokenCookie(session);
-          const userProfile = await fetchUserProfile(session.user.id);
-          if (isMounted) applyProfile(userProfile);
+          const userProfile = await fetchProfileWithRetry(session.user.id);
+          if (isMounted) applyProfile(userProfile || FALLBACK_PROFILE);
           return;
         }
 
