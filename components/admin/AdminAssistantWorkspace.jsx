@@ -827,6 +827,28 @@ export default function AdminAssistantWorkspace({
               {historyError}
             </div>
           ) : null}
+          {threads.filter((t) => t.sessionId !== sessionId).length > 0 && (
+            <div className="mb-2 max-h-32 overflow-y-auto rounded-xl border border-neutral-100 bg-neutral-50 px-2 py-1.5">
+              <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
+                Previous threads
+              </div>
+              {threads
+                .filter((t) => t.sessionId !== sessionId)
+                .slice(0, 5)
+                .map((thread) => (
+                  <button
+                    key={thread.sessionId}
+                    type="button"
+                    onClick={() => switchThread(thread.sessionId)}
+                    className="w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white"
+                  >
+                    <div className="truncate text-xs font-medium text-neutral-700">
+                      {thread.title.length > 40 ? `${thread.title.slice(0, 40)}...` : thread.title}
+                    </div>
+                  </button>
+                ))}
+            </div>
+          )}
           <div className="mb-2 flex items-center justify-between px-1 text-[11px] font-medium text-neutral-500">
             <span>Describe what you need, and the assistant will guide the next step.</span>
             <button
