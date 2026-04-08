@@ -34,18 +34,20 @@ export function AuthProvider({ children }) {
   });
 
   const fetchUserProfile = useCallback(async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role, department, full_name, username, access_level')
-        .eq('id', userId)
-        .single();
-      if (error) console.error('Profile fetch error:', error);
-      return data || null;
-    } catch (err) {
-      console.error('Profile fetch failed:', err);
-      return null;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role, department, full_name, username, access_level')
+      .eq('id', userId)
+      .single();
+
+    // PGRST116 = "no rows returned" — the profile row genuinely doesn't
+    // exist yet (e.g. new user before the insert trigger runs).
+    if (error && error.code !== 'PGRST116') {
+      console.error('Profile fetch error:', error);
+      throw error;
     }
+
+    return data || null;
   }, []);
 
   const applyProfile = useCallback((nextProfile) => {
@@ -58,6 +60,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
     let authResolved = false;
+    // Gate: onAuthStateChange must not process events (except SIGNED_OUT)
+    // until recoverSession() completes.  Without this, getUser() can
+    // internally refresh an expired token, which fires TOKEN_REFRESHED
+    // on the listener while recoverSession is still mid-flight — causing
+    // two concurrent fetchUserProfile calls and interleaved state updates
+    // that leave the page in a half-authed / hanging state.
+    let recoveryDone = false;
 
     const finishLoading = () => {
       authResolved = true;
@@ -75,6 +84,27 @@ export function AuthProvider({ children }) {
     // flash of stale auth state that getSession() (localStorage-only) causes.
     // Profile is fetched BEFORE finishLoading so role/department/profile are
     // available when the page renders.
+    // Fetch profile with a single retry. On permanent failure, return null
+    // so the caller can apply a safe fallback instead of clearing auth state.
+    const fetchProfileWithRetry = async (userId) => {
+      try {
+        return await fetchUserProfile(userId);
+      } catch (err) {
+        console.warn('Profile fetch failed, retrying once…', err.message);
+        try {
+          return await fetchUserProfile(userId);
+        } catch (retryErr) {
+          console.error('Profile fetch failed after retry:', retryErr);
+          return null;
+        }
+      }
+    };
+
+    // When the profile DB query fails but the user JWT is valid, apply
+    // minimum-privilege defaults so the user stays authenticated rather
+    // than being kicked to the login page.
+    const FALLBACK_PROFILE = { role: 'user', access_level: 3, department: null, full_name: null, username: null };
+
     const recoverSession = async () => {
       try {
         const { data: { user: validatedUser }, error: userError } = await supabase.auth.getUser();
@@ -84,8 +114,8 @@ export function AuthProvider({ children }) {
           setUser(validatedUser);
           const { data: { session } } = await supabase.auth.getSession();
           syncTokenCookie(session);
-          const userProfile = await fetchUserProfile(validatedUser.id);
-          if (isMounted) applyProfile(userProfile);
+          const userProfile = await fetchProfileWithRetry(validatedUser.id);
+          if (isMounted) applyProfile(userProfile || FALLBACK_PROFILE);
           return;
         }
 
@@ -96,8 +126,8 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           setUser(session.user);
           syncTokenCookie(session);
-          const userProfile = await fetchUserProfile(session.user.id);
-          if (isMounted) applyProfile(userProfile);
+          const userProfile = await fetchProfileWithRetry(session.user.id);
+          if (isMounted) applyProfile(userProfile || FALLBACK_PROFILE);
           return;
         }
 
@@ -106,6 +136,7 @@ export function AuthProvider({ children }) {
         console.error('Session recovery failed:', error);
         clearAuthState();
       } finally {
+        recoveryDone = true;
         finishLoading();
       }
     };
@@ -114,16 +145,17 @@ export function AuthProvider({ children }) {
 
     // SAFETY: never leave the app in a permanent loading state.
     const safetyTimer = setTimeout(() => {
-      if (!authResolved) finishLoading();
+      if (!authResolved) {
+        recoveryDone = true;
+        finishLoading();
+      }
     }, 15000);
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
 
-      // recoverSession already handles the initial load — skip to avoid a
-      // race condition where both paths fetch the profile concurrently.
-      if (event === 'INITIAL_SESSION') return;
-
+      // SIGNED_OUT must always be processed immediately regardless of
+      // recovery state — the user explicitly logged out.
       if (event === 'SIGNED_OUT') {
         clearAuthState();
         finishLoading();
@@ -133,19 +165,22 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Keep user and profile in sync for INITIAL_SESSION, SIGNED_IN,
-      // TOKEN_REFRESHED, and any later auth updates.
+      // Skip ALL other events until recoverSession() completes.
+      // recoverSession uses getUser() for server-side JWT validation,
+      // which is more authoritative than the localStorage-based session
+      // in the event payload. Processing events during recovery causes
+      // duplicate profile fetches and interleaved state updates.
+      if (!recoveryDone) return;
+
+      // Keep user and profile in sync for SIGNED_IN, TOKEN_REFRESHED,
+      // and any later auth updates.
       const currentUser = session?.user || null;
       setUser(currentUser);
       syncTokenCookie(session);
 
       if (currentUser) {
-        try {
-          const userProfile = await fetchUserProfile(currentUser.id);
-          if (isMounted) applyProfile(userProfile);
-        } catch {
-          // Profile fetch failed — still show the page with user, just no profile
-        }
+        const userProfile = await fetchProfileWithRetry(currentUser.id);
+        if (isMounted) applyProfile(userProfile || FALLBACK_PROFILE);
       } else {
         applyProfile(null);
       }
