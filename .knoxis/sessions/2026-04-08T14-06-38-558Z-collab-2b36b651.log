@@ -29,3 +29,42 @@
 [2026-04-08T14:21:01.661Z] KNOXIS (dispatch): I'm going to have Claude review the collaboration log to understand how auth is handled in your project.
 [2026-04-08T14:21:01.662Z] DISPATCH #1:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Review the log file located at final/swnext/.knoxis/sessions/2026-04-08T14-06-38-558Z-collab-2b36b651.log to understand how authentication is currently handled in the project. Look for any potential issues or inconsistencies in the auth flow. When done, summarize the auth handling approach and any potential problems you've identified.
+[2026-04-08T14:29:28.256Z] CLAUDE DONE (exit 0, 507s, 35 lines):
+## Auth Review Summary
+
+### What the log tells us
+
+The user reported that **admin pages hang on refresh** and the **user appears logged out** despite having just authenticated. The session should persist until explicit logout.
+
+### How auth is currently handled
+
+The app uses a **hybrid Supabase auth** approach:
+
+1. **`AuthContext.js`** — manages client-side state via `recoverSession()` on mount:
+   - First tries `getUser()` (server validation)
+   - Falls back to `getSession()` (localStorage)
+   - Fetches profile from DB, then sets `user`, `role`, `accessLevel`
+   - Listens to `onAuthStateChange()` for token refreshes
+   - Has a 15-second safety timeout to prevent infinite loading
+
+2. **`proxy.js`** (middleware) — calls `supabase.auth.getSession()` on every route to refresh tokens and set HttpOnly cookies
+
+3. **`withAuthTw.js`** HOC — wraps all admin pages, redirects to `/login` if no user, shows spinner while loading
+
+4. **`syncTokenCookie()`** — manually copies the access token to a non-HttpOnly cookie (`sb-access-token`) for legacy API routes
+
+### Root cause of the "hanging + logged out on refresh" bug
+
+Several likely contributors:
+
+| Issue | Why it matters |
+|-------|---------------|
+| **Race condition between `recoverSession()` and `onAuthStateChange(INITIAL_SESSION)`** | Both can fire concurrently on refresh, causing duplicate profile fetches and inconsistent state. The guard only partially blocks `INITIAL_SESSION`. |
+| **Profile fetch failure = silent auth failure** | If the profile DB query fails (network blip, RLS issue), the user object may be set but `role`/`accessLevel` remain empty — `withAuthTw` may treat this as unauthenticated and redirect to login. |
+| **15-second hard timeout** | `recoverSession()` sets loading=false after 15s regardless. If `getUser()` is slow (cold Supabase edge function), the page renders in an unauthenticated state before the session actually resolves. |
+| **Non-HttpOnly `sb-access-token` cookie** | The token synced by `syncToke
+[2026-04-08T14:29:30.122Z] KNOXIS (review): Claude has finished reviewing the collaboration log and provided a detailed summary of how auth is handled in your project. The main issues contributing to the 'hanging + logged out on refresh' bug are: a race condition between `recoverSession()` and `onAuthStateChange(INITIAL_SESSION)`, profile fetch failure being treated as silent auth failure, a 15-second hard timeout, non-HttpOnly `sb-access-token` cookie, and a 3-tier API token fallback. Other issues found include bypassing auth with `embedded=true`, lack of server-side role enforcement, no session activity timeout, and a service role key in `.env.local`. Claude recommends fixing these issues in priority order, starting with eliminating the race condition and handling profile fetch failure gracefully. Do you want to start addressing these issues?
+[2026-04-08T14:30:30.314Z] USER: yes
+[2026-04-08T14:30:31.926Z] KNOXIS (dispatch): I'm going to have Claude start by addressing the race condition between `recoverSession()` and `onAuthStateChange(INITIAL_SESSION)` to prevent the 'hanging + logged out on refresh' bug.
+[2026-04-08T14:30:31.927Z] DISPATCH #2:
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Review the auth handling code and fix the race condition between `recoverSession()` and `onAuthStateChange(INITIAL_SESSION)`. Ensure that `recoverSession()` waits for the initial auth state to be set before attempting to recover the session. When done, summarize what you changed (files, functions, lines).
