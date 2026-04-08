@@ -501,6 +501,24 @@ export default function AdminAssistantWorkspace({
     return () => window.clearTimeout(timer);
   }, [isPanel]);
 
+  const fetchThreads = useCallback(async () => {
+    setThreadsLoading(true);
+    try {
+      const res = await fetch("/api/ai-chat?list=threads", { credentials: "same-origin" });
+      const data = await res.json().catch(() => null);
+      if (data?.threads) setThreads(data.threads);
+    } catch {
+      // Thread list is non-critical — fail silently
+    } finally {
+      setThreadsLoading(false);
+    }
+  }, []);
+
+  // Load thread list on mount and after history finishes loading
+  useEffect(() => {
+    if (!historyLoading) fetchThreads();
+  }, [historyLoading, fetchThreads]);
+
   const startNewConversation = () => {
     const nextSessionId = createSessionId();
     setStoredSessionId(nextSessionId);
@@ -509,6 +527,14 @@ export default function AdminAssistantWorkspace({
     setInput("");
     setHistoryError("");
     setHistoryLoading(false);
+  };
+
+  const switchThread = (targetSessionId) => {
+    if (targetSessionId === sessionId) return;
+    setStoredSessionId(targetSessionId);
+    setSessionId(targetSessionId);
+    hasHydratedRef.current = false;
+    // Session change triggers the history-loading useEffect
   };
 
   const sendMessage = useCallback(async (presetMessage) => {
