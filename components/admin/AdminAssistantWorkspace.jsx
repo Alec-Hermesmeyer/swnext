@@ -370,6 +370,8 @@ export default function AdminAssistantWorkspace({
   const [historyError, setHistoryError] = useState("");
   const [activeWorkspace, setActiveWorkspace] = useState(null);
   const [workspaceContext, setWorkspaceContext] = useState({});
+  const [threads, setThreads] = useState([]);
+  const [threadsLoading, setThreadsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const prevMessageCountRef = useRef(0);
