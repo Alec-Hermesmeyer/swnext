@@ -348,7 +348,7 @@ export default function AdminAssistantWorkspace({
   variant = "page",
   onClose,
 }) {
-  const { profile, role, department } = useAuth();
+  const { profile, role, department, logout } = useAuth();
 
   const visiblePromptCards = useMemo(
     () =>
