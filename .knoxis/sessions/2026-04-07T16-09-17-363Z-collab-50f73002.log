@@ -285,3 +285,32 @@ The migration has 8 sections, all idempotent (safe to run multiple times):
 [2026-04-08T12:56:05.133Z] KNOXIS (dispatch): I'll work with Claude to create a demo script for your presentation.
 [2026-04-08T12:56:05.133Z] DISPATCH #9:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Create a demo script for the admin portion of the platform, highlighting the chat functionality, social media manager, and crew schedule automation. Include talking points, potential Q&A scenarios, and a clear call-to-action at the end of the demo. Assume the demo will be done using the live version of the platform. When done, provide the script and summarize the key points covered.
+[2026-04-08T12:59:07.482Z] CLAUDE DONE (exit 0, 182s, 18 lines):
+The demo script is at `scripts/admin-demo-script.md`. Here's a summary of what it covers:
+
+### Structure (15-20 min + Q&A)
+
+| Section | Duration | What you show |
+|---------|----------|---------------|
+| **Opening** | 1-2 min | Three-layer overview: assistant, scheduler, social media |
+| **AI Chat** | 5-6 min | Open chat bubble, run "Plan the schedule" prompt (live data), enter a job via inline surface, show thread history and switching |
+| **Crew Scheduler** | 5-6 min | Build a daily rig schedule, copy a previous day, show auto-generated daily packets and one-click email, quick look at the month planner |
+| **Social Media** | 4-5 min | Brand voice profile, AI-draft a project showcase post, queue/approval flow, strategy chat with real business context |
+| **Wrap-up** | 2 min | Connect the three pieces: bid sheet enters via chat, grows in the scheduler, becomes a social post |
+| **Call to Action** | — | Three concrete asks: try the chat this week, enter one real job, send feedback |
+| **Q&A Prep** | — | 10 anticipated questions with suggested answers (permissions, AI safety, imports, mobile, onboarding) |
+
+### Key talking points baked into the script
+
+- The assistant works with **live data**, not templates — rig counts and crew gaps are real numbers
+- The three-stage job workflow (intake, detail, schedule+packets) is the throughline connecting all features
+- Packet automation replaces **1+ hour of daily manual work** with one click
+- Social media drafts run through the **brand voice profile** — not generic AI output
+- Every write action requires explicit user approval — the AI proposes, you confirm
+- Role-based access controls what each user sees across all modules
+
+[2026-04-08T12:59:08.833Z] KNOXIS (review): The demo script is now available at `scripts/admin-demo-script.md`. The script is structured into sections, including an opening overview, demos of the AI chat, crew scheduler, and social media features, and a wrap-up that connects the three pieces. The script also includes key talking points, such as the use of live data, the three-stage job workflow, and the benefits of packet automation. Additionally, the script includes 10 anticipated questions with suggested answers to help you prepare for Q&A. Let me know if you'd like to review the script or if you have any questions about the content.
+[2026-04-08T13:50:09.772Z] USER: on the Previous conversations can we actually make that an accordian that shows the last three conversations by default, having them all displayed out like that has thrown a slight layout shift, also the where we have on the chat interface under the greeting we have Crew Scheduler Priority Flow, that is cool shows the steps yea. What if we made that like a slider that went through other features as well, like the Social Media tool, and then as i create more solutions for them i can add them there, we could even create some more sql and data drive this, creating a sort of solutions area where S&W can easily see all the tools and features at their disposal as they are being built.
+[2026-04-08T13:50:10.826Z] KNOXIS (dispatch): I'll have Claude work on implementing an accordion for the previous conversations and a feature slider for the chat interface.
+[2026-04-08T13:50:10.827Z] DISPATCH #10:
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Implement an accordion to display the last three conversations by default in the previous conversations section. Also, create a feature slider that showcases the Crew Scheduler Priority Flow, Social Media tool, and other features as they are developed. The slider should be data-driven, using SQL to fetch the features and their descriptions. The goal is to create a solutions area where S&W can easily access all the tools and features. When done, summarize the changes made to the code, including any new files, functions, or database schema updates.
