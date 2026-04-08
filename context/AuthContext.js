@@ -179,12 +179,8 @@ export function AuthProvider({ children }) {
       syncTokenCookie(session);
 
       if (currentUser) {
-        try {
-          const userProfile = await fetchUserProfile(currentUser.id);
-          if (isMounted) applyProfile(userProfile);
-        } catch {
-          // Profile fetch failed — still show the page with user, just no profile
-        }
+        const userProfile = await fetchProfileWithRetry(currentUser.id);
+        if (isMounted) applyProfile(userProfile || FALLBACK_PROFILE);
       } else {
         applyProfile(null);
       }
