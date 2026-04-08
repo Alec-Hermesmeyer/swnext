@@ -185,3 +185,79 @@ Both files look correct. Here's the summary.
 `finishLoading()` was called on the line *before* `fetchUserProfile()`, so the page would render with `loading=false` + `user=<object>` but `profile=null`, `role=null`, `department=null`. Any component reading those values (like the role badge in the header) saw empty data until the `onAuthStateChange` listener independently re-fetched the profile — which itself raced with the recovery function.
 
 [2026-04-07T21:57:51.023Z] KNOXIS (review): Claude has finished investigating and implementing the fixes. The main issues were with the `recoverSession` function in `context/AuthContext.js`, where the profile ordering was incorrect, and a race condition in `onAuthStateChange`. These have been fixed, and a logout feature has been added, including a button and a keyboard command. The logout function now properly cleans up the session and removes all Supabase tokens from local storage. The root cause of the refresh bug was identified as a premature call to `finishLoading()` before the user profile was fetched, which has been corrected. You can now test the application to see if the issues are resolved.
+[2026-04-08T12:34:26.363Z] USER: working much better, still some weirdness but over all much better. now we need to sace the chat thread history so users can go back and view things. and we need to finish the function to log a user out from the chat, type logout and it responds its logged me out but it hasn't actually done so, the button does work though
+[2026-04-08T12:34:27.509Z] KNOXIS (dispatch): I'll have Claude work on saving the chat thread history and fixing the logout function when typing 'logout' in the chat.
+[2026-04-08T12:34:27.509Z] DISPATCH #7:
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Implement a feature to save the chat thread history, allowing users to view previous conversations. Additionally, fix the issue with the 'logout' command in the chat, where it responds with a success message but doesn't actually log the user out. The logout function should properly clean up the session and remove all Supabase tokens from local storage. When done, summarize what you changed (files, functions, lines).
+[2026-04-08T12:40:55.379Z] CLAUDE DONE (exit 0, 388s, 31 lines):
+## Summary of Changes
+
+### Files Modified: 3
+
+---
+
+### `pages/api/ai-chat.js`
+
+| Lines | Function/Section | Change |
+|-------|-----------------|--------|
+| 1285-1319 | `fetchSessionList()` | **New function.** Queries `chat_messages` for all user messages belonging to the authenticated user, groups by `session_id`, extracts the first user message as the thread title, and returns sessions sorted by most recent activity. |
+| 1651-1655 | GET handler | **New branch.** When `?list=threads` is passed, calls `fetchSessionList()` and returns `{ threads }` — enables the frontend to list previous conversations. |
+
+---
+
+### `components/admin/AdminAssistantWorkspace.jsx`
+
+| Lines | What | Change |
+|-------|------|--------|
+| 351 | `useAuth()` | Added `logout` to destructured values. |
+| 373-374 | State | Added `threads` and `threadsLoading` state. |
+| 504-520 | `fetchThreads()` | **New function.** Fetches `GET /api/ai-chat?list=threads` and populates the thread list. Runs once history finishes loading. |
+| 532-538 | `switchThread()` | **New function.** Switches the active session by updating `sessionId` in state and localStorage, triggering the existing history-loading effect. |
+| 545-551 | `sendMessage()` | **Logout interception.** Before sending to the API, normalizes the input and checks for `logout`, `logmeout`, `signout`, `signmeout`. If matched, calls the real `logout()` function from AuthContext and returns — the message never reaches the LLM. |
+| 612 | `sendMessage` deps | Added `logout` to the `useCallback` dependency array. |
+| 635 | `clearHistory()` | Added `fetchThreads()` call after successful clear so deleted threads disappear from the list. |
+| 713-739 | Panel header | Added `+ New` button next to the close button to start a new conversation from the floating chat panel. |
+| 830-853 | Panel footer | **New section.** "Previous threads" collapsible list (max 5, max-height 128px scrollable) above the input area, showing past conversations the user can switch to. |
+| 
+[2026-04-08T12:40:56.543Z] KNOXIS (review): Claude has finished implementing the chat thread history and logout functionality. The changes include: a new API endpoint to fetch chat sessions, a new function to switch between threads, and a logout interception in the `sendMessage` function. The logout function now properly clears the session ID from local storage. You can now view previous conversations and log out by typing 'logout' in the chat. Please test the new functionality to ensure it works as expected.
+[2026-04-08T12:46:03.202Z] USER: can we save the chat history to supabase, claude could generate the proper sql and then its data driven rather than localStorage or similiar options
+[2026-04-08T12:46:04.152Z] KNOXIS (dispatch): I'll have Claude design a database schema to store chat history in Supabase and generate the necessary SQL to create the tables.
+[2026-04-08T12:46:04.153Z] DISPATCH #8:
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Design a database schema to store chat history, including user IDs, message text, and timestamps. Generate the SQL to create the tables in Supabase. When done, summarize the schema and SQL changes.
+[2026-04-08T12:48:16.658Z] CLAUDE DONE (exit 0, 132s, 32 lines):
+## Schema Summary
+
+### New table: `chat_threads`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid (PK) | Auto-generated primary key |
+| `session_id` | text (unique) | Client-generated session ID, matches existing `chat_messages.session_id` |
+| `user_id` | uuid (FK → auth.users) | Thread owner, enables fast per-user lookups |
+| `title` | text | Derived from the first user message (max 80 chars) |
+| `created_at` | timestamptz | When the thread started |
+| `updated_at` | timestamptz | Auto-updated by trigger on every new message |
+
+### Modified table: `chat_messages`
+
+| New Column | Type | Description |
+|------------|------|-------------|
+| `user_id` | uuid (FK → auth.users) | Promoted from `metadata->>'user_id'` to a proper indexed column |
+| `thread_id` | uuid (FK → chat_threads) | Links each message to its thread row |
+
+Existing columns (`session_id`, `role`, `content`, `metadata`, `created_at`) are untouched.
+
+### SQL file: `scripts/chat-history-schema.sql`
+
+The migration has 8 sections, all idempotent (safe to run multiple times):
+
+| Section | What it does |
+|---------|--------------|
+| 1 | Creates `chat_threads` table |
+| 2 | Adds `user_id` and `thread_id` columns to `chat_messages` |
+| 3 | **Backfills** all existing data — extracts `user_id` from metadata, creates thread rows from existing sessions, links messages to threads |
+| 4 | Creates 6 indexes: `chat_threads(user_id)`, `chat_threads(user_id, updated_at)`, `chat_messages(user_id)`, `chat_messages(session_id, created_at)`, `chat_messages(thread_id)`, and a GIN index on `metadata` for JSONB filters |
+| 5 | Trigger `trg_chat_message_update_thread` — auto-updates `chat_threads.updated_at` whenever a message is inserted |
+| 6 | Trigger `trg_chat_message_ensure_thread` — auto-creates a `chat_threads` row on first message insert for a session (so existing app code keeps working without changes) |
+| 7 | Trigger `trg_chat_message_populate_user` — auto-copies `metadata->>'user_id'` into
+[2026-04-08T12:48:17.754Z] KNOXIS (review): Claude has designed a database schema to store chat history in Supabase. The new schema includes a `chat_threads` table to store thread metadata and a modified `chat_messages` table to store individual messages. The schema includes foreign keys to link messages to threads and users, as well as indexes for efficient querying. The migration script is idempotent and includes triggers to auto-update thread metadata and populate user IDs. This design allows for efficient querying of chat threads and messages, and enables row-level security policies to control access to threads and messages. You can now review the schema and migration script to ensure it meets your requirements.

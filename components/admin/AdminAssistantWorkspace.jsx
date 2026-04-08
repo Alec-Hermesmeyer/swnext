@@ -348,7 +348,7 @@ export default function AdminAssistantWorkspace({
   variant = "page",
   onClose,
 }) {
-  const { profile, role, department } = useAuth();
+  const { profile, role, department, logout } = useAuth();
 
   const visiblePromptCards = useMemo(
     () =>
@@ -370,6 +370,8 @@ export default function AdminAssistantWorkspace({
   const [historyError, setHistoryError] = useState("");
   const [activeWorkspace, setActiveWorkspace] = useState(null);
   const [workspaceContext, setWorkspaceContext] = useState({});
+  const [threads, setThreads] = useState([]);
+  const [threadsLoading, setThreadsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const prevMessageCountRef = useRef(0);
@@ -499,6 +501,24 @@ export default function AdminAssistantWorkspace({
     return () => window.clearTimeout(timer);
   }, [isPanel]);
 
+  const fetchThreads = useCallback(async () => {
+    setThreadsLoading(true);
+    try {
+      const res = await fetch("/api/ai-chat?list=threads", { credentials: "same-origin" });
+      const data = await res.json().catch(() => null);
+      if (data?.threads) setThreads(data.threads);
+    } catch {
+      // Thread list is non-critical — fail silently
+    } finally {
+      setThreadsLoading(false);
+    }
+  }, []);
+
+  // Load thread list on mount and after history finishes loading
+  useEffect(() => {
+    if (!historyLoading) fetchThreads();
+  }, [historyLoading, fetchThreads]);
+
   const startNewConversation = () => {
     const nextSessionId = createSessionId();
     setStoredSessionId(nextSessionId);
@@ -509,10 +529,26 @@ export default function AdminAssistantWorkspace({
     setHistoryLoading(false);
   };
 
+  const switchThread = (targetSessionId) => {
+    if (targetSessionId === sessionId) return;
+    setStoredSessionId(targetSessionId);
+    setSessionId(targetSessionId);
+    hasHydratedRef.current = false;
+    // Session change triggers the history-loading useEffect
+  };
+
   const sendMessage = useCallback(async (presetMessage) => {
     const text = typeof presetMessage === "string" ? presetMessage.trim() : input.trim();
 
     if (!text || loadingRef.current || !sessionIdRef.current) return;
+
+    // Intercept logout commands — actually sign the user out instead of
+    // sending to the LLM (which would just echo a fake success message).
+    const cmd = text.toLowerCase().replace(/[^a-z]/g, "");
+    if (cmd === "logout" || cmd === "logmeout" || cmd === "signout" || cmd === "signmeout") {
+      logout();
+      return;
+    }
 
     // Snapshot history from current state via functional updater — avoids
     // needing `messages` in the dependency array
@@ -573,7 +609,7 @@ export default function AdminAssistantWorkspace({
     } finally {
       setLoading(false);
     }
-  }, [input]);
+  }, [input, logout]);
 
   const clearHistory = async () => {
     if (!sessionId || loading) return;
@@ -597,6 +633,7 @@ export default function AdminAssistantWorkspace({
 
       setMessages([welcomeMessage]);
       setHistoryError("");
+      fetchThreads();
     } catch (error) {
       setHistoryError(error.message || "Could not clear assistant history.");
     }
@@ -674,19 +711,30 @@ export default function AdminAssistantWorkspace({
                 </div>
               </div>
             </div>
-            {onClose ? (
+            <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={onClose}
-                className="rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-                aria-label="Close assistant"
+                onClick={startNewConversation}
+                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="New conversation"
+                title="New conversation"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                + New
               </button>
-            ) : null}
+              {onClose ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                  aria-label="Close assistant"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
 
@@ -780,6 +828,28 @@ export default function AdminAssistantWorkspace({
               {historyError}
             </div>
           ) : null}
+          {threads.filter((t) => t.sessionId !== sessionId).length > 0 && (
+            <div className="mb-2 max-h-32 overflow-y-auto rounded-xl border border-neutral-100 bg-neutral-50 px-2 py-1.5">
+              <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
+                Previous threads
+              </div>
+              {threads
+                .filter((t) => t.sessionId !== sessionId)
+                .slice(0, 5)
+                .map((thread) => (
+                  <button
+                    key={thread.sessionId}
+                    type="button"
+                    onClick={() => switchThread(thread.sessionId)}
+                    className="w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white"
+                  >
+                    <div className="truncate text-xs font-medium text-neutral-700">
+                      {thread.title.length > 40 ? `${thread.title.slice(0, 40)}...` : thread.title}
+                    </div>
+                  </button>
+                ))}
+            </div>
+          )}
           <div className="mb-2 flex items-center justify-between px-1 text-[11px] font-medium text-neutral-500">
             <span>Describe what you need, and the assistant will guide the next step.</span>
             <button
@@ -986,7 +1056,7 @@ export default function AdminAssistantWorkspace({
               <button
                 type="button"
                 onClick={() => inputRef.current?.focus()}
-                className="w-full rounded-[1.45rem] border border-[#dbe4f0] bg-white/90 px-4 py-4 text-left shadow-[0_14px_34px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:border-[#0b2a5a]/14 hover:shadow-[0_18px_38px_rgba(11,42,90,0.08)]"
+                className="w-full rounded-[1.45rem] border border-[#0b2a5a]/20 bg-white px-4 py-4 text-left shadow-[0_14px_34px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(11,42,90,0.08)]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="truncate text-sm font-semibold text-neutral-900">{conversationTitle}</div>
@@ -1009,6 +1079,42 @@ export default function AdminAssistantWorkspace({
               </div>
             )}
           </section>
+
+          {threads.length > 0 && (
+            <section>
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                Previous conversations
+              </div>
+              <div className="space-y-2">
+                {threads
+                  .filter((t) => t.sessionId !== sessionId)
+                  .slice(0, 10)
+                  .map((thread) => (
+                    <button
+                      key={thread.sessionId}
+                      type="button"
+                      onClick={() => switchThread(thread.sessionId)}
+                      className="w-full rounded-xl border border-[#dbe4f0] bg-white/80 px-3 py-3 text-left transition-all hover:border-[#0b2a5a]/14 hover:bg-white"
+                    >
+                      <div className="truncate text-sm font-medium text-neutral-800">
+                        {thread.title.length > 50 ? `${thread.title.slice(0, 50)}...` : thread.title}
+                      </div>
+                      <div className="mt-1 text-[11px] text-neutral-400">
+                        {new Date(thread.lastActivity).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    </button>
+                  ))}
+              </div>
+              {threadsLoading && (
+                <div className="mt-2 text-center text-xs text-neutral-400">Loading threads...</div>
+              )}
+            </section>
+          )}
 
           <section>
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">

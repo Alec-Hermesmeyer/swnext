@@ -1282,6 +1282,42 @@ async function clearStoredMessages(sessionId, userContext) {
   }
 }
 
+async function fetchSessionList(userContext) {
+  if (!userContext?.id) return [];
+
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("session_id, role, content, created_at")
+    .filter("metadata->>user_id", "eq", userContext.id)
+    .eq("role", "user")
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (error) {
+    console.warn("Thread list fetch failed:", error.message);
+    return [];
+  }
+
+  // Group by session_id — first user message becomes the title
+  const sessions = new Map();
+  for (const row of (data || []).reverse()) {
+    if (!sessions.has(row.session_id)) {
+      sessions.set(row.session_id, {
+        sessionId: row.session_id,
+        title: (row.content || "").slice(0, 80) || "Untitled",
+        createdAt: row.created_at,
+        lastActivity: row.created_at,
+      });
+    } else {
+      sessions.get(row.session_id).lastActivity = row.created_at;
+    }
+  }
+
+  return Array.from(sessions.values()).sort(
+    (a, b) => new Date(b.lastActivity) - new Date(a.lastActivity)
+  );
+}
+
 // ── System prompt ──
 
 function buildSystemPrompt(data, userContext, assistantProfile) {
@@ -1613,6 +1649,12 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "GET") {
+      // List all conversation threads for this user
+      if (req.query?.list === "threads") {
+        const threads = await fetchSessionList(userContext);
+        return res.status(200).json({ threads });
+      }
+
       const sessionId = String(req.query?.session_id || "").trim();
       if (!sessionId) {
         return res.status(400).json({ error: "session_id is required" });

@@ -167,11 +167,12 @@ export function AuthProvider({ children }) {
       syncTokenCookie(null);
       setUser(null);
       applyProfile(null);
-      // Remove any lingering Supabase localStorage keys
+      // Remove Supabase tokens and assistant session from localStorage
       if (typeof window !== 'undefined') {
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith('sb-')) localStorage.removeItem(key);
         });
+        localStorage.removeItem('sw-admin-assistant-session');
       }
       router.replace('/login');
     }
