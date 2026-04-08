@@ -1189,64 +1189,17 @@ export default function AdminAssistantWorkspace({
             );
           })()}
 
-          {/* ── Solutions feature slider ── */}
+          {/* Solutions link — now displayed in main content area */}
           {visibleFeatures.length > 0 && (
             <section>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
                 Solutions
               </div>
-              <div className="relative overflow-hidden rounded-[1.55rem] border border-[#dbe4f0] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
-                <div
-                  className="flex transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${sliderIndex * 100}%)` }}
-                >
-                  {visibleFeatures.map((feature) => {
-                    const priorityColor = feature.priority === "primary"
-                      ? "from-[#0b2a5a] to-[#2458a6]"
-                      : feature.priority === "secondary"
-                        ? "from-[#cc574d] to-[#e8877f]"
-                        : "from-neutral-500 to-neutral-400";
-                    return (
-                      <Link
-                        key={feature.slug}
-                        href={feature.href || "#"}
-                        className="block w-full flex-shrink-0 px-5 py-5"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${priorityColor} text-white shadow-sm`}>
-                            <span className="text-sm font-bold">{feature.title.charAt(0)}</span>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-semibold text-neutral-900">{feature.title}</div>
-                              {feature.status === "coming_soon" && (
-                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">Soon</span>
-                              )}
-                              {feature.status === "beta" && (
-                                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-violet-700">Beta</span>
-                              )}
-                            </div>
-                            <div className="mt-1 text-xs leading-5 text-neutral-500">{feature.description}</div>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
+              <div className="rounded-[1.45rem] border border-[#dbe4f0] bg-white/80 px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+                <div className="text-sm font-semibold text-neutral-900">{visibleFeatures.length} tools available</div>
+                <div className="mt-1 text-xs leading-5 text-neutral-500">
+                  View and manage solutions in the main workspace area.
                 </div>
-                {/* Slider dots */}
-                {visibleFeatures.length > 1 && (
-                  <div className="flex items-center justify-center gap-1.5 pb-3">
-                    {visibleFeatures.map((feature, i) => (
-                      <button
-                        key={feature.slug}
-                        type="button"
-                        onClick={() => setSliderIndex(i)}
-                        className={`h-1.5 rounded-full transition-all ${i === sliderIndex ? "w-5 bg-[#0b2a5a]" : "w-1.5 bg-neutral-300 hover:bg-neutral-400"}`}
-                        aria-label={`Go to ${feature.title}`}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             </section>
           )}

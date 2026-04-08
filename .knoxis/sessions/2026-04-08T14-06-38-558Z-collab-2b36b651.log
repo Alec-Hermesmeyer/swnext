@@ -68,3 +68,25 @@ Several likely contributors:
 [2026-04-08T14:30:31.926Z] KNOXIS (dispatch): I'm going to have Claude start by addressing the race condition between `recoverSession()` and `onAuthStateChange(INITIAL_SESSION)` to prevent the 'hanging + logged out on refresh' bug.
 [2026-04-08T14:30:31.927Z] DISPATCH #2:
 Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Review the auth handling code and fix the race condition between `recoverSession()` and `onAuthStateChange(INITIAL_SESSION)`. Ensure that `recoverSession()` waits for the initial auth state to be set before attempting to recover the session. When done, summarize what you changed (files, functions, lines).
+[2026-04-08T14:31:43.443Z] CLAUDE DONE (exit 0, 72s, 8 lines):
+The fix is in place. Here's what changed:
+
+### File: `context/AuthContext.js`
+
+**What changed:**
+
+1. **Added `recoveryDone` gate variable** (line ~61) — a boolean flag that starts `false` and is set to `true` only after `recoverSession()` completes (in the `finally` block) or after the safety timeout fires.
+
+2. **Replaced the `INITIAL_SESSION`-only skip with a broader gate** — the `onAuthStateChange` handler now skips **all** events (not just `INITIAL_SESSION`) while `recoveryDone` is `false`. This blocks `TOKEN_REFRESHED` events that `getUser()` triggers internally when it refreshes an expired token mid-recovery.
+
+3. **`SIGNED_OUT` is exempt from the gate** — it's always processed immediately since it represents an explicit user action that must clear state regardless of recovery status.
+
+4. **Safety timeout also sets `recoveryDone = true`** — so if recovery hangs and the timeout fires, the listener unblocks and can process subsequent events normally.
+
+**Why this fixes the hang:** Previously, `getUser()` inside `recoverSession()` could trigger an internal token refresh, which fired `TOKEN_REFRESHED` on the listener. The listener wasn't gated, so it ran `fetchUserProfile()` concurrently with `recoverSession()`'s own `fetchUserProfile()` call. The interleaved state updates (`setUser`, `applyProfile`, `setLoading`) could leave the component in an inconsistent state — user set but profile null, or loading cleared before profile arrived — causing `withAuthTw` to redirect to login.
+
+[2026-04-08T14:31:44.152Z] KNOXIS (review): Claude has fixed the race condition between `recoverSession()` and `onAuthStateChange(INITIAL_SESSION)` by introducing a `recoveryDone` gate variable in `AuthContext.js`. This change prevents concurrent state updates and ensures that the component remains in a consistent state, thus addressing the 'hanging + logged out on refresh' bug. The next step would be to tackle the profile fetch failure being treated as silent auth failure. Do you want to proceed with that?
+[2026-04-08T14:40:02.403Z] USER: yes
+[2026-04-08T14:40:03.253Z] KNOXIS (dispatch): I'm going to have Claude address the profile fetch failure being treated as silent auth failure by adding proper error handling for the `getProfile` function.
+[2026-04-08T14:40:03.254Z] DISPATCH #3:
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext. Review the `getProfile` function in `AuthContext.js` and add error handling to prevent silent auth failures when the profile fetch fails. Ensure that the error is properly logged and propagated to the caller. When done, summarize what you changed (files, functions, lines).

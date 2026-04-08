@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.admin_features (
   status      text        NOT NULL DEFAULT 'active'
                           CHECK (status IN ('active', 'coming_soon', 'beta', 'hidden')),
   sort_order  integer     NOT NULL DEFAULT 100,
+  status_note text        NOT NULL DEFAULT '',
   created_at  timestamptz NOT NULL DEFAULT now(),
   updated_at  timestamptz NOT NULL DEFAULT now()
 );
