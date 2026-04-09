@@ -40,6 +40,60 @@ const IMAGE_CATEGORIES = [
 
 const POST_STATUSES = ["pending", "approved", "scheduled", "published", "rejected", "failed"];
 
+function getChatMessageContent(payload) {
+  if (!payload) return "";
+  if (typeof payload === "string") return payload.trim();
+
+  const content = payload.response
+    ?? payload.reply
+    ?? payload.message
+    ?? payload.assistant_response
+    ?? payload.content
+    ?? payload.output_text
+    ?? "";
+
+  return String(content).trim();
+}
+
+function normalizeChatMessages(payload) {
+  const rawMessages = Array.isArray(payload?.messages)
+    ? payload.messages
+    : Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.history)
+        ? payload.history
+        : [];
+
+  return rawMessages
+    .map((message) => {
+      if (!message) return null;
+
+      const role = message.role || message.sender || (message.isUser ? "user" : "assistant");
+      const content = String(
+        message.content
+        ?? message.message
+        ?? message.text
+        ?? message.reply
+        ?? ""
+      ).trim();
+
+      if (!content) return null;
+      return { role, content };
+    })
+    .filter(Boolean);
+}
+
+async function readApiPayload(response) {
+  const raw = await response.text();
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+}
+
 // Chat Tab Component
 function ChatTab() {
   const [messages, setMessages] = useState([]);
@@ -64,8 +118,8 @@ function ChatTab() {
       const res = await fetch(`${API_BASE}/chat/history?session_id=${sessionId}`, { signal: controller.signal });
       clearTimeout(timeout);
       if (res.ok) {
-        const data = await res.json();
-        setMessages(data.messages || []);
+        const data = await readApiPayload(res);
+        setMessages(normalizeChatMessages(data));
       }
     } catch (err) {
       if (err.name !== "AbortError") console.error("Failed to fetch chat history:", err);
@@ -76,9 +130,10 @@ function ChatTab() {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput || loading) return;
 
-    const userMessage = { role: "user", content: input };
+    const userMessage = { role: "user", content: trimmedInput };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
@@ -89,16 +144,26 @@ function ChatTab() {
       const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input, session_id: sessionId }),
+        body: JSON.stringify({ message: trimmedInput, session_id: sessionId }),
         signal: controller.signal,
       });
       clearTimeout(timeout);
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+      const data = await readApiPayload(res);
+
+      if (!res.ok) {
+        throw new Error(data?.error || data?.message || `Chat request failed with status ${res.status}`);
+      }
+
+      const assistantContent = getChatMessageContent(data);
+      if (!assistantContent) {
+        throw new Error("The social media assistant returned an empty response.");
+      }
+
+      setMessages((prev) => [...prev, { role: "assistant", content: assistantContent }]);
     } catch (err) {
       const msg = err.name === "AbortError"
         ? "Error: Request timed out. The social media backend may not be running."
-        : "Error: Could not connect to the AI assistant.";
+        : `Error: ${err.message || "Could not connect to the AI assistant."}`;
       setMessages((prev) => [...prev, { role: "assistant", content: msg }]);
     } finally {
       setLoading(false);
