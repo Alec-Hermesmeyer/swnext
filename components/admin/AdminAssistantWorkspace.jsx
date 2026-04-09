@@ -1461,40 +1461,32 @@ export default function AdminAssistantWorkspace({
       <section className="relative z-10 flex min-h-[780px] flex-col bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)]">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_rgba(11,42,90,0.06),_transparent_62%)]" />
 
-        <header className="relative border-b border-[#dbe4f0] bg-white/56 px-6 py-6 backdrop-blur-sm md:px-8 md:py-7">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <div className="inline-flex rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm">
-                Start Here
+        <header className="relative border-b border-[#dbe4f0] bg-white/80 px-6 py-4 backdrop-blur-sm md:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#dbe4f0] bg-white">
+                <img src="/att.png" alt="S&W" width="20" height="20" className="h-5 w-5 object-contain" />
               </div>
-              <h1 className="mt-3 text-2xl font-black tracking-[-0.04em] text-neutral-950 md:text-[2.35rem]">
-                Move one paper step into the system.
-              </h1>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-neutral-500 md:text-base">
-                Start with the paper, email, or task in front of you. The assistant suggests the
-                next step, stays inside your role permissions, and opens the standard workflow when
-                you are ready to review or edit details.
-              </p>
+              <div>
+                <div className="text-sm font-bold text-neutral-900">S&W Assistant</div>
+                <div className="text-xs text-neutral-500">Ask anything about your operations</div>
+              </div>
             </div>
-
-            <div className="flex flex-wrap items-center gap-2 lg:max-w-[40%] lg:justify-end">
-              <span className="rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1.5 text-xs font-semibold text-neutral-600">
-                {visibleWorkflowModules.length} available workflows
-              </span>
-              {hasUserMessages ? (
-                <span className="rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1.5 text-xs font-semibold text-neutral-600">
-                  {conversationTitle}
+            <div className="flex items-center gap-2">
+              {role && (
+                <span className="hidden rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1 text-xs font-medium text-neutral-600 sm:inline-flex">
+                  {role}
                 </span>
-              ) : null}
-              {hasUserMessages ? (
+              )}
+              {hasUserMessages && (
                 <button
                   type="button"
                   onClick={clearHistory}
-                  className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
+                  className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
                 >
-                  Clear conversation
+                  New chat
                 </button>
-              ) : null}
+              )}
             </div>
           </div>
         </header>
