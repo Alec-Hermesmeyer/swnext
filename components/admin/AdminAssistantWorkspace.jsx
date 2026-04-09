@@ -827,52 +827,6 @@ export default function AdminAssistantWorkspace({
     }
   };
 
-  const refreshFeatures = useCallback(async () => {
-    try {
-      const r = await fetch("/api/admin-features", { credentials: "same-origin" });
-      const d = await r.json();
-      if (d?.features) setSolutionFeatures(d.features);
-    } catch { /* non-critical */ }
-  }, []);
-
-  const saveFeature = useCallback(async (featureData) => {
-    setFeatureSaving(true);
-    try {
-      const isNew = !featureData.id;
-      const res = await fetch("/api/admin-features", {
-        method: isNew ? "POST" : "PUT",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(featureData),
-      });
-      if (res.ok) {
-        await refreshFeatures();
-        setEditingFeature(null);
-        setShowAddForm(false);
-      }
-    } catch { /* handled */ } finally {
-      setFeatureSaving(false);
-    }
-  }, [refreshFeatures]);
-
-  const deleteFeature = useCallback(async (id) => {
-    setFeatureSaving(true);
-    try {
-      const res = await fetch("/api/admin-features", {
-        method: "DELETE",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (res.ok) {
-        await refreshFeatures();
-        setEditingFeature(null);
-      }
-    } catch { /* handled */ } finally {
-      setFeatureSaving(false);
-    }
-  }, [refreshFeatures]);
-
   const handleSurfaceComplete = useCallback(({
     surfaceId,
     userMessage,
