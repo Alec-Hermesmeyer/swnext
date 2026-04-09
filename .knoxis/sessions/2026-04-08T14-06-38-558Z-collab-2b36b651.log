@@ -127,3 +127,4 @@ Previously, a transient network error or Supabase outage during profile fetch wo
 * Introducing a `FALLBACK_PROFILE` constant with safe minimum-privilege defaults to apply when profile fetch fails
 * Updating `recoverSession` and `onAuthStateChange` to use the retry + fallback approach
 These changes prevent the user from being logged out due to transient network errors or Supabase outages during profile fetch. The user will now stay authenticated with fallback permissions until the next successful profile fetch.
+[2026-04-08T16:03:45.113Z] SESSION END (stdin closed)
