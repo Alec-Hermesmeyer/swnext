@@ -1642,9 +1642,17 @@ export default function AdminAssistantWorkspace({
             </div>
           ) : (
             <div className="relative flex h-full flex-col">
-              <div className="flex-1 overflow-y-auto px-6 py-8 md:px-8">
-                <div className="mx-auto max-w-5xl space-y-6 pb-8">
-                  <div className="relative overflow-hidden rounded-[2.5rem] border border-white/85 bg-[linear-gradient(115deg,rgba(185,28,28,0.72)_0%,rgba(255,255,255,0.97)_35%,rgba(255,255,255,0.94)_63%,rgba(11,42,90,0.8)_100%)] px-6 py-10 shadow-[0_26px_80px_rgba(15,23,42,0.09)] md:px-8 md:py-12">
+              <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 md:px-8">
+                <div className="mx-auto w-full max-w-2xl text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#dbe4f0] bg-white shadow-sm">
+                    <img
+                      src="/att.png"
+                      alt="S&W Foundation"
+                      width="40"
+                      height="40"
+                      className="h-10 w-10 object-contain"
+                    />
+                  </div>
                     <div className="pointer-events-none absolute inset-0 opacity-[0.62]">
                       <GridPatternTailwind
                         yOffset={18}
