@@ -1,27 +1,15 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import { FaLinkedin, FaFacebookSquare, FaBars, FaTimes } from "react-icons/fa";
+import { FaLinkedin, FaFacebookSquare, FaBars, FaTimes, FaChevronDown } from "react-icons/fa";
 import Image from "next/image";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
-// Full mobile list for navigation
-const mobileLinks = [
+const mobileQuickLinks = [
   { name: "Home", link: "/" },
-  { name: "About", link: "/about" },
-  { name: "Services", link: "/services" },
-  { name: "Pier Drilling", link: "/pier-drilling" },
-  { name: "Limited Access Pier Drilling", link: "/limited-access" },
-  { name: "Turn Key Drilling Solutions", link: "/turn-key" },
-  { name: "Crane Services", link: "/crane" },
-  { name: "Helical Piles", link: "/helical-piles" },
   { name: "Contact", link: "/contact" },
   { name: "Careers", link: "/careers" },
-  { name: "Gallery", link: "/gallery" },
-  { name: "Safety", link: "/safety" },
-  { name: "Core Values", link: "/core-values" },
-  { name: "Blog", link: "/blog" },
   { name: "Login", link: "/login" },
 ];
 
@@ -31,7 +19,14 @@ const aboutMenu = [
   { name: "Blog", link: "/blog" },
 ];
 
+const companyMenu = [
+  { name: "About", link: "/about" },
+  { name: "Gallery", link: "/gallery" },
+  ...aboutMenu,
+];
+
 const servicesMenu = [
+  { name: "Services Overview", link: "/services" },
   { name: "Pier Drilling", link: "/pier-drilling" },
   { name: "Limited Access Pier Drilling", link: "/limited-access" },
   { name: "Turn Key Drilling Solutions", link: "/turn-key" },
@@ -43,9 +38,17 @@ const NavTailwind = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [mobileCompanyOpen, setMobileCompanyOpen] = useState(true);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleMobileLinkClick = () => {
+    setIsMobileMenuOpen(false);
+    setMobileCompanyOpen(true);
+    setMobileServicesOpen(false);
   };
 
   return (
@@ -129,6 +132,9 @@ const NavTailwind = () => {
               <li className="cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600">
                 <Link href="/gallery" className={`${lato.className} text-lg`}>Gallery</Link>
               </li>
+              <li className="cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600">
+                <Link href="/login" className={`${lato.className} text-lg`}>Login</Link>
+              </li>
             </ul>
           </div>
 
@@ -170,21 +176,99 @@ const NavTailwind = () => {
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
           <div className="fixed top-[15vh] md:top-[12vh] left-0 w-full h-[calc(100vh-15vh)] md:h-[calc(100vh-12vh)] overflow-y-auto bg-gradient-to-r from-red-800 via-white to-[#10275e] flex transition-all duration-800 ease-in-out lg:hidden z-40">
-            <div className="w-full">
-              <ul className="list-none flex flex-col items-center justify-evenly h-full w-full py-4">
-                {mobileLinks.map((item, index) => (
-                  <li key={index} className="w-full text-center py-2">
+            <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 py-5">
+              <div className="rounded-3xl border border-white/60 bg-white/78 p-4 shadow-lg backdrop-blur">
+                <div className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-[#10275e]/70">
+                  Quick Access
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {mobileQuickLinks.map((item) => (
                     <Link
+                      key={item.link}
                       href={item.link}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-black text-center text-xl font-bold flex items-center justify-center py-3 hover:text-red-600 transition-colors duration-200"
-                      style={{ textShadow: '2px 2px 2px white' }}
+                      onClick={handleMobileLinkClick}
+                      className="flex min-h-[64px] items-center justify-center rounded-2xl border border-[#dbe4f0] bg-white px-4 py-3 text-center text-base font-bold text-[#10275e] shadow-sm transition-colors duration-200 hover:border-red-200 hover:text-red-600"
                     >
                       {item.name}
                     </Link>
-                  </li>
-                ))}
-              </ul>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/60 bg-white/78 p-4 shadow-lg backdrop-blur">
+                <button
+                  type="button"
+                  onClick={() => setMobileCompanyOpen((open) => !open)}
+                  className="flex w-full items-center justify-between text-left"
+                >
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#10275e]/70">
+                      Company
+                    </div>
+                    <div className="mt-1 text-sm text-neutral-600">
+                      About, gallery, safety, and company info.
+                    </div>
+                  </div>
+                  <FaChevronDown
+                    className={`text-[#10275e] transition-transform duration-200 ${
+                      mobileCompanyOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {mobileCompanyOpen && (
+                  <div className="mt-4 grid gap-2">
+                    {companyMenu.map((item) => (
+                      <Link
+                        key={item.link}
+                        href={item.link}
+                        onClick={handleMobileLinkClick}
+                        className="flex items-center justify-between rounded-2xl border border-[#dbe4f0] bg-white px-4 py-3 text-sm font-semibold text-neutral-800 transition-colors duration-200 hover:border-red-200 hover:text-red-600"
+                      >
+                        <span>{item.name}</span>
+                        <span className="text-xs text-neutral-400">Open</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-3xl border border-white/60 bg-white/78 p-4 shadow-lg backdrop-blur">
+                <button
+                  type="button"
+                  onClick={() => setMobileServicesOpen((open) => !open)}
+                  className="flex w-full items-center justify-between text-left"
+                >
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-[0.28em] text-[#10275e]/70">
+                      Services
+                    </div>
+                    <div className="mt-1 text-sm text-neutral-600">
+                      Start with the overview or jump into a service page.
+                    </div>
+                  </div>
+                  <FaChevronDown
+                    className={`text-[#10275e] transition-transform duration-200 ${
+                      mobileServicesOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {mobileServicesOpen && (
+                  <div className="mt-4 grid gap-2">
+                    {servicesMenu.map((item) => (
+                      <Link
+                        key={item.link}
+                        href={item.link}
+                        onClick={handleMobileLinkClick}
+                        className="rounded-2xl border border-[#dbe4f0] bg-white px-4 py-3 text-sm font-semibold text-neutral-800 transition-colors duration-200 hover:border-red-200 hover:text-red-600"
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

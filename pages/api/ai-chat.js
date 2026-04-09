@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { routeAdminAssistantRequest } from "@/lib/admin-assistant-direct-router";
 import { buildAssistantSurface, buildScheduleOverviewForDates } from "@/lib/admin-assistant-surfaces";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
-import { hasToolAccess, canWrite as roleCanWrite, getDataModules } from "@/lib/roles";
+import { hasToolAccess, canWrite as roleCanWrite, getDataModules, isAdminRole } from "@/lib/roles";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -1711,7 +1711,7 @@ export default async function handler(req, res) {
     const userRole = String(userContext.role || "").trim().toLowerCase();
     const userAccessLevel = userContext.accessLevel || 3;
     const writeAccessEnabled = roleCanWrite(userRole, userAccessLevel);
-    const canManageUsers = userRole === "admin";
+    const canManageUsers = isAdminRole(userRole);
     const allowedModules = getDataModules(userRole, userAccessLevel);
     const [data, assistantProfile] = await Promise.all([
       fetchDataContext(allowedModules),

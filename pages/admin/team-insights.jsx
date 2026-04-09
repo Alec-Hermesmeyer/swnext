@@ -3,6 +3,7 @@ import Head from "next/head";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import { useAuth } from "@/context/AuthContext";
+import { isAdminRole } from "@/lib/roles";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
@@ -123,12 +124,12 @@ function TeamInsights() {
     }
   };
 
-  if (currentRole !== "admin") {
+  if (!isAdminRole(currentRole)) {
     return (
       <>
         <Head><title>Team Insights | Admin</title><meta name="robots" content="noindex" /></Head>
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-800">
-          Only admins can view team insights.
+          Only Admin (IT) and Owner roles can view team insights.
         </div>
       </>
     );
