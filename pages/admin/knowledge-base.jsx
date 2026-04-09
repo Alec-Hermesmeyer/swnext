@@ -3,6 +3,7 @@ import Head from "next/head";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import { useAuth } from "@/context/AuthContext";
+import { isAdminRole } from "@/lib/roles";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
@@ -209,12 +210,12 @@ function KnowledgeBase() {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
   };
 
-  if (currentRole !== "admin") {
+  if (!isAdminRole(currentRole)) {
     return (
       <>
         <Head><title>Knowledge Base | Admin</title><meta name="robots" content="noindex" /></Head>
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-800">
-          Only admins can manage the knowledge base.
+          Only Admin (IT) and Owner roles can manage the knowledge base.
         </div>
       </>
     );

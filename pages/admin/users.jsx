@@ -3,30 +3,14 @@ import Head from "next/head";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import { useAuth } from "@/context/AuthContext";
+import { ACCESS_LEVEL_OPTIONS, ROLE_OPTIONS, isAdminRole } from "@/lib/roles";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-const ROLE_OPTIONS = [
-  { value: "", label: "No role" },
-  { value: "admin", label: "Admin (IT)" },
-  { value: "operations", label: "Operations" },
-  { value: "safety", label: "Safety" },
-  { value: "social_media", label: "Social Media" },
-  { value: "hr", label: "HR" },
-  { value: "sales", label: "Sales" },
-  { value: "viewer", label: "Staff / Viewer" },
-];
-
-const LEVEL_OPTIONS = [
-  { value: 1, label: "1 — View", hint: "Read-only, can chat" },
-  { value: 2, label: "2 — Standard", hint: "Can write, core tools" },
-  { value: 3, label: "3 — Lead", hint: "Full access within role" },
-];
-
 function roleBadge(role) {
   if (!role) return "bg-neutral-100 text-neutral-500";
-  if (role === "admin") return "bg-[#0b2a5a] text-white";
+  if (role === "admin" || role === "owner") return "bg-[#0b2a5a] text-white";
   if (role === "operations" || role === "safety") return "bg-blue-100 text-blue-800";
   if (role === "hr") return "bg-violet-100 text-violet-800";
   if (role === "sales") return "bg-amber-100 text-amber-800";
@@ -175,12 +159,12 @@ function UserManagement() {
     }
   };
 
-  if (currentRole !== "admin") {
+  if (!isAdminRole(currentRole)) {
     return (
       <>
         <Head><title>Users | Admin</title><meta name="robots" content="noindex" /></Head>
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-800">
-          Only admins can manage users.
+          Only Admin (IT) and Owner roles can manage users.
         </div>
       </>
     );
@@ -396,7 +380,7 @@ function UserManagement() {
                               onChange={(e) => setEditForm({ ...editForm, access_level: Number(e.target.value) })}
                               className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm focus:border-[#0b2a5a] focus:outline-none focus:ring-1 focus:ring-[#0b2a5a]/20"
                             >
-                              {LEVEL_OPTIONS.map((opt) => (
+                              {ACCESS_LEVEL_OPTIONS.map((opt) => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                               ))}
                             </select>
@@ -408,7 +392,7 @@ function UserManagement() {
                                 ? "bg-blue-100 text-blue-800"
                                 : "bg-neutral-100 text-neutral-600"
                             }`}>
-                              {LEVEL_OPTIONS.find((o) => o.value === (user.access_level || 3))?.label || `${user.access_level || 3}`}
+                              {ACCESS_LEVEL_OPTIONS.find((o) => o.value === (user.access_level || 3))?.label || `${user.access_level || 3}`}
                             </span>
                           )}
                         </td>
