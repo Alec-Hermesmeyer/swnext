@@ -194,6 +194,34 @@ function getModulePriorityStyles(priority) {
   };
 }
 
+function getFeatureStatusMeta(status) {
+  if (status === "coming_soon") {
+    return {
+      label: "Coming soon",
+      styles: "border-amber-200 bg-amber-50 text-amber-700",
+    };
+  }
+
+  if (status === "beta") {
+    return {
+      label: "Beta",
+      styles: "border-violet-200 bg-violet-50 text-violet-700",
+    };
+  }
+
+  if (status === "hidden") {
+    return {
+      label: "Hidden",
+      styles: "border-neutral-200 bg-neutral-100 text-neutral-600",
+    };
+  }
+
+  return {
+    label: "Active",
+    styles: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  };
+}
+
 function renderInline(line) {
   const parts = String(line || "").split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, index) => {
@@ -434,6 +462,29 @@ export default function AdminAssistantWorkspace({
       ),
     [role]
   );
+  const featuredPromptCards = useMemo(() => {
+    const preferredTitles = ["Enter a new job", "Plan the schedule", "Review new intake"];
+    const featured = [];
+
+    preferredTitles.forEach((title) => {
+      const match = visiblePromptCards.find((card) => card.title === title);
+      if (match && !featured.some((card) => card.title === match.title)) {
+        featured.push(match);
+      }
+    });
+
+    visiblePromptCards.forEach((card) => {
+      if (featured.length < 3 && !featured.some((item) => item.title === card.title)) {
+        featured.push(card);
+      }
+    });
+
+    return featured;
+  }, [visiblePromptCards]);
+  const supportingPromptCards = useMemo(
+    () => visiblePromptCards.filter((card) => !featuredPromptCards.some((item) => item.title === card.title)),
+    [featuredPromptCards, visiblePromptCards]
+  );
 
   const visibleWorkflowModules = useMemo(
     () => WORKFLOW_MODULES.filter((mod) => hasPageAccess(role, mod.href)),
@@ -613,18 +664,48 @@ export default function AdminAssistantWorkspace({
     return () => { active = false; };
   }, []);
 
-  // Auto-advance the feature slider every 5 seconds
+  // Keep the selected feature index in range as the catalog changes.
   const visibleFeatures = useMemo(
     () => solutionFeatures.filter((f) => f.status !== "hidden"),
     [solutionFeatures]
   );
   useEffect(() => {
-    if (visibleFeatures.length < 2) return;
-    const timer = setInterval(() => {
-      setSliderIndex((i) => (i + 1) % visibleFeatures.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [visibleFeatures.length]);
+    if (!visibleFeatures.length) {
+      if (sliderIndex !== 0) setSliderIndex(0);
+      return;
+    }
+
+    if (sliderIndex >= visibleFeatures.length) {
+      setSliderIndex(0);
+    }
+  }, [sliderIndex, visibleFeatures.length]);
+  const currentFeature = visibleFeatures[sliderIndex] || visibleFeatures[0] || null;
+  const currentFeatureStatus = useMemo(
+    () => getFeatureStatusMeta(currentFeature?.status),
+    [currentFeature]
+  );
+  const workflowProfilePrompt = useMemo(
+    () => visiblePromptCards.find((card) => card.title === "Teach how I work")?.prompt || "Interview me about my role and how you can help.",
+    [visiblePromptCards]
+  );
+  const solutionsStatusPrompt = useMemo(
+    () => visiblePromptCards.find((card) => card.title === "Ask about solutions")?.prompt || "What solutions and tools are available right now, and what is the status of each?",
+    [visiblePromptCards]
+  );
+  const solutionSummary = useMemo(
+    () =>
+      visibleFeatures.reduce(
+        (summary, feature) => {
+          summary.total += 1;
+          if (feature.status === "beta") summary.beta += 1;
+          else if (feature.status === "coming_soon") summary.pipeline += 1;
+          else summary.active += 1;
+          return summary;
+        },
+        { total: 0, active: 0, beta: 0, pipeline: 0 }
+      ),
+    [visibleFeatures]
+  );
 
   const startNewConversation = () => {
     const nextSessionId = createSessionId();
@@ -856,7 +937,7 @@ export default function AdminAssistantWorkspace({
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-sm font-bold tracking-wide text-white">
-                    S&W Assistant
+                    S&W AI Assistant
                   </div>
                   <div className="truncate text-xs text-white/65">
                     Jobs, leads, schedules, contacts, and content
@@ -1079,7 +1160,7 @@ export default function AdminAssistantWorkspace({
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white">
                 SW
               </div>
-              <div className="text-sm font-bold text-white">Assistant</div>
+              <div className="text-sm font-bold text-white">AI Assistant</div>
             </div>
             <button
               type="button"
@@ -1179,33 +1260,33 @@ export default function AdminAssistantWorkspace({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[320px_minmax(0,1fr)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.18),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(215,82,74,0.08),_transparent_28%)]" />
+    <div className="relative overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(11,42,90,0.05),_transparent_28%)]" />
 
-      <aside className="relative z-10 flex flex-col border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfdff_0%,#f3f6fb_100%)] xl:border-b-0 xl:border-r">
+      <aside className="relative z-10 flex flex-col border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] xl:border-b-0 xl:border-r">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.28),_transparent_58%)]" />
 
         <div className="relative border-b border-[#dbe4f0] px-5 py-5">
-          <div className="rounded-[1.7rem] border border-white/90 bg-white/86 p-4 shadow-[0_16px_40px_rgba(11,42,90,0.08)]">
+          <div className="rounded-[1.5rem] border border-white/90 bg-white/92 p-4 shadow-[0_12px_28px_rgba(11,42,90,0.06)]">
             <div className="flex items-start gap-3">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.35rem] border border-[#dbe4f0] bg-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.1rem] border border-[#dbe4f0] bg-[#f8fbff] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
                 <img
                   src="/att.png"
                   alt="S&W Foundation"
                   width="40"
                   height="40"
-                  className="h-10 w-10 object-contain"
+                  className="h-9 w-9 object-contain"
                 />
               </div>
               <div className="min-w-0">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a]/55">
-                  Operations workspace
+                  Guided workspace
                 </div>
                 <div className="mt-1 text-base font-bold tracking-tight text-neutral-950">
-                  S&W Assistant
+                  S&W AI Assistant
                 </div>
                 <p className="mt-1 text-sm leading-6 text-neutral-500">
-                  Scheduling, communication, hiring, contacts, and intake in one workspace.
+                  Start in chat, then move into the right tool only when you need more detail.
                 </p>
               </div>
             </div>
@@ -1214,9 +1295,9 @@ export default function AdminAssistantWorkspace({
           <button
             type="button"
             onClick={startNewConversation}
-            className="mt-4 flex w-full items-center justify-start gap-3 rounded-[1.25rem] bg-[linear-gradient(180deg,#143a75_0%,#0b2a5a_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(11,42,90,0.2)] transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_40px_rgba(11,42,90,0.24)]"
+            className="mt-4 flex w-full items-center justify-start gap-3 rounded-[1.1rem] border border-[#dbe4f0] bg-white px-4 py-3 text-sm font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18 hover:bg-[#f8fbff]"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/14 text-base text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#eef4fb] text-base text-[#0b2a5a]">
               +
             </span>
             New conversation
@@ -1328,20 +1409,20 @@ export default function AdminAssistantWorkspace({
                   <Link
                     key={module.href}
                     href={module.href}
-                    className={`group block rounded-[1.35rem] border border-[#dbe4f0] bg-white/80 px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition-all ${styles.card}`}
+                    className={`group block rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3 transition-colors ${styles.card}`}
                   >
                     <div className="flex items-start gap-3">
-                      <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${styles.dot}`} />
+                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${styles.dot}`} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-sm font-semibold text-neutral-900 transition-colors group-hover:text-[#0b2a5a]">
                             {module.label}
                           </div>
-                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${styles.badge}`}>
+                          <span className={`rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] ${styles.badge}`}>
                             {module.priority}
                           </span>
                         </div>
-                        <div className="mt-1.5 text-sm leading-6 text-neutral-500">
+                        <div className="mt-1 text-xs leading-5 text-neutral-500">
                           {module.description}
                         </div>
                       </div>
@@ -1377,24 +1458,22 @@ export default function AdminAssistantWorkspace({
         </div>
       </aside>
 
-      <section className="relative z-10 flex min-h-[780px] flex-col bg-[linear-gradient(180deg,#f8fbff_0%,#f3f7fc_28%,#ffffff_100%)]">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_rgba(11,42,90,0.08),_transparent_62%)]" />
-        <div className="pointer-events-none absolute left-8 top-24 h-64 w-64 rounded-full bg-[#9bc7f7]/18 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-16 right-12 h-72 w-72 rounded-full bg-[#f0b3a8]/18 blur-3xl" />
+      <section className="relative z-10 flex min-h-[780px] flex-col bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_rgba(11,42,90,0.06),_transparent_62%)]" />
 
         <header className="relative border-b border-[#dbe4f0] bg-white/56 px-6 py-6 backdrop-blur-sm md:px-8 md:py-7">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <div className="inline-flex rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm">
-                S&W Operations Copilot
+                Start Here
               </div>
               <h1 className="mt-3 text-2xl font-black tracking-[-0.04em] text-neutral-950 md:text-[2.35rem]">
-                Your crew, your jobs, one place to run it.
+                Move one paper step into the system.
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-neutral-500 md:text-base">
-                Tell the assistant what you need and it pulls from live job data, schedules,
-                contacts, and submissions to get it done. No switching tabs, no re-entering
-                information. Just say what you need.
+                Start with the paper, email, or task in front of you. The assistant suggests the
+                next step, stays inside your role permissions, and opens the standard workflow when
+                you are ready to review or edit details.
               </p>
             </div>
 
@@ -1458,7 +1537,7 @@ export default function AdminAssistantWorkspace({
                               />
                             </div>
                             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#0b2a5a]/52">
-                              S&W Assistant
+                              S&W AI Assistant
                             </div>
                           </div>
                           <div
@@ -1503,7 +1582,7 @@ export default function AdminAssistantWorkspace({
                             />
                           </div>
                           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#0b2a5a]/52">
-                            S&W Assistant
+                            S&W AI Assistant
                           </div>
                         </div>
                         <div className="rounded-[1.65rem] rounded-tl-[0.55rem] border border-white/90 bg-white/92 px-5 py-4 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
@@ -1531,7 +1610,7 @@ export default function AdminAssistantWorkspace({
                 <div className="mx-auto w-full max-w-5xl rounded-[1.9rem] border border-white/90 bg-white/88 p-3 shadow-[0_20px_50px_rgba(11,42,90,0.1)]">
                   {!loading && (
                     <div className="mb-3 flex flex-wrap gap-2 px-1">
-                      {visiblePromptCards.map((card) => (
+                      {featuredPromptCards.map((card) => (
                         <button
                           key={card.title}
                           type="button"
@@ -1550,7 +1629,7 @@ export default function AdminAssistantWorkspace({
                       value={input}
                       onChange={(event) => setInput(event.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ask to create a job, update details, review schedules, capture team context, or move work forward..."
+                      placeholder="Tell me what paper, email, or task is in front of you..."
                       className="min-h-[60px] flex-1 resize-none rounded-[1.25rem] border border-transparent bg-transparent px-4 py-3 text-sm text-neutral-800 outline-none transition-all placeholder:text-neutral-400 focus:border-[#dbe4f0] focus:bg-white"
                       disabled={loading || historyLoading}
                     />
@@ -1572,329 +1651,490 @@ export default function AdminAssistantWorkspace({
           ) : (
             <div className="relative flex h-full flex-col">
               <div className="flex-1 overflow-y-auto px-6 py-8 md:px-8">
-                <div className="mx-auto flex h-full max-w-6xl flex-col justify-center">
-                  <div className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-[3rem] border border-white/88 bg-[linear-gradient(115deg,rgba(185,28,28,0.78)_0%,rgba(255,255,255,0.96)_34%,rgba(255,255,255,0.94)_63%,rgba(11,42,90,0.82)_100%)] px-6 py-10 shadow-[0_30px_100px_rgba(15,23,42,0.09)] md:px-12 md:py-12">
-                    <div className="pointer-events-none absolute inset-0 opacity-[0.72]">
+                <div className="mx-auto max-w-5xl space-y-6 pb-8">
+                  <div className="relative overflow-hidden rounded-[2.5rem] border border-white/85 bg-[linear-gradient(115deg,rgba(185,28,28,0.72)_0%,rgba(255,255,255,0.97)_35%,rgba(255,255,255,0.94)_63%,rgba(11,42,90,0.8)_100%)] px-6 py-10 shadow-[0_26px_80px_rgba(15,23,42,0.09)] md:px-8 md:py-12">
+                    <div className="pointer-events-none absolute inset-0 opacity-[0.62]">
                       <GridPatternTailwind
-                        yOffset={14}
+                        yOffset={18}
                         className="h-full w-full"
                         patternStroke="#ffffff"
-                        patternOpacity={0.56}
+                        patternOpacity={0.54}
                         blockFill="#ffffff"
-                        blockOpacity={0.15}
+                        blockOpacity={0.1}
                       />
                     </div>
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.5),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.24),_transparent_20%)]" />
-                    <div className="pointer-events-none absolute left-8 top-10 h-28 w-28 rounded-full bg-red-600/22 blur-3xl" />
-                    <div className="pointer-events-none absolute right-8 top-16 h-32 w-32 rounded-full bg-[#0b2a5a]/20 blur-3xl" />
-                    <div className="pointer-events-none absolute inset-[1px] rounded-[2.95rem] border border-white/16" />
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.5),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.22),_transparent_22%)]" />
 
                     <div className="relative mx-auto max-w-4xl text-center">
-                      <div className="mb-4 inline-flex rounded-full border border-white/60 bg-white/74 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm backdrop-blur-sm">
+                      <div className="inline-flex rounded-full border border-white/60 bg-white/76 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm backdrop-blur-sm">
                         S&W Operations Hub
                       </div>
-                      <div className="relative mx-auto mb-9 flex w-full max-w-[34rem] justify-center">
-                        <div className="pointer-events-none absolute inset-x-12 top-1/2 h-24 -translate-y-1/2 rounded-full bg-gradient-to-r from-red-700/18 via-white/70 to-[#0b2a5a]/22 blur-3xl" />
-                        <div className="relative flex h-44 w-44 items-center justify-center rounded-[2.9rem] border border-white/72 bg-gradient-to-r from-red-700 via-white to-[#0b2a5a] shadow-[0_30px_90px_rgba(11,42,90,0.22)]">
-                          <div className="absolute inset-[1px] rounded-[2.8rem] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.34),_transparent_44%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]" />
-                          <div className="absolute inset-3 overflow-hidden rounded-[2.2rem] border border-white/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]">
+
+                      <div className="relative mx-auto mt-6 flex w-full max-w-[18rem] justify-center">
+                        <div className="pointer-events-none absolute inset-x-6 top-1/2 h-20 -translate-y-1/2 rounded-full bg-gradient-to-r from-red-700/18 via-white/70 to-[#0b2a5a]/22 blur-3xl" />
+                        <div className="relative flex h-36 w-36 items-center justify-center rounded-[2.4rem] border border-white/72 bg-gradient-to-r from-red-700 via-white to-[#0b2a5a] shadow-[0_24px_70px_rgba(11,42,90,0.2)]">
+                          <div className="absolute inset-[1px] rounded-[2.3rem] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.34),_transparent_44%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]" />
+                          <div className="absolute inset-3 overflow-hidden rounded-[1.8rem] border border-white/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]">
                             <GridPatternTailwind
                               yOffset={28}
-                              className="h-full w-full opacity-[0.52]"
+                              className="h-full w-full opacity-[0.5]"
                               patternStroke="#ffffff"
-                              patternOpacity={0.42}
+                              patternOpacity={0.4}
                               blockFill="#ffffff"
-                              blockOpacity={0.18}
+                              blockOpacity={0.16}
                             />
                           </div>
-                          <div className="absolute inset-0 rounded-[2.9rem] bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.42),transparent_30%),radial-gradient(circle_at_78%_78%,rgba(11,42,90,0.18),transparent_28%)]" />
-                          <div className="absolute inset-x-8 bottom-5 h-7 rounded-full bg-[#071b3d]/38 blur-xl" />
-                          <div className="relative flex h-28 w-28 items-center justify-center rounded-[2rem] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(237,244,255,0.9))] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_22px_40px_rgba(11,42,90,0.14)]">
-                            <div className="absolute inset-4 rounded-full border border-[#0b2a5a]/8 bg-[radial-gradient(circle_at_top,_rgba(155,199,247,0.34),_transparent_72%)]" />
+                          <div className="absolute inset-0 rounded-[2.4rem] bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.42),transparent_30%),radial-gradient(circle_at_78%_78%,rgba(11,42,90,0.18),transparent_28%)]" />
+                          <div className="relative flex h-24 w-24 items-center justify-center rounded-[1.7rem] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(237,244,255,0.9))] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_18px_30px_rgba(11,42,90,0.14)]">
                             <img
                               src="/att.png"
                               alt="S&W Foundation"
-                              width="96"
-                              height="96"
-                              className="relative h-20 w-20 object-contain drop-shadow-[0_12px_20px_rgba(11,42,90,0.18)]"
+                              width="72"
+                              height="72"
+                              className="h-16 w-16 object-contain drop-shadow-[0_10px_18px_rgba(11,42,90,0.18)]"
                             />
                           </div>
                         </div>
                       </div>
-                      <h2 className="text-4xl font-black tracking-[-0.04em] text-neutral-950 md:text-[3.4rem]">
+
+                      <h2 className="mt-8 text-4xl font-black tracking-[-0.05em] text-neutral-950 md:text-[3.5rem]">
                         {getGreeting(displayName)}
                       </h2>
-                      <p className="mt-4 text-sm leading-8 text-neutral-600 md:text-base">
-                        Everything your team touches — jobs, crews, schedules, contacts, hiring,
-                        and packets — lives here. Type what you need and the assistant handles the rest.
+                      <p className="mx-auto mt-4 max-w-3xl text-sm leading-8 text-neutral-700 md:text-[1.05rem]">
+                        Bring the paper form, text message, email, or note into one guided system.
+                        Start the conversation in plain language and let the assistant suggest the
+                        next step before opening the full workflow.
                       </p>
                     </div>
                   </div>
 
-                  {/* ── Solutions slider — rich layout ── */}
-                  {visibleFeatures.length > 0 && (() => {
-                    const currentFeature = visibleFeatures[sliderIndex] || visibleFeatures[0];
-                    const statusLabel = currentFeature.status === "coming_soon" ? "Coming soon"
-                      : currentFeature.status === "beta" ? "Beta"
-                      : currentFeature.status === "hidden" ? "Hidden"
-                      : "Active";
-                    const statusStyles = currentFeature.status === "coming_soon"
-                      ? "border-amber-200 bg-amber-50 text-amber-700"
-                      : currentFeature.status === "beta"
-                        ? "border-violet-200 bg-violet-50 text-violet-700"
-                        : "border-emerald-200 bg-emerald-50 text-emerald-700";
+                  <div className="-mt-2 rounded-[1.75rem] border border-[#dbe4f0] bg-white/94 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-neutral-700">
+                        {visibleWorkflowModules.length} workflows available
+                      </span>
+                      {role ? (
+                        <span className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700">
+                          Role: {role}
+                        </span>
+                      ) : null}
+                      {department ? (
+                        <span className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700">
+                          Department: {department}
+                        </span>
+                      ) : null}
+                    </div>
 
-                    return (
-                      <div className="mx-auto mt-8 w-full max-w-5xl">
-                        {/* Header bar */}
-                        <div className="rounded-[1.7rem] border border-white/90 bg-white/84 p-5 shadow-[0_16px_42px_rgba(15,23,42,0.05)]">
-                          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                            <div>
-                              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a]/55">
-                                {currentFeature.title} {currentFeature.priority === "primary" ? "— Primary solution" : currentFeature.priority === "secondary" ? "— Active tool" : "— Support tool"}
-                              </div>
-                              <div className="mt-2 text-xl font-bold tracking-tight text-neutral-950">
-                                {currentFeature.description}
-                              </div>
+                    <div className="mt-5 grid gap-3 md:grid-cols-3">
+                      {[
+                        {
+                          step: "1",
+                          title: "Start with the source",
+                          description: "Paste or describe what is in front of you.",
+                        },
+                        {
+                          step: "2",
+                          title: "Get the next suggestion",
+                          description: "The assistant narrows the task using your role and context.",
+                        },
+                        {
+                          step: "3",
+                          title: "Move into the workflow",
+                          description: "Open the standard tool only when more structure is needed.",
+                        },
+                      ].map((item) => (
+                        <div key={item.step} className="rounded-[1.15rem] border border-[#dbe4f0] bg-[#fcfdff] px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0b2a5a] text-xs font-bold text-white">
+                              {item.step}
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className={`rounded-full border px-4 py-2 text-xs font-semibold ${statusStyles}`}>
-                                {statusLabel}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => { setEditingFeature(currentFeature); setShowAddForm(false); }}
-                                className="rounded-full border border-[#dbe4f0] bg-white p-2 text-neutral-400 transition-colors hover:border-[#0b2a5a]/20 hover:text-[#0b2a5a]"
-                                aria-label={`Edit ${currentFeature.title}`}
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
-                              </button>
+                            <div className="text-sm font-semibold text-neutral-900">
+                              {item.title}
                             </div>
+                          </div>
+                          <div className="mt-3 text-sm leading-6 text-neutral-500">
+                            {item.description}
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  </div>
 
-                        {/* Detail area — status note + link */}
-                        <div className="mt-4 grid gap-4 md:grid-cols-3">
-                          <div className="rounded-[1.55rem] border border-white/90 bg-white/84 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.05)]">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a]/55">
-                              Priority
+                  <div className="-mt-3 rounded-[2rem] border border-[#dbe4f0] bg-white/95 p-5 shadow-[0_18px_48px_rgba(15,23,42,0.07)] md:p-6">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      {currentFeature ? (
+                        <>
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                              Workspace tools
                             </div>
-                            <div className="mt-2 text-lg font-bold tracking-tight text-neutral-950 capitalize">
-                              {currentFeature.priority}
+                            <div className="mt-2 text-xl font-bold tracking-tight text-neutral-950">
+                              {currentFeature.title}
                             </div>
-                            <div className="mt-2 text-sm leading-6 text-neutral-500">
-                              {currentFeature.priority === "primary"
-                                ? "Core workflow that drives daily operations."
-                                : currentFeature.priority === "secondary"
-                                  ? "Active tool that supports key workflows."
-                                  : "Supporting tool available when needed."}
+                            <div className="mt-2 max-w-3xl text-sm leading-6 text-neutral-500">
+                              {currentFeature.description}
                             </div>
                           </div>
-                          <div className="rounded-[1.55rem] border border-white/90 bg-white/84 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.05)]">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a]/55">
-                              Status
-                            </div>
-                            <div className="mt-2 text-lg font-bold tracking-tight text-neutral-950">
-                              {statusLabel}
-                            </div>
-                            <div className="mt-2 text-sm leading-6 text-neutral-500">
-                              {currentFeature.status_note || "This solution is live and available in the workspace."}
-                            </div>
-                          </div>
-                          <div className="rounded-[1.55rem] border border-white/90 bg-white/84 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.05)]">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a]/55">
-                              Access
-                            </div>
-                            <div className="mt-2 text-lg font-bold tracking-tight text-neutral-950">
-                              {currentFeature.href && currentFeature.href !== "#" ? "Available" : "Coming"}
-                            </div>
-                            <div className="mt-2 text-sm leading-6 text-neutral-500">
-                              {currentFeature.href && currentFeature.href !== "#" ? (
-                                <Link href={currentFeature.href} className="font-semibold text-[#0b2a5a] hover:underline">
-                                  Open {currentFeature.title} →
-                                </Link>
-                              ) : (
-                                "This tool is not yet available in the workspace."
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Slider navigation */}
-                        {visibleFeatures.length > 1 && (
-                          <div className="mt-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => { setShowAddForm(true); setEditingFeature(null); }}
-                                className="rounded-full border border-[#dbe4f0] bg-white/84 px-3 py-1.5 text-[11px] font-semibold text-[#0b2a5a] transition-colors hover:bg-white hover:border-[#0b2a5a]/20"
-                              >
-                                + Add solution
-                              </button>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <button
-                                type="button"
-                                onClick={() => setSliderIndex((i) => (i - 1 + visibleFeatures.length) % visibleFeatures.length)}
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbe4f0] bg-white/84 text-neutral-500 transition-colors hover:text-[#0b2a5a]"
-                                aria-label="Previous solution"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                              </button>
-                              <div className="flex items-center gap-1.5">
-                                {visibleFeatures.map((feature, i) => (
-                                  <button
-                                    key={feature.slug}
-                                    type="button"
-                                    onClick={() => setSliderIndex(i)}
-                                    className={`h-1.5 rounded-full transition-all ${i === sliderIndex ? "w-5 bg-[#0b2a5a]" : "w-1.5 bg-neutral-300 hover:bg-neutral-400"}`}
-                                    aria-label={`Go to ${feature.title}`}
-                                  />
-                                ))}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setSliderIndex((i) => (i + 1) % visibleFeatures.length)}
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbe4f0] bg-white/84 text-neutral-500 transition-colors hover:text-[#0b2a5a]"
-                                aria-label="Next solution"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                        {visibleFeatures.length <= 1 && (
-                          <div className="mt-4">
+                          <div className="flex items-center gap-2">
+                            <span className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${currentFeatureStatus.styles}`}>
+                              {currentFeatureStatus.label}
+                            </span>
                             <button
                               type="button"
-                              onClick={() => { setShowAddForm(true); setEditingFeature(null); }}
-                              className="rounded-full border border-[#dbe4f0] bg-white/84 px-3 py-1.5 text-[11px] font-semibold text-[#0b2a5a] transition-colors hover:bg-white hover:border-[#0b2a5a]/20"
+                              onClick={() => { setEditingFeature(currentFeature); setShowAddForm(false); }}
+                              className="rounded-full border border-[#dbe4f0] bg-white p-2 text-neutral-400 transition-colors hover:border-[#0b2a5a]/20 hover:text-[#0b2a5a]"
+                              aria-label={`Edit ${currentFeature.title}`}
                             >
-                              + Add solution
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
                             </button>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Add / Edit form */}
-                  {(showAddForm || editingFeature) && (
-                    <div className="mx-auto mt-4 w-full max-w-5xl rounded-[1.55rem] border border-[#0b2a5a]/14 bg-white p-6 shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
-                      <div className="mb-4 flex items-center justify-between">
-                        <div className="text-sm font-bold text-neutral-900">
-                          {editingFeature ? "Edit solution" : "New solution"}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => { setShowAddForm(false); setEditingFeature(null); }}
-                          className="text-xs font-semibold text-neutral-500 hover:text-neutral-800"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                      <SolutionForm
-                        initial={editingFeature}
-                        saving={featureSaving}
-                        onSave={saveFeature}
-                        onDelete={editingFeature ? () => deleteFeature(editingFeature.id) : null}
-                      />
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                              Workspace tools
+                            </div>
+                            <div className="mt-2 text-base font-semibold text-neutral-900">
+                              No solution cards have been added yet.
+                            </div>
+                            <div className="mt-1 text-sm leading-6 text-neutral-500">
+                              Keep this list short so the workspace stays easy to follow.
+                            </div>
+                          </div>
+                          <div />
+                        </>
+                      )}
                     </div>
-                  )}
 
-                  <div className="mx-auto mt-5 flex max-w-4xl flex-wrap justify-center gap-2">
-                    {visibleWorkflowModules.slice(0, 6).map((module) => (
-                      <Link
-                        key={module.href}
-                        href={module.href}
-                        className="rounded-full border border-[#dbe4f0] bg-white/84 px-3 py-2 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/16 hover:text-[#0b2a5a]"
-                      >
-                        {module.label}
-                      </Link>
-                    ))}
-                  </div>
-
-                  <div className="mx-auto mt-10 grid w-full max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {visiblePromptCards.map((card) => (
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {currentFeature?.href && currentFeature.href !== "#" ? (
+                        <Link
+                          href={currentFeature.href}
+                          className="rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18"
+                        >
+                          Open {currentFeature.title}
+                        </Link>
+                      ) : currentFeature ? (
+                        <span className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-1.5 text-xs font-semibold text-neutral-500">
+                          This tool is not yet available in the workspace
+                        </span>
+                      ) : null}
+                      {currentFeature ? (
+                        <span className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 capitalize">
+                          {currentFeature.priority} priority
+                        </span>
+                      ) : null}
+                      {currentFeature?.status_note ? (
+                        <span className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600">
+                          {currentFeature.status_note}
+                        </span>
+                      ) : null}
                       <button
-                        key={card.title}
                         type="button"
-                        onClick={() => sendMessage(card.prompt)}
-                        className="group relative overflow-hidden rounded-[1.65rem] border border-white/90 bg-white/92 p-5 text-left shadow-[0_16px_38px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-1 hover:border-[#0b2a5a]/16 hover:shadow-[0_24px_50px_rgba(11,42,90,0.11)]"
+                        onClick={() => { setShowAddForm(true); setEditingFeature(null); }}
+                        className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18"
                       >
-                        <div className={`pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${card.accent}`} />
-                        <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${card.accent} opacity-[0.10]`} />
-                        <div className="relative">
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="rounded-full border border-neutral-200 bg-white/84 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                              {card.eyebrow}
-                            </span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-950/[0.04] text-[#0b2a5a] transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
-                              ↗
-                            </span>
+                        + Add solution
+                      </button>
+                      {visibleFeatures.length > 1 ? (
+                        <div className="ml-auto flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSliderIndex((i) => (i - 1 + visibleFeatures.length) % visibleFeatures.length)}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbe4f0] bg-white text-neutral-500 transition-colors hover:text-[#0b2a5a]"
+                            aria-label="Previous solution"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="15 18 9 12 15 6" />
+                            </svg>
+                          </button>
+                          <div className="flex items-center gap-1.5">
+                            {visibleFeatures.map((feature, index) => (
+                              <button
+                                key={feature.slug}
+                                type="button"
+                                onClick={() => setSliderIndex(index)}
+                                className={`h-1.5 rounded-full transition-all ${index === sliderIndex ? "w-5 bg-[#0b2a5a]" : "w-1.5 bg-neutral-300 hover:bg-neutral-400"}`}
+                                aria-label={`Go to ${feature.title}`}
+                              />
+                            ))}
                           </div>
-                          <div className="mt-5 text-[1.05rem] font-bold tracking-tight text-neutral-950 transition-colors group-hover:text-[#0b2a5a]">
-                            {card.title}
+                          <button
+                            type="button"
+                            onClick={() => setSliderIndex((i) => (i + 1) % visibleFeatures.length)}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbe4f0] bg-white text-neutral-500 transition-colors hover:text-[#0b2a5a]"
+                            aria-label="Next solution"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {(showAddForm || editingFeature) && (
+                      <div className="mt-5 rounded-[1.55rem] border border-[#0b2a5a]/14 bg-white p-6 shadow-[0_14px_38px_rgba(15,23,42,0.08)]">
+                        <div className="mb-4 flex items-center justify-between">
+                          <div className="text-sm font-bold text-neutral-900">
+                            {editingFeature ? "Edit solution" : "New solution"}
                           </div>
-                          <div className="mt-2 text-sm leading-6 text-neutral-500">
-                            {card.description}
+                          <button
+                            type="button"
+                            onClick={() => { setShowAddForm(false); setEditingFeature(null); }}
+                            className="text-xs font-semibold text-neutral-500 hover:text-neutral-800"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        <SolutionForm
+                          initial={editingFeature}
+                          saving={featureSaving}
+                          onSave={saveFeature}
+                          onDelete={editingFeature ? () => deleteFeature(editingFeature.id) : null}
+                        />
+                      </div>
+                    )}
+
+                    <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+                      <div className="flex h-full flex-col">
+                        <div className="rounded-[1.65rem] border border-[#dbe4f0] bg-[#fcfdff] p-5">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                                Suggested first actions
+                              </div>
+                              <div className="mt-1 text-base font-semibold text-neutral-900">
+                                Pick the closest match and start there.
+                              </div>
+                            </div>
+                            <div className="text-sm text-neutral-500">
+                              Keep the first step small and specific.
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid gap-3 md:grid-cols-3">
+                            {featuredPromptCards.map((card) => (
+                              <button
+                                key={card.title}
+                                type="button"
+                                onClick={() => sendMessage(card.prompt)}
+                                className="group rounded-[1.35rem] border border-[#dbe4f0] bg-white p-4 text-left transition-colors hover:border-[#0b2a5a]/16 hover:bg-[#fbfdff]"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="rounded-full border border-[#e4ebf4] bg-[#f8fbff] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                                    {card.eyebrow}
+                                  </span>
+                                  <span className="text-sm text-[#0b2a5a]/60 transition-transform group-hover:translate-x-0.5">
+                                    ↗
+                                  </span>
+                                </div>
+                                <div className="mt-4 text-base font-semibold tracking-tight text-neutral-950">
+                                  {card.title}
+                                </div>
+                                <div className="mt-2 text-sm leading-6 text-neutral-500">
+                                  {card.description}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+
+                          {supportingPromptCards.length > 0 ? (
+                            <div className="mt-5 border-t border-[#e8eef5] pt-4">
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                                More things I can help with
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {supportingPromptCards.map((card) => (
+                                  <button
+                                    key={card.title}
+                                    type="button"
+                                    onClick={() => sendMessage(card.prompt)}
+                                    className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
+                                  >
+                                    {card.title}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-4 rounded-[1.75rem] border border-[#dbe4f0] bg-[#f7f9fc] p-4 lg:mt-auto">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                                Start with the source material
+                              </div>
+                              <div className="mt-1 text-sm text-neutral-500">
+                                Describe the paper, email, or request and the assistant will suggest the next step.
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {featuredPromptCards.map((card) => (
+                                <button
+                                  key={card.title}
+                                  type="button"
+                                  onClick={() => sendMessage(card.prompt)}
+                                  className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
+                                >
+                                  {card.title}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="mt-4 flex items-end gap-3 rounded-[1.5rem] border border-[#dbe4f0] bg-white p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                            <textarea
+                              ref={inputRef}
+                              rows={2}
+                              value={input}
+                              onChange={(event) => setInput(event.target.value)}
+                              onKeyDown={handleKeyDown}
+                              placeholder="Tell me what paper, email, or task is in front of you..."
+                              className="min-h-[60px] flex-1 resize-none rounded-[1.25rem] border border-transparent bg-transparent px-4 py-3 text-sm text-neutral-800 outline-none transition-all placeholder:text-neutral-400 focus:border-[#dbe4f0] focus:bg-[#fbfdff]"
+                              disabled={loading || historyLoading}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => sendMessage()}
+                              disabled={!input.trim() || loading || historyLoading}
+                              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.15rem] bg-[linear-gradient(180deg,#143a75_0%,#0b2a5a_100%)] text-white shadow-[0_12px_28px_rgba(11,42,90,0.18)] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
+                              aria-label="Send message"
+                            >
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="mt-3 px-1 text-center text-[11px] font-medium text-neutral-400">
+                            Start with the source material. The assistant will suggest the next step and bring in the right workflow when needed.
                           </div>
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                      </div>
 
-              <div className="border-t border-[#dbe4f0] bg-white/74 px-5 py-5 backdrop-blur-sm md:px-6">
-                {historyError ? (
-                  <div className="mx-auto mb-3 max-w-5xl rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    {historyError}
-                  </div>
-                ) : null}
+                      <div className="flex h-full flex-col rounded-[1.65rem] border border-[#dbe4f0] bg-[#fcfdff] p-5">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                          Solutions pipeline
+                        </div>
+                        <div className="mt-1 text-base font-semibold text-neutral-900">
+                          Track what gets built and how it rolls out.
+                        </div>
+                        <div className="mt-3 text-sm leading-6 text-neutral-500">
+                          Use workflow interviews and assistant history to spot paper or spreadsheet friction,
+                          then stage tools by status and grant access when the team is ready.
+                        </div>
 
-                <div className="mx-auto w-full max-w-5xl rounded-[1.9rem] border border-white/90 bg-white/88 p-3 shadow-[0_20px_50px_rgba(11,42,90,0.1)]">
-                  <div className="mb-3 flex flex-wrap gap-2 px-1">
-                    {visiblePromptCards.slice(0, 4).map((card) => (
-                      <button
-                        key={card.title}
-                        type="button"
-                        onClick={() => sendMessage(card.prompt)}
-                        className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
-                      >
-                        {card.title}
-                      </button>
-                    ))}
-                  </div>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                              Tracked
+                            </div>
+                            <div className="mt-2 text-2xl font-bold tracking-tight text-neutral-950">
+                              {solutionSummary.total}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              solutions in the catalog
+                            </div>
+                          </div>
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                              Live
+                            </div>
+                            <div className="mt-2 text-2xl font-bold tracking-tight text-neutral-950">
+                              {solutionSummary.active}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              active tools available now
+                            </div>
+                          </div>
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                              Pipeline
+                            </div>
+                            <div className="mt-2 text-2xl font-bold tracking-tight text-neutral-950">
+                              {solutionSummary.beta + solutionSummary.pipeline}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              beta or coming soon
+                            </div>
+                          </div>
+                        </div>
 
-                  <div className="flex items-end gap-3 rounded-[1.5rem] border border-[#dbe4f0] bg-[#f7f9fc] p-2">
-                    <textarea
-                      ref={inputRef}
-                      rows={2}
-                      value={input}
-                      onChange={(event) => setInput(event.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Create a job, update details, review the schedule, or check readiness..."
-                      className="min-h-[60px] flex-1 resize-none rounded-[1.25rem] border border-transparent bg-transparent px-4 py-3 text-sm text-neutral-800 outline-none transition-all placeholder:text-neutral-400 focus:border-[#dbe4f0] focus:bg-white"
-                      disabled={loading || historyLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => sendMessage()}
-                      disabled={!input.trim() || loading || historyLoading}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.15rem] bg-[linear-gradient(180deg,#143a75_0%,#0b2a5a_100%)] text-white shadow-[0_12px_28px_rgba(11,42,90,0.18)] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label="Send message"
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="mt-2 px-1 text-center text-[11px] font-medium text-neutral-400">
-                    Start work in one conversation and bring in related workflows as needed.
+                        <div className="mt-4 space-y-3">
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-sm font-semibold text-neutral-900">
+                              Gather workflow input
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              Have team members describe how they currently work so tool ideas come from real friction, not guesses.
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => sendMessage(workflowProfilePrompt)}
+                              className="mt-3 rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18"
+                            >
+                              Teach how I work
+                            </button>
+                          </div>
+
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-sm font-semibold text-neutral-900">
+                              Review rollout status
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              Check which tools are live, which are still in beta, and what needs access decisions before rollout.
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => sendMessage(solutionsStatusPrompt)}
+                              className="mt-3 rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18"
+                            >
+                              Ask about solutions
+                            </button>
+                          </div>
+                        </div>
+
+                        {currentFeature ? (
+                          <div className="mt-auto rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                              Current focus
+                            </div>
+                            <div className="mt-2 text-sm font-semibold text-neutral-900">
+                              {currentFeature.title}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              {currentFeature.status_note || currentFeature.description}
+                            </div>
+                            {currentFeature.href && currentFeature.href !== "#" ? (
+                              <Link
+                                href={currentFeature.href}
+                                className="mt-3 inline-flex rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18"
+                              >
+                                Open {currentFeature.title}
+                              </Link>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div className="mt-auto rounded-[1rem] border border-dashed border-[#dbe4f0] bg-white px-3 py-4 text-sm text-neutral-500">
+                            Add a few solution cards here so the team can see what is live, what is in beta, and what is coming next.
+                          </div>
+                        )}
+
+                        <div className="mt-3 border-t border-[#e8eef5] pt-3">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                            Access stays role-based
+                          </div>
+                          <div className="mt-1 text-xs leading-5 text-neutral-500">
+                            Direct workflows stay available from the left rail based on each user&apos;s role and access level.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

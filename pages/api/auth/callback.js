@@ -1,4 +1,4 @@
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerSupabase } from '@/lib/supabase';
 
 export default async function handler(req, res) {
   const { code, next } = req.query;
@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return res.redirect('/login');
   }
 
-  const supabase = createPagesServerClient({ req, res });
+  const supabase = createServerSupabase(req, res);
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {

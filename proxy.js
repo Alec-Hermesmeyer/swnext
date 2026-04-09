@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { get } from '@vercel/edge-config';
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/auth-helpers-nextjs';
+
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY =
+  process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 /**
  * Next.js 16 proxy — runs on matched routes before rendering.
@@ -27,13 +31,33 @@ export async function proxy(req) {
       }
     }
 
-    const res = NextResponse.next({ request: req });
+    let res = NextResponse.next({ request: req });
 
-    // Refresh the Supabase session — getSession() validates the JWT and
-    // writes updated HttpOnly cookies onto the response so tokens are
-    // always fresh when the page or API handler executes.
-    const supabase = createMiddlewareClient({ req, res });
-    await supabase.auth.getSession();
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      return res;
+    }
+
+    // Refresh the Supabase session and keep request/response cookies aligned
+    // so downstream handlers can see the latest auth state immediately.
+    const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            req.cookies.set(name, value);
+          });
+
+          res = NextResponse.next({ request: req });
+
+          cookiesToSet.forEach(({ name, value, options }) => {
+            res.cookies.set(name, value, options);
+          });
+        },
+      },
+    });
+    await supabase.auth.getUser();
 
     return res;
   } catch (err) {

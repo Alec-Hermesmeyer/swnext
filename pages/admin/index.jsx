@@ -7,7 +7,7 @@ function AdminHomeTW() {
   return (
     <>
       <Head>
-        <title>Assistant | S&W Admin</title>
+        <title>AI Assistant | S&W Admin</title>
         <meta name="robots" content="noindex" />
       </Head>
 
