@@ -194,33 +194,6 @@ function getModulePriorityStyles(priority) {
   };
 }
 
-function getFeatureStatusMeta(status) {
-  if (status === "coming_soon") {
-    return {
-      label: "Coming soon",
-      styles: "border-amber-200 bg-amber-50 text-amber-700",
-    };
-  }
-
-  if (status === "beta") {
-    return {
-      label: "Beta",
-      styles: "border-violet-200 bg-violet-50 text-violet-700",
-    };
-  }
-
-  if (status === "hidden") {
-    return {
-      label: "Hidden",
-      styles: "border-neutral-200 bg-neutral-100 text-neutral-600",
-    };
-  }
-
-  return {
-    label: "Active",
-    styles: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  };
-}
 
 function renderInline(line) {
   const parts = String(line || "").split(/(\*\*[^*]+\*\*)/g);
