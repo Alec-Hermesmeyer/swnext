@@ -654,58 +654,6 @@ export default function AdminAssistantWorkspace({
     if (!historyLoading) fetchThreads();
   }, [historyLoading, fetchThreads]);
 
-  // Fetch data-driven feature catalog for the Solutions slider
-  useEffect(() => {
-    let active = true;
-    fetch("/api/admin-features", { credentials: "same-origin" })
-      .then((r) => r.json())
-      .then((d) => { if (active && d?.features) setSolutionFeatures(d.features); })
-      .catch(() => {});
-    return () => { active = false; };
-  }, []);
-
-  // Keep the selected feature index in range as the catalog changes.
-  const visibleFeatures = useMemo(
-    () => solutionFeatures.filter((f) => f.status !== "hidden"),
-    [solutionFeatures]
-  );
-  useEffect(() => {
-    if (!visibleFeatures.length) {
-      if (sliderIndex !== 0) setSliderIndex(0);
-      return;
-    }
-
-    if (sliderIndex >= visibleFeatures.length) {
-      setSliderIndex(0);
-    }
-  }, [sliderIndex, visibleFeatures.length]);
-  const currentFeature = visibleFeatures[sliderIndex] || visibleFeatures[0] || null;
-  const currentFeatureStatus = useMemo(
-    () => getFeatureStatusMeta(currentFeature?.status),
-    [currentFeature]
-  );
-  const workflowProfilePrompt = useMemo(
-    () => visiblePromptCards.find((card) => card.title === "Teach how I work")?.prompt || "Interview me about my role and how you can help.",
-    [visiblePromptCards]
-  );
-  const solutionsStatusPrompt = useMemo(
-    () => visiblePromptCards.find((card) => card.title === "Ask about solutions")?.prompt || "What solutions and tools are available right now, and what is the status of each?",
-    [visiblePromptCards]
-  );
-  const solutionSummary = useMemo(
-    () =>
-      visibleFeatures.reduce(
-        (summary, feature) => {
-          summary.total += 1;
-          if (feature.status === "beta") summary.beta += 1;
-          else if (feature.status === "coming_soon") summary.pipeline += 1;
-          else summary.active += 1;
-          return summary;
-        },
-        { total: 0, active: 0, beta: 0, pipeline: 0 }
-      ),
-    [visibleFeatures]
-  );
 
   const startNewConversation = () => {
     const nextSessionId = createSessionId();
