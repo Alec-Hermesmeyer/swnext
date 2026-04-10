@@ -1,6 +1,90 @@
 import { useState, useRef, useCallback, useEffect, memo } from "react";
 import { Send, Loader2, X, Maximize2, Minimize2 } from "lucide-react";
 
+function renderInlineTokens(line) {
+  const parts = String(line || "").split(
+    /(\*\*[^*]+\*\*|(?<!\*)\*(?!\*)[^*]+\*(?!\*)|_[^_]+_|`[^`]+`|\[[^\]]+\]\([^)]+\))/g
+  );
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**"))
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+    if ((part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) ||
+        (part.startsWith("_") && part.endsWith("_")))
+      return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+    if (part.startsWith("`") && part.endsWith("`"))
+      return <code key={i} className="rounded bg-neutral-200 px-1 py-0.5 text-xs font-mono">{part.slice(1, -1)}</code>;
+    const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (linkMatch)
+      return <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="underline">{linkMatch[1]}</a>;
+    return <span key={i}>{part}</span>;
+  });
+}
+
+function FormattedText({ text }) {
+  if (!text) return null;
+  const lines = String(text).split("\n");
+  const elements = [];
+  let listItems = [];
+  let listType = null;
+  let inCodeBlock = false;
+  let codeLines = [];
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    const Tag = listType === "ol" ? "ol" : "ul";
+    const cls = listType === "ol"
+      ? "my-1.5 ml-5 list-decimal space-y-0.5 text-sm"
+      : "my-1.5 ml-5 list-disc space-y-0.5 text-sm";
+    elements.push(
+      <Tag key={`list-${elements.length}`} className={cls}>
+        {listItems.map((item, i) => <li key={i}>{renderInlineTokens(item)}</li>)}
+      </Tag>
+    );
+    listItems = [];
+    listType = null;
+  };
+
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx];
+    if (line.trimStart().startsWith("```")) {
+      if (!inCodeBlock) { flushList(); inCodeBlock = true; codeLines = []; continue; }
+      inCodeBlock = false;
+      elements.push(
+        <pre key={`code-${elements.length}`} className="my-1.5 overflow-x-auto rounded bg-neutral-800 p-3">
+          <code className="text-neutral-100 font-mono text-xs">{codeLines.join("\n")}</code>
+        </pre>
+      );
+      codeLines = [];
+      continue;
+    }
+    if (inCodeBlock) { codeLines.push(line); continue; }
+    const headingMatch = line.match(/^(#{1,4})\s+(.+)/);
+    if (headingMatch) {
+      flushList();
+      const lvl = headingMatch[1].length;
+      const cls = lvl <= 2 ? "text-sm font-bold mt-2 mb-1" : "text-sm font-semibold mt-1.5 mb-0.5";
+      elements.push(<p key={`h-${idx}`} className={cls}>{renderInlineTokens(headingMatch[2])}</p>);
+      continue;
+    }
+    const olMatch = line.match(/^\s*\d+\.\s+(.+)/);
+    const ulMatch = line.match(/^\s*[-*]\s+(.+)/);
+    if (olMatch) { if (listType && listType !== "ol") flushList(); listType = "ol"; listItems.push(olMatch[1]); continue; }
+    if (ulMatch) { if (listType && listType !== "ul") flushList(); listType = "ul"; listItems.push(ulMatch[1]); continue; }
+    flushList();
+    if (!line.trim()) { elements.push(<div key={`sp-${idx}`} className="h-1.5" />); continue; }
+    elements.push(<p key={`p-${idx}`} className="text-sm leading-relaxed">{renderInlineTokens(line)}</p>);
+  }
+  if (inCodeBlock && codeLines.length) {
+    elements.push(
+      <pre key={`code-${elements.length}`} className="my-1.5 overflow-x-auto rounded bg-neutral-800 p-3">
+        <code className="text-neutral-100 font-mono text-xs">{codeLines.join("\n")}</code>
+      </pre>
+    );
+  }
+  flushList();
+  return <>{elements}</>;
+}
+
 const Message = memo(({ message, isUser }) => (
   <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
     <div
@@ -10,7 +94,11 @@ const Message = memo(({ message, isUser }) => (
           : "bg-neutral-100 text-neutral-900"
       }`}
     >
-      <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
+      {isUser ? (
+        <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
+      ) : (
+        <div className="break-words"><FormattedText text={message.text} /></div>
+      )}
       <span className="text-xs opacity-70 mt-1 block">
         {new Date(message.timestamp).toLocaleTimeString([], {
           hour: "2-digit",

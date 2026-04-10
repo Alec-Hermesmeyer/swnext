@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { stageLabel } from "@/lib/sales-pipeline";
 
 function buildInitialValues(surface) {
   const initial = {};
@@ -483,6 +486,139 @@ function renderCrewJobActivitySurface(surface, activeActionJobId, onToggle) {
   );
 }
 
+function formatSalesMoney(n) {
+  if (n === null || n === undefined || n === "") return "—";
+  const num = Number(n);
+  if (Number.isNaN(num)) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(num);
+}
+
+function formatSalesDate(iso) {
+  if (!iso) return "—";
+  const s = String(iso).slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, d] = s.split("-");
+    return `${m}/${d}/${y}`;
+  }
+  return String(iso);
+}
+
+function stageTone(stage) {
+  switch (stage) {
+    case "qualify":
+      return "border-slate-200 bg-slate-50 text-slate-800";
+    case "pursuing":
+      return "border-sky-200 bg-sky-50 text-sky-900";
+    case "quoted":
+      return "border-violet-200 bg-violet-50 text-violet-900";
+    case "negotiation":
+      return "border-amber-200 bg-amber-50 text-amber-900";
+    case "won":
+      return "border-emerald-200 bg-emerald-50 text-emerald-900";
+    case "lost":
+      return "border-rose-200 bg-rose-50 text-rose-900";
+    default:
+      return "border-[#dbe4f0] bg-[#f7f9fc] text-neutral-600";
+  }
+}
+
+function renderSalesPipelineList(surface) {
+  const rows = surface.opportunities || [];
+
+  return (
+    <div className="px-4 py-4 md:px-5">
+      {surface.demoMode ? (
+        <div className="mb-4 rounded-[1.1rem] border border-dashed border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
+          Preview mode — these rows are examples only. They are not saved until you add a real opportunity.
+        </div>
+      ) : null}
+
+      {surface.summary?.length ? (
+        <div className="mb-4 grid gap-3 md:grid-cols-3">
+          {surface.summary.map((item) => (
+            <div
+              key={`${surface.id}-${item.label}`}
+              className="rounded-[1.1rem] border border-[#e6edf5] bg-white/84 px-3 py-3 text-center"
+            >
+              <div className="text-lg font-bold text-[#0b2a5a]">{item.value}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {rows.length ? (
+        <div className="space-y-3">
+          {rows.map((row) => (
+            <div
+              key={row.id}
+              className={`rounded-[1.2rem] border p-4 ${
+                row.isDemo ? "border-dashed border-amber-200/80 bg-white/90" : "border-[#e6edf5] bg-white/84"
+              }`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-bold tracking-tight text-neutral-950">{row.title}</div>
+                  {row.company ? (
+                    <div className="mt-0.5 text-sm text-neutral-600">{row.company}</div>
+                  ) : null}
+                </div>
+                <span
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${stageTone(row.stage)}`}
+                >
+                  {stageLabel(row.stage)}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-1 text-xs text-neutral-500 sm:grid-cols-2">
+                <div>
+                  <span className="font-medium text-neutral-700">Est. value:</span>{" "}
+                  {formatSalesMoney(row.value_estimate)}
+                </div>
+                <div>
+                  <span className="font-medium text-neutral-700">Bid due:</span>{" "}
+                  {formatSalesDate(row.bid_due)}
+                </div>
+                <div>
+                  <span className="font-medium text-neutral-700">Follow-up:</span>{" "}
+                  {formatSalesDate(row.next_follow_up)}
+                </div>
+                {row.contact_name ? (
+                  <div>
+                    <span className="font-medium text-neutral-700">Contact:</span> {row.contact_name}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[1.2rem] border border-dashed border-[#dbe4f0] bg-white/80 px-4 py-4 text-sm text-neutral-500">
+          {surface.emptyMessage || "No opportunities loaded."}
+        </div>
+      )}
+
+      {surface.tips?.length ? (
+        <div className="mt-4 rounded-[1.15rem] border border-[#e6edf5] bg-white/72 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Why this surface exists
+          </div>
+          <div className="mt-2 space-y-1 text-sm leading-6 text-neutral-500">
+            {surface.tips.map((tip) => (
+              <div key={tip}>{tip}</div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function renderQuickActions(actions, onQuickAction, onOpenWorkspace) {
   if (!actions?.length) return null;
 
@@ -493,6 +629,17 @@ function renderQuickActions(actions, onQuickAction, onOpenWorkspace) {
       </div>
       <div className="flex flex-wrap gap-2">
         {actions.map((action) => {
+          if (action.href) {
+            return (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="rounded-full border border-[#0b2a5a]/20 bg-[#0b2a5a] px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-[#143a75]"
+              >
+                {action.label}
+              </Link>
+            );
+          }
           const isWorkspace = action.action === "workspace";
           const handler = isWorkspace
             ? () => onOpenWorkspace?.(action.workspace, action.context || {})
@@ -704,6 +851,8 @@ export default function AssistantTaskSurface({
         renderJobIntakeContext(surface)
       ) : surface.type === "schedule_builder_context" ? (
         renderScheduleBuilderContext(surface)
+      ) : surface.type === "sales_pipeline_list" ? (
+        renderSalesPipelineList(surface)
       ) : surface.readOnly ? (
         renderScheduleOverview(surface)
       ) : completed ? (

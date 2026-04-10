@@ -3,7 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 import { routeAdminAssistantRequest } from "@/lib/admin-assistant-direct-router";
 import { buildAssistantSurface, buildScheduleOverviewForDates } from "@/lib/admin-assistant-surfaces";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
-import { hasToolAccess, canWrite as roleCanWrite, getDataModules, isAdminRole } from "@/lib/roles";
+import {
+  hasToolAccess,
+  canWrite as roleCanWrite,
+  getDataModules,
+  isAdminRole,
+  READ_ONLY_ASSISTANT_TOOLS,
+  canAccessSalesPipeline,
+} from "@/lib/roles";
+import { filterSalesOpportunitiesForUser, isSalesRole } from "@/lib/sales-pipeline-access";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -286,7 +294,7 @@ const tools = [
     function: {
       name: "create_crew_job",
       description:
-        "Create or update one crew scheduler job record. Use this when the user provides job data (often from spreadsheet rows).",
+        "Create or update one crew scheduler job record. Use this when the user provides job data (often from spreadsheet rows). Capture as many fields as possible — days, mob days, bid amount, pier count, scope, and dates are all valuable for tracking and analytics.",
       parameters: {
         type: "object",
         properties: {
@@ -305,6 +313,17 @@ const tools = [
           pm_phone: { type: "string", description: "S&W PM phone" },
           default_rig: { type: "string", description: "Default rig/category label" },
           crane_required: { type: "boolean", description: "True if crane is required" },
+          estimated_days: { type: "integer", description: "Estimated working days for the job (excludes mob)" },
+          mob_days: { type: "integer", description: "Estimated mobilization days" },
+          actual_days: { type: "integer", description: "Actual working days (fill in when job completes)" },
+          actual_mob_days: { type: "integer", description: "Actual mob days (fill in when job completes)" },
+          bid_amount: { type: "number", description: "Original bid amount in dollars" },
+          contract_amount: { type: "number", description: "Final contract/award amount in dollars" },
+          pier_count: { type: "integer", description: "Number of piers in scope" },
+          scope_description: { type: "string", description: "Brief scope summary (e.g. '24in piers to 30ft')" },
+          job_status: { type: "string", enum: ["bid", "awarded", "scheduled", "in_progress", "completed", "on_hold", "active"], description: "Job lifecycle stage" },
+          start_date: { type: "string", description: "Actual or planned start date (YYYY-MM-DD)" },
+          end_date: { type: "string", description: "Actual or planned end date (YYYY-MM-DD)" },
         },
         required: ["job_name"],
       },
@@ -315,7 +334,7 @@ const tools = [
     function: {
       name: "bulk_create_crew_jobs",
       description:
-        "Create or update many crew scheduler jobs in one call. Use when the user pastes multiple spreadsheet rows.",
+        "Create or update many crew scheduler jobs in one call. Use when the user pastes multiple spreadsheet rows. Include days, mob days, amounts, and scope when available.",
       parameters: {
         type: "object",
         properties: {
@@ -339,6 +358,15 @@ const tools = [
                 pm_phone: { type: "string" },
                 default_rig: { type: "string" },
                 crane_required: { type: "boolean" },
+                estimated_days: { type: "integer" },
+                mob_days: { type: "integer" },
+                bid_amount: { type: "number" },
+                contract_amount: { type: "number" },
+                pier_count: { type: "integer" },
+                scope_description: { type: "string" },
+                job_status: { type: "string" },
+                start_date: { type: "string" },
+                end_date: { type: "string" },
               },
               required: ["job_name"],
             },
@@ -354,7 +382,7 @@ const tools = [
     type: "function",
     function: {
       name: "update_crew_job_detail",
-      description: "Update fields on an existing crew job by ID. Use when the user wants to edit a specific job's details like address, PM, customer, crane status, etc. Requires the job_id (UUID) — look it up from the ACTIVE CREW JOBS list in context.",
+      description: "Update fields on an existing crew job by ID. Use when the user wants to edit a specific job's details — address, PM, customer, crane, days, mob days, bid amount, scope, status, dates, etc. Requires the job_id (UUID) — look it up from the ACTIVE CREW JOBS list in context.",
       parameters: {
         type: "object",
         properties: {
@@ -374,6 +402,17 @@ const tools = [
           pm_phone: { type: "string", description: "S&W PM phone" },
           default_rig: { type: "string", description: "Default rig label" },
           crane_required: { type: "boolean", description: "Crane required flag" },
+          estimated_days: { type: "integer", description: "Estimated working days (excludes mob)" },
+          mob_days: { type: "integer", description: "Estimated mobilization days" },
+          actual_days: { type: "integer", description: "Actual working days (when job completes)" },
+          actual_mob_days: { type: "integer", description: "Actual mob days (when job completes)" },
+          bid_amount: { type: "number", description: "Original bid amount in dollars" },
+          contract_amount: { type: "number", description: "Final contract/award amount in dollars" },
+          pier_count: { type: "integer", description: "Number of piers in scope" },
+          scope_description: { type: "string", description: "Brief scope summary" },
+          job_status: { type: "string", enum: ["bid", "awarded", "scheduled", "in_progress", "completed", "on_hold", "active"], description: "Job lifecycle stage" },
+          start_date: { type: "string", description: "Actual or planned start date (YYYY-MM-DD)" },
+          end_date: { type: "string", description: "Actual or planned end date (YYYY-MM-DD)" },
         },
         required: ["job_id"],
       },
@@ -671,6 +710,52 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "lookup_crew_job",
+      description:
+        "Search the crew scheduler job list by job name, job number, customer, GC, city, or address. Use when the user asks to tell them about a specific job or project and you need full fields from the database (not just the short excerpt in the system prompt). If no rows match, the job may not be entered yet.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Search text: job name, number, customer, location keyword, etc.",
+          },
+        },
+        required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_sales_opportunity",
+      description:
+        "Add a pre-award sales opportunity to the internal pipeline (same data as /admin/sales). Use when the user wants to log a bid, quote, or deal before job setup. Title is required.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Short name for the opportunity" },
+          company: { type: "string", description: "Client or GC name" },
+          contact_name: { type: "string" },
+          contact_email: { type: "string" },
+          contact_phone: { type: "string" },
+          stage: {
+            type: "string",
+            description: "Pipeline stage",
+            enum: ["qualify", "pursuing", "quoted", "negotiation", "won", "lost"],
+          },
+          value_estimate: { type: "number", description: "Estimated contract value in USD" },
+          bid_due: { type: "string", description: "Bid due date YYYY-MM-DD" },
+          next_follow_up: { type: "string", description: "Next follow-up date YYYY-MM-DD" },
+          notes: { type: "string" },
+        },
+        required: ["title"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
@@ -680,19 +765,20 @@ const tools = [
 const DATA_CACHE = new Map();
 const DATA_CACHE_TTL = 45_000; // 45 seconds
 
-function getDataCacheKey(modules) {
-  return (modules || []).slice().sort().join(",") || "__all__";
+function getDataCacheKey(modules, userId) {
+  const mod = (modules || []).slice().sort().join(",") || "__all__";
+  return userId ? `${mod}::uid:${userId}` : mod;
 }
 
-function getCachedDataContext(modules) {
-  const key = getDataCacheKey(modules);
+function getCachedDataContext(modules, userId) {
+  const key = getDataCacheKey(modules, userId);
   const entry = DATA_CACHE.get(key);
   if (entry && Date.now() - entry.ts < DATA_CACHE_TTL) return entry.data;
   return null;
 }
 
-function setCachedDataContext(modules, data) {
-  const key = getDataCacheKey(modules);
+function setCachedDataContext(modules, userId, data) {
+  const key = getDataCacheKey(modules, userId);
   DATA_CACHE.set(key, { data, ts: Date.now() });
   // Evict stale entries if map grows (prevents memory leak across many module combos)
   if (DATA_CACHE.size > 20) {
@@ -712,9 +798,10 @@ const capLines = (lines, max) => {
 const linesOrFallback = (lines, fallback) =>
   lines && lines.length ? lines.join("\n") : fallback;
 
-async function fetchDataContext(modules = [], { skipCache = false } = {}) {
+async function fetchDataContext(modules = [], { skipCache = false, userContext = null } = {}) {
+  const userId = userContext?.id || null;
   if (!skipCache) {
-    const cached = getCachedDataContext(modules);
+    const cached = getCachedDataContext(modules, userId);
     if (cached) return cached;
   }
 
@@ -756,7 +843,7 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
     supabase
       .from("crew_jobs")
       .select(
-        "id, job_name, job_number, customer_name, address, city, pm_name, crane_required, is_active, default_rig, hiring_contractor"
+        "id, job_name, job_number, customer_name, address, city, pm_name, crane_required, is_active, default_rig, hiring_contractor, estimated_days, mob_days, actual_days, actual_mob_days, bid_amount, contract_amount, pier_count, scope_description, job_status, start_date, end_date"
       ),
     hasModule("schedule")
       ? supabase.from("crew_superintendents").select("id, name, phone, is_active")
@@ -1076,6 +1163,43 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
     80
   );
 
+  let salesOpportunities = [];
+  if (
+    hasModule("sales") &&
+    userContext?.id &&
+    canAccessSalesPipeline(userContext.role)
+  ) {
+    let level1SalesUserIds = [];
+    if (isSalesRole(userContext.role)) {
+      const { data: l1 } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", "sales")
+        .eq("access_level", 1);
+      level1SalesUserIds = (l1 || []).map((p) => p.id).filter(Boolean);
+    }
+    const { data: soRows, error: soErr } = await supabase
+      .from("sales_opportunities")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (!soErr && soRows) {
+      salesOpportunities = filterSalesOpportunitiesForUser(soRows, userContext, level1SalesUserIds);
+    }
+  }
+
+  const salesOpportunitiesNormalized = salesOpportunities.map((r) => ({
+    id: r.id,
+    title: r.title || "",
+    company: r.company || "",
+    stage: r.stage || "qualify",
+    value_estimate: r.value_estimate,
+    bid_due: r.bid_due,
+    next_follow_up: r.next_follow_up,
+    contact_name: r.contact_name || "",
+    owner_name: r.owner_name || "",
+  }));
+
   const result = {
     today,
     historyStart,
@@ -1100,6 +1224,7 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
       pendingSocialPosts: (socialPosts || []).filter((p) => p.status === "pending").length,
       scheduledSocialPosts: (socialPosts || []).filter((p) => p.status === "scheduled").length,
       totalSchedulesInWindow: (schedules || []).length,
+      totalSalesOpportunities: salesOpportunitiesNormalized.length,
     },
     workers: activeWorkers.map((w) => ({
       name: w.name,
@@ -1115,6 +1240,15 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
       pm: j.pm_name || "",
       crane: j.crane_required ? "Yes" : "No",
       hiringContractor: j.hiring_contractor || "",
+      estDays: j.estimated_days || "",
+      mobDays: j.mob_days || "",
+      bidAmount: j.bid_amount || "",
+      contractAmount: j.contract_amount || "",
+      pierCount: j.pier_count || "",
+      scope: j.scope_description || "",
+      status: j.job_status || "active",
+      startDate: j.start_date || "",
+      endDate: j.end_date || "",
     })),
     crewJobsAll: (crewJobs || []).map((j) => ({
       id: j.id,
@@ -1197,9 +1331,10 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
       statusNote: f.status_note || "",
       href: f.href || "",
     })),
+    salesOpportunities: salesOpportunitiesNormalized,
   };
 
-  setCachedDataContext(modules, result);
+  setCachedDataContext(modules, userId, result);
   return result;
 }
 
@@ -1347,7 +1482,7 @@ function buildSystemPrompt(data, userContext, assistantProfile) {
   const department = userContext?.department || "unknown";
   const fullName =
     userContext?.fullName || userContext?.username || userContext?.email || "Current user";
-  const writeAllowed = roleCanWrite(String(role || "").trim().toLowerCase());
+  const writeAllowed = roleCanWrite(String(role || "").trim().toLowerCase(), userContext?.accessLevel ?? 3);
   const workflowProfileSection = assistantProfile
     ? `USER WORKFLOW PROFILE:
 - Self-described role: ${assistantProfile.role_title || "Not provided"}
@@ -1384,6 +1519,7 @@ OVERVIEW:
 - ${data.summary.totalCompanyContacts} company contacts
 - ${data.summary.totalContactSubmissions} recent contact form submissions
 - ${data.summary.totalJobApplications} recent job applications
+- ${data.summary.totalSalesOpportunities ?? 0} sales opportunities (pre-award pipeline)
 - ${data.summary.totalSocialPosts} social posts (${data.summary.pendingSocialPosts} pending review, ${data.summary.scheduledSocialPosts} scheduled)
 
 CREW WORKERS:
@@ -1398,10 +1534,12 @@ ACTIVE CREW JOBS (id | name | details):
 ${linesOrFallback(
   data.crewJobs.map(
     (j) =>
-      `- [${j.id}] ${j.name}${j.number ? ` #${j.number}` : ""}${j.customer ? ` | Customer: ${j.customer}` : ""}${j.address ? ` | ${j.address}` : ""}${j.pm ? ` | PM: ${j.pm}` : ""}${j.hiringContractor ? ` | Hiring: ${j.hiringContractor}` : ""}${j.crane === "Yes" ? " | CRANE REQUIRED" : ""}`
+      `- [${j.id}] ${j.name}${j.number ? ` #${j.number}` : ""}${j.status && j.status !== "active" ? ` [${j.status}]` : ""}${j.customer ? ` | Customer: ${j.customer}` : ""}${j.address ? ` | ${j.address}` : ""}${j.pm ? ` | PM: ${j.pm}` : ""}${j.hiringContractor ? ` | Hiring: ${j.hiringContractor}` : ""}${j.crane === "Yes" ? " | CRANE" : ""}${j.estDays ? ` | ${j.estDays}d` : ""}${j.mobDays ? ` +${j.mobDays}d mob` : ""}${j.pierCount ? ` | ${j.pierCount} piers` : ""}${j.scope ? ` | ${j.scope}` : ""}${j.bidAmount ? ` | Bid: $${Number(j.bidAmount).toLocaleString()}` : ""}${j.contractAmount ? ` | Contract: $${Number(j.contractAmount).toLocaleString()}` : ""}${j.startDate ? ` | Start: ${j.startDate}` : ""}${j.endDate ? ` | End: ${j.endDate}` : ""}`
   ),
   "None"
 )}
+
+JOB LOOKUP: If the user asks about a specific job by name or number and you need more than this summary, call lookup_crew_job. If the tool returns no rows, the job is probably not in the system yet — say so clearly and suggest Crew Scheduler or job intake to add it.
 
 RIGS: ${data.rigs.join(", ") || "None"}
 SUPERINTENDENTS: ${data.superintendents.join(", ") || "None"}
@@ -1472,6 +1610,18 @@ ${linesOrFallback(
   "None"
 )}
 
+SALES OPPORTUNITIES (pre-award pipeline — visible to you):
+${linesOrFallback(
+  (data.salesOpportunities || []).map((o) => {
+    const money =
+      o.value_estimate != null && o.value_estimate !== ""
+        ? ` | est ${Number(o.value_estimate).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`
+        : "";
+    return `- ${o.title}${o.company ? ` | ${o.company}` : ""} | stage: ${o.stage}${money}`;
+  }),
+  "None in your visible list."
+)}
+
 APPLICATIONS BY POSITION: ${Object.entries(positionCounts)
     .map(([pos, count]) => `${pos}: ${count}`)
     .join(", ") || "None"}
@@ -1515,6 +1665,18 @@ When the user wants to enter a new job (from a bid sheet, email, or spreadsheet)
 5. If they mention the customer, contractor, address, PM, etc., include those fields.
 6. After creating, confirm what was saved and ask if they want to add more detail or enter another job.
 7. Common bid sheet fields: Job Name, Job Number, Customer, Hiring Contractor, Contact Name/Phone/Email, Address/City/ZIP, PM, Dig Tess Number, Default Rig, Crane Required.
+8. ALWAYS capture duration and scope data when available: estimated_days (working days, not including mob), mob_days (mobilization days), pier_count, scope_description (e.g. "24in piers to 30ft"), bid_amount, contract_amount, start_date, end_date.
+9. When updating existing jobs with update_crew_job_detail, proactively ask about missing tracking fields (days, mob days, scope, amounts) if they are not yet filled in — this data feeds analytics and ROI reporting.
+10. Job status lifecycle: bid → awarded → scheduled → in_progress → completed. Set job_status appropriately. Jobs from bids start as "bid", won jobs move to "awarded", etc.
+
+JOB ANALYTICS CONTEXT:
+Days, mob days, bid amounts, contract amounts, pier counts, and scope data are tracked to enable:
+- Revenue per day analysis (contract_amount / actual_days)
+- Mobilization efficiency (actual_mob_days vs mob_days estimates)
+- Bid accuracy (bid_amount vs contract_amount)
+- Customer ROI ranking (total revenue by customer vs total days)
+- Scope-based pricing patterns ($/pier, $/day by scope type)
+When users ask about job performance, profitability, or which jobs/customers are most profitable, use these fields to calculate insights from the crew jobs data.
 
 SCHEDULE BUILDER GUIDE:
 The schedule flow is: RIG → CREW → JOB → next rig → finalize → send packets. Walk users through rig-by-rig:
@@ -1576,7 +1738,7 @@ RULES:
 - If asked about a date inside the window but there is no matching schedule/assignment, say no schedule is recorded for that date.
 - Use plain language and keep responses short.
 - When listing a day, group by rig/category.
-- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, and create/update social posts.
+- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, and create_sales_opportunity for the pre-award pipeline.
 - For contact-form spam control, use add_spam_block_rule, list_spam_block_rules, toggle_spam_block_rule, and remove_spam_block_rule.
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
 - You can finalize schedules, send schedule emails, send packets, and update job progress. Always confirm with the user before finalizing or sending emails/packets.
@@ -1714,15 +1876,17 @@ export default async function handler(req, res) {
     const canManageUsers = isAdminRole(userRole);
     const allowedModules = getDataModules(userRole, userAccessLevel);
     const [data, assistantProfile] = await Promise.all([
-      fetchDataContext(allowedModules),
+      fetchDataContext(allowedModules, { userContext }),
       fetchLatestAssistantProfile(userContext),
     ]);
+    const pipelineAccess = canAccessSalesPipeline(userRole);
     const directRoute = routeAdminAssistantRequest({
       message,
       data,
       writeAccessEnabled,
       canManageUsers,
       assistantProfile,
+      pipelineAccess,
     });
 
     if (directRoute?.handled) {
@@ -1772,16 +1936,18 @@ export default async function handler(req, res) {
     ];
 
     // Filter tools to only those the user's role + level can access
-    const roleFilteredTools = writeAccessEnabled
-      ? tools.filter((t) => hasToolAccess(userRole, t.function.name, userAccessLevel))
-      : [];
+    const roleFilteredTools = tools.filter((t) => {
+      const name = t.function.name;
+      if (!hasToolAccess(userRole, name, userAccessLevel)) return false;
+      if (writeAccessEnabled) return true;
+      return READ_ONLY_ASSISTANT_TOOLS.includes(name);
+    });
 
     let result = await callGroq(messages, roleFilteredTools.length > 0, roleFilteredTools);
     let choice = result.choices?.[0];
 
     let rounds = 0;
     while (
-      writeAccessEnabled &&
       choice?.finish_reason === "tool_calls" &&
       choice?.message?.tool_calls &&
       rounds < 5
@@ -1810,10 +1976,20 @@ export default async function handler(req, res) {
           toolArgs = {};
         }
 
+        const mergedArgs =
+          toolCall.function.name === "create_sales_opportunity"
+            ? {
+                ...toolArgs,
+                created_by: userContext.id,
+                owner_user_id: userContext.id,
+              }
+            : toolArgs;
+
         const toolResult = await executeAdminAssistantMutation(
           supabase,
           toolCall.function.name,
-          toolArgs
+          mergedArgs,
+          { cookieHeader: req.headers?.cookie || "", userId: userContext?.id || null }
         );
         messages.push({
           role: "tool",
@@ -1834,7 +2010,7 @@ export default async function handler(req, res) {
     if (actionsPerformed) {
       const affectedDates = collectAffectedDates(messages);
       if (affectedDates.length > 0) {
-        const freshData = await fetchDataContext(allowedModules, { skipCache: true });
+        const freshData = await fetchDataContext(allowedModules, { skipCache: true, userContext });
         surface = buildScheduleOverviewForDates(affectedDates, freshData);
       }
     }
@@ -1847,6 +2023,7 @@ export default async function handler(req, res) {
         canManageUsers,
         actionsPerformed,
         assistantProfile,
+        pipelineAccess,
       });
     }
 

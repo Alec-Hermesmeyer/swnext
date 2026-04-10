@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
-import { buildCrewJobActivitySurface } from "@/lib/admin-assistant-surfaces";
+import { buildCrewJobActivitySurface, buildSalesPipelineListSurface } from "@/lib/admin-assistant-surfaces";
+import { filterSalesOpportunitiesForUser, isSalesRole } from "@/lib/sales-pipeline-access";
 import { canWrite as roleCanWrite, hasToolAccess } from "@/lib/roles";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -114,7 +115,7 @@ async function getAuthenticatedUserContext(req, res) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, department, full_name, username")
+    .select("role, department, full_name, username, access_level")
     .eq("id", user.id)
     .single();
 
@@ -125,6 +126,7 @@ async function getAuthenticatedUserContext(req, res) {
     username: profile?.username || "",
     role: profile?.role || "",
     department: profile?.department || "",
+    accessLevel: profile?.access_level ?? 3,
   };
 }
 
@@ -151,6 +153,40 @@ async function storeMessages(sessionId, userContext, entries) {
   if (error) {
     console.warn("Assistant action history write failed:", error.message);
   }
+}
+
+async function fetchSalesPipelineSurfaceData(userContext) {
+  const { data: soRows, error } = await supabase
+    .from("sales_opportunities")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) {
+    return { salesOpportunities: [] };
+  }
+  let level1SalesUserIds = [];
+  if (isSalesRole(userContext.role)) {
+    const { data: l1 } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("role", "sales")
+      .eq("access_level", 1);
+    level1SalesUserIds = (l1 || []).map((p) => p.id).filter(Boolean);
+  }
+  const filtered = filterSalesOpportunitiesForUser(soRows || [], userContext, level1SalesUserIds);
+  return {
+    salesOpportunities: filtered.map((r) => ({
+      id: r.id,
+      title: r.title || "",
+      company: r.company || "",
+      stage: r.stage || "qualify",
+      value_estimate: r.value_estimate,
+      bid_due: r.bid_due,
+      next_follow_up: r.next_follow_up,
+      contact_name: r.contact_name || "",
+      owner_name: r.owner_name || "",
+    })),
+  };
 }
 
 async function fetchCrewJobActivitySurfaceData() {
@@ -199,6 +235,8 @@ function summarizeUserSubmission(surfaceType, values) {
       return `Created a social media post draft for ${values.platforms || "facebook"}.`;
     case "spam_block_rule_create":
       return `Blocked ${values.rule_type === "domain" ? `domain ${values.rule_value || ""}` : values.rule_value || "sender"} for contact submissions.`;
+    case "sales_opportunity_create":
+      return `Added sales opportunity "${values.title || "new"}" to the pipeline.`;
     default:
       return "Submitted an assistant work surface.";
   }
@@ -280,6 +318,23 @@ function getMutationConfig(surfaceType, values = {}) {
           reason: values.reason,
         },
       };
+    case "sales_opportunity_create":
+      return {
+        mutation: "create_sales_opportunity",
+        args: {
+          title: values.title,
+          company: values.company,
+          contact_name: values.contact_name,
+          contact_email: values.contact_email,
+          contact_phone: values.contact_phone,
+          stage: values.stage,
+          value_estimate: values.value_estimate,
+          bid_due: values.bid_due,
+          next_follow_up: values.next_follow_up,
+          owner_name: values.owner_name,
+          notes: values.notes,
+        },
+      };
     default:
       return null;
   }
@@ -356,7 +411,16 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Your role does not have permission for this action" });
     }
 
-    const result = await executeAdminAssistantMutation(supabase, config.mutation, config.args);
+    const mutationArgs =
+      surfaceType === "sales_opportunity_create"
+        ? {
+            ...config.args,
+            created_by: userContext.id,
+            owner_user_id: userContext.id,
+          }
+        : config.args;
+
+    const result = await executeAdminAssistantMutation(supabase, config.mutation, mutationArgs);
     if (!result.success) {
       return res.status(400).json({ error: result.error || "Could not complete assistant action" });
     }
@@ -369,6 +433,9 @@ export default async function handler(req, res) {
         view: values.view,
         canToggle: true,
       });
+    } else if (surfaceType === "sales_opportunity_create") {
+      const surfaceData = await fetchSalesPipelineSurfaceData(userContext);
+      nextSurface = buildSalesPipelineListSurface(surfaceData, { writeAccessEnabled: true });
     }
 
     const assistantMessage = nextSurface
