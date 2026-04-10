@@ -1754,61 +1754,63 @@ export default function AdminAssistantWorkspace({
             </div>
           ) : (
             <div className="relative flex h-full flex-col">
-              <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-6 sm:py-10 md:px-8">
-                <div className="mx-auto w-full max-w-2xl text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#dbe4f0] bg-white shadow-sm">
-                    <img
-                      src="/att.png"
-                      alt="S&W Foundation"
-                      width="40"
-                      height="40"
-                      className="h-10 w-10 object-contain"
-                    />
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8">
+                <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-start lg:min-h-full lg:justify-center">
+                  <div className="w-full text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#dbe4f0] bg-white shadow-sm">
+                      <img
+                        src="/att.png"
+                        alt="S&W Foundation"
+                        width="40"
+                        height="40"
+                        className="h-10 w-10 object-contain"
+                      />
+                    </div>
+
+                    <h2 className="mt-5 text-2xl font-bold tracking-tight text-neutral-900 md:text-3xl">
+                      {getGreeting(displayName)}
+                    </h2>
+                    <p className="mx-auto mt-2 max-w-md text-base leading-relaxed text-neutral-500">
+                      Tell me what you&apos;re working on and I&apos;ll help you get it into the system.
+                    </p>
                   </div>
 
-                  <h2 className="mt-5 text-2xl font-bold tracking-tight text-neutral-900 md:text-3xl">
-                    {getGreeting(displayName)}
-                  </h2>
-                  <p className="mx-auto mt-2 max-w-md text-base leading-relaxed text-neutral-500">
-                    Tell me what you&apos;re working on and I&apos;ll help you get it into the system.
-                  </p>
-                </div>
-
-                <div className="mx-auto mt-8 grid w-full max-w-2xl gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {featuredPromptCards.map((card) => (
-                    <button
-                      key={card.title}
-                      type="button"
-                      onClick={() => sendMessage(card.prompt)}
-                      className="group rounded-2xl border border-[#dbe4f0] bg-white p-4 text-left transition-all hover:border-[#0b2a5a]/20 hover:shadow-md"
-                    >
-                      <div className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
-                        {card.eyebrow}
-                      </div>
-                      <div className="mt-2 text-sm font-semibold text-neutral-900 group-hover:text-[#0b2a5a]">
-                        {card.title}
-                      </div>
-                      <div className="mt-1 text-xs leading-relaxed text-neutral-500">
-                        {card.description}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {supportingPromptCards.length > 0 && (
-                  <div className="mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-2">
-                    {supportingPromptCards.map((card) => (
+                  <div className="mt-8 grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {featuredPromptCards.map((card) => (
                       <button
                         key={card.title}
                         type="button"
                         onClick={() => sendMessage(card.prompt)}
-                        className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/20 hover:text-[#0b2a5a]"
+                        className="group rounded-2xl border border-[#dbe4f0] bg-white p-4 text-left transition-all hover:border-[#0b2a5a]/20 hover:shadow-md"
                       >
-                        {card.title}
+                        <div className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
+                          {card.eyebrow}
+                        </div>
+                        <div className="mt-2 text-sm font-semibold text-neutral-900 group-hover:text-[#0b2a5a]">
+                          {card.title}
+                        </div>
+                        <div className="mt-1 text-xs leading-relaxed text-neutral-500">
+                          {card.description}
+                        </div>
                       </button>
                     ))}
                   </div>
-                )}
+
+                  {supportingPromptCards.length > 0 && (
+                    <div className="mt-4 flex w-full flex-wrap justify-center gap-2">
+                      {supportingPromptCards.map((card) => (
+                        <button
+                          key={card.title}
+                          type="button"
+                          onClick={() => sendMessage(card.prompt)}
+                          className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/20 hover:text-[#0b2a5a]"
+                        >
+                          {card.title}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="border-t border-[#dbe4f0] bg-white/80 px-4 py-4 backdrop-blur-sm sm:px-5 md:px-6">
