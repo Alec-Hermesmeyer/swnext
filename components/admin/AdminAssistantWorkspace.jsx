@@ -936,9 +936,9 @@ export default function AdminAssistantWorkspace({
     const WorkspaceComponent = WORKSPACE_COMPONENTS[activeWorkspace] || null;
 
     return (
-      <div className="relative overflow-hidden rounded-[1.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:h-full xl:min-h-0 xl:grid-cols-[380px_minmax(0,1fr)] xl:grid-rows-1">
         {/* Left: compact chat panel — hidden on mobile, visible on xl */}
-        <div className="relative z-10 hidden flex-col border-r border-[#dbe4f0] bg-white xl:flex">
+        <div className="relative z-10 hidden min-h-0 flex-col overflow-hidden border-r border-[#dbe4f0] bg-white xl:flex xl:h-full">
           <div className="flex items-center justify-between border-b border-neutral-200 bg-[#0b2a5a] px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white">
@@ -1021,7 +1021,7 @@ export default function AdminAssistantWorkspace({
         </div>
 
         {/* Right: workspace content */}
-        <div className="relative z-10 overflow-y-auto">
+        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto xl:h-full xl:min-h-0">
           <div className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-3 py-2 backdrop-blur">
             <button
               type="button"
@@ -1044,10 +1044,10 @@ export default function AdminAssistantWorkspace({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur xl:grid xl:h-full xl:min-h-0 xl:grid-cols-[300px_minmax(0,1fr)] xl:grid-rows-1 xl:rounded-[2.5rem]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(11,42,90,0.05),_transparent_28%)]" />
 
-      <aside className="relative z-10 flex flex-col border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] xl:border-b-0 xl:border-r">
+      <aside className="relative z-10 flex max-h-[min(520px,52vh)] min-h-0 shrink-0 flex-col overflow-hidden border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] xl:max-h-none xl:h-full xl:min-h-0 xl:border-b-0 xl:border-r">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.28),_transparent_58%)]" />
 
         <div className="relative border-b border-[#dbe4f0] px-5 py-5">
@@ -1242,7 +1242,7 @@ export default function AdminAssistantWorkspace({
         </div>
       </aside>
 
-      <section className="relative z-10 flex min-h-[780px] flex-col bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)]">
+      <section className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)] xl:h-full xl:min-h-0">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_rgba(11,42,90,0.06),_transparent_62%)]" />
 
         <header className="relative border-b border-[#dbe4f0] bg-white/80 px-6 py-4 backdrop-blur-sm md:px-8">
