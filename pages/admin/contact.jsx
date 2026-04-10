@@ -2,14 +2,31 @@
 import { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { Lato } from "next/font/google";
+import { useAuth } from "@/context/AuthContext";
+import { canAccessSalesPipeline, canAccessHiringPipeline } from "@/lib/roles";
+import { buildOpportunityPayloadFromContactSubmission } from "@/lib/contact-to-pipeline";
+import { buildHiringPayloadFromJobSubmission } from "@/lib/job-to-pipeline";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-function SubmissionModal({ submission, type, onClose, onDelete, onBlockEmail }) {
+function SubmissionModal({
+  submission,
+  type,
+  onClose,
+  onDelete,
+  onBlockEmail,
+  pipelineEnabled,
+  onPromoteToPipeline,
+  promoteLoading,
+  hiringEnabled,
+  onPromoteToHiring,
+  promoteHiringLoading,
+}) {
   if (!submission) return null;
 
   return (
@@ -104,8 +121,28 @@ function SubmissionModal({ submission, type, onClose, onDelete, onBlockEmail }) 
           })}
         </div>
 
-        <div className="flex items-center justify-between p-4 border-t border-neutral-200 bg-neutral-50">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-t border-neutral-200 bg-neutral-50">
+          <div className="flex flex-wrap items-center gap-2">
+            {type === "contact" && pipelineEnabled ? (
+              <button
+                type="button"
+                onClick={() => onPromoteToPipeline?.(submission)}
+                disabled={promoteLoading}
+                className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a75] transition-colors disabled:opacity-50"
+              >
+                {promoteLoading ? "Adding…" : "Add to sales pipeline"}
+              </button>
+            ) : null}
+            {type === "job" && hiringEnabled ? (
+              <button
+                type="button"
+                onClick={() => onPromoteToHiring?.(submission)}
+                disabled={promoteHiringLoading}
+                className="rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 transition-colors disabled:opacity-50"
+              >
+                {promoteHiringLoading ? "Adding…" : "Add to hiring pipeline"}
+              </button>
+            ) : null}
             {type === "contact" && submission?.email ? (
               <button
                 onClick={() => onBlockEmail?.(submission.email)}
@@ -137,6 +174,10 @@ function SubmissionModal({ submission, type, onClose, onDelete, onBlockEmail }) 
 }
 
 function ContactTW() {
+  const router = useRouter();
+  const { role } = useAuth();
+  const pipelineEnabled = canAccessSalesPipeline(role);
+  const hiringEnabled = canAccessHiringPipeline(role);
   const [activeTab, setActiveTab] = useState("contact");
   const [contactRows, setContactRows] = useState([]);
   const [jobRows, setJobRows] = useState([]);
@@ -149,6 +190,8 @@ function ContactTW() {
   const [newRuleValue, setNewRuleValue] = useState("");
   const [newRuleReason, setNewRuleReason] = useState("");
   const [savingRule, setSavingRule] = useState(false);
+  const [promoteLoading, setPromoteLoading] = useState(false);
+  const [promoteHiringLoading, setPromoteHiringLoading] = useState(false);
   const pageSize = 10;
 
   useEffect(() => {
@@ -251,6 +294,52 @@ function ContactTW() {
     if (!confirm("Delete this application?")) return;
     await supabase.from("job_form").delete().eq("id", id);
     setJobRows(jobRows.filter((r) => r.id !== id));
+  };
+
+  const handlePromoteToPipeline = async (submission) => {
+    if (!submission || promoteLoading) return;
+    setPromoteLoading(true);
+    try {
+      const payload = buildOpportunityPayloadFromContactSubmission(submission);
+      const res = await fetch("/api/sales-opportunities", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || "Could not add to sales pipeline.");
+        return;
+      }
+      setSelectedSubmission(null);
+      router.push("/admin/sales?tab=pipeline");
+    } finally {
+      setPromoteLoading(false);
+    }
+  };
+
+  const handlePromoteToHiring = async (submission) => {
+    if (!submission || promoteHiringLoading) return;
+    setPromoteHiringLoading(true);
+    try {
+      const payload = buildHiringPayloadFromJobSubmission(submission);
+      const res = await fetch("/api/hiring-opportunities", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || "Could not add to hiring pipeline.");
+        return;
+      }
+      setSelectedSubmission(null);
+      router.push("/admin/hiring");
+    } finally {
+      setPromoteHiringLoading(false);
+    }
   };
 
   // Filter and paginate
@@ -446,7 +535,7 @@ function ContactTW() {
                         <th className="px-4 py-3">Email</th>
                         <th className="px-4 py-3">Phone</th>
                         <th className="px-4 py-3">Message</th>
-                        <th className="px-4 py-3 w-24">Actions</th>
+                        <th className={`px-4 py-3 ${pipelineEnabled ? "min-w-[140px]" : "w-24"}`}>Actions</th>
                       </tr>
                     ) : (
                       <tr className="text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
@@ -455,7 +544,7 @@ function ContactTW() {
                         <th className="px-4 py-3">Email</th>
                         <th className="px-4 py-3">Phone</th>
                         <th className="px-4 py-3">Position</th>
-                        <th className="px-4 py-3 w-24">Actions</th>
+                        <th className={`px-4 py-3 ${hiringEnabled ? "min-w-[140px]" : "w-24"}`}>Actions</th>
                       </tr>
                     )}
                   </thead>
@@ -489,16 +578,36 @@ function ContactTW() {
                             </span>
                           </td>
                         )}
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSubmission(row);
-                            }}
-                            className="rounded-md bg-neutral-100 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-200 transition-colors"
-                          >
-                            View
-                          </button>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedSubmission(row)}
+                              className="rounded-md bg-neutral-100 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-200 transition-colors"
+                            >
+                              View
+                            </button>
+                            {activeTab === "contact" && pipelineEnabled ? (
+                              <button
+                                type="button"
+                                onClick={() => handlePromoteToPipeline(row)}
+                                disabled={promoteLoading}
+                                className="rounded-md bg-[#0b2a5a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#143a75] transition-colors disabled:opacity-50"
+                              >
+                                Sales
+                              </button>
+                            ) : null}
+                            {activeTab === "job" && hiringEnabled ? (
+                              <button
+                                type="button"
+                                onClick={() => handlePromoteToHiring(row)}
+                                disabled={promoteHiringLoading}
+                                className="rounded-md bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 transition-colors disabled:opacity-50"
+                              >
+                                Hiring
+                              </button>
+                            ) : null}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -545,6 +654,12 @@ function ContactTW() {
             onClose={() => setSelectedSubmission(null)}
             onDelete={activeTab === "contact" ? handleDeleteContact : handleDeleteJob}
             onBlockEmail={handleBlockSender}
+            pipelineEnabled={activeTab === "contact" && pipelineEnabled}
+            onPromoteToPipeline={handlePromoteToPipeline}
+            promoteLoading={promoteLoading}
+            hiringEnabled={activeTab === "job" && hiringEnabled}
+            onPromoteToHiring={handlePromoteToHiring}
+            promoteHiringLoading={promoteHiringLoading}
           />
         )}
       </div>

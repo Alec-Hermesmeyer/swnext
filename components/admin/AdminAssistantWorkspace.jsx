@@ -115,6 +115,14 @@ const PROMPT_CARDS = [
     module: "submissions",
   },
   {
+    eyebrow: "Sales",
+    title: "Preview the sales pipeline",
+    description: "Open a live pipeline snapshot in chat — sample rows if the board is still empty.",
+    prompt: "Show me the sales pipeline and what stages we use for pre-award deals.",
+    accent: "from-indigo-700 via-indigo-500 to-sky-300",
+    module: "sales",
+  },
+  {
     eyebrow: "Solutions",
     title: "Ask about solutions",
     description: "Get status updates, details, or ideas for tools and automation being built.",
@@ -196,7 +204,10 @@ function getModulePriorityStyles(priority) {
 
 
 function renderInline(line) {
-  const parts = String(line || "").split(/(\*\*[^*]+\*\*)/g);
+  // Split on bold (**), italic (*/_), inline code (`), and links ([text](url))
+  const parts = String(line || "").split(
+    /(\*\*[^*]+\*\*|(?<!\*)\*(?!\*)[^*]+\*(?!\*)|_[^_]+_|`[^`]+`|\[[^\]]+\]\([^)]+\))/g
+  );
   return parts.map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
@@ -205,7 +216,40 @@ function renderInline(line) {
         </strong>
       );
     }
-
+    if (
+      (part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) ||
+      (part.startsWith("_") && part.endsWith("_"))
+    ) {
+      return (
+        <em key={index} className="italic">
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code
+          key={index}
+          className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs font-mono text-pink-600"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (linkMatch) {
+      return (
+        <a
+          key={index}
+          href={linkMatch[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline hover:text-blue-800"
+        >
+          {linkMatch[1]}
+        </a>
+      );
+    }
     return <span key={index}>{part}</span>;
   });
 }
@@ -217,6 +261,9 @@ function FormattedMessage({ text }) {
   const elements = [];
   let listItems = [];
   let listType = null;
+  let inCodeBlock = false;
+  let codeLines = [];
+  let codeLang = "";
 
   const flushList = () => {
     if (!listItems.length) return;
@@ -251,6 +298,82 @@ function FormattedMessage({ text }) {
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
+
+    // Fenced code blocks
+    if (line.trimStart().startsWith("```")) {
+      if (!inCodeBlock) {
+        flushList();
+        inCodeBlock = true;
+        codeLang = line.trimStart().slice(3).trim();
+        codeLines = [];
+        continue;
+      } else {
+        inCodeBlock = false;
+        elements.push(
+          <pre
+            key={`code-${elements.length}`}
+            className="my-2 overflow-x-auto rounded-lg bg-neutral-900 p-4 text-sm leading-relaxed"
+          >
+            <code className="text-neutral-100 font-mono text-xs">
+              {codeLines.join("\n")}
+            </code>
+          </pre>
+        );
+        codeLines = [];
+        codeLang = "";
+        continue;
+      }
+    }
+
+    if (inCodeBlock) {
+      codeLines.push(line);
+      continue;
+    }
+
+    // Headings
+    const headingMatch = line.match(/^(#{1,4})\s+(.+)/);
+    if (headingMatch) {
+      flushList();
+      const level = headingMatch[1].length;
+      const content = headingMatch[2];
+      const headingClass = {
+        1: "text-lg font-bold mt-4 mb-2",
+        2: "text-base font-bold mt-3 mb-1.5",
+        3: "text-sm font-semibold mt-2 mb-1",
+        4: "text-sm font-medium mt-2 mb-1 text-neutral-600",
+      }[level];
+      elements.push(
+        <p key={`h-${index}`} className={`${headingClass} leading-relaxed`}>
+          {renderInline(content)}
+        </p>
+      );
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^[-*_]{3,}\s*$/.test(line.trim())) {
+      flushList();
+      elements.push(
+        <hr key={`hr-${index}`} className="my-3 border-neutral-200" />
+      );
+      continue;
+    }
+
+    // Blockquote
+    if (line.match(/^>\s?(.*)/)) {
+      flushList();
+      const quoteContent = line.replace(/^>\s?/, "");
+      elements.push(
+        <blockquote
+          key={`bq-${index}`}
+          className="my-2 border-l-4 border-blue-300 bg-blue-50/50 py-1 pl-4 text-sm italic leading-relaxed text-neutral-700"
+        >
+          {renderInline(quoteContent)}
+        </blockquote>
+      );
+      continue;
+    }
+
     const orderedItem = line.match(/^\s*\d+\.\s+(.+)/);
     const unorderedItem = line.match(/^\s*[-*]\s+(.+)/);
 
@@ -279,6 +402,20 @@ function FormattedMessage({ text }) {
       <p key={`line-${index}`} className="text-sm leading-relaxed">
         {renderInline(line)}
       </p>
+    );
+  }
+
+  // Flush any unclosed code block
+  if (inCodeBlock && codeLines.length) {
+    elements.push(
+      <pre
+        key={`code-${elements.length}`}
+        className="my-2 overflow-x-auto rounded-lg bg-neutral-900 p-4 text-sm leading-relaxed"
+      >
+        <code className="text-neutral-100 font-mono text-xs">
+          {codeLines.join("\n")}
+        </code>
+      </pre>
     );
   }
 
@@ -334,6 +471,7 @@ const MODULE_TO_PAGE = {
   contacts: "/admin/company-contacts",
   submissions: "/admin/contact",
   sales: "/admin/sales",
+  hiring: "/admin/hiring",
 };
 
 export default function AdminAssistantWorkspace({
@@ -350,7 +488,12 @@ export default function AdminAssistantWorkspace({
     [role]
   );
   const featuredPromptCards = useMemo(() => {
-    const preferredTitles = ["Enter a new job", "Plan the schedule", "Review new intake"];
+    const preferredTitles = [
+      "Enter a new job",
+      "Plan the schedule",
+      "Review new intake",
+      "Preview the sales pipeline",
+    ];
     const featured = [];
 
     preferredTitles.forEach((title) => {

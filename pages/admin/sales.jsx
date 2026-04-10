@@ -1,16 +1,20 @@
-"use client"
+"use client";
+
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import Head from "next/head";
-import Link from "next/link";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { Lato } from "next/font/google";
 import { getSalesData } from "@/actions/jobInfo";
+import SalesPipeline from "@/components/admin/SalesPipeline";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 function SalesTW() {
+  const router = useRouter();
+  const [tab, setTab] = useState("pipeline");
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -24,11 +28,16 @@ function SalesTW() {
   const [estimatorFilter, setEstimatorFilter] = useState("");
 
   useEffect(() => {
+    if (!router.isReady) return;
+    const t = router.query.tab;
+    if (t === "won") setTab("won");
+    else if (t === "pipeline") setTab("pipeline");
+  }, [router.isReady, router.query.tab]);
+
+  useEffect(() => {
     const fetchTotalCount = async () => {
-      const { count, error } = await supabase
-        .from("Customer")
-        .select("name", { count: "exact", head: true });
-      if (!error && typeof count === 'number') {
+      const { count, error } = await supabase.from("Customer").select("name", { count: "exact", head: true });
+      if (!error && typeof count === "number") {
         setTotalPages(Math.ceil(count / pageSize));
       }
     };
@@ -36,7 +45,10 @@ function SalesTW() {
   }, []);
 
   useEffect(() => {
+    if (tab !== "won") return;
+
     const fetchAndSetSalesData = async () => {
+      setLoading(true);
       const { paginatedData, totalCount } = await getSalesData(page, pageSize, {
         company: companyFilter,
         jobName: jobNameFilter,
@@ -51,12 +63,18 @@ function SalesTW() {
       setLoading(false);
     };
     fetchAndSetSalesData();
-  }, [page, companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
+  }, [tab, page, companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
 
-  useEffect(() => { setPage(0); }, [companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
+  useEffect(() => {
+    setPage(0);
+  }, [companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
 
-  const handlePreviousPage = () => { if (page > 0) setPage(page - 1); };
-  const handleNextPage = () => { if (page < totalPages - 1) setPage(page + 1); };
+  const handlePreviousPage = () => {
+    if (page > 0) setPage(page - 1);
+  };
+  const handleNextPage = () => {
+    if (page < totalPages - 1) setPage(page + 1);
+  };
 
   return (
     <>
@@ -66,58 +84,132 @@ function SalesTW() {
       </Head>
       <div>
         <div className="mb-6">
-          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Sales Pipeline</h1>
-          <p className="mt-1 text-sm text-neutral-600">View and filter sales data</p>
+          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Sales</h1>
+          <p className="mt-1 text-sm text-neutral-600">
+            Pipeline for open bids and pursuits, plus historical won-job data.
+          </p>
         </div>
 
-        <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
-          <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
-            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Company" value={companyFilter} onChange={(e)=>setCompanyFilter(e.target.value)} />
-            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Job Name" value={jobNameFilter} onChange={(e)=>setJobNameFilter(e.target.value)} />
-            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Scope" value={scopeFilter} onChange={(e)=>setScopeFilter(e.target.value)} />
-            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Month Sold" value={monthSoldFilter} onChange={(e)=>setMonthSoldFilter(e.target.value)} />
-            <input className="h-10 rounded-md border border-neutral-300 px-3" placeholder="Filter by Estimator" value={estimatorFilter} onChange={(e)=>setEstimatorFilter(e.target.value)} />
-          </div>
+        <div className="mb-6 flex gap-1 rounded-xl border border-neutral-200 bg-neutral-100/80 p-1">
+          <button
+            type="button"
+            onClick={() => setTab("pipeline")}
+            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+              tab === "pipeline"
+                ? "bg-white text-[#0b2a5a] shadow-sm"
+                : "text-neutral-600 hover:text-neutral-900"
+            }`}
+          >
+            Pipeline
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("won")}
+            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+              tab === "won"
+                ? "bg-white text-[#0b2a5a] shadow-sm"
+                : "text-neutral-600 hover:text-neutral-900"
+            }`}
+          >
+            Won jobs
+          </button>
+        </div>
 
-          {loading ? (
-            <div>Loading...</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-auto">
-                <thead>
-                  <tr className="text-left text-sm text-neutral-600">
-                    <th className="p-2">Company</th>
-                    <th className="p-2">Job Name</th>
-                    <th className="p-2">Amount</th>
-                    <th className="p-2">Scope</th>
-                    <th className="p-2">Day Sold</th>
-                    <th className="p-2">Month Sold</th>
-                    <th className="p-2">Estimator</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm text-neutral-800">
-                  {customers.map((c, idx) => (
-                    <tr key={idx} className="border-t">
-                      <td className="p-2">{c.name}</td>
-                      <td className="p-2">{c.jobName}</td>
-                      <td className="p-2">{c.amount}</td>
-                      <td className="p-2">{c.scope}</td>
-                      <td className="p-2">{c.dateSold}</td>
-                      <td className="p-2">{c.monthSold}</td>
-                      <td className="p-2">{c.estimator}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {tab === "pipeline" ? (
+          <SalesPipeline />
+        ) : (
+          <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
+            <p className="mb-4 text-sm text-neutral-600">
+              Records from the legacy <strong>Customer</strong> table (sold work). For active pursuits, use the{" "}
+              <strong>Pipeline</strong> tab.
+            </p>
+            <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
+              <input
+                className="h-10 rounded-md border border-neutral-300 px-3"
+                placeholder="Filter by Company"
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+              />
+              <input
+                className="h-10 rounded-md border border-neutral-300 px-3"
+                placeholder="Filter by Job Name"
+                value={jobNameFilter}
+                onChange={(e) => setJobNameFilter(e.target.value)}
+              />
+              <input
+                className="h-10 rounded-md border border-neutral-300 px-3"
+                placeholder="Filter by Scope"
+                value={scopeFilter}
+                onChange={(e) => setScopeFilter(e.target.value)}
+              />
+              <input
+                className="h-10 rounded-md border border-neutral-300 px-3"
+                placeholder="Filter by Month Sold"
+                value={monthSoldFilter}
+                onChange={(e) => setMonthSoldFilter(e.target.value)}
+              />
+              <input
+                className="h-10 rounded-md border border-neutral-300 px-3"
+                placeholder="Filter by Estimator"
+                value={estimatorFilter}
+                onChange={(e) => setEstimatorFilter(e.target.value)}
+              />
             </div>
-          )}
 
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <button className="rounded-md bg-neutral-100 px-3 py-1 ring-1 ring-neutral-300 disabled:opacity-50" onClick={handlePreviousPage} disabled={page === 0}>Previous</button>
-            <span className="text-sm">Page {page + 1} of {totalPages}</span>
-            <button className="rounded-md bg-neutral-100 px-3 py-1 ring-1 ring-neutral-300 disabled:opacity-50" onClick={handleNextPage} disabled={page >= totalPages - 1}>Next</button>
-          </div>
-        </section>
+            {loading ? (
+              <div>Loading...</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full table-auto">
+                  <thead>
+                    <tr className="text-left text-sm text-neutral-600">
+                      <th className="p-2">Company</th>
+                      <th className="p-2">Job Name</th>
+                      <th className="p-2">Amount</th>
+                      <th className="p-2">Scope</th>
+                      <th className="p-2">Day Sold</th>
+                      <th className="p-2">Month Sold</th>
+                      <th className="p-2">Estimator</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm text-neutral-800">
+                    {customers.map((c, idx) => (
+                      <tr key={idx} className="border-t">
+                        <td className="p-2">{c.name}</td>
+                        <td className="p-2">{c.jobName}</td>
+                        <td className="p-2">{c.amount}</td>
+                        <td className="p-2">{c.scope}</td>
+                        <td className="p-2">{c.dateSold}</td>
+                        <td className="p-2">{c.monthSold}</td>
+                        <td className="p-2">{c.estimator}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <button
+                className="rounded-md bg-neutral-100 px-3 py-1 ring-1 ring-neutral-300 disabled:opacity-50"
+                onClick={handlePreviousPage}
+                disabled={page === 0}
+              >
+                Previous
+              </button>
+              <span className="text-sm">
+                Page {page + 1} of {Math.max(1, totalPages)}
+              </span>
+              <button
+                className="rounded-md bg-neutral-100 px-3 py-1 ring-1 ring-neutral-300 disabled:opacity-50"
+                onClick={handleNextPage}
+                disabled={page >= totalPages - 1}
+              >
+                Next
+              </button>
+            </div>
+          </section>
+        )}
       </div>
     </>
   );
@@ -128,5 +220,3 @@ SalesTW.getLayout = function getLayout(page) {
 };
 
 export default withAuthTw(SalesTW);
-
-

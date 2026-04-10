@@ -3,7 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 import { routeAdminAssistantRequest } from "@/lib/admin-assistant-direct-router";
 import { buildAssistantSurface, buildScheduleOverviewForDates } from "@/lib/admin-assistant-surfaces";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
-import { hasToolAccess, canWrite as roleCanWrite, getDataModules, isAdminRole } from "@/lib/roles";
+import {
+  hasToolAccess,
+  canWrite as roleCanWrite,
+  getDataModules,
+  isAdminRole,
+  READ_ONLY_ASSISTANT_TOOLS,
+  canAccessSalesPipeline,
+} from "@/lib/roles";
+import { filterSalesOpportunitiesForUser, isSalesRole } from "@/lib/sales-pipeline-access";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -671,6 +679,52 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "lookup_crew_job",
+      description:
+        "Search the crew scheduler job list by job name, job number, customer, GC, city, or address. Use when the user asks to tell them about a specific job or project and you need full fields from the database (not just the short excerpt in the system prompt). If no rows match, the job may not be entered yet.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Search text: job name, number, customer, location keyword, etc.",
+          },
+        },
+        required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_sales_opportunity",
+      description:
+        "Add a pre-award sales opportunity to the internal pipeline (same data as /admin/sales). Use when the user wants to log a bid, quote, or deal before job setup. Title is required.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Short name for the opportunity" },
+          company: { type: "string", description: "Client or GC name" },
+          contact_name: { type: "string" },
+          contact_email: { type: "string" },
+          contact_phone: { type: "string" },
+          stage: {
+            type: "string",
+            description: "Pipeline stage",
+            enum: ["qualify", "pursuing", "quoted", "negotiation", "won", "lost"],
+          },
+          value_estimate: { type: "number", description: "Estimated contract value in USD" },
+          bid_due: { type: "string", description: "Bid due date YYYY-MM-DD" },
+          next_follow_up: { type: "string", description: "Next follow-up date YYYY-MM-DD" },
+          notes: { type: "string" },
+        },
+        required: ["title"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
@@ -680,19 +734,20 @@ const tools = [
 const DATA_CACHE = new Map();
 const DATA_CACHE_TTL = 45_000; // 45 seconds
 
-function getDataCacheKey(modules) {
-  return (modules || []).slice().sort().join(",") || "__all__";
+function getDataCacheKey(modules, userId) {
+  const mod = (modules || []).slice().sort().join(",") || "__all__";
+  return userId ? `${mod}::uid:${userId}` : mod;
 }
 
-function getCachedDataContext(modules) {
-  const key = getDataCacheKey(modules);
+function getCachedDataContext(modules, userId) {
+  const key = getDataCacheKey(modules, userId);
   const entry = DATA_CACHE.get(key);
   if (entry && Date.now() - entry.ts < DATA_CACHE_TTL) return entry.data;
   return null;
 }
 
-function setCachedDataContext(modules, data) {
-  const key = getDataCacheKey(modules);
+function setCachedDataContext(modules, userId, data) {
+  const key = getDataCacheKey(modules, userId);
   DATA_CACHE.set(key, { data, ts: Date.now() });
   // Evict stale entries if map grows (prevents memory leak across many module combos)
   if (DATA_CACHE.size > 20) {
@@ -712,9 +767,10 @@ const capLines = (lines, max) => {
 const linesOrFallback = (lines, fallback) =>
   lines && lines.length ? lines.join("\n") : fallback;
 
-async function fetchDataContext(modules = [], { skipCache = false } = {}) {
+async function fetchDataContext(modules = [], { skipCache = false, userContext = null } = {}) {
+  const userId = userContext?.id || null;
   if (!skipCache) {
-    const cached = getCachedDataContext(modules);
+    const cached = getCachedDataContext(modules, userId);
     if (cached) return cached;
   }
 
@@ -1076,6 +1132,43 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
     80
   );
 
+  let salesOpportunities = [];
+  if (
+    hasModule("sales") &&
+    userContext?.id &&
+    canAccessSalesPipeline(userContext.role)
+  ) {
+    let level1SalesUserIds = [];
+    if (isSalesRole(userContext.role)) {
+      const { data: l1 } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", "sales")
+        .eq("access_level", 1);
+      level1SalesUserIds = (l1 || []).map((p) => p.id).filter(Boolean);
+    }
+    const { data: soRows, error: soErr } = await supabase
+      .from("sales_opportunities")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (!soErr && soRows) {
+      salesOpportunities = filterSalesOpportunitiesForUser(soRows, userContext, level1SalesUserIds);
+    }
+  }
+
+  const salesOpportunitiesNormalized = salesOpportunities.map((r) => ({
+    id: r.id,
+    title: r.title || "",
+    company: r.company || "",
+    stage: r.stage || "qualify",
+    value_estimate: r.value_estimate,
+    bid_due: r.bid_due,
+    next_follow_up: r.next_follow_up,
+    contact_name: r.contact_name || "",
+    owner_name: r.owner_name || "",
+  }));
+
   const result = {
     today,
     historyStart,
@@ -1100,6 +1193,7 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
       pendingSocialPosts: (socialPosts || []).filter((p) => p.status === "pending").length,
       scheduledSocialPosts: (socialPosts || []).filter((p) => p.status === "scheduled").length,
       totalSchedulesInWindow: (schedules || []).length,
+      totalSalesOpportunities: salesOpportunitiesNormalized.length,
     },
     workers: activeWorkers.map((w) => ({
       name: w.name,
@@ -1197,9 +1291,10 @@ async function fetchDataContext(modules = [], { skipCache = false } = {}) {
       statusNote: f.status_note || "",
       href: f.href || "",
     })),
+    salesOpportunities: salesOpportunitiesNormalized,
   };
 
-  setCachedDataContext(modules, result);
+  setCachedDataContext(modules, userId, result);
   return result;
 }
 
@@ -1347,7 +1442,7 @@ function buildSystemPrompt(data, userContext, assistantProfile) {
   const department = userContext?.department || "unknown";
   const fullName =
     userContext?.fullName || userContext?.username || userContext?.email || "Current user";
-  const writeAllowed = roleCanWrite(String(role || "").trim().toLowerCase());
+  const writeAllowed = roleCanWrite(String(role || "").trim().toLowerCase(), userContext?.accessLevel ?? 3);
   const workflowProfileSection = assistantProfile
     ? `USER WORKFLOW PROFILE:
 - Self-described role: ${assistantProfile.role_title || "Not provided"}
@@ -1384,6 +1479,7 @@ OVERVIEW:
 - ${data.summary.totalCompanyContacts} company contacts
 - ${data.summary.totalContactSubmissions} recent contact form submissions
 - ${data.summary.totalJobApplications} recent job applications
+- ${data.summary.totalSalesOpportunities ?? 0} sales opportunities (pre-award pipeline)
 - ${data.summary.totalSocialPosts} social posts (${data.summary.pendingSocialPosts} pending review, ${data.summary.scheduledSocialPosts} scheduled)
 
 CREW WORKERS:
@@ -1402,6 +1498,8 @@ ${linesOrFallback(
   ),
   "None"
 )}
+
+JOB LOOKUP: If the user asks about a specific job by name or number and you need more than this summary, call lookup_crew_job. If the tool returns no rows, the job is probably not in the system yet — say so clearly and suggest Crew Scheduler or job intake to add it.
 
 RIGS: ${data.rigs.join(", ") || "None"}
 SUPERINTENDENTS: ${data.superintendents.join(", ") || "None"}
@@ -1470,6 +1568,18 @@ ${linesOrFallback(
       `- ${s.date}: ${s.name} applied for ${s.position || "unknown"}${s.email ? ` | ${s.email}` : ""}${s.phone ? ` | ${s.phone}` : ""}`
   ),
   "None"
+)}
+
+SALES OPPORTUNITIES (pre-award pipeline — visible to you):
+${linesOrFallback(
+  (data.salesOpportunities || []).map((o) => {
+    const money =
+      o.value_estimate != null && o.value_estimate !== ""
+        ? ` | est ${Number(o.value_estimate).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`
+        : "";
+    return `- ${o.title}${o.company ? ` | ${o.company}` : ""} | stage: ${o.stage}${money}`;
+  }),
+  "None in your visible list."
 )}
 
 APPLICATIONS BY POSITION: ${Object.entries(positionCounts)
@@ -1576,7 +1686,7 @@ RULES:
 - If asked about a date inside the window but there is no matching schedule/assignment, say no schedule is recorded for that date.
 - Use plain language and keep responses short.
 - When listing a day, group by rig/category.
-- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, and create/update social posts.
+- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, and create_sales_opportunity for the pre-award pipeline.
 - For contact-form spam control, use add_spam_block_rule, list_spam_block_rules, toggle_spam_block_rule, and remove_spam_block_rule.
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
 - You can finalize schedules, send schedule emails, send packets, and update job progress. Always confirm with the user before finalizing or sending emails/packets.
@@ -1714,15 +1824,17 @@ export default async function handler(req, res) {
     const canManageUsers = isAdminRole(userRole);
     const allowedModules = getDataModules(userRole, userAccessLevel);
     const [data, assistantProfile] = await Promise.all([
-      fetchDataContext(allowedModules),
+      fetchDataContext(allowedModules, { userContext }),
       fetchLatestAssistantProfile(userContext),
     ]);
+    const pipelineAccess = canAccessSalesPipeline(userRole);
     const directRoute = routeAdminAssistantRequest({
       message,
       data,
       writeAccessEnabled,
       canManageUsers,
       assistantProfile,
+      pipelineAccess,
     });
 
     if (directRoute?.handled) {
@@ -1772,16 +1884,18 @@ export default async function handler(req, res) {
     ];
 
     // Filter tools to only those the user's role + level can access
-    const roleFilteredTools = writeAccessEnabled
-      ? tools.filter((t) => hasToolAccess(userRole, t.function.name, userAccessLevel))
-      : [];
+    const roleFilteredTools = tools.filter((t) => {
+      const name = t.function.name;
+      if (!hasToolAccess(userRole, name, userAccessLevel)) return false;
+      if (writeAccessEnabled) return true;
+      return READ_ONLY_ASSISTANT_TOOLS.includes(name);
+    });
 
     let result = await callGroq(messages, roleFilteredTools.length > 0, roleFilteredTools);
     let choice = result.choices?.[0];
 
     let rounds = 0;
     while (
-      writeAccessEnabled &&
       choice?.finish_reason === "tool_calls" &&
       choice?.message?.tool_calls &&
       rounds < 5
@@ -1810,10 +1924,20 @@ export default async function handler(req, res) {
           toolArgs = {};
         }
 
+        const mergedArgs =
+          toolCall.function.name === "create_sales_opportunity"
+            ? {
+                ...toolArgs,
+                created_by: userContext.id,
+                owner_user_id: userContext.id,
+              }
+            : toolArgs;
+
         const toolResult = await executeAdminAssistantMutation(
           supabase,
           toolCall.function.name,
-          toolArgs
+          mergedArgs,
+          { cookieHeader: req.headers?.cookie || "", userId: userContext?.id || null }
         );
         messages.push({
           role: "tool",
@@ -1834,7 +1958,7 @@ export default async function handler(req, res) {
     if (actionsPerformed) {
       const affectedDates = collectAffectedDates(messages);
       if (affectedDates.length > 0) {
-        const freshData = await fetchDataContext(allowedModules, { skipCache: true });
+        const freshData = await fetchDataContext(allowedModules, { skipCache: true, userContext });
         surface = buildScheduleOverviewForDates(affectedDates, freshData);
       }
     }
@@ -1847,6 +1971,7 @@ export default async function handler(req, res) {
         canManageUsers,
         actionsPerformed,
         assistantProfile,
+        pipelineAccess,
       });
     }
 

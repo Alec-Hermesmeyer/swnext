@@ -1,3 +1,32 @@
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY =
+  process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+/**
+ * Resolve auth.users id from the same session cookies / Bearer token as /api/ai-chat.
+ * Injected into POST /chat so the Flask backend does not rely on env fallbacks for logged-in users.
+ */
+async function getSupabaseUserIdFromRequest(req) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  const accessToken =
+    req.cookies?.["sb-access-token"] ||
+    (typeof req.headers?.authorization === "string"
+      ? req.headers.authorization.replace(/^Bearer\s+/i, "")
+      : "");
+  if (!accessToken) return null;
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(accessToken);
+  if (error || !user?.id) return null;
+  return user.id;
+}
+
 // Proxy API requests to Flask backend to avoid CORS issues
 export default async function handler(req, res) {
   const FLASK_BACKEND = process.env.FLASK_BACKEND || 'http://localhost:5000';
@@ -37,11 +66,32 @@ export default async function handler(req, res) {
       headers,
     };
 
-    // Forward body for POST/PUT/PATCH requests
-    if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-      if (req.body && Object.keys(req.body).length > 0) {
-        fetchOptions.body = JSON.stringify(req.body);
-        console.log(`[Proxy] Body:`, req.body);
+    // Forward body for POST/PUT/PATCH (always stringify objects so Flask receives JSON)
+    if (["POST", "PUT", "PATCH"].includes(req.method) && req.body != null) {
+      let payload = req.body;
+      if (typeof payload === "string") {
+        try {
+          payload = JSON.parse(payload);
+        } catch {
+          payload = req.body;
+        }
+      }
+      if (
+        req.method === "POST" &&
+        targetPath === "chat" &&
+        payload &&
+        typeof payload === "object" &&
+        !Array.isArray(payload)
+      ) {
+        const userId = await getSupabaseUserIdFromRequest(req);
+        if (userId) {
+          payload = { ...payload, user_id: userId };
+        }
+      }
+      fetchOptions.body =
+        typeof payload === "string" ? payload : JSON.stringify(payload);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[Proxy] Body (user_id injected server-side when session present):`, payload);
       }
     }
 
@@ -55,11 +105,20 @@ export default async function handler(req, res) {
     // Get response data
     const contentType = response.headers.get('content-type');
     let data;
-
-    if (contentType?.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
+    try {
+      if (contentType?.includes('application/json')) {
+        const raw = await response.text();
+        data = raw ? JSON.parse(raw) : {};
+      } else {
+        data = await response.text();
+      }
+    } catch (parseErr) {
+      console.error("[Proxy] Failed to parse backend response:", parseErr.message);
+      return res.status(502).json({
+        error: "Backend returned an unreadable response",
+        message: parseErr.message,
+        target: fullUrl,
+      });
     }
 
     // Log non-200 responses for debugging
@@ -70,7 +129,7 @@ export default async function handler(req, res) {
     // Forward status and response
     res.status(response.status);
 
-    if (typeof data === 'object') {
+    if (typeof data === "object" && data !== null) {
       res.json(data);
     } else {
       res.send(data);
