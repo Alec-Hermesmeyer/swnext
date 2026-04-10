@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { withRetry } from "@/lib/retry";
 import { SALES_PIPELINE_STAGES, stageLabel } from "@/lib/sales-pipeline";
 
 const emptyForm = () => ({
@@ -66,25 +67,42 @@ export default function SalesPipeline() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const loadRequestRef = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++loadRequestRef.current;
     setError("");
     setLoading(true);
     try {
-      const q = stageFilter ? `?stage=${encodeURIComponent(stageFilter)}` : "";
-      const res = await fetch(`/api/sales-opportunities${q}`, { credentials: "same-origin" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || "Could not load pipeline");
-        setRows([]);
-        return;
-      }
+      const data = await withRetry(async () => {
+        const q = stageFilter ? `?stage=${encodeURIComponent(stageFilter)}` : "";
+        const res = await fetch(`/api/sales-opportunities${q}`, {
+          credentials: "same-origin",
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const nextError = new Error(payload.error || "Could not load pipeline");
+          nextError.status = res.status;
+          throw nextError;
+        }
+        return payload;
+      }, {
+        attempts: 3,
+        delayMs: 300,
+        backoff: 1.75,
+        shouldRetry: (error) => ![400, 401, 403].includes(error?.status),
+      });
+
+      if (requestId !== loadRequestRef.current) return;
       setRows(data.opportunities || []);
-    } catch {
-      setError("Network error");
+    } catch (error) {
+      if (requestId !== loadRequestRef.current) return;
+      setError(error?.message || "Network error");
       setRows([]);
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestRef.current) {
+        setLoading(false);
+      }
     }
   }, [stageFilter]);
 

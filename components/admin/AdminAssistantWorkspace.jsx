@@ -1173,8 +1173,8 @@ export default function AdminAssistantWorkspace({
         </div>
 
         {/* Right: workspace content */}
-        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto lg:h-full lg:min-h-0">
-          <div className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-3 py-2 backdrop-blur">
+        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(180deg,#fbfcfe_0%,#f3f6fb_100%)] lg:h-full lg:min-h-0">
+          <div className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white px-3 py-2 backdrop-blur">
             <button
               type="button"
               onClick={closeWorkspace}
@@ -1188,7 +1188,9 @@ export default function AdminAssistantWorkspace({
             <div className="text-sm font-semibold text-neutral-700">{workspaceLabel}</div>
           </div>
           <div className="p-3 sm:p-4 md:p-6">
-            {WorkspaceComponent ? <WorkspaceComponent /> : null}
+            <div className="rounded-[1.6rem] border border-white/90 bg-white/96 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+              {WorkspaceComponent ? <WorkspaceComponent /> : null}
+            </div>
           </div>
         </div>
       </div>
