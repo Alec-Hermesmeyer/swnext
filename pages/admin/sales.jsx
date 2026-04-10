@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
-import supabase from "@/components/Supabase";
 import { Lato } from "next/font/google";
 import { getSalesData } from "@/actions/jobInfo";
 import SalesPipeline from "@/components/admin/SalesPipeline";
@@ -14,9 +13,10 @@ const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 function SalesTW() {
   const router = useRouter();
-  const [tab, setTab] = useState("pipeline");
+  const [selectedTab, setSelectedTab] = useState(null);
   const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [wonLoadError, setWonLoadError] = useState("");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const pageSize = 5;
@@ -26,54 +26,82 @@ function SalesTW() {
   const [monthSoldFilter, setMonthSoldFilter] = useState("");
   const [scopeFilter, setScopeFilter] = useState("");
   const [estimatorFilter, setEstimatorFilter] = useState("");
+  const wonJobsRequestRef = useRef(0);
+  const tabFromRoute =
+    router.isReady && (router.query.tab === "won" || router.query.tab === "pipeline")
+      ? router.query.tab
+      : null;
+  const tab = selectedTab || tabFromRoute || "pipeline";
 
-  useEffect(() => {
-    if (!router.isReady) return;
-    const t = router.query.tab;
-    if (t === "won") setTab("won");
-    else if (t === "pipeline") setTab("pipeline");
-  }, [router.isReady, router.query.tab]);
+  const loadWonJobs = useCallback(async () => {
+    const requestId = ++wonJobsRequestRef.current;
+    setLoading(true);
+    setWonLoadError("");
 
-  useEffect(() => {
-    const fetchTotalCount = async () => {
-      const { count, error } = await supabase.from("Customer").select("name", { count: "exact", head: true });
-      if (!error && typeof count === "number") {
-        setTotalPages(Math.ceil(count / pageSize));
-      }
-    };
-    fetchTotalCount();
-  }, []);
+    const { paginatedData, totalCount, error } = await getSalesData(page, pageSize, {
+      company: companyFilter,
+      jobName: jobNameFilter,
+      monthSold: monthSoldFilter,
+      scope: scopeFilter,
+      estimator: estimatorFilter,
+    });
+
+    if (error) {
+      if (requestId !== wonJobsRequestRef.current) return;
+      setCustomers([]);
+      setTotalPages(0);
+      setWonLoadError(error);
+      setLoading(false);
+      return;
+    }
+
+    if (requestId !== wonJobsRequestRef.current) return;
+    setCustomers(paginatedData || []);
+    setTotalPages(Math.ceil((totalCount || 0) / pageSize));
+    setLoading(false);
+  }, [
+    companyFilter,
+    estimatorFilter,
+    jobNameFilter,
+    monthSoldFilter,
+    page,
+    pageSize,
+    scopeFilter,
+  ]);
 
   useEffect(() => {
     if (tab !== "won") return;
-
-    const fetchAndSetSalesData = async () => {
-      setLoading(true);
-      const { paginatedData, totalCount } = await getSalesData(page, pageSize, {
-        company: companyFilter,
-        jobName: jobNameFilter,
-        monthSold: monthSoldFilter,
-        scope: scopeFilter,
-        estimator: estimatorFilter,
-      });
-      if (paginatedData) {
-        setCustomers(paginatedData);
-        setTotalPages(Math.ceil(totalCount / pageSize));
-      }
-      setLoading(false);
-    };
-    fetchAndSetSalesData();
-  }, [tab, page, companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [companyFilter, jobNameFilter, monthSoldFilter, scopeFilter, estimatorFilter]);
+    const timeoutId = window.setTimeout(() => {
+      loadWonJobs();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadWonJobs, tab]);
 
   const handlePreviousPage = () => {
     if (page > 0) setPage(page - 1);
   };
   const handleNextPage = () => {
     if (page < totalPages - 1) setPage(page + 1);
+  };
+  const handleCompanyFilterChange = (value) => {
+    setCompanyFilter(value);
+    setPage(0);
+  };
+  const handleJobNameFilterChange = (value) => {
+    setJobNameFilter(value);
+    setPage(0);
+  };
+  const handleScopeFilterChange = (value) => {
+    setScopeFilter(value);
+    setPage(0);
+  };
+  const handleMonthSoldFilterChange = (value) => {
+    setMonthSoldFilter(value);
+    setPage(0);
+  };
+  const handleEstimatorFilterChange = (value) => {
+    setEstimatorFilter(value);
+    setPage(0);
   };
 
   return (
@@ -93,7 +121,7 @@ function SalesTW() {
         <div className="mb-6 flex gap-1 rounded-xl border border-neutral-200 bg-neutral-100/80 p-1">
           <button
             type="button"
-            onClick={() => setTab("pipeline")}
+            onClick={() => setSelectedTab("pipeline")}
             className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
               tab === "pipeline"
                 ? "bg-white text-[#0b2a5a] shadow-sm"
@@ -104,7 +132,7 @@ function SalesTW() {
           </button>
           <button
             type="button"
-            onClick={() => setTab("won")}
+            onClick={() => setSelectedTab("won")}
             className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
               tab === "won"
                 ? "bg-white text-[#0b2a5a] shadow-sm"
@@ -123,36 +151,49 @@ function SalesTW() {
               Records from the legacy <strong>Customer</strong> table (sold work). For active pursuits, use the{" "}
               <strong>Pipeline</strong> tab.
             </p>
+            {wonLoadError ? (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <span>{wonLoadError} Use retry instead of refreshing the page.</span>
+                <button
+                  type="button"
+                  onClick={loadWonJobs}
+                  disabled={loading}
+                  className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? "Retrying..." : "Retry won jobs"}
+                </button>
+              </div>
+            ) : null}
             <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
               <input
                 className="h-10 rounded-md border border-neutral-300 px-3"
                 placeholder="Filter by Company"
                 value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
+                onChange={(e) => handleCompanyFilterChange(e.target.value)}
               />
               <input
                 className="h-10 rounded-md border border-neutral-300 px-3"
                 placeholder="Filter by Job Name"
                 value={jobNameFilter}
-                onChange={(e) => setJobNameFilter(e.target.value)}
+                onChange={(e) => handleJobNameFilterChange(e.target.value)}
               />
               <input
                 className="h-10 rounded-md border border-neutral-300 px-3"
                 placeholder="Filter by Scope"
                 value={scopeFilter}
-                onChange={(e) => setScopeFilter(e.target.value)}
+                onChange={(e) => handleScopeFilterChange(e.target.value)}
               />
               <input
                 className="h-10 rounded-md border border-neutral-300 px-3"
                 placeholder="Filter by Month Sold"
                 value={monthSoldFilter}
-                onChange={(e) => setMonthSoldFilter(e.target.value)}
+                onChange={(e) => handleMonthSoldFilterChange(e.target.value)}
               />
               <input
                 className="h-10 rounded-md border border-neutral-300 px-3"
                 placeholder="Filter by Estimator"
                 value={estimatorFilter}
-                onChange={(e) => setEstimatorFilter(e.target.value)}
+                onChange={(e) => handleEstimatorFilterChange(e.target.value)}
               />
             </div>
 

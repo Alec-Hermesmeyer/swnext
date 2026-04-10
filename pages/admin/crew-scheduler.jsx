@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import Head from "next/head";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { Lato } from "next/font/google";
+import { withRetry } from "@/lib/retry";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
@@ -310,6 +311,23 @@ const getRigDayStatusFromAssignments = (assignmentRows = []) => {
   };
 };
 
+const toSupabaseQueryError = (error, fallbackMessage) => {
+  const nextError = new Error(error?.message || fallbackMessage);
+  nextError.code = error?.code;
+  return nextError;
+};
+
+const normalizeCustomerName = (name) =>
+  String(name || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+const normalizeCrewKey = (row) =>
+  `${String(row.name || "").trim().toLowerCase()}::${String(row.phone || "")
+    .trim()
+    .toLowerCase()}`;
+
 function CrewScheduler() {
   const [activeTab, setActiveTab] = useState("schedule");
   const [selectedDate, setSelectedDate] = useState(getTomorrowScheduleDate());
@@ -322,8 +340,12 @@ function CrewScheduler() {
   const [recentSchedules, setRecentSchedules] = useState([]);
   const [currentSchedule, setCurrentSchedule] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [initialLoadError, setInitialLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const printRef = useRef(null);
+  const skipInitialSelectedDateFetchRef = useRef(true);
+  const initialLoadStartedRef = useRef(false);
+  const scheduleRequestRef = useRef(0);
 
   // New worker form
   const [newWorkerName, setNewWorkerName] = useState("");
@@ -441,104 +463,110 @@ function CrewScheduler() {
     });
   }, [jobAdminRows, jobListFilter, jobListSearch]);
 
-  // Fetch workers, categories, jobs, superintendents, trucks on mount
-  useEffect(() => {
-    fetchWorkers();
-    fetchCategories();
-    fetchJobs();
-    fetchSuperintendents();
-    fetchTrucks();
-    fetchCustomers();
-    fetchRecentSchedules();
-    fetchJobProgress();
+  const runSupabaseQuery = useCallback(async (label, queryFactory, options = {}) => {
+    const { attempts = 3, delayMs = 250 } = options;
+    return withRetry(async () => {
+      const result = await queryFactory();
+      if (result?.error) {
+        throw toSupabaseQueryError(result.error, `${label} failed`);
+      }
+      return result;
+    }, {
+      attempts,
+      delayMs,
+      backoff: 1.75,
+      shouldRetry: (error) => error?.code !== "42501",
+    });
   }, []);
 
-  // Fetch schedule when date changes
-  useEffect(() => {
-    if (selectedDate) {
-      fetchSchedule(selectedDate);
-    }
-  }, [selectedDate]);
+  const fetchWorkers = useCallback(async (options = {}) => {
+    const { data } = await runSupabaseQuery(
+      "crew workers",
+      () =>
+        supabase
+          .from("crew_workers")
+          .select("*")
+          .eq("is_active", true)
+          .order("name"),
+      options
+    );
+    setWorkers(data || []);
+    return data || [];
+  }, [runSupabaseQuery]);
 
-  useEffect(() => {
-    fetchRecentSchedules();
-  }, [currentSchedule?.id]);
+  const fetchCategories = useCallback(async (options = {}) => {
+    const { data } = await runSupabaseQuery(
+      "crew categories",
+      () => supabase.from("crew_categories").select("*").order("sort_order"),
+      options
+    );
+    setCategories(data || []);
+    return data || [];
+  }, [runSupabaseQuery]);
 
-  const fetchWorkers = async () => {
-    const { data, error } = await supabase
-      .from("crew_workers")
-      .select("*")
-      .eq("is_active", true)
-      .order("name");
-    if (!error) setWorkers(data || []);
-  };
+  const fetchJobs = useCallback(async (options = {}) => {
+    const { data } = await runSupabaseQuery(
+      "crew jobs",
+      () => supabase.from("crew_jobs").select("*").order("job_name"),
+      options
+    );
+    const rows = sortCrewJobsForManagePanel(data || []);
+    setJobAdminRows(rows);
+    setJobs(rows.filter((job) => isCrewJobActive(job)));
+    return rows;
+  }, [runSupabaseQuery]);
 
-  const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from("crew_categories")
-      .select("*")
-      .order("sort_order");
-    if (!error) setCategories(data || []);
-    setLoading(false);
-  };
-
-  const fetchJobs = async () => {
-    const { data, error } = await supabase
-      .from("crew_jobs")
-      .select("*")
-      .order("job_name");
-    if (!error) {
-      const rows = sortCrewJobsForManagePanel(data || []);
-      setJobAdminRows(rows);
-      setJobs(rows.filter((job) => isCrewJobActive(job)));
-    }
-  };
-
-  const fetchJobProgress = async () => {
-    const { data, error } = await supabase
-      .from("crew_job_progress")
-      .select("*");
-    if (error) {
+  const fetchJobProgress = useCallback(async (options = {}) => {
+    try {
+      const { data } = await runSupabaseQuery(
+        "crew job progress",
+        () => supabase.from("crew_job_progress").select("*"),
+        options
+      );
+      const byJobId = {};
+      (data || []).forEach((row) => {
+        if (!row?.job_id) return;
+        byJobId[row.job_id] = row;
+      });
+      setJobProgressByJobId(byJobId);
+      setJobProgressAvailable(true);
+      return byJobId;
+    } catch (error) {
+      console.warn("crew_job_progress unavailable:", error?.message || error);
       setJobProgressAvailable(false);
-      return;
+      return {};
     }
-    const byJobId = {};
-    (data || []).forEach((row) => {
-      if (!row?.job_id) return;
-      byJobId[row.job_id] = row;
-    });
-    setJobProgressByJobId(byJobId);
-    setJobProgressAvailable(true);
-  };
+  }, [runSupabaseQuery]);
 
-  const fetchSuperintendents = async () => {
-    const { data, error } = await supabase
-      .from("crew_superintendents")
-      .select("*")
-      .eq("is_active", true)
-      .order("name");
-    if (!error) setSuperintendents(data || []);
-  };
+  const fetchSuperintendents = useCallback(async (options = {}) => {
+    const { data } = await runSupabaseQuery(
+      "crew superintendents",
+      () =>
+        supabase
+          .from("crew_superintendents")
+          .select("*")
+          .eq("is_active", true)
+          .order("name"),
+      options
+    );
+    setSuperintendents(data || []);
+    return data || [];
+  }, [runSupabaseQuery]);
 
-  const fetchTrucks = async () => {
-    const { data, error } = await supabase
-      .from("crew_trucks")
-      .select("*")
-      .eq("is_active", true)
-      .order("truck_number");
-    if (!error) setTrucks(data || []);
-  };
-
-  const normalizeCustomerName = (name) =>
-    String(name || "")
-      .trim()
-      .replace(/\s+/g, " ")
-      .toLowerCase();
-
-  const normalizeCrewKey = (row) =>
-    `${String(row.name || "").trim().toLowerCase()}::${String(row.phone || "")
-      .trim()
-      .toLowerCase()}`;
+  const fetchTrucks = useCallback(async (options = {}) => {
+    const { data } = await runSupabaseQuery(
+      "crew trucks",
+      () =>
+        supabase
+          .from("crew_trucks")
+          .select("*")
+          .eq("is_active", true)
+          .order("truck_number"),
+      options
+    );
+    setTrucks(data || []);
+    return data || [];
+  }, [runSupabaseQuery]);
 
   const splitCsvLine = (line) => {
     if (!line) return [];
@@ -729,23 +757,23 @@ function CrewScheduler() {
     return { rows: Array.from(deduped.values()), error: null };
   };
 
-  const fetchCustomers = async () => {
-    const { data, error } = await supabase
-      .from("Customer")
-      .select("id, name");
-    if (!error) {
-      const uniqueMap = new Map();
-      (data || []).forEach((c) => {
-        const clean = String(c?.name || "").trim();
-        if (!clean) return;
-        const key = normalizeCustomerName(clean);
-        if (!uniqueMap.has(key)) uniqueMap.set(key, clean);
-      });
-      setCustomerNames(
-        Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b))
-      );
-    }
-  };
+  const fetchCustomers = useCallback(async (options = {}) => {
+    const { data } = await runSupabaseQuery(
+      "customers",
+      () => supabase.from("Customer").select("id, name"),
+      options
+    );
+    const uniqueMap = new Map();
+    (data || []).forEach((c) => {
+      const clean = String(c?.name || "").trim();
+      if (!clean) return;
+      const key = normalizeCustomerName(clean);
+      if (!uniqueMap.has(key)) uniqueMap.set(key, clean);
+    });
+    const nextNames = Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b));
+    setCustomerNames(nextNames);
+    return nextNames;
+  }, [runSupabaseQuery]);
 
   const ensureCustomerExists = async (name) => {
     const clean = String(name || "").trim();
@@ -767,34 +795,54 @@ function CrewScheduler() {
     }
   };
 
-  const fetchRecentSchedules = async () => {
-    const { data, error } = await supabase
-      .from("crew_schedules")
-      .select("id, schedule_date, is_finalized, finalized_at")
-      .order("schedule_date", { ascending: false })
-      .limit(10);
-    if (!error) setRecentSchedules(data || []);
-  };
+  const fetchRecentSchedules = useCallback(async (options = {}) => {
+    const { data } = await runSupabaseQuery(
+      "recent schedules",
+      () =>
+        supabase
+          .from("crew_schedules")
+          .select("id, schedule_date, is_finalized, finalized_at")
+          .order("schedule_date", { ascending: false })
+          .limit(10),
+      options
+    );
+    setRecentSchedules(data || []);
+    return data || [];
+  }, [runSupabaseQuery]);
 
-  const getOrCreateSchedule = async (date) => {
-    let { data: schedule, error } = await supabase
-      .from("crew_schedules")
-      .select("*")
-      .eq("schedule_date", date)
-      .single();
+  const getOrCreateSchedule = useCallback(async (date, options = {}) =>
+    withRetry(async () => {
+      const { data: schedule, error } = await supabase
+        .from("crew_schedules")
+        .select("*")
+        .eq("schedule_date", date)
+        .single();
 
-    if (error && error.code === "PGRST116") {
+      if (error && error.code !== "PGRST116") {
+        throw toSupabaseQueryError(error, "Could not load crew schedule");
+      }
+
+      if (schedule) {
+        return schedule;
+      }
+
       const { data: created, error: createError } = await supabase
         .from("crew_schedules")
         .insert({ schedule_date: date })
         .select()
         .single();
-      if (createError) return null;
-      schedule = created;
-    }
 
-    return schedule || null;
-  };
+      if (createError) {
+        throw toSupabaseQueryError(createError, "Could not create crew schedule");
+      }
+
+      return created || null;
+    }, {
+      attempts: options.attempts || 3,
+      delayMs: options.delayMs || 250,
+      backoff: 1.75,
+      shouldRetry: (error) => error?.code !== "42501",
+    }), []);
 
   const normalizeJobInput = (job) => {
     const intOrNull = (v) => { const n = parseInt(v, 10); return Number.isFinite(n) && n >= 0 ? n : null; };
@@ -1008,28 +1056,57 @@ function CrewScheduler() {
     await fetchJobs();
   };
 
-  const fetchSchedule = async (date) => {
-    const schedule = await getOrCreateSchedule(date);
+  const fetchSchedule = useCallback(async (date, options = {}) => {
+    const requestId = ++scheduleRequestRef.current;
 
-    setCurrentSchedule(schedule);
+    try {
+      const payload = await withRetry(async () => {
+        const schedule = await getOrCreateSchedule(date, options);
 
-    if (schedule) {
-      // Fetch assignments for this schedule including job details
-      const { data: assignmentData } = await supabase
-        .from("crew_assignments")
-        .select("*, crew_workers(*), crew_categories(*), crew_jobs(*)")
-        .eq("schedule_id", schedule.id)
-        .order("sort_order");
-      setAssignments(assignmentData || []);
+        if (!schedule) {
+          return { schedule: null, assignments: [], rigData: [] };
+        }
 
-      // Fetch rig details for this schedule
-      const { data: rigData } = await supabase
-        .from("schedule_rig_details")
-        .select("*, crew_superintendents(*), crew_trucks(*)")
-        .eq("schedule_id", schedule.id);
+        const [assignmentResult, rigResult] = await Promise.all([
+          supabase
+            .from("crew_assignments")
+            .select("*, crew_workers(*), crew_categories(*), crew_jobs(*)")
+            .eq("schedule_id", schedule.id)
+            .order("sort_order"),
+          supabase
+            .from("schedule_rig_details")
+            .select("*, crew_superintendents(*), crew_trucks(*)")
+            .eq("schedule_id", schedule.id),
+        ]);
+
+        if (assignmentResult.error) {
+          throw toSupabaseQueryError(assignmentResult.error, "Could not load crew assignments");
+        }
+        if (rigResult.error) {
+          throw toSupabaseQueryError(rigResult.error, "Could not load rig details");
+        }
+
+        return {
+          schedule,
+          assignments: assignmentResult.data || [],
+          rigData: rigResult.data || [],
+        };
+      }, {
+        attempts: options.attempts || 3,
+        delayMs: options.delayMs || 250,
+        backoff: 1.75,
+        shouldRetry: (error) => error?.code !== "42501",
+      });
+
+      if (requestId !== scheduleRequestRef.current) {
+        return payload?.schedule || null;
+      }
+
+      setCurrentSchedule(payload.schedule);
+      setAssignments(payload.assignments || []);
 
       const detailsMap = {};
-      (rigData || []).forEach((rd) => {
+      (payload.rigData || []).forEach((rd) => {
         detailsMap[rd.category_id] = {
           id: rd.id,
           superintendent_id: rd.superintendent_id || "",
@@ -1042,11 +1119,87 @@ function CrewScheduler() {
         };
       });
       setRigDetails(detailsMap);
-    } else {
-      setAssignments([]);
-      setRigDetails({});
+
+      return payload.schedule;
+    } catch (error) {
+      if (requestId === scheduleRequestRef.current) {
+        setCurrentSchedule(null);
+        setAssignments([]);
+        setRigDetails({});
+      }
+      console.error("Could not load selected crew schedule:", error);
+      throw error;
     }
-  };
+  }, [getOrCreateSchedule]);
+
+  const loadInitialData = useCallback(async () => {
+    setLoading(true);
+    setInitialLoadError("");
+
+    const results = await Promise.allSettled([
+      fetchWorkers({ attempts: 3 }),
+      fetchCategories({ attempts: 3 }),
+      fetchJobs({ attempts: 3 }),
+      fetchSuperintendents({ attempts: 3 }),
+      fetchTrucks({ attempts: 3 }),
+      fetchCustomers({ attempts: 3 }),
+      fetchRecentSchedules({ attempts: 3 }),
+      fetchJobProgress({ attempts: 2 }),
+      fetchSchedule(selectedDate, { attempts: 3 }),
+    ]);
+
+    const failures = results.filter((result) => result.status === "rejected");
+    if (failures.length) {
+      console.error(
+        "Crew scheduler initial load issues:",
+        failures.map((result) => result.reason?.message || result.reason)
+      );
+      setInitialLoadError(
+        "Some scheduler data did not load on the first attempt. Use Retry data load instead of refreshing the whole page."
+      );
+    }
+
+    setLoading(false);
+  }, [
+    fetchCategories,
+    fetchCustomers,
+    fetchJobProgress,
+    fetchJobs,
+    fetchRecentSchedules,
+    fetchSchedule,
+    fetchSuperintendents,
+    fetchTrucks,
+    fetchWorkers,
+    selectedDate,
+  ]);
+
+  useEffect(() => {
+    if (initialLoadStartedRef.current) return;
+    initialLoadStartedRef.current = true;
+    loadInitialData();
+  }, [loadInitialData]);
+
+  // Fetch schedule when date changes after the initial bootstrap
+  useEffect(() => {
+    if (!selectedDate) return;
+    if (skipInitialSelectedDateFetchRef.current) {
+      skipInitialSelectedDateFetchRef.current = false;
+      return;
+    }
+
+    fetchSchedule(selectedDate, { attempts: 3 }).catch(() => {
+      setInitialLoadError(
+        "Could not load the selected schedule right away. Use Retry data load instead of refreshing the page."
+      );
+    });
+  }, [fetchSchedule, selectedDate]);
+
+  useEffect(() => {
+    if (!currentSchedule?.id) return;
+    fetchRecentSchedules({ attempts: 2 }).catch((error) => {
+      console.warn("Could not refresh recent schedules:", error?.message || error);
+    });
+  }, [currentSchedule?.id, fetchRecentSchedules]);
 
   const addWorker = async () => {
     if (!newWorkerName.trim()) return;
@@ -3758,6 +3911,28 @@ function CrewScheduler() {
           >
             {emailStatus.message}
             <button onClick={() => setEmailStatus(null)} className="ml-2 font-bold">x</button>
+          </div>
+        )}
+        {initialLoadError && (
+          <div className="mx-4 mt-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p className="max-w-4xl">{initialLoadError}</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={loadInitialData}
+                disabled={loading}
+                className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Retrying..." : "Retry data load"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setInitialLoadError("")}
+                className="rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         )}
         {currentSchedule?.is_finalized && activeTab === "schedule" && (
