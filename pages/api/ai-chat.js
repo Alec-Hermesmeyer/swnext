@@ -294,7 +294,7 @@ const tools = [
     function: {
       name: "create_crew_job",
       description:
-        "Create or update one crew scheduler job record. Use this when the user provides job data (often from spreadsheet rows).",
+        "Create or update one crew scheduler job record. Use this when the user provides job data (often from spreadsheet rows). Capture as many fields as possible — days, mob days, bid amount, pier count, scope, and dates are all valuable for tracking and analytics.",
       parameters: {
         type: "object",
         properties: {
@@ -313,6 +313,17 @@ const tools = [
           pm_phone: { type: "string", description: "S&W PM phone" },
           default_rig: { type: "string", description: "Default rig/category label" },
           crane_required: { type: "boolean", description: "True if crane is required" },
+          estimated_days: { type: "integer", description: "Estimated working days for the job (excludes mob)" },
+          mob_days: { type: "integer", description: "Estimated mobilization days" },
+          actual_days: { type: "integer", description: "Actual working days (fill in when job completes)" },
+          actual_mob_days: { type: "integer", description: "Actual mob days (fill in when job completes)" },
+          bid_amount: { type: "number", description: "Original bid amount in dollars" },
+          contract_amount: { type: "number", description: "Final contract/award amount in dollars" },
+          pier_count: { type: "integer", description: "Number of piers in scope" },
+          scope_description: { type: "string", description: "Brief scope summary (e.g. '24in piers to 30ft')" },
+          job_status: { type: "string", enum: ["bid", "awarded", "scheduled", "in_progress", "completed", "on_hold", "active"], description: "Job lifecycle stage" },
+          start_date: { type: "string", description: "Actual or planned start date (YYYY-MM-DD)" },
+          end_date: { type: "string", description: "Actual or planned end date (YYYY-MM-DD)" },
         },
         required: ["job_name"],
       },
@@ -323,7 +334,7 @@ const tools = [
     function: {
       name: "bulk_create_crew_jobs",
       description:
-        "Create or update many crew scheduler jobs in one call. Use when the user pastes multiple spreadsheet rows.",
+        "Create or update many crew scheduler jobs in one call. Use when the user pastes multiple spreadsheet rows. Include days, mob days, amounts, and scope when available.",
       parameters: {
         type: "object",
         properties: {
@@ -347,6 +358,15 @@ const tools = [
                 pm_phone: { type: "string" },
                 default_rig: { type: "string" },
                 crane_required: { type: "boolean" },
+                estimated_days: { type: "integer" },
+                mob_days: { type: "integer" },
+                bid_amount: { type: "number" },
+                contract_amount: { type: "number" },
+                pier_count: { type: "integer" },
+                scope_description: { type: "string" },
+                job_status: { type: "string" },
+                start_date: { type: "string" },
+                end_date: { type: "string" },
               },
               required: ["job_name"],
             },
@@ -362,7 +382,7 @@ const tools = [
     type: "function",
     function: {
       name: "update_crew_job_detail",
-      description: "Update fields on an existing crew job by ID. Use when the user wants to edit a specific job's details like address, PM, customer, crane status, etc. Requires the job_id (UUID) — look it up from the ACTIVE CREW JOBS list in context.",
+      description: "Update fields on an existing crew job by ID. Use when the user wants to edit a specific job's details — address, PM, customer, crane, days, mob days, bid amount, scope, status, dates, etc. Requires the job_id (UUID) — look it up from the ACTIVE CREW JOBS list in context.",
       parameters: {
         type: "object",
         properties: {
@@ -382,6 +402,17 @@ const tools = [
           pm_phone: { type: "string", description: "S&W PM phone" },
           default_rig: { type: "string", description: "Default rig label" },
           crane_required: { type: "boolean", description: "Crane required flag" },
+          estimated_days: { type: "integer", description: "Estimated working days (excludes mob)" },
+          mob_days: { type: "integer", description: "Estimated mobilization days" },
+          actual_days: { type: "integer", description: "Actual working days (when job completes)" },
+          actual_mob_days: { type: "integer", description: "Actual mob days (when job completes)" },
+          bid_amount: { type: "number", description: "Original bid amount in dollars" },
+          contract_amount: { type: "number", description: "Final contract/award amount in dollars" },
+          pier_count: { type: "integer", description: "Number of piers in scope" },
+          scope_description: { type: "string", description: "Brief scope summary" },
+          job_status: { type: "string", enum: ["bid", "awarded", "scheduled", "in_progress", "completed", "on_hold", "active"], description: "Job lifecycle stage" },
+          start_date: { type: "string", description: "Actual or planned start date (YYYY-MM-DD)" },
+          end_date: { type: "string", description: "Actual or planned end date (YYYY-MM-DD)" },
         },
         required: ["job_id"],
       },
@@ -812,7 +843,7 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
     supabase
       .from("crew_jobs")
       .select(
-        "id, job_name, job_number, customer_name, address, city, pm_name, crane_required, is_active, default_rig, hiring_contractor"
+        "id, job_name, job_number, customer_name, address, city, pm_name, crane_required, is_active, default_rig, hiring_contractor, estimated_days, mob_days, actual_days, actual_mob_days, bid_amount, contract_amount, pier_count, scope_description, job_status, start_date, end_date"
       ),
     hasModule("schedule")
       ? supabase.from("crew_superintendents").select("id, name, phone, is_active")
@@ -1209,6 +1240,15 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
       pm: j.pm_name || "",
       crane: j.crane_required ? "Yes" : "No",
       hiringContractor: j.hiring_contractor || "",
+      estDays: j.estimated_days || "",
+      mobDays: j.mob_days || "",
+      bidAmount: j.bid_amount || "",
+      contractAmount: j.contract_amount || "",
+      pierCount: j.pier_count || "",
+      scope: j.scope_description || "",
+      status: j.job_status || "active",
+      startDate: j.start_date || "",
+      endDate: j.end_date || "",
     })),
     crewJobsAll: (crewJobs || []).map((j) => ({
       id: j.id,
@@ -1494,7 +1534,7 @@ ACTIVE CREW JOBS (id | name | details):
 ${linesOrFallback(
   data.crewJobs.map(
     (j) =>
-      `- [${j.id}] ${j.name}${j.number ? ` #${j.number}` : ""}${j.customer ? ` | Customer: ${j.customer}` : ""}${j.address ? ` | ${j.address}` : ""}${j.pm ? ` | PM: ${j.pm}` : ""}${j.hiringContractor ? ` | Hiring: ${j.hiringContractor}` : ""}${j.crane === "Yes" ? " | CRANE REQUIRED" : ""}`
+      `- [${j.id}] ${j.name}${j.number ? ` #${j.number}` : ""}${j.status && j.status !== "active" ? ` [${j.status}]` : ""}${j.customer ? ` | Customer: ${j.customer}` : ""}${j.address ? ` | ${j.address}` : ""}${j.pm ? ` | PM: ${j.pm}` : ""}${j.hiringContractor ? ` | Hiring: ${j.hiringContractor}` : ""}${j.crane === "Yes" ? " | CRANE" : ""}${j.estDays ? ` | ${j.estDays}d` : ""}${j.mobDays ? ` +${j.mobDays}d mob` : ""}${j.pierCount ? ` | ${j.pierCount} piers` : ""}${j.scope ? ` | ${j.scope}` : ""}${j.bidAmount ? ` | Bid: $${Number(j.bidAmount).toLocaleString()}` : ""}${j.contractAmount ? ` | Contract: $${Number(j.contractAmount).toLocaleString()}` : ""}${j.startDate ? ` | Start: ${j.startDate}` : ""}${j.endDate ? ` | End: ${j.endDate}` : ""}`
   ),
   "None"
 )}
@@ -1625,6 +1665,18 @@ When the user wants to enter a new job (from a bid sheet, email, or spreadsheet)
 5. If they mention the customer, contractor, address, PM, etc., include those fields.
 6. After creating, confirm what was saved and ask if they want to add more detail or enter another job.
 7. Common bid sheet fields: Job Name, Job Number, Customer, Hiring Contractor, Contact Name/Phone/Email, Address/City/ZIP, PM, Dig Tess Number, Default Rig, Crane Required.
+8. ALWAYS capture duration and scope data when available: estimated_days (working days, not including mob), mob_days (mobilization days), pier_count, scope_description (e.g. "24in piers to 30ft"), bid_amount, contract_amount, start_date, end_date.
+9. When updating existing jobs with update_crew_job_detail, proactively ask about missing tracking fields (days, mob days, scope, amounts) if they are not yet filled in — this data feeds analytics and ROI reporting.
+10. Job status lifecycle: bid → awarded → scheduled → in_progress → completed. Set job_status appropriately. Jobs from bids start as "bid", won jobs move to "awarded", etc.
+
+JOB ANALYTICS CONTEXT:
+Days, mob days, bid amounts, contract amounts, pier counts, and scope data are tracked to enable:
+- Revenue per day analysis (contract_amount / actual_days)
+- Mobilization efficiency (actual_mob_days vs mob_days estimates)
+- Bid accuracy (bid_amount vs contract_amount)
+- Customer ROI ranking (total revenue by customer vs total days)
+- Scope-based pricing patterns ($/pier, $/day by scope type)
+When users ask about job performance, profitability, or which jobs/customers are most profitable, use these fields to calculate insights from the crew jobs data.
 
 SCHEDULE BUILDER GUIDE:
 The schedule flow is: RIG → CREW → JOB → next rig → finalize → send packets. Walk users through rig-by-rig:

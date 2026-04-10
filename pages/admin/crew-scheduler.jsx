@@ -93,6 +93,17 @@ const createEmptyJobDraft = () => ({
   default_rig: "",
   crane_required: false,
   is_active: true,
+  estimated_days: "",
+  mob_days: "",
+  actual_days: "",
+  actual_mob_days: "",
+  bid_amount: "",
+  contract_amount: "",
+  pier_count: "",
+  scope_description: "",
+  job_status: "active",
+  start_date: "",
+  end_date: "",
 });
 
 const isCrewJobActive = (job) => job?.is_active !== false;
@@ -785,24 +796,40 @@ function CrewScheduler() {
     return schedule || null;
   };
 
-  const normalizeJobInput = (job) => ({
-    job_name: String(job.job_name || "").trim(),
-    job_number: String(job.job_number || "").trim() || null,
-    dig_tess_number: String(job.dig_tess_number || "").trim() || null,
-    customer_name: String(job.customer_name || "").trim() || null,
-    hiring_contractor: String(job.hiring_contractor || "").trim() || null,
-    hiring_contact_name: String(job.hiring_contact_name || "").trim() || null,
-    hiring_contact_phone: String(job.hiring_contact_phone || "").trim() || null,
-    hiring_contact_email: String(job.hiring_contact_email || "").trim() || null,
-    address: String(job.address || "").trim() || null,
-    city: String(job.city || "").trim() || null,
-    zip: String(job.zip || "").trim() || null,
-    pm_name: String(job.pm_name || "").trim() || null,
-    pm_phone: String(job.pm_phone || "").trim() || null,
-    default_rig: String(job.default_rig || "").trim() || null,
-    crane_required: !!job.crane_required,
-    is_active: job.is_active !== false,
-  });
+  const normalizeJobInput = (job) => {
+    const intOrNull = (v) => { const n = parseInt(v, 10); return Number.isFinite(n) && n >= 0 ? n : null; };
+    const numOrNull = (v) => { const s = String(v || "").replace(/[$,\s]/g, ""); const n = parseFloat(s); return Number.isFinite(n) ? n : null; };
+    const dateOrNull = (v) => { const s = String(v || "").trim(); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null; };
+    return {
+      job_name: String(job.job_name || "").trim(),
+      job_number: String(job.job_number || "").trim() || null,
+      dig_tess_number: String(job.dig_tess_number || "").trim() || null,
+      customer_name: String(job.customer_name || "").trim() || null,
+      hiring_contractor: String(job.hiring_contractor || "").trim() || null,
+      hiring_contact_name: String(job.hiring_contact_name || "").trim() || null,
+      hiring_contact_phone: String(job.hiring_contact_phone || "").trim() || null,
+      hiring_contact_email: String(job.hiring_contact_email || "").trim() || null,
+      address: String(job.address || "").trim() || null,
+      city: String(job.city || "").trim() || null,
+      zip: String(job.zip || "").trim() || null,
+      pm_name: String(job.pm_name || "").trim() || null,
+      pm_phone: String(job.pm_phone || "").trim() || null,
+      default_rig: String(job.default_rig || "").trim() || null,
+      crane_required: !!job.crane_required,
+      is_active: job.is_active !== false,
+      estimated_days: intOrNull(job.estimated_days),
+      mob_days: intOrNull(job.mob_days),
+      actual_days: intOrNull(job.actual_days),
+      actual_mob_days: intOrNull(job.actual_mob_days),
+      bid_amount: numOrNull(job.bid_amount),
+      contract_amount: numOrNull(job.contract_amount),
+      pier_count: intOrNull(job.pier_count),
+      scope_description: String(job.scope_description || "").trim() || null,
+      job_status: String(job.job_status || "active").trim(),
+      start_date: dateOrNull(job.start_date),
+      end_date: dateOrNull(job.end_date),
+    };
+  };
 
   const normalizeJobMatchValue = (value) => normalizeJobText(value);
 
@@ -5625,22 +5652,100 @@ function CrewScheduler() {
                           className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                         />
                         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-                          <span>Status</span>
+                          <span>Job Status</span>
                           <select
-                            value={newJob.is_active ? "active" : "inactive"}
-                            onChange={(e) =>
-                              setNewJob({
-                                ...newJob,
-                                is_active: e.target.value === "active",
-                              })
-                            }
+                            value={newJob.job_status}
+                            onChange={(e) => setNewJob({ ...newJob, job_status: e.target.value })}
                             className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                           >
                             <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="bid">Bid</option>
+                            <option value="awarded">Awarded</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="on_hold">On Hold</option>
                           </select>
                         </label>
                       </div>
+
+                      {/* Duration & Scope */}
+                      <div className="mt-3 border-t border-neutral-100 pt-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Duration & Scope</p>
+                        <div className="grid gap-3 sm:grid-cols-4">
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Est. Days"
+                            value={newJob.estimated_days}
+                            onChange={(e) => setNewJob({ ...newJob, estimated_days: e.target.value })}
+                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Mob Days"
+                            value={newJob.mob_days}
+                            onChange={(e) => setNewJob({ ...newJob, mob_days: e.target.value })}
+                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Pier Count"
+                            value={newJob.pier_count}
+                            onChange={(e) => setNewJob({ ...newJob, pier_count: e.target.value })}
+                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Scope (e.g. 24in piers to 30ft)"
+                            value={newJob.scope_description}
+                            onChange={(e) => setNewJob({ ...newJob, scope_description: e.target.value })}
+                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Financial & Dates */}
+                      <div className="mt-3 border-t border-neutral-100 pt-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Financial & Dates</p>
+                        <div className="grid gap-3 sm:grid-cols-4">
+                          <input
+                            type="text"
+                            placeholder="Bid Amount ($)"
+                            value={newJob.bid_amount}
+                            onChange={(e) => setNewJob({ ...newJob, bid_amount: e.target.value })}
+                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Contract Amount ($)"
+                            value={newJob.contract_amount}
+                            onChange={(e) => setNewJob({ ...newJob, contract_amount: e.target.value })}
+                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                          <label className="flex flex-col gap-1 text-xs font-medium text-neutral-500">
+                            Start Date
+                            <input
+                              type="date"
+                              value={newJob.start_date}
+                              onChange={(e) => setNewJob({ ...newJob, start_date: e.target.value })}
+                              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal text-neutral-900 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                            />
+                          </label>
+                          <label className="flex flex-col gap-1 text-xs font-medium text-neutral-500">
+                            End Date
+                            <input
+                              type="date"
+                              value={newJob.end_date}
+                              onChange={(e) => setNewJob({ ...newJob, end_date: e.target.value })}
+                              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal text-neutral-900 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
                       <div className="mt-3 flex items-center justify-between">
                         <label className="flex items-center gap-2 text-sm text-neutral-600">
                           <input
@@ -5698,22 +5803,58 @@ function CrewScheduler() {
                           <input type="text" placeholder="PM Phone" value={editingJob.pm_phone} onChange={(e) => setEditingJob({ ...editingJob, pm_phone: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
                           <input type="text" placeholder="Default Rig" value={editingJob.default_rig} onChange={(e) => setEditingJob({ ...editingJob, default_rig: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
                           <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-                            <span>Status</span>
+                            <span>Job Status</span>
                             <select
-                              value={editingJob.is_active ? "active" : "inactive"}
-                              onChange={(e) =>
-                                setEditingJob({
-                                  ...editingJob,
-                                  is_active: e.target.value === "active",
-                                })
-                              }
+                              value={editingJob.job_status || "active"}
+                              onChange={(e) => setEditingJob({ ...editingJob, job_status: e.target.value })}
                               className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                             >
                               <option value="active">Active</option>
-                              <option value="inactive">Inactive</option>
+                              <option value="bid">Bid</option>
+                              <option value="awarded">Awarded</option>
+                              <option value="scheduled">Scheduled</option>
+                              <option value="in_progress">In Progress</option>
+                              <option value="completed">Completed</option>
+                              <option value="on_hold">On Hold</option>
                             </select>
                           </label>
                         </div>
+                        {/* Duration & Scope */}
+                        <div className="mt-3 border-t border-blue-200 pt-3">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Duration & Scope</p>
+                          <div className="grid gap-3 sm:grid-cols-4">
+                            <input type="number" min="0" placeholder="Est. Days" value={editingJob.estimated_days || ""} onChange={(e) => setEditingJob({ ...editingJob, estimated_days: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                            <input type="number" min="0" placeholder="Mob Days" value={editingJob.mob_days || ""} onChange={(e) => setEditingJob({ ...editingJob, mob_days: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                            <input type="number" min="0" placeholder="Pier Count" value={editingJob.pier_count || ""} onChange={(e) => setEditingJob({ ...editingJob, pier_count: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                            <input type="text" placeholder="Scope Description" value={editingJob.scope_description || ""} onChange={(e) => setEditingJob({ ...editingJob, scope_description: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                          </div>
+                        </div>
+                        {/* Financial & Dates */}
+                        <div className="mt-3 border-t border-blue-200 pt-3">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Financial & Dates</p>
+                          <div className="grid gap-3 sm:grid-cols-4">
+                            <input type="text" placeholder="Bid Amount ($)" value={editingJob.bid_amount || ""} onChange={(e) => setEditingJob({ ...editingJob, bid_amount: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                            <input type="text" placeholder="Contract Amount ($)" value={editingJob.contract_amount || ""} onChange={(e) => setEditingJob({ ...editingJob, contract_amount: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                            <label className="flex flex-col gap-1 text-xs font-medium text-neutral-500">
+                              Start Date
+                              <input type="date" value={editingJob.start_date || ""} onChange={(e) => setEditingJob({ ...editingJob, start_date: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal text-neutral-900 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                            </label>
+                            <label className="flex flex-col gap-1 text-xs font-medium text-neutral-500">
+                              End Date
+                              <input type="date" value={editingJob.end_date || ""} onChange={(e) => setEditingJob({ ...editingJob, end_date: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal text-neutral-900 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                            </label>
+                          </div>
+                        </div>
+                        {/* Actuals (for completed jobs) */}
+                        {(editingJob.job_status === "completed" || editingJob.actual_days || editingJob.actual_mob_days) && (
+                          <div className="mt-3 border-t border-blue-200 pt-3">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Actuals</p>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <input type="number" min="0" placeholder="Actual Work Days" value={editingJob.actual_days || ""} onChange={(e) => setEditingJob({ ...editingJob, actual_days: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                              <input type="number" min="0" placeholder="Actual Mob Days" value={editingJob.actual_mob_days || ""} onChange={(e) => setEditingJob({ ...editingJob, actual_mob_days: e.target.value })} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500" />
+                            </div>
+                          </div>
+                        )}
                         <div className="mt-3 flex items-center justify-between">
                           <label className="flex items-center gap-2 text-sm text-neutral-600">
                             <input
@@ -5819,6 +5960,13 @@ function CrewScheduler() {
                                           Crane
                                         </span>
                                       )}
+                                      {job.job_status && job.job_status !== "active" && (
+                                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                          { bid: "bg-amber-50 text-amber-700", awarded: "bg-blue-50 text-blue-700", scheduled: "bg-violet-50 text-violet-700", in_progress: "bg-cyan-50 text-cyan-700", completed: "bg-emerald-50 text-emerald-700", on_hold: "bg-orange-50 text-orange-700" }[job.job_status] || "bg-neutral-100 text-neutral-700"
+                                        }`}>
+                                          {(job.job_status || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                                        </span>
+                                      )}
                                       <span
                                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                                           isJobActive
@@ -5865,6 +6013,38 @@ function CrewScheduler() {
                                     {job.customer_name && (
                                       <div className="mt-1 text-sm text-neutral-500">
                                         Customer: {job.customer_name}
+                                      </div>
+                                    )}
+                                    {(job.estimated_days || job.mob_days || job.pier_count || job.scope_description) && (
+                                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-500">
+                                        {job.estimated_days != null && (
+                                          <span className="rounded bg-neutral-100 px-1.5 py-0.5">{job.estimated_days}d est</span>
+                                        )}
+                                        {job.mob_days != null && (
+                                          <span className="rounded bg-neutral-100 px-1.5 py-0.5">{job.mob_days}d mob</span>
+                                        )}
+                                        {job.pier_count != null && (
+                                          <span className="rounded bg-neutral-100 px-1.5 py-0.5">{job.pier_count} piers</span>
+                                        )}
+                                        {job.scope_description && (
+                                          <span className="rounded bg-neutral-100 px-1.5 py-0.5">{job.scope_description}</span>
+                                        )}
+                                      </div>
+                                    )}
+                                    {(job.bid_amount || job.contract_amount || job.start_date) && (
+                                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-500">
+                                        {job.bid_amount != null && (
+                                          <span className="rounded bg-green-50 px-1.5 py-0.5 text-green-700">Bid: ${Number(job.bid_amount).toLocaleString()}</span>
+                                        )}
+                                        {job.contract_amount != null && (
+                                          <span className="rounded bg-green-50 px-1.5 py-0.5 text-green-700">Contract: ${Number(job.contract_amount).toLocaleString()}</span>
+                                        )}
+                                        {job.start_date && (
+                                          <span className="rounded bg-neutral-100 px-1.5 py-0.5">Start: {job.start_date}</span>
+                                        )}
+                                        {job.end_date && (
+                                          <span className="rounded bg-neutral-100 px-1.5 py-0.5">End: {job.end_date}</span>
+                                        )}
                                       </div>
                                     )}
 

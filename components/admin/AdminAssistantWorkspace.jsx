@@ -532,6 +532,7 @@ export default function AdminAssistantWorkspace({
   const [threadsLoading, setThreadsLoading] = useState(false);
   const [threadsExpanded, setThreadsExpanded] = useState(false);
   const [panelThreadsExpanded, setPanelThreadsExpanded] = useState(false);
+  const [mobileRailOpen, setMobileRailOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const prevMessageCountRef = useRef(0);
@@ -556,6 +557,10 @@ export default function AdminAssistantWorkspace({
       ? `${first.slice(0, 42)}${first.length > 42 ? "..." : ""}`
       : "New conversation";
   }, [messages]);
+  const otherThreads = useMemo(
+    () => threads.filter((thread) => thread.sessionId !== sessionId),
+    [sessionId, threads]
+  );
 
   useEffect(() => {
     setSessionId(getSessionId());
@@ -688,6 +693,7 @@ export default function AdminAssistantWorkspace({
     setInput("");
     setHistoryError("");
     setHistoryLoading(false);
+    setMobileRailOpen(false);
   };
 
   const switchThread = (targetSessionId) => {
@@ -695,6 +701,7 @@ export default function AdminAssistantWorkspace({
     setStoredSessionId(targetSessionId);
     setSessionId(targetSessionId);
     hasHydratedRef.current = false;
+    setMobileRailOpen(false);
     // Session change triggers the history-loading useEffect
   };
 
@@ -794,6 +801,7 @@ export default function AdminAssistantWorkspace({
 
       setMessages([welcomeMessage]);
       setHistoryError("");
+      setMobileRailOpen(false);
       fetchThreads();
     } catch (error) {
       setHistoryError(error.message || "Could not clear assistant history.");
@@ -845,6 +853,7 @@ export default function AdminAssistantWorkspace({
   const openWorkspace = useCallback((workspace, context = {}) => {
     setActiveWorkspace(workspace);
     setWorkspaceContext(context);
+    setMobileRailOpen(false);
   }, []);
 
   const closeWorkspace = useCallback(() => {
@@ -990,8 +999,8 @@ export default function AdminAssistantWorkspace({
             </div>
           ) : null}
           {(() => {
-            const panelOtherThreads = threads.filter((t) => t.sessionId !== sessionId);
-            if (!panelOtherThreads.length) return null;
+            if (!otherThreads.length) return null;
+            const panelOtherThreads = otherThreads;
             const panelVisible = panelThreadsExpanded ? panelOtherThreads : panelOtherThreads.slice(0, 3);
             return (
               <div className="mb-2 rounded-xl border border-neutral-100 bg-neutral-50 px-2 py-1.5">
@@ -1079,9 +1088,9 @@ export default function AdminAssistantWorkspace({
     const WorkspaceComponent = WORKSPACE_COMPONENTS[activeWorkspace] || null;
 
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:h-full xl:min-h-0 xl:grid-cols-[380px_minmax(0,1fr)] xl:grid-rows-1">
-        {/* Left: compact chat panel — hidden on mobile, visible on xl */}
-        <div className="relative z-10 hidden min-h-0 flex-col overflow-hidden border-r border-[#dbe4f0] bg-white xl:flex xl:h-full">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[320px_minmax(0,1fr)] lg:grid-rows-1 xl:rounded-[2.5rem] xl:grid-cols-[380px_minmax(0,1fr)]">
+        {/* Left: compact chat panel — hidden on phones, visible on tablet/desktop */}
+        <div className="relative z-10 hidden min-h-0 flex-col overflow-hidden border-r border-[#dbe4f0] bg-white lg:flex lg:h-full">
           <div className="flex items-center justify-between border-b border-neutral-200 bg-[#0b2a5a] px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white">
@@ -1164,7 +1173,7 @@ export default function AdminAssistantWorkspace({
         </div>
 
         {/* Right: workspace content */}
-        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto xl:h-full xl:min-h-0">
+        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto lg:h-full lg:min-h-0">
           <div className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-3 py-2 backdrop-blur">
             <button
               type="button"
@@ -1178,7 +1187,7 @@ export default function AdminAssistantWorkspace({
             </button>
             <div className="text-sm font-semibold text-neutral-700">{workspaceLabel}</div>
           </div>
-          <div className="p-4 md:p-6">
+          <div className="p-3 sm:p-4 md:p-6">
             {WorkspaceComponent ? <WorkspaceComponent /> : null}
           </div>
         </div>
@@ -1187,10 +1196,10 @@ export default function AdminAssistantWorkspace({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur xl:grid xl:h-full xl:min-h-0 xl:grid-cols-[300px_minmax(0,1fr)] xl:grid-rows-1 xl:rounded-[2.5rem]">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] lg:grid-rows-1 xl:rounded-[2.5rem] xl:grid-cols-[320px_minmax(0,1fr)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(11,42,90,0.05),_transparent_28%)]" />
 
-      <aside className="relative z-10 flex max-h-[min(520px,52vh)] min-h-0 shrink-0 flex-col overflow-hidden border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] xl:max-h-none xl:h-full xl:min-h-0 xl:border-b-0 xl:border-r">
+      <aside className="relative z-10 hidden min-h-0 shrink-0 flex-col overflow-hidden border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] lg:flex lg:h-full lg:max-h-none lg:min-h-0 lg:border-b-0 lg:border-r">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.28),_transparent_58%)]" />
 
         <div className="relative border-b border-[#dbe4f0] px-5 py-5">
@@ -1266,7 +1275,6 @@ export default function AdminAssistantWorkspace({
 
           {/* ── Previous conversations accordion ── */}
           {(() => {
-            const otherThreads = threads.filter((t) => t.sessionId !== sessionId);
             if (!otherThreads.length) return null;
             const collapsed = otherThreads.slice(0, 3);
             const shown = threadsExpanded ? otherThreads : collapsed;
@@ -1385,21 +1393,28 @@ export default function AdminAssistantWorkspace({
         </div>
       </aside>
 
-      <section className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)] xl:h-full xl:min-h-0">
+      <section className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)] lg:h-full lg:min-h-0">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_rgba(11,42,90,0.06),_transparent_62%)]" />
 
-        <header className="relative border-b border-[#dbe4f0] bg-white/80 px-6 py-4 backdrop-blur-sm md:px-8">
-          <div className="flex items-center justify-between gap-4">
+        <header className="relative border-b border-[#dbe4f0] bg-white/80 px-4 py-4 backdrop-blur-sm sm:px-5 md:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#dbe4f0] bg-white">
                 <img src="/att.png" alt="S&W" width="20" height="20" className="h-5 w-5 object-contain" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="text-sm font-bold text-neutral-900">S&W Assistant</div>
                 <div className="text-xs text-neutral-500">Ask anything about your operations</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMobileRailOpen((value) => !value)}
+                className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a] lg:hidden"
+              >
+                {mobileRailOpen ? "Hide tools" : "Tools"}
+              </button>
               {role && (
                 <span className="hidden rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1 text-xs font-medium text-neutral-600 sm:inline-flex">
                   {role}
@@ -1418,16 +1433,186 @@ export default function AdminAssistantWorkspace({
           </div>
         </header>
 
+        {mobileRailOpen ? (
+          <div className="relative z-10 border-b border-[#dbe4f0] bg-white/72 backdrop-blur-sm lg:hidden">
+            <div className="max-h-[min(58vh,34rem)] space-y-4 overflow-y-auto px-4 py-4 sm:px-5 md:px-6">
+              <section className="rounded-[1.35rem] border border-white/90 bg-white/92 p-4 shadow-[0_12px_28px_rgba(11,42,90,0.06)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a]/55">
+                      Guided workspace
+                    </div>
+                    <div className="mt-1 text-base font-bold tracking-tight text-neutral-950">
+                      S&W AI Assistant
+                    </div>
+                    <p className="mt-1 text-sm leading-6 text-neutral-500">
+                      Chat stays primary on smaller screens. Open workflows only when you need them.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={startNewConversation}
+                    className="shrink-0 rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18 hover:bg-white"
+                  >
+                    New chat
+                  </button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-1.5 text-xs font-semibold text-neutral-600">
+                    {visibleWorkflowModules.length} workflows
+                  </span>
+                  {role ? (
+                    <span className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-1.5 text-xs font-semibold text-neutral-600">
+                      {role}
+                    </span>
+                  ) : null}
+                  {department ? (
+                    <span className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-1.5 text-xs font-semibold text-neutral-600">
+                      {department}
+                    </span>
+                  ) : null}
+                </div>
+              </section>
+
+              <section className="rounded-[1.35rem] border border-[#dbe4f0] bg-white/90 p-4">
+                <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                  Thread
+                </div>
+                {hasUserMessages ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileRailOpen(false);
+                      inputRef.current?.focus();
+                    }}
+                    className="w-full rounded-[1.2rem] border border-[#0b2a5a]/18 bg-[#f8fbff] px-4 py-4 text-left"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="truncate text-sm font-semibold text-neutral-900">{conversationTitle}</div>
+                      <span className="rounded-full border border-[#dbe4f0] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0b2a5a]">
+                        Live
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm leading-6 text-neutral-500">
+                      Jump back into the active thread and keep working from chat.
+                    </div>
+                  </button>
+                ) : (
+                  <div className="rounded-[1.2rem] border border-dashed border-[#dbe4f0] bg-[#f8fbff] px-4 py-4 text-sm leading-6 text-neutral-500">
+                    No conversation history yet. Ask about scheduling, social content, hiring, contacts, or submissions to get started.
+                  </div>
+                )}
+              </section>
+
+              {otherThreads.length ? (
+                <section className="rounded-[1.35rem] border border-[#dbe4f0] bg-white/90 p-4">
+                  <button
+                    type="button"
+                    onClick={() => setThreadsExpanded((value) => !value)}
+                    className="mb-3 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400 hover:text-neutral-600"
+                  >
+                    <span>Previous conversations</span>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={`transition-transform ${threadsExpanded ? "rotate-180" : ""}`}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  <div className="space-y-2">
+                    {(threadsExpanded ? otherThreads : otherThreads.slice(0, 3)).map((thread) => (
+                      <button
+                        key={thread.sessionId}
+                        type="button"
+                        onClick={() => switchThread(thread.sessionId)}
+                        className="w-full rounded-xl border border-[#dbe4f0] bg-[#f8fbff] px-3 py-3 text-left transition-colors hover:border-[#0b2a5a]/14 hover:bg-white"
+                      >
+                        <div className="truncate text-sm font-medium text-neutral-800">
+                          {thread.title.length > 50 ? `${thread.title.slice(0, 50)}...` : thread.title}
+                        </div>
+                        <div className="mt-1 text-[11px] text-neutral-400">
+                          {new Date(thread.lastActivity).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  {otherThreads.length > 3 ? (
+                    <button
+                      type="button"
+                      onClick={() => setThreadsExpanded((value) => !value)}
+                      className="mt-2 w-full text-center text-xs font-semibold text-[#0b2a5a]/60 hover:text-[#0b2a5a]"
+                    >
+                      {threadsExpanded ? "Show less" : `Show all ${otherThreads.length} conversations`}
+                    </button>
+                  ) : null}
+                  {threadsLoading ? (
+                    <div className="mt-2 text-center text-xs text-neutral-400">Loading threads...</div>
+                  ) : null}
+                </section>
+              ) : null}
+
+              <section className="rounded-[1.35rem] border border-[#dbe4f0] bg-white/90 p-4">
+                <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                  Connected workflows
+                </div>
+                <div className="space-y-3">
+                  {visibleWorkflowModules.map((module) => {
+                    const styles = getModulePriorityStyles(module.priority);
+
+                    return (
+                      <Link
+                        key={module.href}
+                        href={module.href}
+                        onClick={() => setMobileRailOpen(false)}
+                        className={`group block rounded-[1rem] border border-[#dbe4f0] bg-[#f8fbff] px-3 py-3 transition-colors ${styles.card}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${styles.dot}`} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="text-sm font-semibold text-neutral-900 transition-colors group-hover:text-[#0b2a5a]">
+                                {module.label}
+                              </div>
+                              <span className={`rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] ${styles.badge}`}>
+                                {module.priority}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              {module.description}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            </div>
+          </div>
+        ) : null}
+
         <div className="relative flex-1 overflow-hidden">
           {historyLoading ? (
-            <div className="relative flex h-full items-center justify-center px-8">
+            <div className="relative flex h-full items-center justify-center px-4 sm:px-6 md:px-8">
               <div className="rounded-[1.7rem] border border-[#dbe4f0] bg-white/92 px-5 py-4 text-sm text-neutral-500 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
                 Loading assistant history...
               </div>
             </div>
           ) : hasUserMessages ? (
             <div className="relative flex h-full flex-col">
-              <div className="flex-1 overflow-y-auto px-6 py-7 md:px-8">
+              <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-5 sm:py-6 md:px-6 lg:px-8">
                 <div className="mx-auto max-w-5xl space-y-6">
                   {messages.map((message, index) => (
                     <div
@@ -1436,7 +1621,7 @@ export default function AdminAssistantWorkspace({
                     >
                       {message.role === "user" ? (
                         <div
-                          className="max-w-[78%] rounded-[1.65rem] rounded-tr-[0.55rem] bg-[linear-gradient(180deg,#143a75_0%,#0b2a5a_100%)] px-5 py-4 text-white shadow-[0_18px_40px_rgba(11,42,90,0.2)]"
+                          className="max-w-[88%] rounded-[1.4rem] rounded-tr-[0.5rem] bg-[linear-gradient(180deg,#143a75_0%,#0b2a5a_100%)] px-4 py-3 text-white shadow-[0_18px_40px_rgba(11,42,90,0.2)] sm:max-w-[80%] sm:rounded-[1.65rem] sm:rounded-tr-[0.55rem] sm:px-5 sm:py-4 lg:max-w-[78%]"
                           style={{ wordBreak: "break-word" }}
                         >
                           <span className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -1444,7 +1629,7 @@ export default function AdminAssistantWorkspace({
                           </span>
                         </div>
                       ) : (
-                        <div className="max-w-[84%]">
+                        <div className="max-w-[92%] sm:max-w-[88%] lg:max-w-[84%]">
                           <div className="mb-2 flex items-center gap-2 pl-1">
                             <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbe4f0] bg-white shadow-sm">
                               <img
@@ -1460,7 +1645,7 @@ export default function AdminAssistantWorkspace({
                             </div>
                           </div>
                           <div
-                            className="rounded-[1.65rem] rounded-tl-[0.55rem] border border-white/90 bg-white/92 px-5 py-4 text-neutral-800 shadow-[0_18px_50px_rgba(15,23,42,0.06)]"
+                            className="rounded-[1.4rem] rounded-tl-[0.5rem] border border-white/90 bg-white/92 px-4 py-3 text-neutral-800 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:rounded-[1.65rem] sm:rounded-tl-[0.55rem] sm:px-5 sm:py-4"
                             style={{ wordBreak: "break-word" }}
                           >
                             <FormattedMessage text={message.content} />
@@ -1489,7 +1674,7 @@ export default function AdminAssistantWorkspace({
 
                   {loading ? (
                     <div className="flex justify-start">
-                      <div className="max-w-[84%]">
+                      <div className="max-w-[92%] sm:max-w-[88%] lg:max-w-[84%]">
                         <div className="mb-2 flex items-center gap-2 pl-1">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbe4f0] bg-white shadow-sm">
                             <img
@@ -1504,7 +1689,7 @@ export default function AdminAssistantWorkspace({
                             S&W AI Assistant
                           </div>
                         </div>
-                        <div className="rounded-[1.65rem] rounded-tl-[0.55rem] border border-white/90 bg-white/92 px-5 py-4 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+                        <div className="rounded-[1.4rem] rounded-tl-[0.5rem] border border-white/90 bg-white/92 px-4 py-3 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:rounded-[1.65rem] sm:rounded-tl-[0.55rem] sm:px-5 sm:py-4">
                           <div className="flex gap-1.5">
                             <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-300" style={{ animationDelay: "0ms" }} />
                             <span className="h-2 w-2 animate-bounce rounded-full bg-neutral-300" style={{ animationDelay: "150ms" }} />
@@ -1519,7 +1704,7 @@ export default function AdminAssistantWorkspace({
                 </div>
               </div>
 
-              <div className="border-t border-[#dbe4f0] bg-white/74 px-5 py-5 backdrop-blur-sm md:px-6">
+              <div className="border-t border-[#dbe4f0] bg-white/74 px-4 py-4 backdrop-blur-sm sm:px-5 md:px-6">
                 {historyError ? (
                   <div className="mx-auto mb-3 max-w-5xl rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                     {historyError}
@@ -1528,7 +1713,7 @@ export default function AdminAssistantWorkspace({
 
                 <div className="mx-auto w-full max-w-5xl rounded-[1.9rem] border border-white/90 bg-white/88 p-3 shadow-[0_20px_50px_rgba(11,42,90,0.1)]">
                   {!loading && (
-                    <div className="mb-3 flex flex-wrap gap-2 px-1">
+                    <div className="mb-3 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
                       {featuredPromptCards.map((card) => (
                         <button
                           key={card.title}
@@ -1541,7 +1726,7 @@ export default function AdminAssistantWorkspace({
                       ))}
                     </div>
                   )}
-                  <div className="flex items-end gap-3 rounded-[1.5rem] border border-[#dbe4f0] bg-[#f7f9fc] p-2">
+                  <div className="flex items-end gap-2 rounded-[1.5rem] border border-[#dbe4f0] bg-[#f7f9fc] p-2 sm:gap-3">
                     <textarea
                       ref={inputRef}
                       rows={2}
@@ -1549,14 +1734,14 @@ export default function AdminAssistantWorkspace({
                       onChange={(event) => setInput(event.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Tell me what paper, email, or task is in front of you..."
-                      className="min-h-[60px] flex-1 resize-none rounded-[1.25rem] border border-transparent bg-transparent px-4 py-3 text-sm text-neutral-800 outline-none transition-all placeholder:text-neutral-400 focus:border-[#dbe4f0] focus:bg-white"
+                      className="min-h-[56px] flex-1 resize-none rounded-[1.25rem] border border-transparent bg-transparent px-3 py-2.5 text-sm text-neutral-800 outline-none transition-all placeholder:text-neutral-400 focus:border-[#dbe4f0] focus:bg-white sm:min-h-[60px] sm:px-4 sm:py-3"
                       disabled={loading || historyLoading}
                     />
                     <button
                       type="button"
                       onClick={() => sendMessage()}
                       disabled={!input.trim() || loading || historyLoading}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.15rem] bg-[linear-gradient(180deg,#143a75_0%,#0b2a5a_100%)] text-white shadow-[0_12px_28px_rgba(11,42,90,0.18)] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1.05rem] bg-[linear-gradient(180deg,#143a75_0%,#0b2a5a_100%)] text-white shadow-[0_12px_28px_rgba(11,42,90,0.18)] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 sm:h-12 sm:w-12 sm:rounded-[1.15rem]"
                       aria-label="Send message"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -1569,7 +1754,7 @@ export default function AdminAssistantWorkspace({
             </div>
           ) : (
             <div className="relative flex h-full flex-col">
-              <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 md:px-8">
+              <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-6 sm:py-10 md:px-8">
                 <div className="mx-auto w-full max-w-2xl text-center">
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#dbe4f0] bg-white shadow-sm">
                     <img
@@ -1585,11 +1770,11 @@ export default function AdminAssistantWorkspace({
                     {getGreeting(displayName)}
                   </h2>
                   <p className="mx-auto mt-2 max-w-md text-base leading-relaxed text-neutral-500">
-                    Tell me what you're working on and I'll help you get it into the system.
+                    Tell me what you&apos;re working on and I&apos;ll help you get it into the system.
                   </p>
                 </div>
 
-                <div className="mx-auto mt-8 grid w-full max-w-2xl gap-3 sm:grid-cols-3">
+                <div className="mx-auto mt-8 grid w-full max-w-2xl gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {featuredPromptCards.map((card) => (
                     <button
                       key={card.title}
@@ -1626,14 +1811,14 @@ export default function AdminAssistantWorkspace({
                 )}
               </div>
 
-              <div className="border-t border-[#dbe4f0] bg-white/80 px-5 py-5 backdrop-blur-sm md:px-6">
+              <div className="border-t border-[#dbe4f0] bg-white/80 px-4 py-4 backdrop-blur-sm sm:px-5 md:px-6">
                 {historyError ? (
                   <div className="mx-auto mb-3 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                     {historyError}
                   </div>
                 ) : null}
                 <div className="mx-auto w-full max-w-2xl">
-                  <div className="flex items-end gap-3 rounded-2xl border border-[#dbe4f0] bg-[#f7f9fc] p-2">
+                  <div className="flex items-end gap-2 rounded-2xl border border-[#dbe4f0] bg-[#f7f9fc] p-2 sm:gap-3">
                     <textarea
                       ref={inputRef}
                       rows={2}
@@ -1641,7 +1826,7 @@ export default function AdminAssistantWorkspace({
                       onChange={(event) => setInput(event.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Describe what's in front of you — a bid sheet, email, phone call..."
-                      className="min-h-[56px] flex-1 resize-none rounded-xl bg-transparent px-4 py-3 text-sm text-neutral-800 outline-none placeholder:text-neutral-400"
+                      className="min-h-[56px] flex-1 resize-none rounded-xl bg-transparent px-3 py-2.5 text-sm text-neutral-800 outline-none placeholder:text-neutral-400 sm:px-4 sm:py-3"
                       disabled={loading || historyLoading}
                     />
                     <button
