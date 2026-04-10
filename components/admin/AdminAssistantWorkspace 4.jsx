@@ -194,6 +194,33 @@ function getModulePriorityStyles(priority) {
   };
 }
 
+function getFeatureStatusMeta(status) {
+  if (status === "coming_soon") {
+    return {
+      label: "Coming soon",
+      styles: "border-amber-200 bg-amber-50 text-amber-700",
+    };
+  }
+
+  if (status === "beta") {
+    return {
+      label: "Beta",
+      styles: "border-violet-200 bg-violet-50 text-violet-700",
+    };
+  }
+
+  if (status === "hidden") {
+    return {
+      label: "Hidden",
+      styles: "border-neutral-200 bg-neutral-100 text-neutral-600",
+    };
+  }
+
+  return {
+    label: "Active",
+    styles: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  };
+}
 
 function renderInline(line) {
   const parts = String(line || "").split(/(\*\*[^*]+\*\*)/g);
@@ -336,6 +363,92 @@ const MODULE_TO_PAGE = {
   sales: "/admin/sales",
 };
 
+function SolutionForm({ initial, saving, onSave, onDelete }) {
+  const [title, setTitle] = useState(initial?.title || "");
+  const [description, setDescription] = useState(initial?.description || "");
+  const [priority, setPriority] = useState(initial?.priority || "support");
+  const [status, setStatus] = useState(initial?.status || "active");
+  const [statusNote, setStatusNote] = useState(initial?.status_note || "");
+  const [href, setHref] = useState(initial?.href || "");
+  const [sortOrder, setSortOrder] = useState(initial?.sort_order ?? 99);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = {
+      title,
+      description,
+      priority,
+      status,
+      status_note: statusNote,
+      href,
+      sort_order: Number(sortOrder),
+    };
+    if (initial?.id) payload.id = initial.id;
+    onSave(payload);
+  };
+
+  const fieldClass = "w-full rounded-xl border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-2.5 text-sm text-neutral-800 outline-none transition-all focus:border-[#0b2a5a] focus:bg-white focus:ring-1 focus:ring-[#0b2a5a]/10";
+  const labelClass = "block text-xs font-semibold text-neutral-600 mb-1.5";
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className={labelClass}>Title</label>
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={fieldClass} placeholder="e.g. Crew Scheduler" required />
+        </div>
+        <div>
+          <label className={labelClass}>Link (optional)</label>
+          <input type="text" value={href} onChange={(e) => setHref(e.target.value)} className={fieldClass} placeholder="/admin/crew-scheduler" />
+        </div>
+      </div>
+      <div>
+        <label className={labelClass}>Description</label>
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} className={`${fieldClass} min-h-[60px] resize-none`} placeholder="What this tool does..." />
+      </div>
+      <div>
+        <label className={labelClass}>Status note</label>
+        <textarea value={statusNote} onChange={(e) => setStatusNote(e.target.value)} className={`${fieldClass} min-h-[48px] resize-none`} placeholder="e.g. In development — targeting next week launch" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div>
+          <label className={labelClass}>Priority</label>
+          <select value={priority} onChange={(e) => setPriority(e.target.value)} className={fieldClass}>
+            <option value="primary">Primary</option>
+            <option value="secondary">Secondary</option>
+            <option value="support">Support</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Status</label>
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className={fieldClass}>
+            <option value="active">Active</option>
+            <option value="coming_soon">Coming soon</option>
+            <option value="beta">Beta</option>
+            <option value="hidden">Hidden</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Sort order</label>
+          <input type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className={fieldClass} min="0" />
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-2">
+        <div>
+          {onDelete && (
+            <button type="button" onClick={onDelete} disabled={saving} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-50">
+              Delete
+            </button>
+          )}
+        </div>
+        <button type="submit" disabled={saving || !title.trim()} className="rounded-xl bg-[linear-gradient(180deg,#143a75_0%,#0b2a5a_100%)] px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:opacity-50">
+          {saving ? "Saving..." : initial?.id ? "Update" : "Create"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export default function AdminAssistantWorkspace({
   variant = "page",
   onClose,
@@ -389,6 +502,11 @@ export default function AdminAssistantWorkspace({
   const [threadsLoading, setThreadsLoading] = useState(false);
   const [threadsExpanded, setThreadsExpanded] = useState(false);
   const [panelThreadsExpanded, setPanelThreadsExpanded] = useState(false);
+  const [solutionFeatures, setSolutionFeatures] = useState([]);
+  const [sliderIndex, setSliderIndex] = useState(0);
+  const [editingFeature, setEditingFeature] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [featureSaving, setFeatureSaving] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const prevMessageCountRef = useRef(0);
@@ -536,6 +654,58 @@ export default function AdminAssistantWorkspace({
     if (!historyLoading) fetchThreads();
   }, [historyLoading, fetchThreads]);
 
+  // Fetch data-driven feature catalog for the Solutions slider
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin-features", { credentials: "same-origin" })
+      .then((r) => r.json())
+      .then((d) => { if (active && d?.features) setSolutionFeatures(d.features); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  // Keep the selected feature index in range as the catalog changes.
+  const visibleFeatures = useMemo(
+    () => solutionFeatures.filter((f) => f.status !== "hidden"),
+    [solutionFeatures]
+  );
+  useEffect(() => {
+    if (!visibleFeatures.length) {
+      if (sliderIndex !== 0) setSliderIndex(0);
+      return;
+    }
+
+    if (sliderIndex >= visibleFeatures.length) {
+      setSliderIndex(0);
+    }
+  }, [sliderIndex, visibleFeatures.length]);
+  const currentFeature = visibleFeatures[sliderIndex] || visibleFeatures[0] || null;
+  const currentFeatureStatus = useMemo(
+    () => getFeatureStatusMeta(currentFeature?.status),
+    [currentFeature]
+  );
+  const workflowProfilePrompt = useMemo(
+    () => visiblePromptCards.find((card) => card.title === "Teach how I work")?.prompt || "Interview me about my role and how you can help.",
+    [visiblePromptCards]
+  );
+  const solutionsStatusPrompt = useMemo(
+    () => visiblePromptCards.find((card) => card.title === "Ask about solutions")?.prompt || "What solutions and tools are available right now, and what is the status of each?",
+    [visiblePromptCards]
+  );
+  const solutionSummary = useMemo(
+    () =>
+      visibleFeatures.reduce(
+        (summary, feature) => {
+          summary.total += 1;
+          if (feature.status === "beta") summary.beta += 1;
+          else if (feature.status === "coming_soon") summary.pipeline += 1;
+          else summary.active += 1;
+          return summary;
+        },
+        { total: 0, active: 0, beta: 0, pipeline: 0 }
+      ),
+    [visibleFeatures]
+  );
 
   const startNewConversation = () => {
     const nextSessionId = createSessionId();
@@ -656,6 +826,52 @@ export default function AdminAssistantWorkspace({
       setHistoryError(error.message || "Could not clear assistant history.");
     }
   };
+
+  const refreshFeatures = useCallback(async () => {
+    try {
+      const r = await fetch("/api/admin-features", { credentials: "same-origin" });
+      const d = await r.json();
+      if (d?.features) setSolutionFeatures(d.features);
+    } catch { /* non-critical */ }
+  }, []);
+
+  const saveFeature = useCallback(async (featureData) => {
+    setFeatureSaving(true);
+    try {
+      const isNew = !featureData.id;
+      const res = await fetch("/api/admin-features", {
+        method: isNew ? "POST" : "PUT",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(featureData),
+      });
+      if (res.ok) {
+        await refreshFeatures();
+        setEditingFeature(null);
+        setShowAddForm(false);
+      }
+    } catch { /* handled */ } finally {
+      setFeatureSaving(false);
+    }
+  }, [refreshFeatures]);
+
+  const deleteFeature = useCallback(async (id) => {
+    setFeatureSaving(true);
+    try {
+      const res = await fetch("/api/admin-features", {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        await refreshFeatures();
+        setEditingFeature(null);
+      }
+    } catch { /* handled */ } finally {
+      setFeatureSaving(false);
+    }
+  }, [refreshFeatures]);
 
   const handleSurfaceComplete = useCallback(({
     surfaceId,
@@ -936,9 +1152,9 @@ export default function AdminAssistantWorkspace({
     const WorkspaceComponent = WORKSPACE_COMPONENTS[activeWorkspace] || null;
 
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:h-full xl:min-h-0 xl:grid-cols-[380px_minmax(0,1fr)] xl:grid-rows-1">
+      <div className="relative overflow-hidden rounded-[1.5rem] border border-white/85 bg-[#f4f7fb]/92 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[380px_minmax(0,1fr)]">
         {/* Left: compact chat panel — hidden on mobile, visible on xl */}
-        <div className="relative z-10 hidden min-h-0 flex-col overflow-hidden border-r border-[#dbe4f0] bg-white xl:flex xl:h-full">
+        <div className="relative z-10 hidden flex-col border-r border-[#dbe4f0] bg-white xl:flex">
           <div className="flex items-center justify-between border-b border-neutral-200 bg-[#0b2a5a] px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white">
@@ -1021,7 +1237,7 @@ export default function AdminAssistantWorkspace({
         </div>
 
         {/* Right: workspace content */}
-        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto xl:h-full xl:min-h-0">
+        <div className="relative z-10 overflow-y-auto">
           <div className="sticky top-0 z-20 flex items-center justify-between border-b border-neutral-200 bg-white/95 px-3 py-2 backdrop-blur">
             <button
               type="button"
@@ -1044,10 +1260,10 @@ export default function AdminAssistantWorkspace({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur xl:grid xl:h-full xl:min-h-0 xl:grid-cols-[300px_minmax(0,1fr)] xl:grid-rows-1 xl:rounded-[2.5rem]">
+    <div className="relative overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur xl:rounded-[2.5rem] xl:grid xl:min-h-[calc(100vh-3rem)] xl:grid-cols-[300px_minmax(0,1fr)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(11,42,90,0.05),_transparent_28%)]" />
 
-      <aside className="relative z-10 flex max-h-[min(520px,52vh)] min-h-0 shrink-0 flex-col overflow-hidden border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] xl:max-h-none xl:h-full xl:min-h-0 xl:border-b-0 xl:border-r">
+      <aside className="relative z-10 flex flex-col border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] xl:border-b-0 xl:border-r">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.28),_transparent_58%)]" />
 
         <div className="relative border-b border-[#dbe4f0] px-5 py-5">
@@ -1242,35 +1458,43 @@ export default function AdminAssistantWorkspace({
         </div>
       </aside>
 
-      <section className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)] xl:h-full xl:min-h-0">
+      <section className="relative z-10 flex min-h-[780px] flex-col bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)]">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_rgba(11,42,90,0.06),_transparent_62%)]" />
 
-        <header className="relative border-b border-[#dbe4f0] bg-white/80 px-6 py-4 backdrop-blur-sm md:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#dbe4f0] bg-white">
-                <img src="/att.png" alt="S&W" width="20" height="20" className="h-5 w-5 object-contain" />
+        <header className="relative border-b border-[#dbe4f0] bg-white/56 px-6 py-6 backdrop-blur-sm md:px-8 md:py-7">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="inline-flex rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm">
+                Start Here
               </div>
-              <div>
-                <div className="text-sm font-bold text-neutral-900">S&W Assistant</div>
-                <div className="text-xs text-neutral-500">Ask anything about your operations</div>
-              </div>
+              <h1 className="mt-3 text-2xl font-black tracking-[-0.04em] text-neutral-950 md:text-[2.35rem]">
+                Move one paper step into the system.
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-neutral-500 md:text-base">
+                Start with the paper, email, or task in front of you. The assistant suggests the
+                next step, stays inside your role permissions, and opens the standard workflow when
+                you are ready to review or edit details.
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              {role && (
-                <span className="hidden rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1 text-xs font-medium text-neutral-600 sm:inline-flex">
-                  {role}
+
+            <div className="flex flex-wrap items-center gap-2 lg:max-w-[40%] lg:justify-end">
+              <span className="rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1.5 text-xs font-semibold text-neutral-600">
+                {visibleWorkflowModules.length} available workflows
+              </span>
+              {hasUserMessages ? (
+                <span className="rounded-full border border-[#dbe4f0] bg-white/88 px-3 py-1.5 text-xs font-semibold text-neutral-600">
+                  {conversationTitle}
                 </span>
-              )}
-              {hasUserMessages && (
+              ) : null}
+              {hasUserMessages ? (
                 <button
                   type="button"
                   onClick={clearHistory}
-                  className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
+                  className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
                 >
-                  New chat
+                  Clear conversation
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         </header>
@@ -1426,95 +1650,301 @@ export default function AdminAssistantWorkspace({
             </div>
           ) : (
             <div className="relative flex h-full flex-col">
-              <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 md:px-8">
-                <div className="mx-auto w-full max-w-2xl text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#dbe4f0] bg-white shadow-sm">
-                    <img
-                      src="/att.png"
-                      alt="S&W Foundation"
-                      width="40"
-                      height="40"
-                      className="h-10 w-10 object-contain"
-                    />
+              <div className="flex-1 overflow-y-auto px-6 py-8 md:px-8">
+                <div className="mx-auto max-w-5xl space-y-6 pb-8">
+                  <div className="relative overflow-hidden rounded-[2.5rem] border border-white/85 bg-[linear-gradient(115deg,rgba(185,28,28,0.72)_0%,rgba(255,255,255,0.97)_35%,rgba(255,255,255,0.94)_63%,rgba(11,42,90,0.8)_100%)] px-6 py-10 shadow-[0_26px_80px_rgba(15,23,42,0.09)] md:px-8 md:py-12">
+                    <div className="pointer-events-none absolute inset-0 opacity-[0.62]">
+                      <GridPatternTailwind
+                        yOffset={18}
+                        className="h-full w-full"
+                        patternStroke="#ffffff"
+                        patternOpacity={0.54}
+                        blockFill="#ffffff"
+                        blockOpacity={0.1}
+                      />
+                    </div>
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.5),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.22),_transparent_22%)]" />
+
+                    <div className="relative mx-auto max-w-4xl text-center">
+                      <div className="inline-flex rounded-full border border-white/60 bg-white/76 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0b2a5a] shadow-sm backdrop-blur-sm">
+                        S&W Operations Hub
+                      </div>
+
+                      <div className="relative mx-auto mt-6 flex w-full max-w-[18rem] justify-center">
+                        <div className="pointer-events-none absolute inset-x-6 top-1/2 h-20 -translate-y-1/2 rounded-full bg-gradient-to-r from-red-700/18 via-white/70 to-[#0b2a5a]/22 blur-3xl" />
+                        <div className="relative flex h-36 w-36 items-center justify-center rounded-[2.4rem] border border-white/72 bg-gradient-to-r from-red-700 via-white to-[#0b2a5a] shadow-[0_24px_70px_rgba(11,42,90,0.2)]">
+                          <div className="absolute inset-[1px] rounded-[2.3rem] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.34),_transparent_44%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]" />
+                          <div className="absolute inset-3 overflow-hidden rounded-[1.8rem] border border-white/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.03))]">
+                            <GridPatternTailwind
+                              yOffset={28}
+                              className="h-full w-full opacity-[0.5]"
+                              patternStroke="#ffffff"
+                              patternOpacity={0.4}
+                              blockFill="#ffffff"
+                              blockOpacity={0.16}
+                            />
+                          </div>
+                          <div className="absolute inset-0 rounded-[2.4rem] bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.42),transparent_30%),radial-gradient(circle_at_78%_78%,rgba(11,42,90,0.18),transparent_28%)]" />
+                          <div className="relative flex h-24 w-24 items-center justify-center rounded-[1.7rem] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(237,244,255,0.9))] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_18px_30px_rgba(11,42,90,0.14)]">
+                            <img
+                              src="/att.png"
+                              alt="S&W Foundation"
+                              width="72"
+                              height="72"
+                              className="h-16 w-16 object-contain drop-shadow-[0_10px_18px_rgba(11,42,90,0.18)]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <h2 className="mt-8 text-4xl font-black tracking-[-0.05em] text-neutral-950 md:text-[3.5rem]">
+                        {getGreeting(displayName)}
+                      </h2>
+                      <p className="mx-auto mt-4 max-w-3xl text-sm leading-8 text-neutral-700 md:text-[1.05rem]">
+                        Bring the paper form, text message, email, or note into one guided system.
+                        Start the conversation in plain language and let the assistant suggest the
+                        next step before opening the full workflow.
+                      </p>
+                    </div>
                   </div>
 
-                  <h2 className="mt-5 text-2xl font-bold tracking-tight text-neutral-900 md:text-3xl">
-                    {getGreeting(displayName)}
-                  </h2>
-                  <p className="mx-auto mt-2 max-w-md text-base leading-relaxed text-neutral-500">
-                    Tell me what you're working on and I'll help you get it into the system.
-                  </p>
-                </div>
+                  <div className="-mt-2 rounded-[1.75rem] border border-[#dbe4f0] bg-white/94 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-neutral-700">
+                          {visibleWorkflowModules.length} workflows available
+                        </span>
+                        {role ? (
+                          <span className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700">
+                            Role: {role}
+                          </span>
+                        ) : null}
+                        {department ? (
+                          <span className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700">
+                            Department: {department}
+                          </span>
+                        ) : null}
+                      </div>
 
-                <div className="mx-auto mt-8 grid w-full max-w-2xl gap-3 sm:grid-cols-3">
-                  {featuredPromptCards.map((card) => (
-                    <button
-                      key={card.title}
-                      type="button"
-                      onClick={() => sendMessage(card.prompt)}
-                      className="group rounded-2xl border border-[#dbe4f0] bg-white p-4 text-left transition-all hover:border-[#0b2a5a]/20 hover:shadow-md"
-                    >
-                      <div className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
-                        {card.eyebrow}
+                      {/* Guided flow for 'Teach how I work' */}
+                      <div className="rounded-[1.25rem] border border-[#dbe4f0] bg-gradient-to-br from-[#f8fbff] to-white p-5">
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#143a75] to-[#0b2a5a] text-white shadow-sm">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 2v20M2 12h20" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-base font-bold text-neutral-900">Quick Start: Teach Me How You Work</h3>
+                            <p className="mt-1 text-sm text-neutral-600">
+                              Let me learn your workflow to provide better assistance. I'll ask about your role, daily tasks, and pain points.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => sendMessage(workflowProfilePrompt)}
+                              className="mt-3 rounded-full bg-gradient-to-r from-[#143a75] to-[#0b2a5a] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:shadow-md hover:scale-[1.02]"
+                            >
+                              Start Workflow Interview →
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="mt-2 text-sm font-semibold text-neutral-900 group-hover:text-[#0b2a5a]">
-                        {card.title}
-                      </div>
-                      <div className="mt-1 text-xs leading-relaxed text-neutral-500">
-                        {card.description}
-                      </div>
-                    </button>
-                  ))}
-                </div>
 
-                {supportingPromptCards.length > 0 && (
-                  <div className="mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-2">
-                    {supportingPromptCards.map((card) => (
-                      <button
-                        key={card.title}
-                        type="button"
-                        onClick={() => sendMessage(card.prompt)}
-                        className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/20 hover:text-[#0b2a5a]"
-                      >
-                        {card.title}
-                      </button>
-                    ))}
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
+            </div>
+          ) : (
+                                More things I can help with
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {supportingPromptCards.map((card) => (
+                                  <button
+                                    key={card.title}
+                                    type="button"
+                                    onClick={() => sendMessage(card.prompt)}
+                                    className="rounded-full border border-[#dbe4f0] bg-[#f7f9fc] px-3 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
+                                  >
+                                    {card.title}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
 
-              <div className="border-t border-[#dbe4f0] bg-white/80 px-5 py-5 backdrop-blur-sm md:px-6">
-                {historyError ? (
-                  <div className="mx-auto mb-3 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    {historyError}
-                  </div>
-                ) : null}
-                <div className="mx-auto w-full max-w-2xl">
-                  <div className="flex items-end gap-3 rounded-2xl border border-[#dbe4f0] bg-[#f7f9fc] p-2">
-                    <textarea
-                      ref={inputRef}
-                      rows={2}
-                      value={input}
-                      onChange={(event) => setInput(event.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Describe what's in front of you — a bid sheet, email, phone call..."
-                      className="min-h-[56px] flex-1 resize-none rounded-xl bg-transparent px-4 py-3 text-sm text-neutral-800 outline-none placeholder:text-neutral-400"
-                      disabled={loading || historyLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => sendMessage()}
-                      disabled={!input.trim() || loading || historyLoading}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0b2a5a] text-white transition-all hover:bg-[#143a75] disabled:opacity-40"
-                      aria-label="Send message"
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="mt-2 text-center text-[11px] text-neutral-400">
-                    Just describe it in plain words. The assistant will suggest the next step.
+                        <div className="mt-4 rounded-[1.75rem] border border-[#dbe4f0] bg-[#f7f9fc] p-4 lg:mt-auto">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                                Start with the source material
+                              </div>
+                              <div className="mt-1 text-sm text-neutral-500">
+                                Describe the paper, email, or request and the assistant will suggest the next step.
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {featuredPromptCards.map((card) => (
+                                <button
+                                  key={card.title}
+                                  type="button"
+                                  onClick={() => sendMessage(card.prompt)}
+                                  className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a]"
+                                >
+                                  {card.title}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="mt-4 flex items-end gap-3 rounded-[1.5rem] border border-[#dbe4f0] bg-white p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                            <textarea
+                              ref={inputRef}
+                              rows={2}
+                              value={input}
+                              onChange={(event) => setInput(event.target.value)}
+                              onKeyDown={handleKeyDown}
+                              placeholder="Tell me what paper, email, or task is in front of you..."
+                              className="min-h-[60px] flex-1 resize-none rounded-[1.25rem] border border-transparent bg-transparent px-4 py-3 text-sm text-neutral-800 outline-none transition-all placeholder:text-neutral-400 focus:border-[#dbe4f0] focus:bg-[#fbfdff]"
+                              disabled={loading || historyLoading}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => sendMessage()}
+                              disabled={!input.trim() || loading || historyLoading}
+                              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.15rem] bg-[linear-gradient(180deg,#143a75_0%,#0b2a5a_100%)] text-white shadow-[0_12px_28px_rgba(11,42,90,0.18)] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
+                              aria-label="Send message"
+                            >
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="mt-3 px-1 text-center text-[11px] font-medium text-neutral-400">
+                            Start with the source material. The assistant will suggest the next step and bring in the right workflow when needed.
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex h-full flex-col rounded-[1.65rem] border border-[#dbe4f0] bg-[#fcfdff] p-5">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-400">
+                          Solutions pipeline
+                        </div>
+                        <div className="mt-1 text-base font-semibold text-neutral-900">
+                          Track what gets built and how it rolls out.
+                        </div>
+                        <div className="mt-3 text-sm leading-6 text-neutral-500">
+                          Use workflow interviews and assistant history to spot paper or spreadsheet friction,
+                          then stage tools by status and grant access when the team is ready.
+                        </div>
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                              Tracked
+                            </div>
+                            <div className="mt-2 text-2xl font-bold tracking-tight text-neutral-950">
+                              {solutionSummary.total}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              solutions in the catalog
+                            </div>
+                          </div>
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                              Live
+                            </div>
+                            <div className="mt-2 text-2xl font-bold tracking-tight text-neutral-950">
+                              {solutionSummary.active}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              active tools available now
+                            </div>
+                          </div>
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                              Pipeline
+                            </div>
+                            <div className="mt-2 text-2xl font-bold tracking-tight text-neutral-950">
+                              {solutionSummary.beta + solutionSummary.pipeline}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              beta or coming soon
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 space-y-3">
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-sm font-semibold text-neutral-900">
+                              Gather workflow input
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              Have team members describe how they currently work so tool ideas come from real friction, not guesses.
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => sendMessage(workflowProfilePrompt)}
+                              className="mt-3 rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18"
+                            >
+                              Teach how I work
+                            </button>
+                          </div>
+
+                          <div className="rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-sm font-semibold text-neutral-900">
+                              Review rollout status
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              Check which tools are live, which are still in beta, and what needs access decisions before rollout.
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => sendMessage(solutionsStatusPrompt)}
+                              className="mt-3 rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18"
+                            >
+                              Ask about solutions
+                            </button>
+                          </div>
+                        </div>
+
+                        {currentFeature ? (
+                          <div className="mt-auto rounded-[1rem] border border-[#dbe4f0] bg-white px-3 py-3">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                              Current focus
+                            </div>
+                            <div className="mt-2 text-sm font-semibold text-neutral-900">
+                              {currentFeature.title}
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-neutral-500">
+                              {currentFeature.status_note || currentFeature.description}
+                            </div>
+                            {currentFeature.href && currentFeature.href !== "#" ? (
+                              <Link
+                                href={currentFeature.href}
+                                className="mt-3 inline-flex rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:border-[#0b2a5a]/18"
+                              >
+                                Open {currentFeature.title}
+                              </Link>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div className="mt-auto rounded-[1rem] border border-dashed border-[#dbe4f0] bg-white px-3 py-4 text-sm text-neutral-500">
+                            Add a few solution cards here so the team can see what is live, what is in beta, and what is coming next.
+                          </div>
+                        )}
+
+                        <div className="mt-3 border-t border-[#e8eef5] pt-3">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                            Access stays role-based
+                          </div>
+                          <div className="mt-1 text-xs leading-5 text-neutral-500">
+                            Direct workflows stay available from the left rail based on each user&apos;s role and access level.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
