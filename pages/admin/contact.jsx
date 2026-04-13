@@ -313,7 +313,7 @@ function ContactTW() {
         return;
       }
       setSelectedSubmission(null);
-      router.push("/admin/sales?tab=pipeline");
+      alert("Added to the sales pipeline. You can keep reviewing submissions here or manage it from the assistant chat.");
     } finally {
       setPromoteLoading(false);
     }
@@ -672,5 +672,4 @@ ContactTW.getLayout = function getLayout(page) {
 };
 
 export default withAuthTw(ContactTW);
-
 

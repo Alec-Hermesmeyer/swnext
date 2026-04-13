@@ -1,7 +1,11 @@
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { routeAdminAssistantRequest } from "@/lib/admin-assistant-direct-router";
-import { buildAssistantSurface, buildScheduleOverviewForDates } from "@/lib/admin-assistant-surfaces";
+import {
+  buildAssistantSurface,
+  buildSalesPipelineListSurface,
+  buildScheduleOverviewForDates,
+} from "@/lib/admin-assistant-surfaces";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
 import {
   hasToolAccess,
@@ -11,7 +15,11 @@ import {
   READ_ONLY_ASSISTANT_TOOLS,
   canAccessSalesPipeline,
 } from "@/lib/roles";
-import { filterSalesOpportunitiesForUser, isSalesRole } from "@/lib/sales-pipeline-access";
+import {
+  canMutateSalesOpportunity,
+  filterSalesOpportunitiesForUser,
+  isSalesRole,
+} from "@/lib/sales-pipeline-access";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -756,6 +764,40 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "update_sales_opportunity",
+      description:
+        "Update an existing pre-award sales opportunity in the internal pipeline. Use when the user wants to change the stage, dates, owner, value, notes, or contact details for a deal already in the pipeline. Use the opportunity_id from the SALES OPPORTUNITIES list in the system prompt.",
+      parameters: {
+        type: "object",
+        properties: {
+          opportunity_id: {
+            type: "string",
+            description: "The UUID for the opportunity from the SALES OPPORTUNITIES list",
+          },
+          title: { type: "string", description: "Updated short name for the opportunity" },
+          company: { type: "string", description: "Updated client or GC name" },
+          contact_name: { type: "string" },
+          contact_email: { type: "string" },
+          contact_phone: { type: "string" },
+          owner_name: { type: "string", description: "Estimator or owner name" },
+          stage: {
+            type: "string",
+            description: "Updated pipeline stage",
+            enum: ["qualify", "pursuing", "quoted", "negotiation", "won", "lost"],
+          },
+          value_estimate: { type: "number", description: "Estimated contract value in USD" },
+          bid_due: { type: "string", description: "Bid due date YYYY-MM-DD" },
+          next_follow_up: { type: "string", description: "Next follow-up date YYYY-MM-DD" },
+          notes: { type: "string" },
+          lost_reason: { type: "string" },
+        },
+        required: ["opportunity_id"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
@@ -787,6 +829,18 @@ function setCachedDataContext(modules, userId, data) {
       if (now - v.ts > DATA_CACHE_TTL) DATA_CACHE.delete(k);
     }
   }
+}
+
+async function fetchLevel1SalesUserIdsForUser(userContext) {
+  if (!isSalesRole(userContext?.role)) return [];
+
+  const { data: rows } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("role", "sales")
+    .eq("access_level", 1);
+
+  return (rows || []).map((p) => p.id).filter(Boolean);
 }
 
 const capLines = (lines, max) => {
@@ -1197,7 +1251,12 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
     bid_due: r.bid_due,
     next_follow_up: r.next_follow_up,
     contact_name: r.contact_name || "",
+    contact_email: r.contact_email || "",
+    contact_phone: r.contact_phone || "",
     owner_name: r.owner_name || "",
+    notes: r.notes || "",
+    lost_reason: r.lost_reason || "",
+    updated_at: r.updated_at || null,
   }));
 
   const result = {
@@ -1617,7 +1676,7 @@ ${linesOrFallback(
       o.value_estimate != null && o.value_estimate !== ""
         ? ` | est ${Number(o.value_estimate).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`
         : "";
-    return `- ${o.title}${o.company ? ` | ${o.company}` : ""} | stage: ${o.stage}${money}`;
+    return `- [${o.id}] ${o.title}${o.company ? ` | ${o.company}` : ""} | stage: ${o.stage}${money}${o.owner_name ? ` | owner: ${o.owner_name}` : ""}${o.bid_due ? ` | bid due: ${o.bid_due}` : ""}${o.next_follow_up ? ` | follow-up: ${o.next_follow_up}` : ""}`;
   }),
   "None in your visible list."
 )}
@@ -1738,7 +1797,7 @@ RULES:
 - If asked about a date inside the window but there is no matching schedule/assignment, say no schedule is recorded for that date.
 - Use plain language and keep responses short.
 - When listing a day, group by rig/category.
-- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, and create_sales_opportunity for the pre-award pipeline.
+- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, and create_sales_opportunity / update_sales_opportunity for the pre-award pipeline.
 - For contact-form spam control, use add_spam_block_rule, list_spam_block_rules, toggle_spam_block_rule, and remove_spam_block_rule.
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
 - You can finalize schedules, send schedule emails, send packets, and update job progress. Always confirm with the user before finalizing or sending emails/packets.
@@ -1985,6 +2044,34 @@ export default async function handler(req, res) {
               }
             : toolArgs;
 
+        if (toolCall.function.name === "update_sales_opportunity") {
+          const opportunityId = String(toolArgs.opportunity_id || toolArgs.id || "").trim();
+          const { data: existingOpportunity, error: existingOpportunityError } = await supabase
+            .from("sales_opportunities")
+            .select("*")
+            .eq("id", opportunityId)
+            .single();
+
+          if (existingOpportunityError || !existingOpportunity) {
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: false, error: "Sales opportunity not found." }),
+            });
+            continue;
+          }
+
+          const level1SalesUserIds = await fetchLevel1SalesUserIdsForUser(userContext);
+          if (!canMutateSalesOpportunity(existingOpportunity, userContext, level1SalesUserIds)) {
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: false, error: "You do not have permission to update this opportunity." }),
+            });
+            continue;
+          }
+        }
+
         const toolResult = await executeAdminAssistantMutation(
           supabase,
           toolCall.function.name,
@@ -2015,6 +2102,23 @@ export default async function handler(req, res) {
       }
     }
 
+    const toolsCalled = actionsPerformed
+      ? messages
+          .filter((m) => m?.tool_calls)
+          .flatMap((m) => m.tool_calls.map((tc) => tc.function?.name))
+          .filter(Boolean)
+      : [];
+
+    if (
+      !surface &&
+      toolsCalled.some((toolName) =>
+        toolName === "create_sales_opportunity" || toolName === "update_sales_opportunity"
+      )
+    ) {
+      const freshData = await fetchDataContext(allowedModules, { skipCache: true, userContext });
+      surface = buildSalesPipelineListSurface(freshData, { writeAccessEnabled });
+    }
+
     if (!surface) {
       surface = buildAssistantSurface({
         message,
@@ -2033,12 +2137,6 @@ export default async function handler(req, res) {
 
     // Enrich metadata for analytics
     const affectedDates = actionsPerformed ? collectAffectedDates(messages) : [];
-    const toolsCalled = actionsPerformed
-      ? messages
-          .filter((m) => m?.tool_calls)
-          .flatMap((m) => m.tool_calls.map((tc) => tc.function?.name))
-          .filter(Boolean)
-      : [];
     const isScheduleIntent = toolsCalled.some((t) => SCHEDULE_BUILDER_TOOLS.has(t));
 
     if (sessionId) {

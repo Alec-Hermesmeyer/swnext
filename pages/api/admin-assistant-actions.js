@@ -1,8 +1,16 @@
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
-import { buildCrewJobActivitySurface, buildSalesPipelineListSurface } from "@/lib/admin-assistant-surfaces";
-import { filterSalesOpportunitiesForUser, isSalesRole } from "@/lib/sales-pipeline-access";
+import {
+  buildCrewJobActivitySurface,
+  buildSalesOpportunityEditSurface,
+  buildSalesPipelineListSurface,
+} from "@/lib/admin-assistant-surfaces";
+import {
+  canMutateSalesOpportunity,
+  filterSalesOpportunitiesForUser,
+  isSalesRole,
+} from "@/lib/sales-pipeline-access";
 import { canWrite as roleCanWrite, hasToolAccess } from "@/lib/roles";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -164,15 +172,7 @@ async function fetchSalesPipelineSurfaceData(userContext) {
   if (error) {
     return { salesOpportunities: [] };
   }
-  let level1SalesUserIds = [];
-  if (isSalesRole(userContext.role)) {
-    const { data: l1 } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("role", "sales")
-      .eq("access_level", 1);
-    level1SalesUserIds = (l1 || []).map((p) => p.id).filter(Boolean);
-  }
+  const level1SalesUserIds = await fetchLevel1SalesUserIds(userContext);
   const filtered = filterSalesOpportunitiesForUser(soRows || [], userContext, level1SalesUserIds);
   return {
     salesOpportunities: filtered.map((r) => ({
@@ -184,8 +184,50 @@ async function fetchSalesPipelineSurfaceData(userContext) {
       bid_due: r.bid_due,
       next_follow_up: r.next_follow_up,
       contact_name: r.contact_name || "",
+      contact_email: r.contact_email || "",
+      contact_phone: r.contact_phone || "",
       owner_name: r.owner_name || "",
+      notes: r.notes || "",
+      lost_reason: r.lost_reason || "",
+      updated_at: r.updated_at || null,
     })),
+  };
+}
+
+async function fetchLevel1SalesUserIds(userContext) {
+  if (!isSalesRole(userContext?.role)) return [];
+
+  const { data: rows } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("role", "sales")
+    .eq("access_level", 1);
+
+  return (rows || []).map((p) => p.id).filter(Boolean);
+}
+
+async function fetchSalesOpportunityForUser(opportunityId, userContext) {
+  const id = String(opportunityId || "").trim();
+  if (!id) {
+    return { row: null, level1SalesUserIds: [] };
+  }
+
+  const { data: row, error } = await supabase
+    .from("sales_opportunities")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !row) {
+    return { row: null, level1SalesUserIds: [] };
+  }
+
+  const level1SalesUserIds = await fetchLevel1SalesUserIds(userContext);
+  const filtered = filterSalesOpportunitiesForUser([row], userContext, level1SalesUserIds);
+
+  return {
+    row: filtered[0] || null,
+    level1SalesUserIds,
   };
 }
 
@@ -237,6 +279,16 @@ function summarizeUserSubmission(surfaceType, values) {
       return `Blocked ${values.rule_type === "domain" ? `domain ${values.rule_value || ""}` : values.rule_value || "sender"} for contact submissions.`;
     case "sales_opportunity_create":
       return `Added sales opportunity "${values.title || "new"}" to the pipeline.`;
+    case "sales_opportunity_update":
+      return `Updated sales opportunity "${values.title || "selection"}" in chat.`;
+    case "sales_pipeline_list":
+      if (values.action === "edit") {
+        return `Opened sales opportunity "${values.title || "selection"}" for editing in chat.`;
+      }
+      if (values.action === "set_stage") {
+        return `Changed "${values.title || "selection"}" to ${values.stage || "the new stage"}.`;
+      }
+      return "Refreshed the sales pipeline in chat.";
     default:
       return "Submitted an assistant work surface.";
   }
@@ -335,6 +387,25 @@ function getMutationConfig(surfaceType, values = {}) {
           notes: values.notes,
         },
       };
+    case "sales_opportunity_update":
+      return {
+        mutation: "update_sales_opportunity",
+        args: {
+          id: values.id,
+          title: values.title,
+          company: values.company,
+          contact_name: values.contact_name,
+          contact_email: values.contact_email,
+          contact_phone: values.contact_phone,
+          stage: values.stage,
+          value_estimate: values.value_estimate,
+          bid_due: values.bid_due,
+          next_follow_up: values.next_follow_up,
+          owner_name: values.owner_name,
+          notes: values.notes,
+          lost_reason: values.lost_reason,
+        },
+      };
     default:
       return null;
   }
@@ -361,8 +432,9 @@ export default async function handler(req, res) {
     }
 
     const userRole = String(userContext.role || "").trim().toLowerCase();
+    const userAccessLevel = userContext.accessLevel ?? 3;
     const isWorkflowProfileSurface = surfaceType === "workflow_profile_intake";
-    if (!isWorkflowProfileSurface && !roleCanWrite(userRole)) {
+    if (!isWorkflowProfileSurface && !roleCanWrite(userRole, userAccessLevel)) {
       return res.status(403).json({ error: "Write access is disabled for this role" });
     }
 
@@ -402,12 +474,124 @@ export default async function handler(req, res) {
       });
     }
 
+    if (surfaceType === "sales_pipeline_list") {
+      const action = String(values.action || "").trim().toLowerCase();
+
+      if (action === "edit") {
+        const { row } = await fetchSalesOpportunityForUser(values.opportunity_id, userContext);
+        if (!row) {
+          return res.status(404).json({ error: "Sales opportunity not found" });
+        }
+
+        const nextSurface = buildSalesOpportunityEditSurface(row);
+        const userMessage = summarizeUserSubmission(surfaceType, values);
+        const assistantMessage =
+          "I opened the opportunity editor below so you can update the pipeline without leaving the assistant.";
+
+        await storeMessages(sessionId, userContext, [
+          {
+            role: "user",
+            content: userMessage,
+            metadata: {
+              submittedSurfaceType: surfaceType,
+              submittedSurfaceId: surfaceId,
+            },
+          },
+          {
+            role: "assistant",
+            content: assistantMessage,
+            metadata: {
+              actionsPerformed: false,
+              completedSurfaceId: surfaceId,
+              submittedSurfaceType: surfaceType,
+              surface: nextSurface,
+            },
+          },
+        ]);
+
+        return res.status(200).json({
+          userMessage,
+          assistantMessage,
+          actionsPerformed: false,
+          completedSurfaceId: surfaceId,
+          surface: nextSurface,
+        });
+      }
+
+      if (action === "set_stage") {
+        const { row, level1SalesUserIds } = await fetchSalesOpportunityForUser(
+          values.opportunity_id,
+          userContext
+        );
+        if (!row) {
+          return res.status(404).json({ error: "Sales opportunity not found" });
+        }
+        if (!canMutateSalesOpportunity(row, userContext, level1SalesUserIds)) {
+          return res.status(403).json({ error: "You do not have permission to update this opportunity" });
+        }
+
+        const result = await executeAdminAssistantMutation(supabase, "update_sales_opportunity", {
+          id: row.id,
+          stage: values.stage,
+        });
+        if (!result.success) {
+          return res.status(400).json({ error: result.error || "Could not update sales opportunity" });
+        }
+
+        const surfaceData = await fetchSalesPipelineSurfaceData(userContext);
+        const nextSurface = buildSalesPipelineListSurface(surfaceData, {
+          writeAccessEnabled: roleCanWrite(userRole, userAccessLevel),
+        });
+        const userMessage = summarizeUserSubmission(surfaceType, values);
+        const assistantMessage = `${result.message}. I refreshed the sales pipeline below.`;
+
+        await storeMessages(sessionId, userContext, [
+          {
+            role: "user",
+            content: userMessage,
+            metadata: {
+              submittedSurfaceType: surfaceType,
+              submittedSurfaceId: surfaceId,
+            },
+          },
+          {
+            role: "assistant",
+            content: assistantMessage,
+            metadata: {
+              actionsPerformed: true,
+              completedSurfaceId: surfaceId,
+              submittedSurfaceType: surfaceType,
+              surface: nextSurface,
+            },
+          },
+        ]);
+
+        return res.status(200).json({
+          userMessage,
+          assistantMessage,
+          actionsPerformed: true,
+          completedSurfaceId: surfaceId,
+          surface: nextSurface,
+        });
+      }
+    }
+
+    if (surfaceType === "sales_opportunity_update") {
+      const { row, level1SalesUserIds } = await fetchSalesOpportunityForUser(values.id, userContext);
+      if (!row) {
+        return res.status(404).json({ error: "Sales opportunity not found" });
+      }
+      if (!canMutateSalesOpportunity(row, userContext, level1SalesUserIds)) {
+        return res.status(403).json({ error: "You do not have permission to update this opportunity" });
+      }
+    }
+
     const config = getMutationConfig(surfaceType, values);
     if (!config) {
       return res.status(400).json({ error: "Unsupported assistant surface type" });
     }
 
-    if (!hasToolAccess(userRole, config.mutation)) {
+    if (!hasToolAccess(userRole, config.mutation, userAccessLevel)) {
       return res.status(403).json({ error: "Your role does not have permission for this action" });
     }
 
@@ -433,13 +617,20 @@ export default async function handler(req, res) {
         view: values.view,
         canToggle: true,
       });
-    } else if (surfaceType === "sales_opportunity_create") {
+    } else if (
+      surfaceType === "sales_opportunity_create" ||
+      surfaceType === "sales_opportunity_update"
+    ) {
       const surfaceData = await fetchSalesPipelineSurfaceData(userContext);
-      nextSurface = buildSalesPipelineListSurface(surfaceData, { writeAccessEnabled: true });
+      nextSurface = buildSalesPipelineListSurface(surfaceData, {
+        writeAccessEnabled: roleCanWrite(userRole, userAccessLevel),
+      });
     }
 
     const assistantMessage = nextSurface
-      ? `${result.message}. I refreshed the live job list below.`
+      ? surfaceType === "crew_job_activity_list"
+        ? `${result.message}. I refreshed the live job list below.`
+        : `${result.message}. I refreshed the sales pipeline below.`
       : `${result.message}. Refresh if the page view needs to catch up.`;
 
     await storeMessages(sessionId, userContext, [

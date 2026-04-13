@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { stageLabel } from "@/lib/sales-pipeline";
+import { SALES_PIPELINE_STAGES, stageLabel } from "@/lib/sales-pipeline";
 
 function buildInitialValues(surface) {
   const initial = {};
@@ -526,8 +526,15 @@ function stageTone(stage) {
   }
 }
 
-function renderSalesPipelineList(surface) {
+function getNextSalesStage(stage) {
+  const currentIndex = SALES_PIPELINE_STAGES.findIndex((item) => item.id === stage);
+  if (currentIndex === -1) return "";
+  return SALES_PIPELINE_STAGES[currentIndex + 1]?.id || "";
+}
+
+function renderSalesPipelineList(surface, activeActionKey, onSalesAction) {
   const rows = surface.opportunities || [];
+  const canManage = surface.canManage === true && !surface.demoMode;
 
   return (
     <div className="px-4 py-4 md:px-5">
@@ -555,47 +562,114 @@ function renderSalesPipelineList(surface) {
 
       {rows.length ? (
         <div className="space-y-3">
-          {rows.map((row) => (
-            <div
-              key={row.id}
-              className={`rounded-[1.2rem] border p-4 ${
-                row.isDemo ? "border-dashed border-amber-200/80 bg-white/90" : "border-[#e6edf5] bg-white/84"
-              }`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="text-sm font-bold tracking-tight text-neutral-950">{row.title}</div>
-                  {row.company ? (
-                    <div className="mt-0.5 text-sm text-neutral-600">{row.company}</div>
+          {rows.map((row) => {
+            const nextStage = getNextSalesStage(row.stage);
+            const editActionKey = `${row.id}:edit`;
+            const advanceActionKey = `${row.id}:advance`;
+            const wonActionKey = `${row.id}:won`;
+            const lostActionKey = `${row.id}:lost`;
+            const isClosed = row.stage === "won" || row.stage === "lost";
+
+            return (
+              <div
+                key={row.id}
+                className={`rounded-[1.2rem] border p-4 ${
+                  row.isDemo ? "border-dashed border-amber-200/80 bg-white/90" : "border-[#e6edf5] bg-white/84"
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold tracking-tight text-neutral-950">{row.title}</div>
+                    {row.company ? (
+                      <div className="mt-0.5 text-sm text-neutral-600">{row.company}</div>
+                    ) : null}
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${stageTone(row.stage)}`}
+                  >
+                    {stageLabel(row.stage)}
+                  </span>
+                </div>
+                <div className="mt-3 grid gap-1 text-xs text-neutral-500 sm:grid-cols-2">
+                  <div>
+                    <span className="font-medium text-neutral-700">Est. value:</span>{" "}
+                    {formatSalesMoney(row.value_estimate)}
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-700">Bid due:</span>{" "}
+                    {formatSalesDate(row.bid_due)}
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-700">Follow-up:</span>{" "}
+                    {formatSalesDate(row.next_follow_up)}
+                  </div>
+                  {row.owner_name ? (
+                    <div>
+                      <span className="font-medium text-neutral-700">Owner:</span> {row.owner_name}
+                    </div>
+                  ) : null}
+                  {row.contact_name ? (
+                    <div>
+                      <span className="font-medium text-neutral-700">Contact:</span> {row.contact_name}
+                    </div>
                   ) : null}
                 </div>
-                <span
-                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${stageTone(row.stage)}`}
-                >
-                  {stageLabel(row.stage)}
-                </span>
-              </div>
-              <div className="mt-3 grid gap-1 text-xs text-neutral-500 sm:grid-cols-2">
-                <div>
-                  <span className="font-medium text-neutral-700">Est. value:</span>{" "}
-                  {formatSalesMoney(row.value_estimate)}
-                </div>
-                <div>
-                  <span className="font-medium text-neutral-700">Bid due:</span>{" "}
-                  {formatSalesDate(row.bid_due)}
-                </div>
-                <div>
-                  <span className="font-medium text-neutral-700">Follow-up:</span>{" "}
-                  {formatSalesDate(row.next_follow_up)}
-                </div>
-                {row.contact_name ? (
-                  <div>
-                    <span className="font-medium text-neutral-700">Contact:</span> {row.contact_name}
+
+                {canManage && !row.isDemo ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onSalesAction?.("edit", row)}
+                      disabled={activeActionKey === editActionKey}
+                      className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-all hover:border-[#0b2a5a]/30 hover:bg-[#f0f5ff] disabled:cursor-not-allowed disabled:opacity-55"
+                    >
+                      {activeActionKey === editActionKey ? "Opening..." : "Edit in chat"}
+                    </button>
+
+                    {!isClosed && nextStage && nextStage !== row.stage && nextStage !== "won" ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onSalesAction?.("set_stage", row, {
+                            stage: nextStage,
+                            actionKey: advanceActionKey,
+                          })
+                        }
+                        disabled={activeActionKey === advanceActionKey}
+                        className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 transition-all hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-55"
+                      >
+                        {activeActionKey === advanceActionKey
+                          ? "Updating..."
+                          : `Move to ${stageLabel(nextStage)}`}
+                      </button>
+                    ) : null}
+
+                    {!isClosed ? (
+                      <button
+                        type="button"
+                        onClick={() => onSalesAction?.("set_stage", row, { stage: "won", actionKey: wonActionKey })}
+                        disabled={activeActionKey === wonActionKey}
+                        className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition-all hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-55"
+                      >
+                        {activeActionKey === wonActionKey ? "Updating..." : "Mark won"}
+                      </button>
+                    ) : null}
+
+                    {!isClosed && row.stage !== "lost" ? (
+                      <button
+                        type="button"
+                        onClick={() => onSalesAction?.("set_stage", row, { stage: "lost", actionKey: lostActionKey })}
+                        disabled={activeActionKey === lostActionKey}
+                        className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 transition-all hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-55"
+                      >
+                        {activeActionKey === lostActionKey ? "Updating..." : "Mark lost"}
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="rounded-[1.2rem] border border-dashed border-[#dbe4f0] bg-white/80 px-4 py-4 text-sm text-neutral-500">
@@ -675,6 +749,7 @@ export default function AssistantTaskSurface({
   const [values, setValues] = useState(() => buildInitialValues(surface));
   const [submitting, setSubmitting] = useState(false);
   const [activeActionJobId, setActiveActionJobId] = useState("");
+  const [activeSalesActionKey, setActiveSalesActionKey] = useState("");
   const [error, setError] = useState("");
   const [completed, setCompleted] = useState(!!surface?.completed);
   const [completedMessage, setCompletedMessage] = useState(
@@ -685,6 +760,7 @@ export default function AssistantTaskSurface({
     setValues(buildInitialValues(surface));
     setSubmitting(false);
     setActiveActionJobId("");
+    setActiveSalesActionKey("");
     setError("");
     setCompleted(!!surface?.completed);
     setCompletedMessage(
@@ -798,6 +874,53 @@ export default function AssistantTaskSurface({
     }
   };
 
+  const handleSalesPipelineAction = async (action, row, extra = {}) => {
+    if (!row?.id || !surface?.id || !sessionId || activeSalesActionKey) return;
+
+    const actionKey =
+      extra.actionKey || `${row.id}:${action === "set_stage" ? extra.stage || "stage" : action}`;
+
+    setActiveSalesActionKey(actionKey);
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin-assistant-actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          surfaceType: surface.type,
+          surfaceId: surface.id,
+          values: {
+            action,
+            opportunity_id: row.id,
+            title: row.title,
+            stage: extra.stage,
+          },
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Could not complete assistant action.");
+      }
+
+      if (typeof onComplete === "function") {
+        onComplete({
+          surfaceId: surface.id,
+          userMessage: data.userMessage,
+          assistantMessage: data.assistantMessage,
+          actionsPerformed: !!data.actionsPerformed,
+          surface: data.surface || null,
+        });
+      }
+    } catch (submitError) {
+      setError(submitError.message || "Could not complete assistant action.");
+    } finally {
+      setActiveSalesActionKey("");
+    }
+  };
+
   return (
     <div className="mt-4 overflow-hidden rounded-[1.55rem] border border-[#dbe4f0] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] shadow-[0_16px_42px_rgba(15,23,42,0.05)]">
       <div className="border-b border-[#e6edf5] px-4 py-4 md:px-5">
@@ -852,7 +975,16 @@ export default function AssistantTaskSurface({
       ) : surface.type === "schedule_builder_context" ? (
         renderScheduleBuilderContext(surface)
       ) : surface.type === "sales_pipeline_list" ? (
-        renderSalesPipelineList(surface)
+        <>
+          {renderSalesPipelineList(surface, activeSalesActionKey, handleSalesPipelineAction)}
+          {error ? (
+            <div className="px-4 pb-4 md:px-5">
+              <div className="rounded-[1.1rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                {error}
+              </div>
+            </div>
+          ) : null}
+        </>
       ) : surface.readOnly ? (
         renderScheduleOverview(surface)
       ) : completed ? (

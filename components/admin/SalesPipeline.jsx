@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { withRetry } from "@/lib/retry";
 import { SALES_PIPELINE_STAGES, stageLabel } from "@/lib/sales-pipeline";
+
+const UPCOMING_BID_WINDOW_DAYS = 7;
+const CLOSED_STAGES = new Set(["won", "lost"]);
 
 const emptyForm = () => ({
   id: null,
@@ -58,16 +61,193 @@ function formatDate(iso) {
   return iso;
 }
 
+function parseDateOnly(value) {
+  if (!value) return null;
+  const s = String(value).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const [year, month, day] = s.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function dayDiff(date, fromDate) {
+  if (!date || !fromDate) return null;
+  return Math.round((date.getTime() - fromDate.getTime()) / 86400000);
+}
+
+function isOpenStage(stage) {
+  return !CLOSED_STAGES.has(String(stage || "").trim().toLowerCase());
+}
+
+function sortByDateField(rows, field, fallbackField = "updated_at") {
+  return [...rows].sort((a, b) => {
+    const aDate = parseDateOnly(a?.[field]);
+    const bDate = parseDateOnly(b?.[field]);
+    if (aDate && bDate) return aDate.getTime() - bDate.getTime();
+    if (aDate) return -1;
+    if (bDate) return 1;
+
+    const aFallback = new Date(a?.[fallbackField] || 0).getTime();
+    const bFallback = new Date(b?.[fallbackField] || 0).getTime();
+    return bFallback - aFallback;
+  });
+}
+
+function buildSearchText(row) {
+  return [
+    row?.title,
+    row?.company,
+    row?.contact_name,
+    row?.contact_email,
+    row?.contact_phone,
+    row?.owner_name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function relativeDateLabel(dateValue, today) {
+  const date = parseDateOnly(dateValue);
+  if (!date || !today) return "";
+  const diff = dayDiff(date, today);
+  if (diff < 0) return `${Math.abs(diff)}d overdue`;
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Tomorrow";
+  return `In ${diff}d`;
+}
+
+function flagClass(tone) {
+  switch (tone) {
+    case "amber":
+      return "border-amber-200 bg-amber-50 text-amber-900";
+    case "sky":
+      return "border-sky-200 bg-sky-50 text-sky-900";
+    case "emerald":
+      return "border-emerald-200 bg-emerald-50 text-emerald-900";
+    default:
+      return "border-neutral-200 bg-neutral-50 text-neutral-700";
+  }
+}
+
+function buildOpportunityFlags(row, today) {
+  const flags = [];
+
+  if (isOpenStage(row?.stage)) {
+    const followUpDate = parseDateOnly(row?.next_follow_up);
+    if (followUpDate && followUpDate.getTime() <= today.getTime()) {
+      flags.push({ label: "Follow-up due", tone: "amber" });
+    }
+
+    const bidDate = parseDateOnly(row?.bid_due);
+    const diff = dayDiff(bidDate, today);
+    if (diff !== null && diff >= 0 && diff <= UPCOMING_BID_WINDOW_DAYS) {
+      flags.push({ label: diff === 0 ? "Bid due today" : "Bid due soon", tone: "sky" });
+    }
+  }
+
+  if (row?.stage === "won") {
+    flags.push({ label: "Ready for ops review", tone: "emerald" });
+  }
+
+  return flags;
+}
+
+function SummaryCard({ label, value, helper, tone = "neutral" }) {
+  const toneClass =
+    tone === "amber"
+      ? "border-amber-200 bg-amber-50"
+      : tone === "sky"
+        ? "border-sky-200 bg-sky-50"
+        : tone === "emerald"
+          ? "border-emerald-200 bg-emerald-50"
+          : "border-neutral-200 bg-white";
+
+  return (
+    <div className={`rounded-xl border p-4 shadow-sm ${toneClass}`}>
+      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">{label}</div>
+      <div className="mt-2 text-3xl font-black tracking-tight text-neutral-950">{value}</div>
+      <p className="mt-2 text-sm text-neutral-600">{helper}</p>
+    </div>
+  );
+}
+
+function QueueSection({ title, rows, emptyText, countToneClass, detailForRow, onEdit }) {
+  const previewRows = rows.slice(0, 4);
+
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-[#0b2a5a]">{title}</h3>
+          <p className="mt-1 text-sm text-neutral-600">{emptyText}</p>
+        </div>
+        <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${countToneClass}`}>
+          {rows.length}
+        </div>
+      </div>
+
+      {previewRows.length ? (
+        <div className="mt-4 space-y-3">
+          {previewRows.map((row) => {
+            const detail = detailForRow(row);
+            return (
+              <div key={row.id} className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-neutral-900">{row.title}</div>
+                    <div className="mt-1 truncate text-xs text-neutral-600">
+                      {[row.company, row.owner_name].filter(Boolean).join(" · ") || "No company or owner yet"}
+                    </div>
+                  </div>
+                  {detail.badge ? (
+                    <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${flagClass(detail.tone)}`}>
+                      {detail.badge}
+                    </span>
+                  ) : null}
+                </div>
+                {detail.meta ? <div className="mt-2 text-xs text-neutral-500">{detail.meta}</div> : null}
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(row)}
+                    className="text-sm font-semibold text-[#0b2a5a] hover:underline"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+          {rows.length > previewRows.length ? (
+            <p className="text-xs text-neutral-500">
+              {rows.length - previewRows.length} more in the pipeline table below.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export default function SalesPipeline() {
   const { role, accessLevel } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [stageFilter, setStageFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const loadRequestRef = useRef(0);
+  const today = useMemo(() => parseDateOnly(localDateKey()), []);
 
   const load = useCallback(async () => {
     const requestId = ++loadRequestRef.current;
@@ -75,8 +255,7 @@ export default function SalesPipeline() {
     setLoading(true);
     try {
       const data = await withRetry(async () => {
-        const q = stageFilter ? `?stage=${encodeURIComponent(stageFilter)}` : "";
-        const res = await fetch(`/api/sales-opportunities${q}`, {
+        const res = await fetch("/api/sales-opportunities", {
           credentials: "same-origin",
         });
         const payload = await res.json().catch(() => ({}));
@@ -104,11 +283,56 @@ export default function SalesPipeline() {
         setLoading(false);
       }
     }
-  }, [stageFilter]);
+  }, []);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const filteredRows = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return rows.filter((row) => {
+      if (stageFilter && row.stage !== stageFilter) return false;
+      if (!query) return true;
+      return buildSearchText(row).includes(query);
+    });
+  }, [rows, searchQuery, stageFilter]);
+
+  const openRows = useMemo(
+    () => rows.filter((row) => isOpenStage(row.stage)),
+    [rows]
+  );
+
+  const followUpsDue = useMemo(
+    () =>
+      sortByDateField(
+        openRows.filter((row) => {
+          const nextFollowUp = parseDateOnly(row.next_follow_up);
+          return nextFollowUp && nextFollowUp.getTime() <= today.getTime();
+        }),
+        "next_follow_up"
+      ),
+    [openRows, today]
+  );
+
+  const bidsDueSoon = useMemo(
+    () =>
+      sortByDateField(
+        openRows.filter((row) => {
+          const bidDate = parseDateOnly(row.bid_due);
+          const diff = dayDiff(bidDate, today);
+          return diff !== null && diff >= 0 && diff <= UPCOMING_BID_WINDOW_DAYS;
+        }),
+        "bid_due"
+      ),
+    [openRows, today]
+  );
+
+  const wonQueue = useMemo(
+    () => sortByDateField(rows.filter((row) => row.stage === "won"), "updated_at"),
+    [rows]
+  );
 
   const openNew = () => {
     setForm(emptyForm());
@@ -226,12 +450,106 @@ export default function SalesPipeline() {
   return (
     <div>
       {salesVisibilityNote}
+      <div className="mb-5 rounded-2xl border border-sky-200 bg-sky-50/80 p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">
+              Sales pilot workflow
+            </div>
+            <p className="mt-2 text-sm text-sky-950">
+              Start small: log every live bid here, keep the next follow-up and bid due dates
+              current, then mark awards so operations has a clean handoff queue. That gives sales
+              something useful right now without touching the crew scheduler.
+            </p>
+          </div>
+          <Link
+            href="/admin/contact"
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-sky-300 bg-white px-4 text-sm font-semibold text-sky-950 hover:bg-sky-100"
+          >
+            Review submissions
+          </Link>
+        </div>
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard
+          label="Open pursuits"
+          value={openRows.length}
+          helper="Everything still in play before the bid is won or lost."
+        />
+        <SummaryCard
+          label="Follow-ups due"
+          value={followUpsDue.length}
+          helper="Overdue or due-today follow-ups that need sales attention."
+          tone="amber"
+        />
+        <SummaryCard
+          label="Bids due in 7 days"
+          value={bidsDueSoon.length}
+          helper="Near-term bids that should stay visible this week."
+          tone="sky"
+        />
+        <SummaryCard
+          label="Won to review"
+          value={wonQueue.length}
+          helper="Awarded work ready for ops handoff and job setup review."
+          tone="emerald"
+        />
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <QueueSection
+          title="Follow-ups due now"
+          rows={followUpsDue}
+          emptyText="Overdue and due-today follow-ups bubble up here."
+          countToneClass="border-amber-200 bg-amber-50 text-amber-900"
+          detailForRow={(row) => ({
+            badge: relativeDateLabel(row.next_follow_up, today),
+            tone: "amber",
+            meta: `Follow-up: ${formatDate(row.next_follow_up)}`,
+          })}
+          onEdit={openEdit}
+        />
+        <QueueSection
+          title="Bids due this week"
+          rows={bidsDueSoon}
+          emptyText="Anything due in the next 7 days shows here."
+          countToneClass="border-sky-200 bg-sky-50 text-sky-900"
+          detailForRow={(row) => ({
+            badge: relativeDateLabel(row.bid_due, today),
+            tone: "sky",
+            meta: `Bid due: ${formatDate(row.bid_due)}`,
+          })}
+          onEdit={openEdit}
+        />
+        <QueueSection
+          title="Won for ops review"
+          rows={wonQueue}
+          emptyText="Use this queue when a deal is awarded and needs handoff into job tracking."
+          countToneClass="border-emerald-200 bg-emerald-50 text-emerald-900"
+          detailForRow={(row) => ({
+            badge: "Won",
+            tone: "emerald",
+            meta: `Updated: ${formatDate(row.updated_at)}${row.value_estimate ? ` · ${formatMoney(row.value_estimate)}` : ""}`,
+          })}
+          onEdit={openEdit}
+        />
+      </div>
+
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-neutral-600">
           Track bids and pursuits before they become won jobs. For historical wins, use the{" "}
           <strong>Won jobs</strong> tab.
         </p>
         <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search opportunity, company, contact, owner"
+            className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm sm:w-80"
+            aria-label="Search opportunities"
+          />
           <select
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
@@ -254,6 +572,9 @@ export default function SalesPipeline() {
           </button>
         </div>
       </div>
+      <p className="mb-4 text-xs text-neutral-500">
+        Showing {filteredRows.length} of {rows.length} opportunities.
+      </p>
 
       {error ? (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{error}</div>
@@ -270,6 +591,11 @@ export default function SalesPipeline() {
             </Link>{" "}
             or click <strong>New opportunity</strong>.
           </div>
+        ) : filteredRows.length === 0 ? (
+          <div className="p-8 text-center text-sm text-neutral-500">
+            No opportunities match the current filters. Clear the search or stage filter to see
+            the full pipeline.
+          </div>
         ) : (
           <table className="min-w-full table-auto text-left text-sm">
             <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
@@ -284,42 +610,70 @@ export default function SalesPipeline() {
               </tr>
             </thead>
             <tbody className="text-neutral-800">
-              {rows.map((row) => (
-                <tr key={row.id} className="border-t border-neutral-100">
-                  <td className="max-w-[280px] p-3">
-                    <div className="font-semibold text-neutral-900">{row.title}</div>
-                    {row.company ? <div className="text-xs text-neutral-500">{row.company}</div> : null}
-                    {row.contact_name || row.contact_email || row.contact_phone ? (
-                      <div className="mt-1 text-xs text-neutral-600">
-                        {[row.contact_name, row.contact_phone, row.contact_email].filter(Boolean).join(" · ")}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="p-3 align-top">
-                    <span
-                      className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-semibold ${stageBadgeClass(row.stage)}`}
-                    >
-                      {stageLabel(row.stage)}
-                    </span>
-                  </td>
-                  <td className="p-3 align-top text-neutral-700">{row.owner_name || "—"}</td>
-                  <td className="p-3 align-top whitespace-nowrap">{formatDate(row.next_follow_up)}</td>
-                  <td className="p-3 align-top whitespace-nowrap">{formatDate(row.bid_due)}</td>
-                  <td className="p-3 align-top">{formatMoney(row.value_estimate)}</td>
-                  <td className="p-3 align-top text-right whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(row)}
-                      className="mr-2 text-[#0b2a5a] font-semibold hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button type="button" onClick={() => remove(row.id)} className="text-rose-700 font-semibold hover:underline">
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filteredRows.map((row) => {
+                const flags = buildOpportunityFlags(row, today);
+                const followUpDate = parseDateOnly(row.next_follow_up);
+                const isDueNow =
+                  isOpenStage(row.stage) &&
+                  followUpDate &&
+                  followUpDate.getTime() <= today.getTime();
+
+                return (
+                  <tr
+                    key={row.id}
+                    className={`border-t border-neutral-100 ${isDueNow ? "bg-amber-50/40" : ""}`}
+                  >
+                    <td className="max-w-[280px] p-3">
+                      <div className="font-semibold text-neutral-900">{row.title}</div>
+                      {row.company ? <div className="text-xs text-neutral-500">{row.company}</div> : null}
+                      {row.contact_name || row.contact_email || row.contact_phone ? (
+                        <div className="mt-1 text-xs text-neutral-600">
+                          {[row.contact_name, row.contact_phone, row.contact_email].filter(Boolean).join(" · ")}
+                        </div>
+                      ) : null}
+                      {flags.length ? (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {flags.map((flag) => (
+                            <span
+                              key={`${row.id}-${flag.label}`}
+                              className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${flagClass(flag.tone)}`}
+                            >
+                              {flag.label}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="p-3 align-top">
+                      <span
+                        className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-semibold ${stageBadgeClass(row.stage)}`}
+                      >
+                        {stageLabel(row.stage)}
+                      </span>
+                    </td>
+                    <td className="p-3 align-top text-neutral-700">{row.owner_name || "—"}</td>
+                    <td className="p-3 align-top whitespace-nowrap">{formatDate(row.next_follow_up)}</td>
+                    <td className="p-3 align-top whitespace-nowrap">{formatDate(row.bid_due)}</td>
+                    <td className="p-3 align-top">{formatMoney(row.value_estimate)}</td>
+                    <td className="p-3 align-top text-right whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(row)}
+                        className="mr-2 text-[#0b2a5a] font-semibold hover:underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => remove(row.id)}
+                        className="text-rose-700 font-semibold hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
