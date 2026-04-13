@@ -116,8 +116,8 @@ const PROMPT_CARDS = [
   },
   {
     eyebrow: "Sales",
-    title: "Preview the sales pipeline",
-    description: "Open a live pipeline snapshot in chat — sample rows if the board is still empty.",
+    title: "Manage the sales pipeline",
+    description: "Review, add, and update opportunities directly in chat with the live pipeline surface.",
     prompt: "Show me the sales pipeline and what stages we use for pre-award deals.",
     accent: "from-indigo-700 via-indigo-500 to-sky-300",
     module: "sales",
@@ -168,12 +168,6 @@ const WORKFLOW_MODULES = [
     label: "Page Images",
     priority: "Support",
     description: "Feed image-driven workflows and content generation.",
-  },
-  {
-    href: "/admin/sales",
-    label: "Sales",
-    priority: "Support",
-    description: "Surface deal context when the assistant needs business history.",
   },
 ];
 
@@ -492,7 +486,7 @@ export default function AdminAssistantWorkspace({
       "Enter a new job",
       "Plan the schedule",
       "Review new intake",
-      "Preview the sales pipeline",
+      "Manage the sales pipeline",
     ];
     const featured = [];
 
