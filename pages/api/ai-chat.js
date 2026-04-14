@@ -938,6 +938,7 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
     { data: socialPosts },
     { data: brandVoice },
     { data: solutionFeatures },
+    { data: hiringCandidates },
   ] = await Promise.all([
     // ── Schedule module queries (workers, rigs, jobs, schedules, assignments) ──
     hasModule("schedule")
