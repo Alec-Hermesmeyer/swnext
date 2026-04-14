@@ -189,22 +189,26 @@ export default function TWAdminLayout({ children }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-6 md:px-6">
-            {children}
-          </div>
-        </main>
-
-        {/* Footer */}
-        <footer className="border-t border-neutral-200 bg-white px-4 py-3 text-xs text-neutral-400 md:px-6">
-          <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between">
-            <span>&copy; {new Date().getFullYear()} S&W Foundation Contractors</span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-              Admin Console
-            </span>
-          </div>
-        </footer>
+        {currentPath === "/admin" ? (
+          <main className="flex-1 overflow-hidden">{children}</main>
+        ) : (
+          <>
+            <main className="flex-1 overflow-y-auto">
+              <div className="mx-auto w-full max-w-[1400px] px-4 py-6 md:px-6">
+                {children}
+              </div>
+            </main>
+            <footer className="border-t border-neutral-200 bg-white px-4 py-3 text-xs text-neutral-400 md:px-6">
+              <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between">
+                <span>&copy; {new Date().getFullYear()} S&W Foundation Contractors</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  Admin Console
+                </span>
+              </div>
+            </footer>
+          </>
+        )}
       </div>
 
       {/* AI Assistant bubble */}
