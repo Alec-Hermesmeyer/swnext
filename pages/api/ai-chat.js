@@ -1045,6 +1045,14 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
       .from("admin_features")
       .select("slug, title, description, priority, status, status_note, href")
       .order("sort_order", { ascending: true }),
+    // ── Hiring pipeline ──
+    hasModule("hiring")
+      ? supabase
+          .from("hiring_opportunities")
+          .select("id, title, applicant_name, contact_email, contact_phone, position_applied, stage, next_follow_up, notes, decline_reason, created_at, updated_at")
+          .order("created_at", { ascending: false })
+          .limit(50)
+      : empty,
   ]);
 
   const progressByJobId = {};
