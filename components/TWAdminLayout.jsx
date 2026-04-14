@@ -190,7 +190,7 @@ export default function TWAdminLayout({ children }) {
 
         {/* Page content */}
         {currentPath === "/admin" ? (
-          <main className="flex-1 overflow-hidden">{children}</main>
+          <main className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
         ) : (
           <>
             <main className="flex-1 overflow-y-auto">
