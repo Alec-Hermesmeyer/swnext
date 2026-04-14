@@ -4,12 +4,14 @@ import Image from "next/image";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
+import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 const GALLERY_BASE = "/galleryImages";
 const BUCKET_NAME = "Images";
 const STORAGE_BASE = "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images";
+const GALLERY_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const CATEGORIES = [
   "Pier Drilling",
@@ -31,18 +33,30 @@ function StoragePicker({ onAdd, adding, addError, categories, existingFilenames 
   const [selectedCategory, setSelectedCategory] = useState(categories[0]);
   const [justAdded, setJustAdded] = useState(new Set());
 
-  const fetchFolder = useCallback(async () => {
-    setBrowserLoading(true);
+  const fetchFolder = useCallback(async ({ force = false } = {}) => {
+    const cacheKey = `admin-gallery-browser:${currentFolder || "root"}`;
+    if (!force) {
+      const cached = readCachedValue(cacheKey, GALLERY_CACHE_TTL_MS);
+      if (cached?.value) {
+        setFolders(Array.isArray(cached.value.folders) ? cached.value.folders : []);
+        setBrowserImages(Array.isArray(cached.value.images) ? cached.value.images : []);
+        setBrowserLoading(false);
+      }
+    } else {
+      setBrowserLoading(true);
+    }
+
     try {
       const { data: files } = await supabase.storage
         .from(BUCKET_NAME)
         .list(currentFolder, { limit: 300, sortBy: { column: "name", order: "asc" } });
 
       if (files) {
-        setFolders(files.filter((f) => f.id === null));
-        setBrowserImages(
-          files.filter((f) => f.id !== null && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name))
-        );
+        const nextFolders = files.filter((f) => f.id === null);
+        const nextImages = files.filter((f) => f.id !== null && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name));
+        setFolders(nextFolders);
+        setBrowserImages(nextImages);
+        writeCachedValue(cacheKey, { folders: nextFolders, images: nextImages });
       }
     } finally {
       setBrowserLoading(false);
@@ -229,23 +243,37 @@ function GalleryManagement() {
 
   // Inline status messages
   const [statusMap, setStatusMap] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchImages();
   }, []);
 
-  const fetchImages = async () => {
-    setLoading(true);
+  const fetchImages = async ({ force = false } = {}) => {
+    if (!force) {
+      const cached = readCachedValue("admin-gallery-images", GALLERY_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        setImages(cached.value);
+        setLoading(false);
+      }
+    } else {
+      setRefreshing(true);
+      setLoading(true);
+    }
+
     setError("");
     try {
       const res = await fetch("/api/gallery-images?all=true");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load");
-      setImages(data.images || []);
+      const nextImages = data.images || [];
+      setImages(nextImages);
+      writeCachedValue("admin-gallery-images", nextImages);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -338,11 +366,11 @@ function GalleryManagement() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={fetchImages}
-              disabled={loading}
+              onClick={() => fetchImages({ force: true })}
+              disabled={loading || refreshing}
               className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
             >
-              Refresh
+              {refreshing ? "Refreshing..." : "Refresh"}
             </button>
             <button
               onClick={() => { setShowAdd(!showAdd); setAddError(""); }}

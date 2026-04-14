@@ -6,12 +6,14 @@ import Link from "next/link";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
+import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 const BUCKET_NAME = "Images";
 const IMAGE_BASE_URL = "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images";
+const IMAGE_MANAGER_CACHE_TTL_MS = 5 * 60 * 1000;
 
 // Image assignment categories for the site
 const IMAGE_CATEGORIES = {
@@ -237,7 +239,7 @@ function UploadPanel({ onUploadComplete, currentFolder }) {
           alert(`Failed to upload ${file.name}: ${error.message}`);
         }
       }
-      onUploadComplete();
+      onUploadComplete({ force: true });
     } finally {
       setUploading(false);
     }
@@ -294,9 +296,22 @@ function ImageManager() {
   const [previewImage, setPreviewImage] = useState(null);
   const [assignments, setAssignments] = useState({});
   const [filterText, setFilterText] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchImages = useCallback(async () => {
-    setLoading(true);
+  const fetchImages = useCallback(async ({ force = false } = {}) => {
+    const cacheKey = `admin-images:${currentFolder || "root"}`;
+    if (!force) {
+      const cached = readCachedValue(cacheKey, IMAGE_MANAGER_CACHE_TTL_MS);
+      if (cached?.value) {
+        setFolders(Array.isArray(cached.value.folders) ? cached.value.folders : []);
+        setImages(Array.isArray(cached.value.images) ? cached.value.images : []);
+        setLoading(false);
+      }
+    } else {
+      setRefreshing(true);
+      setLoading(true);
+    }
+
     try {
       // List files in current folder
       const { data: files, error } = await supabase.storage
@@ -317,8 +332,10 @@ function ImageManager() {
 
       setFolders(folderItems);
       setImages(fileItems);
+      writeCachedValue(cacheKey, { folders: folderItems, images: fileItems });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [currentFolder]);
 
@@ -350,7 +367,7 @@ function ImageManager() {
     if (error) {
       alert(`Failed to delete: ${error.message}`);
     } else {
-      fetchImages();
+      fetchImages({ force: true });
       setSelectedImages((prev) => prev.filter((p) => p !== path));
     }
   };
@@ -449,6 +466,13 @@ function ImageManager() {
                   ↑ Up
                 </button>
               )}
+              <button
+                onClick={() => fetchImages({ force: true })}
+                className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-bold text-neutral-700 hover:bg-neutral-100"
+                disabled={refreshing}
+              >
+                {refreshing ? "Refreshing..." : "Refresh"}
+              </button>
             </div>
 
             {/* Search */}

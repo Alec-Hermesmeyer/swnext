@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -11,8 +11,10 @@ import { useAuth } from "@/context/AuthContext";
 import { canAccessSalesPipeline, canAccessHiringPipeline } from "@/lib/roles";
 import { buildOpportunityPayloadFromContactSubmission } from "@/lib/contact-to-pipeline";
 import { buildHiringPayloadFromJobSubmission } from "@/lib/job-to-pipeline";
+import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+const SUBMISSIONS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 function SubmissionModal({
   submission,
@@ -193,33 +195,63 @@ function ContactTW() {
   const [showSpamControls, setShowSpamControls] = useState(false);
   const [promoteLoading, setPromoteLoading] = useState(false);
   const [promoteHiringLoading, setPromoteHiringLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const pageSize = 10;
 
-  useEffect(() => {
-    const load = async () => {
-      const [contactRes, jobRes] = await Promise.all([
-        supabase.from("contact_form").select("*").order("created_at", { ascending: false }),
-        supabase.from("job_form").select("*").order("created_at", { ascending: false }),
-      ]);
-      if (!contactRes.error) setContactRows(contactRes.data || []);
-      if (!jobRes.error) setJobRows(jobRes.data || []);
-      try {
-        const ruleResponse = await fetch("/api/spam-blocklist");
-        const ruleJson = await ruleResponse.json();
-        setBlockRules(Array.isArray(ruleJson?.rows) ? ruleJson.rows : []);
-      } catch {
-        setBlockRules([]);
+  const loadSubmissions = useCallback(async ({ force = false } = {}) => {
+    if (!force) {
+      const cachedRows = readCachedValue("admin-contact-submissions", SUBMISSIONS_CACHE_TTL_MS);
+      const cachedRules = readCachedValue("admin-contact-block-rules", SUBMISSIONS_CACHE_TTL_MS);
+      if (cachedRows?.value) {
+        setContactRows(Array.isArray(cachedRows.value.contactRows) ? cachedRows.value.contactRows : []);
+        setJobRows(Array.isArray(cachedRows.value.jobRows) ? cachedRows.value.jobRows : []);
+        setLoading(false);
       }
-      setLoading(false);
-    };
-    load();
+      if (Array.isArray(cachedRules?.value)) {
+        setBlockRules(cachedRules.value);
+      }
+    } else {
+      setRefreshing(true);
+      setLoading(true);
+    }
+
+    const [contactRes, jobRes] = await Promise.all([
+      supabase.from("contact_form").select("*").order("created_at", { ascending: false }),
+      supabase.from("job_form").select("*").order("created_at", { ascending: false }),
+    ]);
+    const nextContactRows = !contactRes.error ? (contactRes.data || []) : [];
+    const nextJobRows = !jobRes.error ? (jobRes.data || []) : [];
+    setContactRows(nextContactRows);
+    setJobRows(nextJobRows);
+    writeCachedValue("admin-contact-submissions", {
+      contactRows: nextContactRows,
+      jobRows: nextJobRows,
+    });
+
+    try {
+      const ruleResponse = await fetch("/api/spam-blocklist");
+      const ruleJson = await ruleResponse.json();
+      const nextRules = Array.isArray(ruleJson?.rows) ? ruleJson.rows : [];
+      setBlockRules(nextRules);
+      writeCachedValue("admin-contact-block-rules", nextRules);
+    } catch {
+      setBlockRules([]);
+    }
+    setLoading(false);
+    setRefreshing(false);
   }, []);
+
+  useEffect(() => {
+    loadSubmissions();
+  }, [loadSubmissions]);
 
   const refreshBlockRules = async () => {
     try {
       const response = await fetch("/api/spam-blocklist");
       const json = await response.json();
-      setBlockRules(Array.isArray(json?.rows) ? json.rows : []);
+      const nextRules = Array.isArray(json?.rows) ? json.rows : [];
+      setBlockRules(nextRules);
+      writeCachedValue("admin-contact-block-rules", nextRules);
     } catch {
       setBlockRules([]);
     }
@@ -288,13 +320,27 @@ function ContactTW() {
   const handleDeleteContact = async (id) => {
     if (!confirm("Delete this submission?")) return;
     await supabase.from("contact_form").delete().eq("id", id);
-    setContactRows(contactRows.filter((r) => r.id !== id));
+    setContactRows((prev) => {
+      const next = prev.filter((r) => r.id !== id);
+      writeCachedValue("admin-contact-submissions", {
+        contactRows: next,
+        jobRows,
+      });
+      return next;
+    });
   };
 
   const handleDeleteJob = async (id) => {
     if (!confirm("Delete this application?")) return;
     await supabase.from("job_form").delete().eq("id", id);
-    setJobRows(jobRows.filter((r) => r.id !== id));
+    setJobRows((prev) => {
+      const next = prev.filter((r) => r.id !== id);
+      writeCachedValue("admin-contact-submissions", {
+        contactRows,
+        jobRows: next,
+      });
+      return next;
+    });
   };
 
   const handlePromoteToPipeline = async (submission) => {
@@ -368,9 +414,19 @@ function ContactTW() {
         <meta name="robots" content="noindex" />
       </Head>
       <div>
-        <div className="mb-6">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
           <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Form Submissions</h1>
           <p className="mt-1 text-sm text-neutral-600">View and manage contact form and job application submissions</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadSubmissions({ force: true })}
+            disabled={refreshing}
+            className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+          >
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </button>
         </div>
 
         {/* Stats Cards */}

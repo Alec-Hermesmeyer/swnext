@@ -6,8 +6,10 @@ import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { Lato } from "next/font/google";
 import { withRetry } from "@/lib/retry";
+import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+const CREW_CACHE_TTL_MS = 5 * 60 * 1000;
 
 // Format date for display
 const toLocalDate = (value) => {
@@ -505,6 +507,12 @@ function CrewScheduler() {
   }, []);
 
   const fetchWorkers = useCallback(async (options = {}) => {
+    if (!options?.force) {
+      const cached = readCachedValue("crew-scheduler-workers", CREW_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        setWorkers(cached.value);
+      }
+    }
     const { data } = await runSupabaseQuery(
       "crew workers",
       () =>
@@ -515,21 +523,39 @@ function CrewScheduler() {
           .order("name"),
       options
     );
-    setWorkers(data || []);
-    return data || [];
+    const rows = data || [];
+    setWorkers(rows);
+    writeCachedValue("crew-scheduler-workers", rows);
+    return rows;
   }, [runSupabaseQuery]);
 
   const fetchCategories = useCallback(async (options = {}) => {
+    if (!options?.force) {
+      const cached = readCachedValue("crew-scheduler-categories", CREW_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        setCategories(cached.value);
+      }
+    }
     const { data } = await runSupabaseQuery(
       "crew categories",
       () => supabase.from("crew_categories").select("*").order("sort_order"),
       options
     );
-    setCategories(data || []);
-    return data || [];
+    const rows = data || [];
+    setCategories(rows);
+    writeCachedValue("crew-scheduler-categories", rows);
+    return rows;
   }, [runSupabaseQuery]);
 
   const fetchJobs = useCallback(async (options = {}) => {
+    if (!options?.force) {
+      const cached = readCachedValue("crew-scheduler-jobs", CREW_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        const cachedRows = sortCrewJobsForManagePanel(cached.value);
+        setJobAdminRows(cachedRows);
+        setJobs(cachedRows.filter((job) => isCrewJobActive(job)));
+      }
+    }
     const { data } = await runSupabaseQuery(
       "crew jobs",
       () => supabase.from("crew_jobs").select("*").order("job_name"),
@@ -538,6 +564,7 @@ function CrewScheduler() {
     const rows = sortCrewJobsForManagePanel(data || []);
     setJobAdminRows(rows);
     setJobs(rows.filter((job) => isCrewJobActive(job)));
+    writeCachedValue("crew-scheduler-jobs", rows);
     return rows;
   }, [runSupabaseQuery]);
 
@@ -564,6 +591,12 @@ function CrewScheduler() {
   }, [runSupabaseQuery]);
 
   const fetchSuperintendents = useCallback(async (options = {}) => {
+    if (!options?.force) {
+      const cached = readCachedValue("crew-scheduler-superintendents", CREW_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        setSuperintendents(cached.value);
+      }
+    }
     const { data } = await runSupabaseQuery(
       "crew superintendents",
       () =>
@@ -574,11 +607,19 @@ function CrewScheduler() {
           .order("name"),
       options
     );
-    setSuperintendents(data || []);
-    return data || [];
+    const rows = data || [];
+    setSuperintendents(rows);
+    writeCachedValue("crew-scheduler-superintendents", rows);
+    return rows;
   }, [runSupabaseQuery]);
 
   const fetchTrucks = useCallback(async (options = {}) => {
+    if (!options?.force) {
+      const cached = readCachedValue("crew-scheduler-trucks", CREW_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        setTrucks(cached.value);
+      }
+    }
     const { data } = await runSupabaseQuery(
       "crew trucks",
       () =>
@@ -589,8 +630,10 @@ function CrewScheduler() {
           .order("truck_number"),
       options
     );
-    setTrucks(data || []);
-    return data || [];
+    const rows = data || [];
+    setTrucks(rows);
+    writeCachedValue("crew-scheduler-trucks", rows);
+    return rows;
   }, [runSupabaseQuery]);
 
   const splitCsvLine = (line) => {
@@ -783,6 +826,12 @@ function CrewScheduler() {
   };
 
   const fetchCustomers = useCallback(async (options = {}) => {
+    if (!options?.force) {
+      const cached = readCachedValue("crew-scheduler-customers", CREW_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        setCustomerNames(cached.value);
+      }
+    }
     const { data } = await runSupabaseQuery(
       "customers",
       () => supabase.from("Customer").select("id, name"),
@@ -797,6 +846,7 @@ function CrewScheduler() {
     });
     const nextNames = Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b));
     setCustomerNames(nextNames);
+    writeCachedValue("crew-scheduler-customers", nextNames);
     return nextNames;
   }, [runSupabaseQuery]);
 
@@ -821,6 +871,12 @@ function CrewScheduler() {
   };
 
   const fetchRecentSchedules = useCallback(async (options = {}) => {
+    if (!options?.force) {
+      const cached = readCachedValue("crew-scheduler-recent-schedules", CREW_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        setRecentSchedules(cached.value);
+      }
+    }
     const { data } = await runSupabaseQuery(
       "recent schedules",
       () =>
@@ -831,8 +887,10 @@ function CrewScheduler() {
           .limit(10),
       options
     );
-    setRecentSchedules(data || []);
-    return data || [];
+    const rows = data || [];
+    setRecentSchedules(rows);
+    writeCachedValue("crew-scheduler-recent-schedules", rows);
+    return rows;
   }, [runSupabaseQuery]);
 
   const getOrCreateSchedule = useCallback(async (date, options = {}) =>
@@ -1083,6 +1141,17 @@ function CrewScheduler() {
 
   const fetchSchedule = useCallback(async (date, options = {}) => {
     const requestId = ++scheduleRequestRef.current;
+    const cacheKey = `crew-scheduler-schedule:${date}`;
+
+    if (!options?.force) {
+      const cached = readCachedValue(cacheKey, CREW_CACHE_TTL_MS);
+      if (cached?.value) {
+        const cachedPayload = cached.value;
+        setCurrentSchedule(cachedPayload.schedule || null);
+        setAssignments(Array.isArray(cachedPayload.assignments) ? cachedPayload.assignments : []);
+        setRigDetails(cachedPayload.rigDetails || {});
+      }
+    }
 
     try {
       const payload = await withRetry(async () => {
@@ -1144,6 +1213,11 @@ function CrewScheduler() {
         };
       });
       setRigDetails(detailsMap);
+      writeCachedValue(cacheKey, {
+        schedule: payload.schedule || null,
+        assignments: payload.assignments || [],
+        rigDetails: detailsMap,
+      });
 
       logSchedulerEvent(
         "schedule_loaded",
