@@ -471,6 +471,8 @@ const MODULE_TO_PAGE = {
 export default function AdminAssistantWorkspace({
   variant = "page",
   onClose,
+  hideSideRail = false,
+  onThreadsReady,
 }) {
   const { profile, role, department, logout } = useAuth();
 
