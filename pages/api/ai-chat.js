@@ -4,6 +4,7 @@ import { routeAdminAssistantRequest } from "@/lib/admin-assistant-direct-router"
 import {
   buildAssistantSurface,
   buildSalesPipelineListSurface,
+  buildHiringPipelineSurface,
   buildScheduleOverviewForDates,
 } from "@/lib/admin-assistant-surfaces";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
@@ -14,6 +15,7 @@ import {
   isAdminRole,
   READ_ONLY_ASSISTANT_TOOLS,
   canAccessSalesPipeline,
+  canAccessHiringPipeline,
 } from "@/lib/roles";
 import {
   canMutateSalesOpportunity,
@@ -798,6 +800,156 @@ const tools = [
       },
     },
   },
+  // ── Hiring pipeline tools ──
+  {
+    type: "function",
+    function: {
+      name: "create_hiring_candidate",
+      description:
+        "Add a candidate to the hiring pipeline. Use when the user wants to track an applicant, promote a job application into the pipeline, or manually add someone they're considering.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Short label for this candidate entry (e.g. 'John Smith — Crane Operator')" },
+          applicant_name: { type: "string", description: "Full name of the applicant" },
+          contact_email: { type: "string", description: "Applicant email" },
+          contact_phone: { type: "string", description: "Applicant phone" },
+          position_applied: { type: "string", description: "Position they applied for" },
+          stage: {
+            type: "string",
+            description: "Pipeline stage",
+            enum: ["new", "reviewing", "interview", "offer", "hired", "declined"],
+          },
+          next_follow_up: { type: "string", description: "Next follow-up date YYYY-MM-DD" },
+          notes: { type: "string", description: "Notes about the candidate" },
+        },
+        required: ["title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_hiring_candidate",
+      description:
+        "Update an existing hiring pipeline candidate. Use when the user wants to advance a candidate to the next stage, add notes, set a follow-up, mark as hired, or decline. Use the candidate ID from the HIRING PIPELINE list in context.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string", description: "The UUID of the hiring_opportunities row to update" },
+          title: { type: "string", description: "Updated label" },
+          applicant_name: { type: "string", description: "Updated name" },
+          contact_email: { type: "string", description: "Updated email" },
+          contact_phone: { type: "string", description: "Updated phone" },
+          position_applied: { type: "string", description: "Updated position" },
+          stage: {
+            type: "string",
+            description: "Updated pipeline stage",
+            enum: ["new", "reviewing", "interview", "offer", "hired", "declined"],
+          },
+          next_follow_up: { type: "string", description: "Updated follow-up date YYYY-MM-DD" },
+          notes: { type: "string", description: "Updated notes" },
+          decline_reason: { type: "string", description: "Reason for declining (when stage=declined)" },
+        },
+        required: ["candidate_id"],
+      },
+    },
+  },
+  // ── Bidding analysis tools ──
+  {
+    type: "function",
+    function: {
+      name: "analyze_bid",
+      description:
+        "Run the AI bid analysis engine on a sales opportunity. Returns a recommended bid amount, confidence score, margin percentage, risk assessment, and competitive positioning. Use when the user asks to analyze a bid, get a bid recommendation, or wants help pricing a job. The opportunity must already exist in the sales pipeline.",
+      parameters: {
+        type: "object",
+        properties: {
+          opportunity_id: { type: "string", description: "UUID of the sales opportunity to analyze" },
+          include_competitors: { type: "boolean", description: "Include competitor data in analysis (default true)" },
+          include_market_data: { type: "boolean", description: "Include market intelligence (default true)" },
+          include_client_history: { type: "boolean", description: "Include client bid history (default true)" },
+          target_margin: { type: "number", description: "Target margin percentage (0-100). If omitted, the engine calculates an optimal margin." },
+        },
+        required: ["opportunity_id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_competitor_intel",
+      description:
+        "Log competitor intelligence for a sales opportunity. Use when the user mentions a competitor bidding on the same job, their estimated bid, strengths, or win rate.",
+      parameters: {
+        type: "object",
+        properties: {
+          opportunity_id: { type: "string", description: "UUID of the sales opportunity" },
+          competitor_name: { type: "string", description: "Name of the competing company" },
+          estimated_bid: { type: "number", description: "Estimated bid amount from competitor" },
+          known_strengths: { type: "string", description: "What this competitor is strong at" },
+          known_weaknesses: { type: "string", description: "Known weaknesses of this competitor" },
+          historical_win_rate: { type: "number", description: "Competitor win rate percentage (0-100)" },
+          notes: { type: "string", description: "Additional notes about the competitor" },
+        },
+        required: ["opportunity_id", "competitor_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_bid_performance",
+      description:
+        "Get bid win/loss performance metrics. Shows total bids, wins, losses, win rate, and revenue by estimator/owner. Use when the user asks about bidding performance, win rates, or how the team is doing on bids.",
+      parameters: {
+        type: "object",
+        properties: {
+          owner_name: { type: "string", description: "Filter to a specific estimator/owner name. Omit for all." },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_bid_details",
+      description:
+        "Add specification details to a bid/sales opportunity. Use when ANYONE (sales, operations, field, estimator) provides job details that inform the bid — pier counts, depths, diameters, soil conditions, equipment needs, material costs, labor estimates, mob/demob, or scope notes. Data accumulates — multiple people can add different details over time and the bid analysis gets smarter. Also use when someone pastes bid sheet data or describes job specs conversationally.",
+      parameters: {
+        type: "object",
+        properties: {
+          opportunity_id: { type: "string", description: "UUID of the sales opportunity this bid is for" },
+          spec_type: {
+            type: "string",
+            description: "Type of specification being added",
+            enum: ["pier_scope", "equipment", "materials", "labor", "mobilization", "subcontractor", "soil_conditions", "general"],
+          },
+          pier_count: { type: "integer", description: "Number of piers in scope" },
+          pier_depth: { type: "string", description: "Pier depth (e.g. '30ft', '25-40ft')" },
+          pier_diameter: { type: "string", description: "Pier diameter (e.g. '24in', '36in')" },
+          estimated_days: { type: "integer", description: "Estimated working days on site" },
+          mob_days: { type: "integer", description: "Mobilization days" },
+          crane_required: { type: "boolean", description: "Whether crane is needed" },
+          equipment_details: { type: "string", description: "Equipment needed (rigs, crane type, etc.)" },
+          material_cost_estimate: { type: "number", description: "Estimated material cost in dollars" },
+          labor_cost_estimate: { type: "number", description: "Estimated labor cost in dollars" },
+          mob_demob_cost: { type: "number", description: "Mobilization/demobilization cost" },
+          subcontractor_cost: { type: "number", description: "Subcontractor costs" },
+          soil_conditions: { type: "string", description: "Soil type and conditions (clay, rock, sand, etc.)" },
+          difficulty_factor: {
+            type: "string",
+            description: "Job difficulty level",
+            enum: ["standard", "moderate", "difficult", "extreme"],
+          },
+          complexity_score: { type: "integer", description: "Overall complexity 1-10" },
+          notes: { type: "string", description: "Additional notes, special requirements, or pasted bid sheet data" },
+        },
+        required: ["opportunity_id", "spec_type"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
@@ -883,6 +1035,7 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
     { data: socialPosts },
     { data: brandVoice },
     { data: solutionFeatures },
+    { data: hiringCandidates },
   ] = await Promise.all([
     // ── Schedule module queries (workers, rigs, jobs, schedules, assignments) ──
     hasModule("schedule")
@@ -989,6 +1142,14 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
       .from("admin_features")
       .select("slug, title, description, priority, status, status_note, href")
       .order("sort_order", { ascending: true }),
+    // ── Hiring pipeline ──
+    hasModule("hiring")
+      ? supabase
+          .from("hiring_opportunities")
+          .select("id, title, applicant_name, contact_email, contact_phone, position_applied, stage, next_follow_up, notes, decline_reason, created_at, updated_at")
+          .order("created_at", { ascending: false })
+          .limit(50)
+      : empty,
   ]);
 
   const progressByJobId = {};
@@ -1284,6 +1445,8 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
       scheduledSocialPosts: (socialPosts || []).filter((p) => p.status === "scheduled").length,
       totalSchedulesInWindow: (schedules || []).length,
       totalSalesOpportunities: salesOpportunitiesNormalized.length,
+      totalHiringCandidates: (hiringCandidates || []).length,
+      activeHiringCandidates: (hiringCandidates || []).filter((h) => h.stage !== "hired" && h.stage !== "declined").length,
     },
     workers: activeWorkers.map((w) => ({
       name: w.name,
@@ -1391,6 +1554,19 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
       href: f.href || "",
     })),
     salesOpportunities: salesOpportunitiesNormalized,
+    hiringCandidates: (hiringCandidates || []).map((h) => ({
+      id: h.id,
+      title: h.title || "",
+      applicant_name: h.applicant_name || "",
+      contact_email: h.contact_email || "",
+      contact_phone: h.contact_phone || "",
+      position_applied: h.position_applied || "",
+      stage: h.stage || "new",
+      next_follow_up: h.next_follow_up || "",
+      notes: h.notes || "",
+      decline_reason: h.decline_reason || "",
+      updated_at: h.updated_at || null,
+    })),
   };
 
   setCachedDataContext(modules, userId, result);
@@ -1579,6 +1755,7 @@ OVERVIEW:
 - ${data.summary.totalContactSubmissions} recent contact form submissions
 - ${data.summary.totalJobApplications} recent job applications
 - ${data.summary.totalSalesOpportunities ?? 0} sales opportunities (pre-award pipeline)
+- ${data.summary.totalHiringCandidates ?? 0} hiring pipeline candidates (${data.summary.activeHiringCandidates ?? 0} active)
 - ${data.summary.totalSocialPosts} social posts (${data.summary.pendingSocialPosts} pending review, ${data.summary.scheduledSocialPosts} scheduled)
 
 CREW WORKERS:
@@ -1685,6 +1862,14 @@ APPLICATIONS BY POSITION: ${Object.entries(positionCounts)
     .map(([pos, count]) => `${pos}: ${count}`)
     .join(", ") || "None"}
 
+HIRING PIPELINE (${data.summary.totalHiringCandidates ?? 0} candidates, ${data.summary.activeHiringCandidates ?? 0} active):
+${linesOrFallback(
+  (data.hiringCandidates || []).map((h) => {
+    return `- [${h.id}] ${h.title}${h.applicant_name ? ` | ${h.applicant_name}` : ""} | stage: ${h.stage}${h.position_applied ? ` | position: ${h.position_applied}` : ""}${h.contact_email ? ` | ${h.contact_email}` : ""}${h.next_follow_up ? ` | follow-up: ${h.next_follow_up}` : ""}`;
+  }),
+  "No candidates in the hiring pipeline yet."
+)}
+
 SOCIAL MEDIA:
 - ${data.summary.totalSocialPosts} total posts (${data.summary.pendingSocialPosts} pending, ${data.summary.scheduledSocialPosts} scheduled)
 ${linesOrFallback(
@@ -1773,7 +1958,16 @@ You have access to a company knowledge base via the search_knowledge_base tool. 
 - Company contacts, career positions, processes
 - Any manually added business context
 
-When the user asks about something that isn't fully covered by the live admin data above — like past project details, a specific client, company processes, or historical context — call search_knowledge_base with a descriptive query. The results come back ranked by relevance. Incorporate the most relevant context into your answer naturally.
+WHEN TO USE IT:
+- The user asks about past projects, a specific client, company processes, or historical context not fully covered by the live admin data above.
+- The user asks "do we have info on…", "what do we know about…", or references something you can't answer from the data above.
+- You are uncertain whether the live data covers the question — search first, then answer.
+
+HOW TO USE IT WELL:
+- Write a descriptive search query — "past pier drilling projects in Austin" is better than "Austin".
+- Results come back ranked by relevance percentage. Focus on results above 75% relevance; treat lower-scoring results as supplementary.
+- Synthesize the results into a clear answer — do not dump raw chunks to the user. Cite the category (e.g. "from project history" or "from a contact form submission") when it adds clarity.
+- If no results are found, say so and suggest the user add the information via the Knowledge Base page.
 
 IMAGE MANAGEMENT GUIDE:
 The S&W website has two types of managed images:
@@ -1797,7 +1991,15 @@ RULES:
 - If asked about a date inside the window but there is no matching schedule/assignment, say no schedule is recorded for that date.
 - Use plain language and keep responses short.
 - When listing a day, group by rig/category.
-- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, and create_sales_opportunity / update_sales_opportunity for the pre-award pipeline.
+- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, create_sales_opportunity / update_sales_opportunity for the pre-award pipeline, and create_hiring_candidate / update_hiring_candidate for the hiring pipeline.
+- HIRING PIPELINE: Stages are New → Reviewing → Interview → Offer → Hired / Declined. When the user asks about applicants, hiring, candidates, or the hiring pipeline, reference the HIRING PIPELINE data. Use create_hiring_candidate to add someone and update_hiring_candidate to advance stages, add notes, or decline. Job applications from the RECENT JOB APPLICATIONS section can be promoted into the hiring pipeline by creating a candidate with their details.
+- BID ANALYSIS & ESTIMATING:
+  The bidding engine builds better recommendations as more data flows in from anyone on the team.
+  • add_bid_details — Use when ANYONE provides job specs: pier counts, depths, diameters, soil conditions, equipment needs, material/labor costs, mob/demob, scope notes, or difficulty. Data accumulates — multiple people can add different pieces and the analysis improves. Also use when someone pastes bid sheet data.
+  • analyze_bid — Runs the recommendation engine. It pulls from: (1) specs attached via add_bid_details, (2) historical pricing from completed crew_jobs (cost-per-pier, cost-per-day), (3) competitor intel, (4) market data, (5) client history. Confidence goes up as more data is available.
+  • add_competitor_intel — Log competitor data (name, estimated bid, strengths, win rate).
+  • get_bid_performance — Win/loss metrics by estimator.
+  Flow: Someone in sales creates the opportunity → anyone adds specs/costs with add_bid_details → analyze_bid generates a recommendation. The more details provided, the more accurate the bid. If only a value_estimate exists, the engine still works but flags low confidence.
 - For contact-form spam control, use add_spam_block_rule, list_spam_block_rules, toggle_spam_block_rule, and remove_spam_block_rule.
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
 - You can finalize schedules, send schedule emails, send packets, and update job progress. Always confirm with the user before finalizing or sending emails/packets.
@@ -1939,6 +2141,7 @@ export default async function handler(req, res) {
       fetchLatestAssistantProfile(userContext),
     ]);
     const pipelineAccess = canAccessSalesPipeline(userRole);
+    const hiringAccess = canAccessHiringPipeline(userRole);
     const directRoute = routeAdminAssistantRequest({
       message,
       data,
@@ -2119,6 +2322,16 @@ export default async function handler(req, res) {
       surface = buildSalesPipelineListSurface(freshData, { writeAccessEnabled });
     }
 
+    if (
+      !surface &&
+      toolsCalled.some((toolName) =>
+        toolName === "create_hiring_candidate" || toolName === "update_hiring_candidate"
+      )
+    ) {
+      const freshData = await fetchDataContext(allowedModules, { skipCache: true, userContext });
+      surface = buildHiringPipelineSurface(freshData, { writeAccessEnabled });
+    }
+
     if (!surface) {
       surface = buildAssistantSurface({
         message,
@@ -2128,6 +2341,7 @@ export default async function handler(req, res) {
         actionsPerformed,
         assistantProfile,
         pipelineAccess,
+        hiringAccess,
       });
     }
 
