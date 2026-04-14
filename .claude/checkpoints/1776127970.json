@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260413-195250", "file": "/Users/alechermesmeyer/Desktop/SWF/final/swnext/lib/roles.js", "timestamp": "2026-04-14T00:52:50Z", "type": "post-edit", "branch": "tailwind-only", "diff_summary": " .claude/checkpoints/1776127960.json | 1 +  .claude/checkpoints/1776127962.json | 1 +  lib/roles.js                        | 3 +++  3 files changed, 5 insertions(+) "}
