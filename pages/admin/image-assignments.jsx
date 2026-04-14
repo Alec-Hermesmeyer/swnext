@@ -8,11 +8,13 @@ import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { Lato } from "next/font/google";
 import { pageImages } from "@/config/imageConfig";
+import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
 const IMAGE_BASE_URL = "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images";
 const BUCKET_NAME = "Images";
+const PAGE_IMAGES_CACHE_TTL_MS = 5 * 60 * 1000;
 
 // Define all image slots that can be assigned
 const IMAGE_SLOTS = {
@@ -134,8 +136,19 @@ function ImagePickerModal({ isOpen, onClose, onSelect, currentUrl, slotLabel }) 
   const [isGlobalSearch, setIsGlobalSearch] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  const fetchImages = useCallback(async () => {
-    setLoading(true);
+  const fetchImages = useCallback(async ({ force = false } = {}) => {
+    const cacheKey = `admin-page-image-picker:${currentFolder || "root"}`;
+    if (!force) {
+      const cached = readCachedValue(cacheKey, PAGE_IMAGES_CACHE_TTL_MS);
+      if (cached?.value) {
+        setFolders(Array.isArray(cached.value.folders) ? cached.value.folders : []);
+        setImages(Array.isArray(cached.value.images) ? cached.value.images : []);
+        setLoading(false);
+      }
+    } else {
+      setLoading(true);
+    }
+
     try {
       const { data: files, error } = await supabase.storage
         .from(BUCKET_NAME)
@@ -151,6 +164,7 @@ function ImagePickerModal({ isOpen, onClose, onSelect, currentUrl, slotLabel }) 
 
       setFolders(folderItems);
       setImages(fileItems);
+      writeCachedValue(cacheKey, { folders: folderItems, images: fileItems });
     } finally {
       setLoading(false);
     }
@@ -503,18 +517,32 @@ function ImageAssignmentsPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [expandedSections, setExpandedSections] = useState({ homepage: true, hero: true, services: true });
+  const [refreshing, setRefreshing] = useState(false);
 
   // Load saved assignments
   useEffect(() => {
-    const fetchAssignments = async () => {
+    const fetchAssignments = async ({ force = false } = {}) => {
+      if (!force) {
+        const cached = readCachedValue("admin-page-image-assignments", PAGE_IMAGES_CACHE_TTL_MS);
+        if (cached?.value && typeof cached.value === "object") {
+          setAssignments(cached.value);
+          setLoading(false);
+        }
+      } else {
+        setRefreshing(true);
+      }
+
       try {
         const res = await fetch("/api/image-assignments");
         const data = await res.json();
-        setAssignments(data.assignments || {});
+        const nextAssignments = data.assignments || {};
+        setAssignments(nextAssignments);
+        writeCachedValue("admin-page-image-assignments", nextAssignments);
       } catch (err) {
         console.error("Failed to load assignments:", err);
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     };
     fetchAssignments();
@@ -551,7 +579,11 @@ function ImageAssignmentsPage() {
         body: JSON.stringify({ page, slot: slotKey, image_url: imageUrl }),
       });
 
-      setAssignments((prev) => ({ ...prev, [key]: imageUrl }));
+      setAssignments((prev) => {
+        const next = { ...prev, [key]: imageUrl };
+        writeCachedValue("admin-page-image-assignments", next);
+        return next;
+      });
     } catch (err) {
       console.error("Failed to save assignment:", err);
       alert("Failed to save. Make sure the image_assignments table exists in Supabase.");
@@ -595,6 +627,27 @@ function ImageAssignmentsPage() {
           >
             📁 Browse All Images
           </Link>
+          <button
+            type="button"
+            onClick={async () => {
+              setRefreshing(true);
+              try {
+                const res = await fetch("/api/image-assignments");
+                const data = await res.json();
+                const nextAssignments = data.assignments || {};
+                setAssignments(nextAssignments);
+                writeCachedValue("admin-page-image-assignments", nextAssignments);
+              } catch (err) {
+                console.error("Failed to refresh assignments:", err);
+              } finally {
+                setRefreshing(false);
+              }
+            }}
+            disabled={refreshing}
+            className="inline-flex items-center rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+          >
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </button>
         </div>
 
         {/* Info box about Supabase table */}
