@@ -911,6 +911,45 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "add_bid_details",
+      description:
+        "Add specification details to a bid/sales opportunity. Use when ANYONE (sales, operations, field, estimator) provides job details that inform the bid — pier counts, depths, diameters, soil conditions, equipment needs, material costs, labor estimates, mob/demob, or scope notes. Data accumulates — multiple people can add different details over time and the bid analysis gets smarter. Also use when someone pastes bid sheet data or describes job specs conversationally.",
+      parameters: {
+        type: "object",
+        properties: {
+          opportunity_id: { type: "string", description: "UUID of the sales opportunity this bid is for" },
+          spec_type: {
+            type: "string",
+            description: "Type of specification being added",
+            enum: ["pier_scope", "equipment", "materials", "labor", "mobilization", "subcontractor", "soil_conditions", "general"],
+          },
+          pier_count: { type: "integer", description: "Number of piers in scope" },
+          pier_depth: { type: "string", description: "Pier depth (e.g. '30ft', '25-40ft')" },
+          pier_diameter: { type: "string", description: "Pier diameter (e.g. '24in', '36in')" },
+          estimated_days: { type: "integer", description: "Estimated working days on site" },
+          mob_days: { type: "integer", description: "Mobilization days" },
+          crane_required: { type: "boolean", description: "Whether crane is needed" },
+          equipment_details: { type: "string", description: "Equipment needed (rigs, crane type, etc.)" },
+          material_cost_estimate: { type: "number", description: "Estimated material cost in dollars" },
+          labor_cost_estimate: { type: "number", description: "Estimated labor cost in dollars" },
+          mob_demob_cost: { type: "number", description: "Mobilization/demobilization cost" },
+          subcontractor_cost: { type: "number", description: "Subcontractor costs" },
+          soil_conditions: { type: "string", description: "Soil type and conditions (clay, rock, sand, etc.)" },
+          difficulty_factor: {
+            type: "string",
+            description: "Job difficulty level",
+            enum: ["standard", "moderate", "difficult", "extreme"],
+          },
+          complexity_score: { type: "integer", description: "Overall complexity 1-10" },
+          notes: { type: "string", description: "Additional notes, special requirements, or pasted bid sheet data" },
+        },
+        required: ["opportunity_id", "spec_type"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
