@@ -1,36 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
+import { getEmbedding } from "@/lib/embeddings";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
-
-async function getEmbedding(text) {
-  if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
-
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "text-embedding-3-small",
-      input: text.substring(0, 8000), // cap input length
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Embedding API error: ${err}`);
-  }
-
-  const data = await response.json();
-  return data.data[0].embedding;
-}
 
 export default async function handler(req, res) {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
