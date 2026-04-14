@@ -14,6 +14,7 @@ import {
   isAdminRole,
   READ_ONLY_ASSISTANT_TOOLS,
   canAccessSalesPipeline,
+  canAccessHiringPipeline,
 } from "@/lib/roles";
 import {
   canMutateSalesOpportunity,
