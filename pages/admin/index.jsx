@@ -110,7 +110,7 @@ function AdminHomeTW() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <div className="relative flex h-[calc(100vh-115px)] min-h-0 flex-col overflow-hidden">
+      <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
         {/* Gradient background + interactive grid */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-r from-red-700 via-white to-[#0b2a5a]" />
