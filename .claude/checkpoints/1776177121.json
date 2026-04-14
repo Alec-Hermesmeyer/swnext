@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260414-093201", "file": "/Users/alechermesmeyer/Desktop/SWF/final/swnext/components/TWAdminLayout.jsx", "timestamp": "2026-04-14T14:32:01Z", "type": "post-edit", "branch": "tailwind-only", "diff_summary": " .claude/checkpoints/task-1776177003.json | 1 +  components/TWAdminLayout.jsx             | 4 ++--  2 files changed, 3 insertions(+), 2 deletions(-) "}
