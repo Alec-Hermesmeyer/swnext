@@ -1,10 +1,12 @@
 import Head from "next/head";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import AdminAssistantWorkspace from "@/components/admin/AdminAssistantWorkspace";
 
 function ChatThreadsSidebar({ data }) {
+  const [expanded, setExpanded] = useState(false);
+
   if (!data) return null;
 
   const {
@@ -16,12 +18,10 @@ function ChatThreadsSidebar({ data }) {
     switchThread,
   } = data;
 
-  const [expanded, setExpanded] = useState(false);
   const visible = expanded ? threads : threads.slice(0, 5);
 
   return (
     <div className="mt-4 border-t border-white/10 pt-4 space-y-3">
-      {/* New conversation */}
       <button
         type="button"
         onClick={startNewConversation}
@@ -31,7 +31,6 @@ function ChatThreadsSidebar({ data }) {
         New conversation
       </button>
 
-      {/* Current thread */}
       {hasUserMessages && (
         <div className="rounded-lg bg-white/10 px-3 py-2.5">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Active thread</div>
@@ -39,7 +38,6 @@ function ChatThreadsSidebar({ data }) {
         </div>
       )}
 
-      {/* Previous threads */}
       {threads.length > 0 && (
         <div>
           <div className="px-3 text-[10px] font-semibold uppercase tracking-wider text-white/40">
@@ -85,10 +83,15 @@ function ChatThreadsSidebar({ data }) {
 
 function AdminHomeTW() {
   const [threadData, setThreadData] = useState(null);
+  const sidebarExtraRef = useRef(null);
+  const [, forceUpdate] = useState(0);
 
   const handleThreadsReady = useCallback((data) => {
     setThreadData(data);
   }, []);
+
+  // Build the sidebar extra element whenever threadData changes
+  const sidebarExtra = threadData ? <ChatThreadsSidebar data={threadData} /> : null;
 
   return (
     <>
@@ -96,6 +99,8 @@ function AdminHomeTW() {
         <title>AI Assistant | S&W Admin</title>
         <meta name="robots" content="noindex" />
       </Head>
+
+      <AdminHomeTW.sidebarExtra = {sidebarExtra} />
 
       <div className="flex h-[calc(100vh-115px)] min-h-0 flex-col">
         <AdminAssistantWorkspace
@@ -107,84 +112,3 @@ function AdminHomeTW() {
     </>
   );
 }
-
-AdminHomeTW.getLayout = function getLayout(page) {
-  // Extract threadData from the page component's state via a render wrapper
-  return <AdminLayoutWithThreads>{page}</AdminLayoutWithThreads>;
-};
-
-function AdminLayoutWithThreads({ children }) {
-  // The child (AdminHomeTW) passes threadData upward — we capture it
-  // by cloning the child with a ref, but simpler: use the page's own state.
-  // Since getLayout wraps the page, we access threadData through the page's
-  // rendered output. The cleanest approach: the page stores threadData
-  // in module-level state that the layout reads.
-  return (
-    <TWAdminLayout sidebarExtra={<ChatThreadsSidebarBridge />}>
-      {children}
-    </TWAdminLayout>
-  );
-}
-
-// Bridge component that reads from module-level store
-let _threadDataRef = null;
-let _threadDataListeners = new Set();
-
-function setGlobalThreadData(data) {
-  _threadDataRef = data;
-  _threadDataListeners.forEach((fn) => fn(data));
-}
-
-function useGlobalThreadData() {
-  const [data, setData] = useState(_threadDataRef);
-  const cb = useCallback((d) => setData(d), []);
-  // Register/unregister listener
-  if (typeof window !== "undefined") {
-    _threadDataListeners.add(cb);
-  }
-  return data;
-}
-
-function ChatThreadsSidebarBridge() {
-  const data = useGlobalThreadData();
-  return <ChatThreadsSidebar data={data} />;
-}
-
-// Override the page's handleThreadsReady to push to global
-const OriginalAdminHomeTW = AdminHomeTW;
-
-function AdminHomeTWWrapped() {
-  const [threadData, setThreadData] = useState(null);
-
-  const handleThreadsReady = useCallback((data) => {
-    setThreadData(data);
-    setGlobalThreadData(data);
-  }, []);
-
-  return (
-    <>
-      <Head>
-        <title>AI Assistant | S&W Admin</title>
-        <meta name="robots" content="noindex" />
-      </Head>
-
-      <div className="flex h-[calc(100vh-115px)] min-h-0 flex-col">
-        <AdminAssistantWorkspace
-          variant="page"
-          hideSideRail
-          onThreadsReady={handleThreadsReady}
-        />
-      </div>
-    </>
-  );
-}
-
-AdminHomeTWWrapped.getLayout = function getLayout(page) {
-  return (
-    <TWAdminLayout sidebarExtra={<ChatThreadsSidebarBridge />}>
-      {page}
-    </TWAdminLayout>
-  );
-};
-
-export default withAuthTw(AdminHomeTWWrapped);
