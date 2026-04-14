@@ -110,12 +110,33 @@ function AdminHomeTW() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <div className="flex h-[calc(100vh-115px)] min-h-0 flex-col">
-        <AdminAssistantWorkspace
-          variant="page"
-          hideSideRail
-          onThreadsReady={handleThreadsReady}
-        />
+      <div className="relative flex h-[calc(100vh-115px)] min-h-0 flex-col overflow-hidden">
+        {/* Gradient background + interactive grid */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-700 via-white to-[#0b2a5a]" />
+          <div className="absolute inset-0 opacity-70">
+            <GridPatternTailwind
+              yOffset={0}
+              interactive
+              className="h-full w-full"
+              patternStroke="#ffffff"
+              patternOpacity={0.8}
+              blockFill="#ffffff"
+              blockOpacity={0.12}
+              hoveredBlockFill="#ffffff"
+              hoveredBlockOpacity={0.28}
+            />
+          </div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.22),transparent_54%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]" />
+        </div>
+
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col p-3 md:p-4">
+          <AdminAssistantWorkspace
+            variant="page"
+            hideSideRail
+            onThreadsReady={handleThreadsReady}
+          />
+        </div>
       </div>
     </>
   );
