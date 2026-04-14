@@ -126,6 +126,13 @@ function normalizeStage(v) {
   return VALID_HIRING_STAGE_IDS.has(s) ? s : null;
 }
 
+function normalizeUuidOrNull(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(raw) ? raw : null;
+}
+
 export default async function handler(req, res) {
   if (!SUPABASE_URL || (!SUPABASE_SERVICE_ROLE_KEY && !SUPABASE_ANON_KEY)) {
     return res.status(500).json({ error: "Supabase is not configured" });
@@ -169,7 +176,7 @@ export default async function handler(req, res) {
         next_follow_up: parseDateInput(body.next_follow_up),
         notes: String(body.notes || "").trim() || null,
         decline_reason: String(body.decline_reason || "").trim() || null,
-        source_job_submission_id: body.source_job_submission_id || null,
+        source_job_submission_id: normalizeUuidOrNull(body.source_job_submission_id),
         created_by: userContext.id,
         owner_user_id: userContext.id,
       };
