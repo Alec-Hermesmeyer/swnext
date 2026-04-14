@@ -41,7 +41,8 @@ const NAV_ICONS = {
 
 const DEFAULT_ICON = (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>;
 
-export default function TWAdminLayout({ children, sidebarExtra }) {
+export default function TWAdminLayout({ children }) {
+  const contextExtra = useSidebarExtra();
   const router = useRouter();
   const currentPath = router.pathname;
   const { role, accessLevel, logout } = useAuth();
