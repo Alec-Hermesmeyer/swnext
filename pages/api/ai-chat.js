@@ -2220,6 +2220,16 @@ export default async function handler(req, res) {
       surface = buildSalesPipelineListSurface(freshData, { writeAccessEnabled });
     }
 
+    if (
+      !surface &&
+      toolsCalled.some((toolName) =>
+        toolName === "create_hiring_candidate" || toolName === "update_hiring_candidate"
+      )
+    ) {
+      const freshData = await fetchDataContext(allowedModules, { skipCache: true, userContext });
+      surface = buildHiringPipelineSurface(freshData, { writeAccessEnabled });
+    }
+
     if (!surface) {
       surface = buildAssistantSurface({
         message,
