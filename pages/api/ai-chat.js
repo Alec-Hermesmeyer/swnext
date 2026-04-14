@@ -1764,6 +1764,14 @@ APPLICATIONS BY POSITION: ${Object.entries(positionCounts)
     .map(([pos, count]) => `${pos}: ${count}`)
     .join(", ") || "None"}
 
+HIRING PIPELINE (${data.summary.totalHiringCandidates ?? 0} candidates, ${data.summary.activeHiringCandidates ?? 0} active):
+${linesOrFallback(
+  (data.hiringCandidates || []).map((h) => {
+    return `- [${h.id}] ${h.title}${h.applicant_name ? ` | ${h.applicant_name}` : ""} | stage: ${h.stage}${h.position_applied ? ` | position: ${h.position_applied}` : ""}${h.contact_email ? ` | ${h.contact_email}` : ""}${h.next_follow_up ? ` | follow-up: ${h.next_follow_up}` : ""}`;
+  }),
+  "No candidates in the hiring pipeline yet."
+)}
+
 SOCIAL MEDIA:
 - ${data.summary.totalSocialPosts} total posts (${data.summary.pendingSocialPosts} pending, ${data.summary.scheduledSocialPosts} scheduled)
 ${linesOrFallback(
