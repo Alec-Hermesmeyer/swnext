@@ -1773,7 +1773,16 @@ You have access to a company knowledge base via the search_knowledge_base tool. 
 - Company contacts, career positions, processes
 - Any manually added business context
 
-When the user asks about something that isn't fully covered by the live admin data above — like past project details, a specific client, company processes, or historical context — call search_knowledge_base with a descriptive query. The results come back ranked by relevance. Incorporate the most relevant context into your answer naturally.
+WHEN TO USE IT:
+- The user asks about past projects, a specific client, company processes, or historical context not fully covered by the live admin data above.
+- The user asks "do we have info on…", "what do we know about…", or references something you can't answer from the data above.
+- You are uncertain whether the live data covers the question — search first, then answer.
+
+HOW TO USE IT WELL:
+- Write a descriptive search query — "past pier drilling projects in Austin" is better than "Austin".
+- Results come back ranked by relevance percentage. Focus on results above 75% relevance; treat lower-scoring results as supplementary.
+- Synthesize the results into a clear answer — do not dump raw chunks to the user. Cite the category (e.g. "from project history" or "from a contact form submission") when it adds clarity.
+- If no results are found, say so and suggest the user add the information via the Knowledge Base page.
 
 IMAGE MANAGEMENT GUIDE:
 The S&W website has two types of managed images:
