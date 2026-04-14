@@ -124,6 +124,99 @@ function normalizeAiJson(payload = {}) {
   };
 }
 
+function buildFallbackDraft({ titleHint, keywordHint, notesHint, cityHint }) {
+  const topic = titleHint || keywordHint || "Commercial foundation planning";
+  const title = titleHint || `What To Know About ${topic} in ${cityHint}`;
+  const excerpt = `Practical field guidance from S&W Foundation on ${topic.toLowerCase()} in ${cityHint}.`;
+  const content = `## Why this matters
+
+Reliable foundation planning is one of the biggest risk reducers on commercial jobs in ${cityHint}. Early coordination, realistic sequencing, and clear communication across crews keep work moving safely and on schedule.
+
+## What we focus on in the field
+
+- Pre-task planning and crew readiness
+- Site access and equipment constraints
+- Soil behavior and drilling strategy
+- Daily production tracking and adjustment
+
+## Common mistakes to avoid
+
+Teams often lose time when assumptions are not validated in the field. We recommend confirming access, utility constraints, and scope details before committing to daily targets.
+
+## Practical workflow for project teams
+
+1. Align superintendent, rig plan, and truck assignment.
+2. Confirm job-specific constraints before mobilization.
+3. Track progress daily and communicate adjustments early.
+4. Keep documentation clear for handoffs and closeout.
+
+## FAQ
+
+### How early should planning begin?
+As early as possible once scope is defined, with a final pass before mobilization.
+
+### What improves consistency most?
+Standardized planning checklists and daily crew communication.
+
+### Can this reduce rework?
+Yes. Clear sequencing and early constraint checks usually reduce downstream surprises.
+
+## Next steps
+
+If you need help planning a commercial foundation project in ${cityHint}, contact S&W Foundation and we can help scope the work and build a practical execution plan.
+
+${notesHint ? `\n\n_Additional context to refine:_ ${notesHint}` : ""}
+`;
+  return {
+    title,
+    excerpt,
+    imageId: "",
+    content,
+  };
+}
+
+async function fetchOpenAiDraft(prompt, apiKey, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        temperature: 0.5,
+        max_tokens: 1000,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: "You output only valid JSON objects." },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`AI generation failed (${response.status}): ${text.slice(0, 180)}`);
+    }
+
+    const data = await response.json();
+    const raw = data?.choices?.[0]?.message?.content || "{}";
+    let parsed = {};
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = {};
+    }
+    return normalizeAiJson(parsed);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -162,7 +255,7 @@ Return ONLY a valid JSON object with keys:
 - title (string)
 - excerpt (string, 1-2 sentences, under 220 chars)
 - imageId (string, may be empty if unknown)
-- content (string, markdown with H2/H3 headings, 600-1000 words)
+- content (string, markdown with H2/H3 headings, 450-750 words)
 
 Requirements:
 - Focus location: ${cityHint}
@@ -178,42 +271,34 @@ Inputs:
 - additional notes: ${notesHint || "(none)"}
 `.trim();
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        temperature: 0.7,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: "You output only valid JSON objects." },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(500).json({
-        error: `AI generation failed (${response.status}). ${text.slice(0, 180)}`,
+    let normalized = null;
+    try {
+      normalized = await fetchOpenAiDraft(prompt, OPENAI_API_KEY, 8000);
+    } catch (aiError) {
+      console.warn("AI draft timed out/faulted; returning fallback draft:", aiError?.message || aiError);
+      normalized = buildFallbackDraft({
+        titleHint,
+        keywordHint,
+        notesHint,
+        cityHint,
+      });
+      return res.status(200).json({
+        draft: normalized,
+        fallback: true,
       });
     }
 
-    const data = await response.json();
-    const raw = data?.choices?.[0]?.message?.content || "{}";
-    let parsed = {};
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      parsed = {};
-    }
-
-    const normalized = normalizeAiJson(parsed);
     if (!normalized.content || !normalized.excerpt) {
-      return res.status(500).json({ error: "AI returned an incomplete draft. Try again." });
+      normalized = buildFallbackDraft({
+        titleHint,
+        keywordHint,
+        notesHint,
+        cityHint,
+      });
+      return res.status(200).json({
+        draft: normalized,
+        fallback: true,
+      });
     }
 
     return res.status(200).json({ draft: normalized });

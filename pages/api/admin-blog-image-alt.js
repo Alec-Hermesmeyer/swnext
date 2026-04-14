@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { canWrite } from "@/lib/roles";
@@ -9,13 +6,11 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
-
-const BLOG_DIR = path.join(process.cwd(), "content", "blog");
-const BLOG_STATUSES = new Set(["draft", "published"]);
 
 const getRequestCookies = (req) => {
   if (req?.cookies && typeof req.cookies.getAll === "function") {
@@ -87,23 +82,6 @@ const getAuthClient = (req, res) =>
     },
   });
 
-const slugify = (value) =>
-  String(value || "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-
-const cleanYamlValue = (value) =>
-  String(value || "")
-    .replace(/\r\n/g, " ")
-    .replace(/\r/g, " ")
-    .replace(/\n/g, " ")
-    .replace(/"/g, '\\"')
-    .trim();
-
 async function getAuthenticatedUserContext(req, res) {
   const accessToken =
     req.cookies?.["sb-access-token"] || req.headers?.authorization?.replace("Bearer ", "");
@@ -133,47 +111,16 @@ async function getAuthenticatedUserContext(req, res) {
   };
 }
 
-function getPostSummaryFromFile(filename) {
-  const slug = filename.replace(/\.md$/i, "");
-  const filePath = path.join(BLOG_DIR, filename);
-  const markdown = fs.readFileSync(filePath, "utf-8");
-  const { data: frontmatter } = matter(markdown);
-  const status = BLOG_STATUSES.has(String(frontmatter?.status || "").toLowerCase())
-    ? String(frontmatter.status).toLowerCase()
-    : "published";
-  return {
-    slug,
-    title: frontmatter?.title || slug,
-    excerpt: frontmatter?.excerpt || "",
-    date: frontmatter?.date || null,
-    imageId: frontmatter?.imageId || "",
-    imageAlt: frontmatter?.imageAlt || "",
-    status,
-  };
-}
-
-function buildMarkdownContent({ title, date, excerpt, imageId, imageAlt, body, status = "draft" }) {
-  return `---
-title: "${cleanYamlValue(title)}"
-date: "${cleanYamlValue(date)}"
-excerpt: "${cleanYamlValue(excerpt)}"
-imageId: "${cleanYamlValue(imageId)}"
-imageAlt: "${cleanYamlValue(imageAlt)}"
-status: "${BLOG_STATUSES.has(String(status || "").toLowerCase()) ? String(status).toLowerCase() : "draft"}"
-contact:
-  phone: "(214) 703-0484"
-  address: "2806 Singleton St. Rowlett, TX 75088"
-  contactUrl: "/contact"
-  servicesUrl: "/services"
----
-
-${String(body || "").trim()}
-`;
-}
-
 export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "Method not allowed" });
+  }
   if (!SUPABASE_URL || (!SUPABASE_SERVICE_ROLE_KEY && !SUPABASE_ANON_KEY)) {
     return res.status(500).json({ error: "Supabase is not configured" });
+  }
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ error: "OPENAI_API_KEY is not configured" });
   }
 
   const userContext = await getAuthenticatedUserContext(req, res);
@@ -181,73 +128,55 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Authentication required" });
   }
   if (!canWrite(userContext.role, userContext.accessLevel)) {
-    return res.status(403).json({ error: "You do not have permission to manage blog posts" });
+    return res.status(403).json({ error: "You do not have permission to generate alt text" });
   }
 
   try {
-    if (!fs.existsSync(BLOG_DIR)) {
-      fs.mkdirSync(BLOG_DIR, { recursive: true });
+    const body = req.body || {};
+    const imageUrl = String(body.imageUrl || "").trim();
+    if (!imageUrl) {
+      return res.status(400).json({ error: "imageUrl is required" });
     }
 
-    if (req.method === "GET") {
-      const files = fs
-        .readdirSync(BLOG_DIR)
-        .filter((filename) => filename.toLowerCase().endsWith(".md"));
-      const posts = files
-        .map(getPostSummaryFromFile)
-        .sort((a, b) => new Date(b?.date || 0).getTime() - new Date(a?.date || 0).getTime());
-      return res.status(200).json({ posts });
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        temperature: 0.2,
+        max_tokens: 90,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Write concise accessibility alt text for construction blog images. Return only plain text, no quotes, no markdown.",
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Generate alt text under 20 words, specific and descriptive for this image." },
+              { type: "image_url", image_url: { url: imageUrl } },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return res.status(500).json({ error: `Alt text generation failed (${response.status}): ${text.slice(0, 160)}` });
     }
-
-    if (req.method === "POST") {
-      const body = req.body || {};
-      const title = String(body.title || "").trim();
-      const excerpt = String(body.excerpt || "").trim();
-      const content = String(body.content || "").trim();
-      const imageId = String(body.imageId || "").trim();
-      const imageAlt = String(body.imageAlt || "").trim();
-      const date = String(body.date || "").trim() || new Date().toISOString().slice(0, 10);
-      const status = BLOG_STATUSES.has(String(body.status || "").toLowerCase())
-        ? String(body.status).toLowerCase()
-        : "draft";
-      const requestedSlug = String(body.slug || "").trim();
-
-      if (!title) return res.status(400).json({ error: "title is required" });
-      if (!excerpt) return res.status(400).json({ error: "excerpt is required" });
-      if (!content) return res.status(400).json({ error: "content is required" });
-
-      const safeSlug = slugify(requestedSlug || title);
-      if (!safeSlug) {
-        return res.status(400).json({ error: "Could not generate a valid slug" });
-      }
-
-      const filePath = path.join(BLOG_DIR, `${safeSlug}.md`);
-      if (fs.existsSync(filePath)) {
-        return res.status(409).json({ error: "A blog post with this slug already exists" });
-      }
-
-      const markdown = buildMarkdownContent({
-        title,
-        date,
-        excerpt,
-        imageId,
-        imageAlt,
-        status,
-        body: content,
-      });
-
-      fs.writeFileSync(filePath, markdown, "utf-8");
-      return res.status(201).json({
-        ok: true,
-        slug: safeSlug,
-        message: "Blog post created.",
-      });
+    const data = await response.json();
+    const altText = String(data?.choices?.[0]?.message?.content || "").trim();
+    if (!altText) {
+      return res.status(500).json({ error: "AI returned empty alt text." });
     }
-
-    res.setHeader("Allow", "GET, POST");
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(200).json({ altText });
   } catch (error) {
-    console.error("admin-blog-posts handler:", error);
+    console.error("admin-blog-image-alt handler:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 }
