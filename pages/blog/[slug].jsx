@@ -22,17 +22,34 @@ export default function BlogPostTW({ frontmatter, content }) {
 export async function getStaticPaths() {
   const baseDir = path.join(process.cwd(), "content", "blog");
   const files = fs.readdirSync(baseDir);
-  const paths = files.map((filename) => ({ params: { slug: filename.replace(".md", "") } }));
-  return { paths, fallback: false };
+  const paths = files
+    .map((filename) => {
+      const filePath = path.join(baseDir, filename);
+      const markdownWithMeta = fs.readFileSync(filePath, "utf-8");
+      const { data: frontmatter } = matter(markdownWithMeta);
+      return {
+        slug: filename.replace(".md", ""),
+        status: String(frontmatter?.status || "published").toLowerCase(),
+      };
+    })
+    .filter((entry) => entry.status !== "draft")
+    .map((entry) => ({ params: { slug: entry.slug } }));
+  return { paths, fallback: "blocking" };
 }
 
 export async function getStaticProps({ params: { slug } }) {
   const filePath = path.join(process.cwd(), "content", "blog", `${slug}.md`);
+  if (!fs.existsSync(filePath)) {
+    return { notFound: true, revalidate: 30 };
+  }
   const markdownWithMeta = fs.readFileSync(filePath, "utf-8");
   const { data: frontmatter, content } = matter(markdownWithMeta);
+  if (String(frontmatter?.status || "published").toLowerCase() === "draft") {
+    return { notFound: true, revalidate: 30 };
+  }
   const processedContent = await remark().use(html).process(content);
   const contentHtml = processedContent.toString();
-  return { props: { frontmatter, content: contentHtml } };
+  return { props: { frontmatter, content: contentHtml }, revalidate: 120 };
 }
 
 

@@ -1,6 +1,4 @@
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import supabase from "@/components/Supabase";
 import { Lato } from "next/font/google";
 import Link from "next/link";
 import ContactCard from "@/components/ContactCard";
@@ -11,78 +9,95 @@ const lato = Lato({
 });
 
 export default function MarkdownBlogPost({ frontmatter, content }) {
-  const [imageUrl, setImageUrl] = useState("");
-
-  // Fetch image URL from Supabase based on the identifier
-  useEffect(() => {
-    const fetchImage = async () => {
-      if (frontmatter.imageId) {
-        const { data, error } = await supabase.storage
-          .from("Images")
-          .getPublicUrl(`public/newimages/${frontmatter.imageId}.webp`);
-
-        if (error) {
-          console.error("Error fetching image:", error);
-        } else {
-          console.log("Fetched image URL:", data.publicUrl); // Add this line
-          setImageUrl(data.publicUrl);
-        }
-      }
-    };
-    fetchImage();
-  }, [frontmatter.imageId]);
-  console.log(frontmatter.imageId);
-
   const contact = frontmatter.contact || {};
-  console.log(contact.contactUrl);
-  const projectId = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID;
-  const supabaseUrl = frontmatter.imageId && projectId
-    ? `https://${projectId}.supabase.co/storage/v1/object/public/Images/public/newimages/${frontmatter.imageId}.webp`
+  const supabaseBase =
+    process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public`
+      : process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID
+      ? `https://${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public`
+      : "";
+  const rawImage = String(frontmatter?.imageId || "").trim();
+  const imageSrc = rawImage
+    ? /^https?:\/\//i.test(rawImage)
+      ? rawImage
+      : rawImage.includes("/") || /\.(png|jpe?g|webp|gif|avif)$/i.test(rawImage)
+      ? `${supabaseBase}/blog-images/${rawImage}`
+      : `${supabaseBase}/Images/public/newimages/${rawImage}.webp`
     : "";
-  const imageSrc = imageUrl || supabaseUrl;
+  const publishedDate = frontmatter?.date
+    ? new Date(frontmatter.date)
+    : null;
+  const publishedDateLabel =
+    publishedDate && !Number.isNaN(publishedDate.getTime())
+      ? publishedDate.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "";
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="p-8">
-            <div className="space-y-8">
-              <div className="">
-                <div className="">
-                  <div className="">
-                    <div className="">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {imageSrc && (
-                          <span className="relative aspect-video rounded-lg overflow-hidden">
-                            <Image
-                              className="object-cover w-full h-full"
-                              src={imageSrc}
-                              height={470}
-                              width={520}
-                              alt={frontmatter.title}
-                              priority
-                              unoptimized
-                              loader={({ src }) => src}
-                              sizes="(max-width: 768px) 90vw, 520px"
-                            />
-                          </span>
-                        )}
-                        
-                          <ContactCard />
-                        
-                      </div>
-                      <div className="space-y-6">
-                        <h1 className={lato.className}>{frontmatter.title}</h1>
-                        <article
-                          className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: content }}
-                        ></article>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <div className="min-h-screen bg-neutral-50">
+      <div className="mx-auto w-full max-w-[1200px] px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mb-4">
+          <Link href="/blog" className="text-sm font-semibold text-[#0b2a5a] hover:underline">
+            ← Back to Blog
+          </Link>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          {imageSrc ? (
+            <div className="relative h-[260px] w-full md:h-[360px]">
+              <Image
+                className="object-cover"
+                src={imageSrc}
+                fill
+                alt={frontmatter.title}
+                priority
+                unoptimized
+                loader={({ src }) => src}
+                sizes="(max-width: 1024px) 100vw, 1200px"
+              />
             </div>
+          ) : null}
+
+          <div className="grid gap-8 px-6 py-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-10">
+            <article>
+              {publishedDateLabel ? (
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                  {publishedDateLabel}
+                </p>
+              ) : null}
+              <h1 className={`${lato.className} text-3xl font-extrabold leading-tight text-neutral-900 md:text-4xl`}>
+                {frontmatter.title}
+              </h1>
+              {frontmatter.excerpt ? (
+                <p className="mt-3 text-base text-neutral-600">{frontmatter.excerpt}</p>
+              ) : null}
+              <div className="mt-8 border-t border-neutral-200 pt-6">
+                <div
+                  className="prose prose-neutral max-w-none prose-headings:font-bold prose-a:text-[#0b2a5a] prose-a:no-underline hover:prose-a:underline"
+                  dangerouslySetInnerHTML={{ __html: content }}
+                />
+              </div>
+            </article>
+
+            <aside className="lg:sticky lg:top-24 lg:self-start">
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Need a quote?</p>
+                <p className="mt-1 text-sm text-neutral-700">
+                  Talk with S&W Foundation about your next project.
+                </p>
+                {contact?.phone ? (
+                  <a href={`tel:${String(contact.phone).replace(/[^\d+]/g, "")}`} className="mt-3 inline-flex text-sm font-semibold text-[#0b2a5a] hover:underline">
+                    {contact.phone}
+                  </a>
+                ) : null}
+              </div>
+              <div className="mt-4">
+                <ContactCard />
+              </div>
+            </aside>
           </div>
         </div>
       </div>
