@@ -5,6 +5,7 @@ import {
   buildCrewJobActivitySurface,
   buildSalesOpportunityEditSurface,
   buildSalesPipelineListSurface,
+  buildHiringPipelineSurface,
 } from "@/lib/admin-assistant-surfaces";
 import {
   canMutateSalesOpportunity,
