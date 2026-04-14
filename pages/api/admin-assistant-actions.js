@@ -290,6 +290,14 @@ function summarizeUserSubmission(surfaceType, values) {
         return `Changed "${values.title || "selection"}" to ${values.stage || "the new stage"}.`;
       }
       return "Refreshed the sales pipeline in chat.";
+    case "hiring_pipeline":
+      if (values.action === "edit") {
+        return `Opened hiring candidate "${values.title || "selection"}" for editing in chat.`;
+      }
+      if (values.action === "set_stage") {
+        return `Changed hiring candidate "${values.title || "selection"}" to ${values.stage || "the new stage"}.`;
+      }
+      return "Refreshed the hiring pipeline in chat.";
     default:
       return "Submitted an assistant work surface.";
   }
