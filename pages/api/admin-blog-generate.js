@@ -7,6 +7,8 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const FLASK_BACKEND = process.env.FLASK_BACKEND || "http://localhost:5000";
+const SOCIAL_WORKSPACE_TOKEN = process.env.SOCIAL_WORKSPACE_TOKEN || "";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -217,6 +219,45 @@ async function fetchOpenAiDraft(prompt, apiKey, timeoutMs = 8000) {
   }
 }
 
+async function fetchSocialAgentDraft({ titleHint, keywordHint, notesHint, cityHint, toneHint }, timeoutMs = 6000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (SOCIAL_WORKSPACE_TOKEN) {
+      headers.Authorization = `Bearer ${SOCIAL_WORKSPACE_TOKEN}`;
+    }
+    const response = await fetch(`${FLASK_BACKEND}/blog/generate`, {
+      method: "POST",
+      headers,
+      signal: controller.signal,
+      body: JSON.stringify({
+        title: titleHint,
+        keyword: keywordHint,
+        notes: notesHint,
+        city: cityHint,
+        tone: toneHint,
+      }),
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Social-agent blog generation failed (${response.status}): ${text.slice(0, 180)}`);
+    }
+    const data = await response.json();
+    const normalized = normalizeAiJson(data?.draft || {});
+    if (!normalized.content || !normalized.excerpt) {
+      throw new Error("Social-agent returned incomplete draft");
+    }
+    return {
+      draft: normalized,
+      socialPosts: Array.isArray(data?.social_posts) ? data.social_posts : [],
+      source: data?.source || "social-agent",
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -271,6 +312,23 @@ Inputs:
 - additional notes: ${notesHint || "(none)"}
 `.trim();
 
+    try {
+      const social = await fetchSocialAgentDraft({
+        titleHint,
+        keywordHint,
+        notesHint,
+        cityHint,
+        toneHint,
+      }, 6000);
+      return res.status(200).json({
+        draft: social.draft,
+        social_posts: social.socialPosts,
+        source: social.source,
+      });
+    } catch (socialError) {
+      console.warn("Social-agent draft path failed; falling back to direct OpenAI:", socialError?.message || socialError);
+    }
+
     let normalized = null;
     try {
       normalized = await fetchOpenAiDraft(prompt, OPENAI_API_KEY, 8000);
@@ -285,6 +343,7 @@ Inputs:
       return res.status(200).json({
         draft: normalized,
         fallback: true,
+        source: "fallback-template",
       });
     }
 
@@ -298,10 +357,11 @@ Inputs:
       return res.status(200).json({
         draft: normalized,
         fallback: true,
+        source: "fallback-template",
       });
     }
 
-    return res.status(200).json({ draft: normalized });
+    return res.status(200).json({ draft: normalized, source: "openai-direct" });
   } catch (error) {
     console.error("admin-blog-generate handler:", error);
     return res.status(500).json({ error: "Internal server error" });
