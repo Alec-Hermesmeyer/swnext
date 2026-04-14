@@ -1,8 +1,11 @@
 import Head from "next/head";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import AdminAssistantWorkspace from "@/components/admin/AdminAssistantWorkspace";
+import { useSetSidebarExtra } from "@/context/SidebarContext";
+
+/* ── Thread list rendered inside the sidebar ── */
 
 function ChatThreadsSidebar({ data }) {
   const [expanded, setExpanded] = useState(false);
@@ -31,7 +34,7 @@ function ChatThreadsSidebar({ data }) {
         New conversation
       </button>
 
-      {hasUserMessages && (
+      {hasUserMessages && conversationTitle && (
         <div className="rounded-lg bg-white/10 px-3 py-2.5">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Active thread</div>
           <div className="mt-1 truncate text-[12px] font-medium text-white/80">{conversationTitle}</div>
@@ -81,17 +84,23 @@ function ChatThreadsSidebar({ data }) {
   );
 }
 
+/* ── Page component ── */
+
 function AdminHomeTW() {
+  const setSidebarExtra = useSetSidebarExtra();
   const [threadData, setThreadData] = useState(null);
-  const sidebarExtraRef = useRef(null);
-  const [, forceUpdate] = useState(0);
 
   const handleThreadsReady = useCallback((data) => {
     setThreadData(data);
   }, []);
 
-  // Build the sidebar extra element whenever threadData changes
-  const sidebarExtra = threadData ? <ChatThreadsSidebar data={threadData} /> : null;
+  // Push thread sidebar into the layout whenever data changes
+  useEffect(() => {
+    if (threadData) {
+      setSidebarExtra(<ChatThreadsSidebar data={threadData} />);
+    }
+    return () => setSidebarExtra(null);
+  }, [threadData, setSidebarExtra]);
 
   return (
     <>
@@ -99,8 +108,6 @@ function AdminHomeTW() {
         <title>AI Assistant | S&W Admin</title>
         <meta name="robots" content="noindex" />
       </Head>
-
-      <AdminHomeTW.sidebarExtra = {sidebarExtra} />
 
       <div className="flex h-[calc(100vh-115px)] min-h-0 flex-col">
         <AdminAssistantWorkspace
@@ -112,3 +119,9 @@ function AdminHomeTW() {
     </>
   );
 }
+
+AdminHomeTW.getLayout = function getLayout(page) {
+  return <TWAdminLayout>{page}</TWAdminLayout>;
+};
+
+export default withAuthTw(AdminHomeTW);
