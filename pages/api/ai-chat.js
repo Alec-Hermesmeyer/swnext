@@ -855,6 +855,62 @@ const tools = [
       },
     },
   },
+  // ── Bidding analysis tools ──
+  {
+    type: "function",
+    function: {
+      name: "analyze_bid",
+      description:
+        "Run the AI bid analysis engine on a sales opportunity. Returns a recommended bid amount, confidence score, margin percentage, risk assessment, and competitive positioning. Use when the user asks to analyze a bid, get a bid recommendation, or wants help pricing a job. The opportunity must already exist in the sales pipeline.",
+      parameters: {
+        type: "object",
+        properties: {
+          opportunity_id: { type: "string", description: "UUID of the sales opportunity to analyze" },
+          include_competitors: { type: "boolean", description: "Include competitor data in analysis (default true)" },
+          include_market_data: { type: "boolean", description: "Include market intelligence (default true)" },
+          include_client_history: { type: "boolean", description: "Include client bid history (default true)" },
+          target_margin: { type: "number", description: "Target margin percentage (0-100). If omitted, the engine calculates an optimal margin." },
+        },
+        required: ["opportunity_id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_competitor_intel",
+      description:
+        "Log competitor intelligence for a sales opportunity. Use when the user mentions a competitor bidding on the same job, their estimated bid, strengths, or win rate.",
+      parameters: {
+        type: "object",
+        properties: {
+          opportunity_id: { type: "string", description: "UUID of the sales opportunity" },
+          competitor_name: { type: "string", description: "Name of the competing company" },
+          estimated_bid: { type: "number", description: "Estimated bid amount from competitor" },
+          known_strengths: { type: "string", description: "What this competitor is strong at" },
+          known_weaknesses: { type: "string", description: "Known weaknesses of this competitor" },
+          historical_win_rate: { type: "number", description: "Competitor win rate percentage (0-100)" },
+          notes: { type: "string", description: "Additional notes about the competitor" },
+        },
+        required: ["opportunity_id", "competitor_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_bid_performance",
+      description:
+        "Get bid win/loss performance metrics. Shows total bids, wins, losses, win rate, and revenue by estimator/owner. Use when the user asks about bidding performance, win rates, or how the team is doing on bids.",
+      parameters: {
+        type: "object",
+        properties: {
+          owner_name: { type: "string", description: "Filter to a specific estimator/owner name. Omit for all." },
+        },
+        required: [],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
@@ -1898,6 +1954,7 @@ RULES:
 - When listing a day, group by rig/category.
 - Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, create_sales_opportunity / update_sales_opportunity for the pre-award pipeline, and create_hiring_candidate / update_hiring_candidate for the hiring pipeline.
 - HIRING PIPELINE: Stages are New → Reviewing → Interview → Offer → Hired / Declined. When the user asks about applicants, hiring, candidates, or the hiring pipeline, reference the HIRING PIPELINE data. Use create_hiring_candidate to add someone and update_hiring_candidate to advance stages, add notes, or decline. Job applications from the RECENT JOB APPLICATIONS section can be promoted into the hiring pipeline by creating a candidate with their details.
+- BID ANALYSIS: When the user asks to analyze a bid, get a bid recommendation, or price a job, use the analyze_bid tool with the opportunity_id from the SALES OPPORTUNITIES list. The engine factors in competitors, market intelligence, client history, and margin targets. Use add_competitor_intel to log competitor data that improves future analyses. Use get_bid_performance for win/loss metrics.
 - For contact-form spam control, use add_spam_block_rule, list_spam_block_rules, toggle_spam_block_rule, and remove_spam_block_rule.
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
 - You can finalize schedules, send schedule emails, send packets, and update job progress. Always confirm with the user before finalizing or sending emails/packets.
