@@ -798,6 +798,61 @@ const tools = [
       },
     },
   },
+  // ── Hiring pipeline tools ──
+  {
+    type: "function",
+    function: {
+      name: "create_hiring_candidate",
+      description:
+        "Add a candidate to the hiring pipeline. Use when the user wants to track an applicant, promote a job application into the pipeline, or manually add someone they're considering.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Short label for this candidate entry (e.g. 'John Smith — Crane Operator')" },
+          applicant_name: { type: "string", description: "Full name of the applicant" },
+          contact_email: { type: "string", description: "Applicant email" },
+          contact_phone: { type: "string", description: "Applicant phone" },
+          position_applied: { type: "string", description: "Position they applied for" },
+          stage: {
+            type: "string",
+            description: "Pipeline stage",
+            enum: ["new", "reviewing", "interview", "offer", "hired", "declined"],
+          },
+          next_follow_up: { type: "string", description: "Next follow-up date YYYY-MM-DD" },
+          notes: { type: "string", description: "Notes about the candidate" },
+        },
+        required: ["title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_hiring_candidate",
+      description:
+        "Update an existing hiring pipeline candidate. Use when the user wants to advance a candidate to the next stage, add notes, set a follow-up, mark as hired, or decline. Use the candidate ID from the HIRING PIPELINE list in context.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string", description: "The UUID of the hiring_opportunities row to update" },
+          title: { type: "string", description: "Updated label" },
+          applicant_name: { type: "string", description: "Updated name" },
+          contact_email: { type: "string", description: "Updated email" },
+          contact_phone: { type: "string", description: "Updated phone" },
+          position_applied: { type: "string", description: "Updated position" },
+          stage: {
+            type: "string",
+            description: "Updated pipeline stage",
+            enum: ["new", "reviewing", "interview", "offer", "hired", "declined"],
+          },
+          next_follow_up: { type: "string", description: "Updated follow-up date YYYY-MM-DD" },
+          notes: { type: "string", description: "Updated notes" },
+          decline_reason: { type: "string", description: "Reason for declining (when stage=declined)" },
+        },
+        required: ["candidate_id"],
+      },
+    },
+  },
 ];
 
 // ── Tool execution ──
