@@ -4,6 +4,7 @@ import { routeAdminAssistantRequest } from "@/lib/admin-assistant-direct-router"
 import {
   buildAssistantSurface,
   buildSalesPipelineListSurface,
+  buildHiringPipelineSurface,
   buildScheduleOverviewForDates,
 } from "@/lib/admin-assistant-surfaces";
 import { executeAdminAssistantMutation } from "@/lib/admin-assistant-mutations";
