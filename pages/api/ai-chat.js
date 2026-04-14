@@ -2228,6 +2228,7 @@ export default async function handler(req, res) {
         actionsPerformed,
         assistantProfile,
         pipelineAccess,
+        hiringAccess,
       });
     }
 
