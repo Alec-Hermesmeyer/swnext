@@ -1993,7 +1993,13 @@ RULES:
 - When listing a day, group by rig/category.
 - Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, create_sales_opportunity / update_sales_opportunity for the pre-award pipeline, and create_hiring_candidate / update_hiring_candidate for the hiring pipeline.
 - HIRING PIPELINE: Stages are New → Reviewing → Interview → Offer → Hired / Declined. When the user asks about applicants, hiring, candidates, or the hiring pipeline, reference the HIRING PIPELINE data. Use create_hiring_candidate to add someone and update_hiring_candidate to advance stages, add notes, or decline. Job applications from the RECENT JOB APPLICATIONS section can be promoted into the hiring pipeline by creating a candidate with their details.
-- BID ANALYSIS: When the user asks to analyze a bid, get a bid recommendation, or price a job, use the analyze_bid tool with the opportunity_id from the SALES OPPORTUNITIES list. The engine factors in competitors, market intelligence, client history, and margin targets. Use add_competitor_intel to log competitor data that improves future analyses. Use get_bid_performance for win/loss metrics.
+- BID ANALYSIS & ESTIMATING:
+  The bidding engine builds better recommendations as more data flows in from anyone on the team.
+  • add_bid_details — Use when ANYONE provides job specs: pier counts, depths, diameters, soil conditions, equipment needs, material/labor costs, mob/demob, scope notes, or difficulty. Data accumulates — multiple people can add different pieces and the analysis improves. Also use when someone pastes bid sheet data.
+  • analyze_bid — Runs the recommendation engine. It pulls from: (1) specs attached via add_bid_details, (2) historical pricing from completed crew_jobs (cost-per-pier, cost-per-day), (3) competitor intel, (4) market data, (5) client history. Confidence goes up as more data is available.
+  • add_competitor_intel — Log competitor data (name, estimated bid, strengths, win rate).
+  • get_bid_performance — Win/loss metrics by estimator.
+  Flow: Someone in sales creates the opportunity → anyone adds specs/costs with add_bid_details → analyze_bid generates a recommendation. The more details provided, the more accurate the bid. If only a value_estimate exists, the engine still works but flags low confidence.
 - For contact-form spam control, use add_spam_block_rule, list_spam_block_rules, toggle_spam_block_rule, and remove_spam_block_rule.
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
 - You can finalize schedules, send schedule emails, send packets, and update job progress. Always confirm with the user before finalizing or sending emails/packets.
