@@ -5,6 +5,7 @@ import Head from "next/head";
 import Link from "next/link";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
+import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
@@ -30,6 +31,9 @@ const EMPTY_FORM = {
   status: "draft",
   content: "",
 };
+const BLOG_POSTS_CACHE_KEY = "admin-blog-posts";
+const BLOG_IMAGES_CACHE_KEY = "admin-blog-images";
+const BLOG_CACHE_TTL_MS = 5 * 60 * 1000;
 
 function AdminBlogPage() {
   const [posts, setPosts] = useState([]);
@@ -61,13 +65,24 @@ function AdminBlogPage() {
 
   const generatedSlug = useMemo(() => toSlug(form.slug || form.title), [form.slug, form.title]);
 
-  const fetchPosts = async () => {
-    setLoading(true);
+  const fetchPosts = async ({ force = false } = {}) => {
+    if (!force) {
+      const cached = readCachedValue(BLOG_POSTS_CACHE_KEY, BLOG_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        setPosts(cached.value);
+        setLoading(false);
+      }
+    } else {
+      setLoading(true);
+    }
+
     try {
       const response = await fetch("/api/admin-blog-posts");
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Could not load blog posts.");
-      setPosts(Array.isArray(data.posts) ? data.posts : []);
+      const nextPosts = Array.isArray(data.posts) ? data.posts : [];
+      setPosts(nextPosts);
+      writeCachedValue(BLOG_POSTS_CACHE_KEY, nextPosts);
     } catch (error) {
       setStatus({
         type: "error",
@@ -78,14 +93,24 @@ function AdminBlogPage() {
     }
   };
 
-  const fetchBlogImages = async () => {
-    setImagesLoading(true);
+  const fetchBlogImages = async ({ force = false } = {}) => {
+    if (!force) {
+      const cached = readCachedValue(BLOG_IMAGES_CACHE_KEY, BLOG_CACHE_TTL_MS);
+      if (Array.isArray(cached?.value)) {
+        setBlogImages(cached.value);
+        setImagesLoading(false);
+      }
+    } else {
+      setImagesLoading(true);
+    }
+
     try {
       const response = await fetch("/api/admin-blog-images");
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Could not load blog images.");
       const nextImages = Array.isArray(data.images) ? data.images : [];
       setBlogImages(nextImages);
+      writeCachedValue(BLOG_IMAGES_CACHE_KEY, nextImages);
       if (selectedBlogImage?.path) {
         const refreshedSelection = nextImages.find((img) => img.path === selectedBlogImage.path) || null;
         setSelectedBlogImage(refreshedSelection);
@@ -353,7 +378,7 @@ function AdminBlogPage() {
         message: `Created post "${form.title}" at /blog/${data.slug}.`,
       });
       clearForm();
-      fetchPosts();
+      fetchPosts({ force: true });
     } catch (error) {
       setStatus({
         type: "error",
@@ -733,8 +758,8 @@ function AdminBlogPage() {
               <button
                 type="button"
                 onClick={() => {
-                  fetchPosts();
-                  fetchBlogImages();
+                  fetchPosts({ force: true });
+                  fetchBlogImages({ force: true });
                 }}
                 className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
               >
