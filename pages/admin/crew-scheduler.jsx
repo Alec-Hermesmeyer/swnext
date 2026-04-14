@@ -201,6 +201,19 @@ const toNonNegativeInteger = (value) => {
   return Math.max(parsed, 0);
 };
 
+const createClientSessionId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
+const toPercentLabel = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "0%";
+  return `${Math.round(num * 100)}%`;
+};
+
 const JOB_PROGRESS_STATUS_OPTIONS = [
   { value: "planned", label: "Planned" },
   { value: "active", label: "Active" },
@@ -346,6 +359,8 @@ function CrewScheduler() {
   const skipInitialSelectedDateFetchRef = useRef(true);
   const initialLoadStartedRef = useRef(false);
   const scheduleRequestRef = useRef(0);
+  const telemetrySessionIdRef = useRef(createClientSessionId());
+  const telemetrySessionLoggedRef = useRef(false);
 
   // New worker form
   const [newWorkerName, setNewWorkerName] = useState("");
@@ -434,6 +449,16 @@ function CrewScheduler() {
   const [plannerSearch, setPlannerSearch] = useState("");
   const [plannerFinalizedOnly, setPlannerFinalizedOnly] = useState(false);
   const [plannerSelectedDate, setPlannerSelectedDate] = useState("");
+  const [automationInsights, setAutomationInsights] = useState({
+    patterns: [],
+    eventCount14d: 0,
+    shownCount14d: 0,
+    acceptedCount14d: 0,
+  });
+  const [automationInsightsLoading, setAutomationInsightsLoading] = useState(false);
+  const [automationInsightsError, setAutomationInsightsError] = useState("");
+  const [automationStatus, setAutomationStatus] = useState(null);
+  const [applyingPatternId, setApplyingPatternId] = useState(null);
 
   const activeJobCount = useMemo(
     () => jobAdminRows.filter((job) => isCrewJobActive(job)).length,
@@ -1120,6 +1145,17 @@ function CrewScheduler() {
       });
       setRigDetails(detailsMap);
 
+      logSchedulerEvent(
+        "schedule_loaded",
+        "session",
+        {
+          selected_date: date,
+          assignment_count: (payload.assignments || []).length,
+          rig_detail_count: (payload.rigData || []).length,
+        },
+        payload.schedule?.id || null
+      );
+
       return payload.schedule;
     } catch (error) {
       if (requestId === scheduleRequestRef.current) {
@@ -1131,6 +1167,152 @@ function CrewScheduler() {
       throw error;
     }
   }, [getOrCreateSchedule]);
+
+  const logSchedulerEvent = useCallback(
+    async (eventName, eventGroup = "other", payload = {}, scheduleIdOverride = null) => {
+      const resolvedScheduleId = scheduleIdOverride || currentSchedule?.id || null;
+      try {
+        const rpcPayload = {
+          p_event_name: eventName,
+          p_event_group: eventGroup,
+          p_schedule_id: resolvedScheduleId,
+          p_session_id: telemetrySessionIdRef.current,
+          p_payload: payload || {},
+          p_client_ts: new Date().toISOString(),
+          p_actor_email: null,
+        };
+        const { error } = await supabase.rpc("log_crew_schedule_event", rpcPayload);
+        if (!error) return;
+      } catch (_) {
+        // Fall through to direct insert fallback.
+      }
+
+      try {
+        await supabase.from("crew_schedule_builder_events").insert({
+          schedule_id: resolvedScheduleId,
+          session_id: telemetrySessionIdRef.current,
+          event_name: eventName,
+          event_group: eventGroup,
+          payload: payload || {},
+          client_ts: new Date().toISOString(),
+        });
+      } catch (fallbackError) {
+        console.warn("Could not log scheduler event:", fallbackError?.message || fallbackError);
+      }
+    },
+    [currentSchedule?.id]
+  );
+
+  const captureAutomationSnapshot = useCallback(async (scheduleId, source = "manual") => {
+    if (!scheduleId) return null;
+    try {
+      const { data, error } = await supabase.rpc("capture_crew_schedule_snapshot", {
+        p_schedule_id: scheduleId,
+        p_source: source,
+        p_scope_key: "global",
+        p_actor_user_id: null,
+      });
+      if (error) throw error;
+      return data || null;
+    } catch (error) {
+      console.warn("Could not capture schedule snapshot:", error?.message || error);
+      return null;
+    }
+  }, []);
+
+  const trackMutation = useCallback(
+    async (eventName, payload = {}, options = {}) => {
+      const {
+        eventGroup = "assignment",
+        source = "manual",
+        scheduleId = currentSchedule?.id || null,
+        captureSnapshot = true,
+      } = options;
+      await logSchedulerEvent(eventName, eventGroup, payload, scheduleId);
+      if (captureSnapshot && scheduleId) {
+        await captureAutomationSnapshot(scheduleId, source);
+      }
+    },
+    [captureAutomationSnapshot, currentSchedule?.id, logSchedulerEvent]
+  );
+
+  const refreshAutomationInsights = useCallback(async (forDate = selectedDate) => {
+    if (!forDate) return;
+    const dayOfWeek = toLocalDate(forDate).getDay();
+    const fourteenDaysAgo = shiftDateString(forDate, -14);
+    const startWindow = `${fourteenDaysAgo}T00:00:00`;
+
+    setAutomationInsightsLoading(true);
+    setAutomationInsightsError("");
+    try {
+      const [patternRes, eventCountRes, shownRes, acceptedRes] = await Promise.all([
+        supabase
+          .from("crew_schedule_pattern_library")
+          .select(
+            "id, scope_key, day_of_week, pattern_hash, occurrence_count, confidence, example_schedule_id, last_seen_at"
+          )
+          .eq("is_active", true)
+          .eq("scope_key", "global")
+          .eq("day_of_week", dayOfWeek)
+          .order("occurrence_count", { ascending: false })
+          .limit(5),
+        supabase
+          .from("crew_schedule_builder_events")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", startWindow),
+        supabase
+          .from("crew_schedule_suggestion_feedback")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "shown")
+          .gte("created_at", startWindow),
+        supabase
+          .from("crew_schedule_suggestion_feedback")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "accepted")
+          .gte("created_at", startWindow),
+      ]);
+
+      if (patternRes.error) throw patternRes.error;
+      if (eventCountRes.error) throw eventCountRes.error;
+      if (shownRes.error) throw shownRes.error;
+      if (acceptedRes.error) throw acceptedRes.error;
+
+      setAutomationInsights({
+        patterns: patternRes.data || [],
+        eventCount14d: eventCountRes.count || 0,
+        shownCount14d: shownRes.count || 0,
+        acceptedCount14d: acceptedRes.count || 0,
+      });
+    } catch (error) {
+      setAutomationInsights({
+        patterns: [],
+        eventCount14d: 0,
+        shownCount14d: 0,
+        acceptedCount14d: 0,
+      });
+      setAutomationInsightsError("Automation insights are not available yet.");
+      console.warn("Could not load automation insights:", error?.message || error);
+    } finally {
+      setAutomationInsightsLoading(false);
+    }
+  }, [selectedDate]);
+
+  const recordSuggestionFeedback = useCallback(
+    async (status, pattern, metadata = {}, scheduleIdOverride = null) => {
+      try {
+        await supabase.from("crew_schedule_suggestion_feedback").insert({
+          schedule_id: scheduleIdOverride || currentSchedule?.id || null,
+          pattern_id: pattern?.id || null,
+          suggestion_hash: pattern?.pattern_hash || "unknown",
+          status,
+          metadata: metadata || {},
+        });
+      } catch (error) {
+        console.warn("Could not record suggestion feedback:", error?.message || error);
+      }
+    },
+    [currentSchedule?.id]
+  );
 
   const loadInitialData = useCallback(async () => {
     setLoading(true);
@@ -1200,6 +1382,20 @@ function CrewScheduler() {
       console.warn("Could not refresh recent schedules:", error?.message || error);
     });
   }, [currentSchedule?.id, fetchRecentSchedules]);
+
+  useEffect(() => {
+    if (!currentSchedule?.id || telemetrySessionLoggedRef.current) return;
+    telemetrySessionLoggedRef.current = true;
+    logSchedulerEvent("session_started", "session", {
+      selected_date: selectedDate,
+      active_tab: activeTab,
+    }, currentSchedule.id);
+  }, [activeTab, currentSchedule?.id, logSchedulerEvent, selectedDate]);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    refreshAutomationInsights(selectedDate);
+  }, [refreshAutomationInsights, selectedDate]);
 
   const addWorker = async () => {
     if (!newWorkerName.trim()) return;
@@ -1311,19 +1507,25 @@ function CrewScheduler() {
       job_name: "",
     });
     if (!error) {
-      fetchSchedule(selectedDate);
+      await trackMutation("assignment_added", { category_id: categoryId });
+      await fetchSchedule(selectedDate);
+      await refreshAutomationInsights(selectedDate);
     }
     setSaving(false);
   };
 
   const updateAssignment = async (assignmentId, updates) => {
     await supabase.from("crew_assignments").update(updates).eq("id", assignmentId);
-    fetchSchedule(selectedDate);
+    await trackMutation("assignment_updated", { assignment_id: assignmentId, fields: Object.keys(updates || {}) });
+    await fetchSchedule(selectedDate);
+    await refreshAutomationInsights(selectedDate);
   };
 
   const deleteAssignment = async (assignmentId) => {
     await supabase.from("crew_assignments").delete().eq("id", assignmentId);
-    fetchSchedule(selectedDate);
+    await trackMutation("assignment_removed", { assignment_id: assignmentId });
+    await fetchSchedule(selectedDate);
+    await refreshAutomationInsights(selectedDate);
   };
 
   const clearCategorySchedule = async (categoryId) => {
@@ -1348,7 +1550,9 @@ function CrewScheduler() {
       .eq("schedule_id", currentSchedule.id)
       .eq("category_id", categoryId);
     setSaving(false);
-    fetchSchedule(selectedDate);
+    await trackMutation("category_cleared", { category_id: categoryId });
+    await fetchSchedule(selectedDate);
+    await refreshAutomationInsights(selectedDate);
   };
 
   const splitAssignment = async (assignment) => {
@@ -1363,7 +1567,9 @@ function CrewScheduler() {
       sort_order: (assignment.sort_order || 0) + 1,
     });
     if (!error) {
-      fetchSchedule(selectedDate);
+      await trackMutation("assignment_split", { category_id: assignment.category_id, source_assignment_id: assignment.id });
+      await fetchSchedule(selectedDate);
+      await refreshAutomationInsights(selectedDate);
     }
     setSaving(false);
   };
@@ -1434,6 +1640,12 @@ function CrewScheduler() {
     await supabase
       .from("schedule_rig_details")
       .upsert(updateData, { onConflict: "schedule_id,category_id" });
+    await trackMutation(
+      "rig_detail_updated",
+      { category_id: categoryId, field, has_value: value !== null && value !== undefined && value !== "" },
+      { eventGroup: "rig_details" }
+    );
+    await refreshAutomationInsights(selectedDate);
 
     // Refresh to get joined data (superintendent/truck names)
     if (field === "superintendent_id" || field === "truck_id") {
@@ -1600,6 +1812,19 @@ function CrewScheduler() {
           skippedCount ? `, skipped ${skippedCount} existing day(s)` : ""
         }.`,
       });
+      await trackMutation(
+        "category_range_copied",
+        {
+          category_id: categoryId,
+          copy_start_date: copyStartDate,
+          copy_end_date: copyEndDate,
+          copied_days: copiedCount,
+          skipped_days: skippedCount,
+          overwrite: copyOverwrite,
+        },
+        { eventGroup: "automation", source: "mixed" }
+      );
+      await refreshAutomationInsights(selectedDate);
     } catch (err) {
       setCopyStatus({
         type: "error",
@@ -1732,6 +1957,20 @@ function CrewScheduler() {
       }
 
       await fetchSchedule(targetDate);
+      await trackMutation(
+        "previous_day_copied",
+        {
+          source_date: sourceDate,
+          target_date: targetDate,
+          target_schedule_id: targetSchedule.id,
+        },
+        {
+          eventGroup: "automation",
+          source: "mixed",
+          scheduleId: targetSchedule.id,
+        }
+      );
+      await refreshAutomationInsights(selectedDate);
       setCopyStatus({
         type: "success",
         message: `Copied ${formatShortDate(sourceDate)} into ${formatShortDate(targetDate)}.`,
@@ -1809,9 +2048,19 @@ function CrewScheduler() {
 
       const result = await response.json();
       if (response.ok) {
+        await trackMutation(
+          "schedule_finalized_and_emailed",
+          {
+            selected_date: selectedDate,
+            assignment_count: emailAssignments.length,
+            rig_count: emailRigDetails.length,
+          },
+          { eventGroup: "publish", source: "manual" }
+        );
         setEmailStatus({ type: "success", message: "Schedule emailed successfully!" });
         // Refresh to show finalized badge
-        fetchSchedule(selectedDate);
+        await fetchSchedule(selectedDate);
+        await refreshAutomationInsights(selectedDate);
       } else {
         setEmailStatus({ type: "error", message: result.message || "Failed to send email" });
       }
@@ -2767,7 +3016,15 @@ function CrewScheduler() {
         ? rigDayStatus.statusLabel
         : job?.job_name || "",
     });
-    if (!error) fetchSchedule(selectedDate);
+    if (!error) {
+      await trackMutation("worker_assigned", {
+        category_id: categoryId,
+        worker_id: workerId,
+        job_id: rigDayStatus.isNonWorking ? null : rigJob || null,
+      });
+      await fetchSchedule(selectedDate);
+      await refreshAutomationInsights(selectedDate);
+    }
     setSaving(false);
   };
 
@@ -2819,6 +3076,11 @@ function CrewScheduler() {
       }
 
       await fetchSchedule(selectedDate);
+      await trackMutation("rig_day_type_set", {
+        category_id: categoryId,
+        day_type: "working",
+      });
+      await refreshAutomationInsights(selectedDate);
       setSaving(false);
       return;
     }
@@ -2862,6 +3124,12 @@ function CrewScheduler() {
     }
 
     await fetchSchedule(selectedDate);
+    await trackMutation("rig_day_type_set", {
+      category_id: categoryId,
+      day_type: nextDayType,
+      status_label: nextLabel,
+    });
+    await refreshAutomationInsights(selectedDate);
     setSaving(false);
   };
 
@@ -2901,7 +3169,12 @@ function CrewScheduler() {
           .eq("id", a.id);
       }
     }
-    fetchSchedule(selectedDate);
+    await trackMutation("job_assigned_to_rig", {
+      category_id: categoryId,
+      job_id: jobId,
+    });
+    await fetchSchedule(selectedDate);
+    await refreshAutomationInsights(selectedDate);
     setSaving(false);
   };
 
@@ -2916,7 +3189,157 @@ function CrewScheduler() {
         .update({ job_id: null, job_name: "" })
         .eq("id", a.id);
     }
-    fetchSchedule(selectedDate);
+    await trackMutation("job_removed_from_rig", { category_id: categoryId });
+    await fetchSchedule(selectedDate);
+    await refreshAutomationInsights(selectedDate);
+  };
+
+  const applyPatternToSelectedDate = async (pattern) => {
+    if (!pattern?.example_schedule_id) {
+      setAutomationStatus({
+        type: "error",
+        message: "Pattern is missing a source schedule.",
+      });
+      return;
+    }
+
+    let targetSchedule = currentSchedule;
+    if (!targetSchedule?.id) {
+      targetSchedule = await getOrCreateSchedule(selectedDate);
+    }
+    if (!targetSchedule?.id) {
+      setAutomationStatus({
+        type: "error",
+        message: "Could not load the target schedule.",
+      });
+      return;
+    }
+    if (targetSchedule.is_finalized) {
+      setAutomationStatus({
+        type: "error",
+        message: "This schedule is finalized. Unfinalize before applying an automation pattern.",
+      });
+      return;
+    }
+
+    const targetCounts = await Promise.all([
+      supabase
+        .from("crew_assignments")
+        .select("id", { count: "exact", head: true })
+        .eq("schedule_id", targetSchedule.id),
+      supabase
+        .from("schedule_rig_details")
+        .select("id", { count: "exact", head: true })
+        .eq("schedule_id", targetSchedule.id),
+    ]);
+    const hasExistingData =
+      (targetCounts[0]?.count || 0) > 0 || (targetCounts[1]?.count || 0) > 0;
+
+    const confirmed = confirm(
+      hasExistingData
+        ? "This day already has schedule data. Replace it with the suggested pattern?"
+        : "Apply this suggested pattern to the selected day?"
+    );
+    if (!confirmed) {
+      await recordSuggestionFeedback("ignored", pattern, {
+        reason: "user_cancelled_apply",
+        selected_date: selectedDate,
+      }, targetSchedule.id);
+      return;
+    }
+
+    setApplyingPatternId(pattern.id);
+    setAutomationStatus(null);
+    await recordSuggestionFeedback("shown", pattern, {
+      selected_date: selectedDate,
+    }, targetSchedule.id);
+
+    try {
+      const [{ data: sourceAssignments, error: sourceAssignmentError }, { data: sourceRigDetails, error: sourceRigError }] =
+        await Promise.all([
+          supabase
+            .from("crew_assignments")
+            .select("category_id, worker_id, job_id, job_name, notes, sort_order")
+            .eq("schedule_id", pattern.example_schedule_id),
+          supabase
+            .from("schedule_rig_details")
+            .select("category_id, superintendent_id, truck_id, crane_info, notes")
+            .eq("schedule_id", pattern.example_schedule_id),
+        ]);
+
+      if (sourceAssignmentError || sourceRigError) {
+        throw sourceAssignmentError || sourceRigError;
+      }
+
+      await Promise.all([
+        supabase.from("crew_assignments").delete().eq("schedule_id", targetSchedule.id),
+        supabase.from("schedule_rig_details").delete().eq("schedule_id", targetSchedule.id),
+      ]);
+
+      if (sourceAssignments?.length) {
+        await supabase.from("crew_assignments").insert(
+          sourceAssignments.map((row) => ({
+            schedule_id: targetSchedule.id,
+            category_id: row.category_id,
+            worker_id: row.worker_id || null,
+            job_id: row.job_id || null,
+            job_name: row.job_name || null,
+            notes: row.notes || null,
+            sort_order: row.sort_order || 0,
+          }))
+        );
+      }
+
+      if (sourceRigDetails?.length) {
+        await supabase.from("schedule_rig_details").insert(
+          sourceRigDetails.map((row) => ({
+            schedule_id: targetSchedule.id,
+            category_id: row.category_id,
+            superintendent_id: row.superintendent_id || null,
+            truck_id: row.truck_id || null,
+            crane_info: row.crane_info || null,
+            notes: row.notes || null,
+          }))
+        );
+      }
+
+      await recordSuggestionFeedback("accepted", pattern, {
+        selected_date: selectedDate,
+      }, targetSchedule.id);
+      await trackMutation(
+        "automation_pattern_applied",
+        {
+          selected_date: selectedDate,
+          pattern_id: pattern.id,
+          pattern_hash: pattern.pattern_hash,
+          source_schedule_id: pattern.example_schedule_id,
+        },
+        {
+          eventGroup: "automation",
+          source: "auto",
+          scheduleId: targetSchedule.id,
+        }
+      );
+
+      await fetchSchedule(selectedDate);
+      await refreshAutomationInsights(selectedDate);
+      setAutomationStatus({
+        type: "success",
+        message: "Pattern applied. Review and tweak if needed, then Save & Email.",
+      });
+    } catch (error) {
+      await recordSuggestionFeedback("rejected", pattern, {
+        selected_date: selectedDate,
+        reason: "apply_failed",
+      }, targetSchedule.id);
+      setAutomationStatus({
+        type: "error",
+        message: "Could not apply this pattern right now.",
+      });
+      console.error("Could not apply automation pattern:", error);
+    } finally {
+      setApplyingPatternId(null);
+    }
   };
 
   const getJobProgress = (jobId) => jobProgressByJobId[jobId] || null;
@@ -3747,6 +4170,10 @@ function CrewScheduler() {
   const todayScheduleDate = getTodayScheduleDate();
   const tomorrowScheduleDate = getTomorrowScheduleDate();
   const previousScheduleDate = shiftDateString(selectedDate, -1);
+  const automationAcceptanceRate =
+    automationInsights.shownCount14d > 0
+      ? automationInsights.acceptedCount14d / automationInsights.shownCount14d
+      : 0;
   const isPlanningTomorrow = selectedDate === tomorrowScheduleDate;
   const copyForwardLabel = isPlanningTomorrow
     ? "Start Tomorrow From Today"
@@ -4049,6 +4476,99 @@ function CrewScheduler() {
                   Reset Filters
                 </button>
               </div>
+            </div>
+
+            <div className="print:hidden mb-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h3 className={`${lato.className} text-sm font-bold text-indigo-900`}>
+                    Automation Learning (Beta)
+                  </h3>
+                  <p className="mt-0.5 text-xs text-indigo-800">
+                    We are learning from real scheduling behavior to suggest repeatable rig patterns.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => refreshAutomationInsights(selectedDate)}
+                  disabled={automationInsightsLoading}
+                  className="h-8 rounded-lg border border-indigo-200 bg-white px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-60"
+                >
+                  {automationInsightsLoading ? "Refreshing..." : "Refresh"}
+                </button>
+              </div>
+
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                <div className="rounded-lg bg-white/80 px-3 py-2 text-xs text-indigo-900">
+                  Events (14d):{" "}
+                  <span className="font-semibold">{automationInsights.eventCount14d}</span>
+                </div>
+                <div className="rounded-lg bg-white/80 px-3 py-2 text-xs text-indigo-900">
+                  Suggestions shown:{" "}
+                  <span className="font-semibold">{automationInsights.shownCount14d}</span>
+                </div>
+                <div className="rounded-lg bg-white/80 px-3 py-2 text-xs text-indigo-900">
+                  Acceptance rate:{" "}
+                  <span className="font-semibold">{toPercentLabel(automationAcceptanceRate)}</span>
+                </div>
+              </div>
+
+              {automationStatus && (
+                <div
+                  className={`mt-2 rounded-lg px-3 py-2 text-xs font-semibold ${
+                    automationStatus.type === "success"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {automationStatus.message}
+                  <button
+                    type="button"
+                    onClick={() => setAutomationStatus(null)}
+                    className="ml-2 font-bold"
+                  >
+                    x
+                  </button>
+                </div>
+              )}
+
+              {automationInsightsError ? (
+                <p className="mt-2 text-xs text-amber-700">{automationInsightsError}</p>
+              ) : (
+                <div className="mt-2 space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-indigo-700">
+                    Suggested pattern(s) for this weekday
+                  </div>
+                  {automationInsights.patterns.length === 0 ? (
+                    <p className="text-xs text-indigo-700">
+                      Not enough repeat data yet. Keep building schedules for 1-2 weeks.
+                    </p>
+                  ) : (
+                    automationInsights.patterns.slice(0, 3).map((pattern) => (
+                      <div
+                        key={pattern.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-indigo-100 bg-white px-3 py-2"
+                      >
+                        <div className="text-xs text-neutral-700">
+                          <span className="font-semibold text-neutral-900">
+                            Seen {pattern.occurrence_count}x
+                          </span>{" "}
+                          • confidence {toPercentLabel(pattern.confidence)} • last seen{" "}
+                          {formatShortDate(pattern.last_seen_at)}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => applyPatternToSelectedDate(pattern)}
+                          disabled={applyingPatternId === pattern.id}
+                          className="h-8 rounded-lg bg-indigo-700 px-3 text-xs font-semibold text-white hover:bg-indigo-800 disabled:opacity-60"
+                        >
+                          {applyingPatternId === pattern.id ? "Applying..." : "Apply to this day"}
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="print:hidden mb-3 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm">
