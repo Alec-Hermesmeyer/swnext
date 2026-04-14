@@ -2038,6 +2038,7 @@ export default async function handler(req, res) {
       fetchLatestAssistantProfile(userContext),
     ]);
     const pipelineAccess = canAccessSalesPipeline(userRole);
+    const hiringAccess = canAccessHiringPipeline(userRole);
     const directRoute = routeAdminAssistantRequest({
       message,
       data,
