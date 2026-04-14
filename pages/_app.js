@@ -19,7 +19,9 @@ export default function App({ Component, pageProps, router }) {
     return (
       <AuthProvider>
         <ImageProvider>
-          {getLayout(<Component {...pageProps} />)}
+          <SidebarProvider>
+            {getLayout(<Component {...pageProps} />)}
+          </SidebarProvider>
         </ImageProvider>
       </AuthProvider>
     );
