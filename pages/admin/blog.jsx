@@ -46,6 +46,10 @@ function AdminBlogPage() {
   const [status, setStatus] = useState(null);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [socialSuggestions, setSocialSuggestions] = useState([]);
+  const [suggestionSource, setSuggestionSource] = useState("");
+  const [queueingSuggestionIndex, setQueueingSuggestionIndex] = useState(null);
+  const [copiedSuggestionIndex, setCopiedSuggestionIndex] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const fileInputRef = useRef(null);
   const [generator, setGenerator] = useState({
@@ -132,6 +136,11 @@ function AdminBlogPage() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Could not generate draft.");
       const draft = data?.draft || {};
+      const returnedSuggestions = Array.isArray(data?.social_posts)
+        ? data.social_posts
+            .map((item) => String(item || "").trim())
+            .filter(Boolean)
+        : [];
 
       setForm((prev) => ({
         ...prev,
@@ -141,17 +150,62 @@ function AdminBlogPage() {
         content: draft.content || prev.content,
         status: "draft",
       }));
+      setSocialSuggestions(returnedSuggestions);
+      setSuggestionSource(String(data?.source || ""));
       setStatus({
         type: "success",
-        message: "AI draft generated. Review, edit, then publish when ready.",
+        message: returnedSuggestions.length
+          ? `AI draft generated with ${returnedSuggestions.length} social suggestion${returnedSuggestions.length === 1 ? "" : "s"}.`
+          : "AI draft generated. Review, edit, then publish when ready.",
       });
     } catch (error) {
+      setSocialSuggestions([]);
+      setSuggestionSource("");
       setStatus({
         type: "error",
         message: error.message || "Could not generate draft.",
       });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const copySuggestionToClipboard = async (text, index) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSuggestionIndex(index);
+      setTimeout(() => setCopiedSuggestionIndex(null), 1500);
+    } catch {
+      setStatus({ type: "error", message: "Could not copy suggestion to clipboard." });
+    }
+  };
+
+  const queueSuggestion = async (suggestion, index) => {
+    if (!suggestion || queueingSuggestionIndex !== null) return;
+    setQueueingSuggestionIndex(index);
+    try {
+      const response = await fetch("/api/social/posts/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          post_type: "company_update",
+          context: `${suggestion}\n\nRelated blog post title: ${form.title || "Untitled Blog Draft"}`,
+          objective: "Promote related website blog content",
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not queue social suggestion.");
+      setStatus({
+        type: "success",
+        message: "Social suggestion added to the Social Media queue as a pending draft.",
+      });
+    } catch (error) {
+      setStatus({
+        type: "error",
+        message: error.message || "Could not queue social suggestion.",
+      });
+    } finally {
+      setQueueingSuggestionIndex(null);
     }
   };
 
@@ -607,6 +661,44 @@ function AdminBlogPage() {
                     {generating ? "Generating draft..." : "Generate AI Draft"}
                   </button>
                 </div>
+                {socialSuggestions.length > 0 ? (
+                  <div className="mt-3 rounded-lg border border-indigo-200 bg-white p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-indigo-900">
+                        Suggested social posts
+                      </p>
+                      {suggestionSource ? (
+                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                          Source: {suggestionSource}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-2 space-y-2">
+                      {socialSuggestions.map((suggestion, index) => (
+                        <div key={`${index}-${suggestion.slice(0, 24)}`} className="rounded-lg border border-neutral-200 bg-neutral-50 p-2">
+                          <p className="whitespace-pre-wrap text-xs text-neutral-700">{suggestion}</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => queueSuggestion(suggestion, index)}
+                              disabled={queueingSuggestionIndex === index}
+                              className="rounded-md bg-[#0b2a5a] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#143a75] disabled:opacity-60"
+                            >
+                              {queueingSuggestionIndex === index ? "Queueing..." : "Add to Social Queue"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => copySuggestionToClipboard(suggestion, index)}
+                              className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+                            >
+                              {copiedSuggestionIndex === index ? "Copied" : "Copy"}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <label className="block text-sm font-semibold text-neutral-700">
