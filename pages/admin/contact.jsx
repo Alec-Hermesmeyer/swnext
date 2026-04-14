@@ -190,6 +190,7 @@ function ContactTW() {
   const [newRuleValue, setNewRuleValue] = useState("");
   const [newRuleReason, setNewRuleReason] = useState("");
   const [savingRule, setSavingRule] = useState(false);
+  const [showSpamControls, setShowSpamControls] = useState(false);
   const [promoteLoading, setPromoteLoading] = useState(false);
   const [promoteHiringLoading, setPromoteHiringLoading] = useState(false);
   const pageSize = 10;
@@ -357,6 +358,8 @@ function ContactTW() {
   }, [activeTab, selectedPosition]);
 
   const positions = [...new Set(jobRows.map((r) => r.position).filter(Boolean))];
+  const activeRuleCount = blockRules.filter((rule) => rule.is_active).length;
+  const visibleRuleCount = blockRules.slice(0, 12).length;
 
   return (
     <>
@@ -371,7 +374,7 @@ function ContactTW() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <button
             onClick={() => setActiveTab("contact")}
             className={`rounded-xl border-2 p-4 text-left transition-all ${
@@ -408,78 +411,16 @@ function ContactTW() {
               <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center text-xl">💼</div>
             </div>
           </button>
-        </div>
-
-        <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-          <div className="mb-3">
-            <h2 className={`${lato.className} text-lg font-bold text-[#0b2a5a]`}>Spam Blocklist</h2>
-            <p className="text-sm text-neutral-600">
-              Block specific emails or entire domains. Blocked senders are silently accepted but no notification email is sent.
+          <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-neutral-500">Submission queue</p>
+            <p className={`${lato.className} mt-1 text-2xl font-bold text-neutral-900`}>
+              {loading ? "—" : currentData.length}
             </p>
-          </div>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-[130px_1fr_1fr_auto]">
-            <select
-              value={newRuleType}
-              onChange={(e) => setNewRuleType(e.target.value)}
-              className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
-            >
-              <option value="email">Email</option>
-              <option value="domain">Domain</option>
-            </select>
-            <input
-              value={newRuleValue}
-              onChange={(e) => setNewRuleValue(e.target.value)}
-              placeholder={newRuleType === "domain" ? "example.com" : "name@example.com"}
-              className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
-            />
-            <input
-              value={newRuleReason}
-              onChange={(e) => setNewRuleReason(e.target.value)}
-              placeholder="Reason (optional)"
-              className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
-            />
-            <button
-              type="button"
-              onClick={handleCreateRule}
-              disabled={savingRule || !newRuleValue.trim()}
-              className="h-10 rounded-lg bg-[#0b2a5a] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {savingRule ? "Saving..." : "Add rule"}
-            </button>
-          </div>
-          <div className="mt-3 space-y-2">
-            {blockRules.length === 0 ? (
-              <p className="text-sm text-neutral-500">No blocked senders yet.</p>
-            ) : (
-              blockRules.slice(0, 12).map((rule) => (
-                <div key={rule.id} className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-neutral-900">
-                      {rule.rule_type === "domain" ? `@${rule.rule_value}` : rule.rule_value}
-                    </div>
-                    <div className="text-xs text-neutral-500">
-                      {rule.reason || "No reason provided"} {rule.is_active ? "• active" : "• inactive"}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleRule(rule.id, rule.is_active)}
-                      className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700"
-                    >
-                      {rule.is_active ? "Disable" : "Enable"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteRule(rule.id)}
-                      className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
+            <p className="mt-1 text-xs text-neutral-500">
+              {activeTab === "contact"
+                ? "Contact submissions currently in review."
+                : "Job applications currently in review."}
+            </p>
           </div>
         </div>
 
@@ -644,6 +585,99 @@ function ContactTW() {
               )}
             </>
           )}
+        </div>
+
+        <div className="mt-6 rounded-xl border border-neutral-200 bg-white shadow-sm">
+          <button
+            type="button"
+            onClick={() => setShowSpamControls((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+          >
+            <div>
+              <h2 className={`${lato.className} text-lg font-bold text-[#0b2a5a]`}>Safety & spam controls</h2>
+              <p className="text-sm text-neutral-600">
+                {activeRuleCount} active rule{activeRuleCount === 1 ? "" : "s"} across {blockRules.length} total.
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-neutral-600">{showSpamControls ? "Hide" : "Manage"}</span>
+          </button>
+
+          {showSpamControls ? (
+            <div className="border-t border-neutral-200 px-4 pb-4 pt-3">
+              <p className="mb-3 text-sm text-neutral-600">
+                Block specific emails or domains. Blocked senders are silently accepted, but notification emails are skipped.
+              </p>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-[130px_1fr_1fr_auto]">
+                <select
+                  value={newRuleType}
+                  onChange={(e) => setNewRuleType(e.target.value)}
+                  className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
+                >
+                  <option value="email">Email</option>
+                  <option value="domain">Domain</option>
+                </select>
+                <input
+                  value={newRuleValue}
+                  onChange={(e) => setNewRuleValue(e.target.value)}
+                  placeholder={newRuleType === "domain" ? "example.com" : "name@example.com"}
+                  className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
+                />
+                <input
+                  value={newRuleReason}
+                  onChange={(e) => setNewRuleReason(e.target.value)}
+                  placeholder="Reason (optional)"
+                  className="h-10 rounded-lg border border-neutral-300 px-3 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateRule}
+                  disabled={savingRule || !newRuleValue.trim()}
+                  className="h-10 rounded-lg bg-[#0b2a5a] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingRule ? "Saving..." : "Add rule"}
+                </button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {blockRules.length === 0 ? (
+                  <p className="text-sm text-neutral-500">No blocked senders yet.</p>
+                ) : (
+                  blockRules.slice(0, 12).map((rule) => (
+                    <div key={rule.id} className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-neutral-900">
+                          {rule.rule_type === "domain" ? `@${rule.rule_value}` : rule.rule_value}
+                        </div>
+                        <div className="text-xs text-neutral-500">
+                          {rule.reason || "No reason provided"} {rule.is_active ? "• active" : "• inactive"}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleRule(rule.id, rule.is_active)}
+                          className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700"
+                        >
+                          {rule.is_active ? "Disable" : "Enable"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRule(rule.id)}
+                          className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+                {blockRules.length > visibleRuleCount ? (
+                  <p className="text-xs text-neutral-500">
+                    Showing first {visibleRuleCount} rules. Narrow old rules from the database if the list grows.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* Detail Modal */}
