@@ -680,6 +680,35 @@ export default function AdminAssistantWorkspace({
     if (!historyLoading) fetchThreads();
   }, [historyLoading, fetchThreads]);
 
+  // Expose thread data + controls to parent (for sidebar rendering)
+  useEffect(() => {
+    if (typeof onThreadsReady === "function") {
+      onThreadsReady({
+        threads: otherThreads,
+        threadsLoading,
+        sessionId,
+        conversationTitle,
+        hasUserMessages,
+        startNewConversation: () => {
+          const nextSessionId = createSessionId();
+          setStoredSessionId(nextSessionId);
+          setSessionId(nextSessionId);
+          setMessages([welcomeMessage]);
+          setInput("");
+          setHistoryError("");
+          setHistoryLoading(false);
+          setMobileRailOpen(false);
+        },
+        switchThread: (targetSessionId) => {
+          if (targetSessionId === sessionId) return;
+          setStoredSessionId(targetSessionId);
+          setSessionId(targetSessionId);
+          hasHydratedRef.current = false;
+          setMobileRailOpen(false);
+        },
+      });
+    }
+  }, [otherThreads, threadsLoading, sessionId, conversationTitle, hasUserMessages, onThreadsReady, welcomeMessage]);
 
   const startNewConversation = () => {
     const nextSessionId = createSessionId();
