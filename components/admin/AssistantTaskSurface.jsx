@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { SALES_PIPELINE_STAGES, stageLabel } from "@/lib/sales-pipeline";
+import { HIRING_PIPELINE_STAGES, hiringStageLabel } from "@/lib/hiring-pipeline";
 
 function buildInitialValues(surface) {
   const initial = {};
