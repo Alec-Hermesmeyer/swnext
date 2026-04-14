@@ -1431,18 +1431,20 @@ export default function AdminAssistantWorkspace({
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-bold text-neutral-900">S&W Assistant</div>
-                <div className="text-xs text-neutral-500">Ask anything about your operations</div>
+                {!hideSideRail && <div className="text-xs text-neutral-500">Ask anything about your operations</div>}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setMobileRailOpen((value) => !value)}
-                className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a] lg:hidden"
-              >
-                {mobileRailOpen ? "Hide tools" : "Tools"}
-              </button>
-              {role && (
+              {!hideSideRail && (
+                <button
+                  type="button"
+                  onClick={() => setMobileRailOpen((value) => !value)}
+                  className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a] lg:hidden"
+                >
+                  {mobileRailOpen ? "Hide tools" : "Tools"}
+                </button>
+              )}
+              {!hideSideRail && role && (
                 <span className="hidden rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1 text-xs font-medium text-neutral-600 sm:inline-flex">
                   {role}
                 </span>
@@ -1460,7 +1462,7 @@ export default function AdminAssistantWorkspace({
           </div>
         </header>
 
-        {mobileRailOpen ? (
+        {!hideSideRail && mobileRailOpen ? (
           <div className="relative z-10 border-b border-[#dbe4f0] bg-white/72 backdrop-blur-sm lg:hidden">
             <div className="max-h-[min(58vh,34rem)] space-y-4 overflow-y-auto px-4 py-4 sm:px-5 md:px-6">
               <section className="rounded-[1.35rem] border border-white/90 bg-white/92 p-4 shadow-[0_12px_28px_rgba(11,42,90,0.06)]">
