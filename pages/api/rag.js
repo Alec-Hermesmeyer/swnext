@@ -20,10 +20,6 @@ export default async function handler(req, res) {
 
     // If q is provided, do similarity search
     if (q) {
-      if (!OPENAI_API_KEY) {
-        return res.status(500).json({ error: "OPENAI_API_KEY not configured — needed for search" });
-      }
-
       try {
         const embedding = await getEmbedding(q);
         const { data, error } = await supabase.rpc("match_documents", {
