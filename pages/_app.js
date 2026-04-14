@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import GoogleAnalytics from '@/components/Analytics'
 import { AuthProvider } from '@/context/AuthContext'
 import { ImageProvider } from '@/context/ImageContext'
+import { SidebarProvider } from '@/context/SidebarContext'
 import '@/styles/globals.css'
 
 export default function App({ Component, pageProps, router }) {
