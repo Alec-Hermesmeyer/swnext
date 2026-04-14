@@ -1116,6 +1116,53 @@ export default function AssistantTaskSurface({
     }
   };
 
+  const handleHiringPipelineAction = async (action, row, extra = {}) => {
+    if (!row?.id || !surface?.id || !sessionId || activeHiringActionKey) return;
+
+    const actionKey =
+      extra.actionKey || `${row.id}:${action === "set_stage" ? extra.stage || "stage" : action}`;
+
+    setActiveHiringActionKey(actionKey);
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin-assistant-actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          surfaceType: surface.type,
+          surfaceId: surface.id,
+          values: {
+            action,
+            candidate_id: row.id,
+            title: row.title,
+            stage: extra.stage,
+          },
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Could not complete assistant action.");
+      }
+
+      if (typeof onComplete === "function") {
+        onComplete({
+          surfaceId: surface.id,
+          userMessage: data.userMessage,
+          assistantMessage: data.assistantMessage,
+          actionsPerformed: !!data.actionsPerformed,
+          surface: data.surface || null,
+        });
+      }
+    } catch (submitError) {
+      setError(submitError.message || "Could not complete assistant action.");
+    } finally {
+      setActiveHiringActionKey("");
+    }
+  };
+
   return (
     <div className="mt-4 overflow-hidden rounded-[1.55rem] border border-[#dbe4f0] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] shadow-[0_16px_42px_rgba(15,23,42,0.05)]">
       <div className="border-b border-[#e6edf5] px-4 py-4 md:px-5">
