@@ -136,8 +136,8 @@ export default function TWAdminLayout({ children }) {
             })}
           </div>
 
-          {/* Extra sidebar content injected by pages */}
-          {sidebarExtra || null}
+          {/* Extra sidebar content injected by pages via SidebarContext */}
+          {contextExtra}
         </nav>
 
         {/* Sidebar footer */}
