@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import withAuthTw from "@/components/withAuthTw";
@@ -25,6 +25,7 @@ const EMPTY_FORM = {
   slug: "",
   excerpt: "",
   imageId: "",
+  imageAlt: "",
   date: todayDate(),
   status: "draft",
   content: "",
@@ -35,11 +36,18 @@ function AdminBlogPage() {
   const [blogImages, setBlogImages] = useState([]);
   const [imagesLoading, setImagesLoading] = useState(true);
   const [imageUploading, setImageUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [renamingPath, setRenamingPath] = useState("");
+  const [renameValue, setRenameValue] = useState("");
+  const [deletePath, setDeletePath] = useState("");
+  const [altGeneratingPath, setAltGeneratingPath] = useState("");
+  const [selectedBlogImage, setSelectedBlogImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(null);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const fileInputRef = useRef(null);
   const [generator, setGenerator] = useState({
     keyword: "",
     city: "Dallas-Fort Worth",
@@ -72,7 +80,12 @@ function AdminBlogPage() {
       const response = await fetch("/api/admin-blog-images");
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Could not load blog images.");
-      setBlogImages(Array.isArray(data.images) ? data.images : []);
+      const nextImages = Array.isArray(data.images) ? data.images : [];
+      setBlogImages(nextImages);
+      if (selectedBlogImage?.path) {
+        const refreshedSelection = nextImages.find((img) => img.path === selectedBlogImage.path) || null;
+        setSelectedBlogImage(refreshedSelection);
+      }
     } catch (error) {
       setStatus({
         type: "error",
@@ -143,7 +156,13 @@ function AdminBlogPage() {
   };
 
   const uploadBlogImage = async (event) => {
-    const file = event.target.files?.[0];
+    const file = event?.target?.files?.[0];
+    if (!file || imageUploading) return;
+    await uploadImageFile(file);
+    if (event?.target) event.target.value = "";
+  };
+
+  const uploadImageFile = async (file) => {
     if (!file || imageUploading) return;
     setImageUploading(true);
     setStatus(null);
@@ -157,7 +176,7 @@ function AdminBlogPage() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Could not upload image.");
       if (data?.image?.path) {
-        setForm((prev) => ({ ...prev, imageId: data.image.path }));
+        setForm((prev) => ({ ...prev, imageId: data.image.path, imageAlt: prev.imageAlt || "" }));
       }
       await fetchBlogImages();
       setStatus({
@@ -171,8 +190,90 @@ function AdminBlogPage() {
       });
     } finally {
       setImageUploading(false);
-      event.target.value = "";
     }
+  };
+
+  const renameImage = async () => {
+    if (!renamingPath || !renameValue.trim()) return;
+    try {
+      const response = await fetch("/api/admin-blog-images", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourcePath: renamingPath,
+          nextName: renameValue.trim(),
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not rename image.");
+
+      if (form.imageId === renamingPath && data?.image?.path) {
+        setForm((prev) => ({ ...prev, imageId: data.image.path }));
+      }
+      setRenamingPath("");
+      setRenameValue("");
+      await fetchBlogImages();
+      setStatus({ type: "success", message: "Image renamed." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message || "Could not rename image." });
+    }
+  };
+
+  const deleteImage = async (imagePath) => {
+    if (!imagePath) return;
+    const confirmed = confirm("Delete this image from blog-images?");
+    if (!confirmed) return;
+    setDeletePath(imagePath);
+    try {
+      const response = await fetch("/api/admin-blog-images", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: imagePath }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not delete image.");
+      if (form.imageId === imagePath) {
+        setForm((prev) => ({ ...prev, imageId: "" }));
+      }
+      if (selectedBlogImage?.path === imagePath) {
+        setSelectedBlogImage(null);
+      }
+      await fetchBlogImages();
+      setStatus({ type: "success", message: "Image deleted." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message || "Could not delete image." });
+    } finally {
+      setDeletePath("");
+    }
+  };
+
+  const generateAltText = async (image) => {
+    if (!image?.publicUrl) return;
+    setAltGeneratingPath(image.path);
+    try {
+      const response = await fetch("/api/admin-blog-image-alt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: image.publicUrl }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not generate alt text.");
+      if (data?.altText) {
+        setForm((prev) => ({ ...prev, imageId: image.path, imageAlt: data.altText }));
+        setStatus({ type: "success", message: "Alt text generated and applied to form." });
+      }
+    } catch (error) {
+      setStatus({ type: "error", message: error.message || "Could not generate alt text." });
+    } finally {
+      setAltGeneratingPath("");
+    }
+  };
+
+  const onDropFiles = async (event) => {
+    event.preventDefault();
+    setDragActive(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file) await uploadImageFile(file);
   };
 
   const submit = async (event) => {
@@ -301,7 +402,31 @@ function AdminBlogPage() {
                 />
               </label>
 
-              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+              <label className="block text-sm font-semibold text-neutral-700">
+                Image Alt Text
+                <input
+                  type="text"
+                  value={form.imageAlt}
+                  onChange={(e) => updateField("imageAlt", e.target.value)}
+                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                  placeholder="Crew drilling pier foundations on an active Dallas commercial site"
+                />
+              </label>
+
+              <div
+                className={`rounded-lg border p-3 transition-colors ${
+                  dragActive ? "border-[#0b2a5a] bg-blue-50" : "border-neutral-200 bg-neutral-50"
+                }`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setDragActive(false);
+                }}
+                onDrop={onDropFiles}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
                     Blog Image Library (bucket: blog-images)
@@ -309,6 +434,7 @@ function AdminBlogPage() {
                   <label className="cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] ring-1 ring-neutral-300 hover:bg-neutral-100">
                     {imageUploading ? "Uploading..." : "Upload image"}
                     <input
+                      ref={fileInputRef}
                       type="file"
                       accept="image/*"
                       onChange={uploadBlogImage}
@@ -318,7 +444,7 @@ function AdminBlogPage() {
                   </label>
                 </div>
                 <p className="mt-1 text-xs text-neutral-500">
-                  Click an image below to use it as this post&apos;s imageId.
+                  Drag-and-drop an image anywhere in this card or click upload. Click a tile to select.
                 </p>
                 <div className="mt-3 max-h-52 overflow-y-auto">
                   {imagesLoading ? (
@@ -331,9 +457,9 @@ function AdminBlogPage() {
                         <button
                           key={img.path}
                           type="button"
-                          onClick={() => updateField("imageId", img.path)}
+                          onClick={() => setSelectedBlogImage(img)}
                           className={`overflow-hidden rounded-lg border text-left transition-all ${
-                            form.imageId === img.path
+                            selectedBlogImage?.path === img.path || form.imageId === img.path
                               ? "border-[#0b2a5a] ring-2 ring-[#0b2a5a]/20"
                               : "border-neutral-200 hover:border-neutral-300"
                           }`}
@@ -348,6 +474,80 @@ function AdminBlogPage() {
                     </div>
                   )}
                 </div>
+                {selectedBlogImage ? (
+                  <div className="mt-3 rounded-lg border border-neutral-200 bg-white p-3">
+                    <p className="truncate text-xs font-semibold text-neutral-700">{selectedBlogImage.name}</p>
+                    <p className="truncate text-[11px] text-neutral-500">{selectedBlogImage.path}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateField("imageId", selectedBlogImage.path);
+                          if (!form.imageAlt) updateField("imageAlt", "");
+                        }}
+                        className="rounded-md bg-[#0b2a5a] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#143a75]"
+                      >
+                        Use image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => generateAltText(selectedBlogImage)}
+                        disabled={altGeneratingPath === selectedBlogImage.path}
+                        className="rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+                      >
+                        {altGeneratingPath === selectedBlogImage.path ? "Generating alt..." : "AI alt text"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRenamingPath(selectedBlogImage.path);
+                          setRenameValue(selectedBlogImage.name);
+                        }}
+                        className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+                      >
+                        Rename
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteImage(selectedBlogImage.path)}
+                        disabled={deletePath === selectedBlogImage.path}
+                        className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                      >
+                        {deletePath === selectedBlogImage.path ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                {renamingPath ? (
+                  <div className="mt-3 rounded-lg border border-neutral-200 bg-white p-3">
+                    <p className="text-xs font-semibold text-neutral-700">Rename image</p>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        type="text"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        className="h-9 flex-1 rounded-lg border border-neutral-300 px-3 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={renameImage}
+                        className="rounded-lg bg-[#0b2a5a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#143a75]"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRenamingPath("");
+                          setRenameValue("");
+                        }}
+                        className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">

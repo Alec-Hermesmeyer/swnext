@@ -52,7 +52,7 @@ export default function MarkdownBlogPost({ frontmatter, content }) {
                 className="object-cover"
                 src={imageSrc}
                 fill
-                alt={frontmatter.title}
+                alt={frontmatter.imageAlt || frontmatter.title}
                 priority
                 unoptimized
                 loader={({ src }) => src}

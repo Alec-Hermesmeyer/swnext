@@ -122,6 +122,20 @@ const sanitizeFilename = (name) =>
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
+const readJsonBody = async (req) => {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  const raw = Buffer.concat(chunks).toString("utf8").trim();
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+};
+
 export const config = {
   api: {
     bodyParser: false,
@@ -214,7 +228,62 @@ export default async function handler(req, res) {
       });
     }
 
-    res.setHeader("Allow", "GET, POST");
+    if (req.method === "PATCH") {
+      const body = await readJsonBody(req);
+      const sourcePath = String(body.sourcePath || "").trim();
+      const nextNameInput = String(body.nextName || "").trim();
+      if (!sourcePath || !nextNameInput) {
+        return res.status(400).json({ error: "sourcePath and nextName are required" });
+      }
+
+      const ext = path.extname(sourcePath || "").toLowerCase();
+      const requestedExt = path.extname(nextNameInput || "").toLowerCase();
+      const cleanBase = sanitizeFilename(path.basename(nextNameInput, requestedExt || ext));
+      const finalName = `${cleanBase}${requestedExt || ext}`;
+      const targetPath = finalName;
+
+      if (!cleanBase) {
+        return res.status(400).json({ error: "Invalid target filename" });
+      }
+      if (sourcePath === targetPath) {
+        const { data: urlData } = supabase.storage.from(BLOG_IMAGE_BUCKET).getPublicUrl(targetPath);
+        return res.status(200).json({ ok: true, image: { path: targetPath, publicUrl: urlData?.publicUrl || "" } });
+      }
+
+      const { error: moveError } = await supabase.storage
+        .from(BLOG_IMAGE_BUCKET)
+        .move(sourcePath, targetPath);
+
+      if (moveError) {
+        return res.status(500).json({ error: moveError.message || "Could not rename image" });
+      }
+
+      const { data: urlData } = supabase.storage.from(BLOG_IMAGE_BUCKET).getPublicUrl(targetPath);
+      return res.status(200).json({
+        ok: true,
+        image: {
+          path: targetPath,
+          name: path.basename(targetPath),
+          publicUrl: urlData?.publicUrl || "",
+        },
+      });
+    }
+
+    if (req.method === "DELETE") {
+      const body = await readJsonBody(req);
+      const imagePath = String(body.path || "").trim();
+      if (!imagePath) return res.status(400).json({ error: "path is required" });
+
+      const { error: removeError } = await supabase.storage
+        .from(BLOG_IMAGE_BUCKET)
+        .remove([imagePath]);
+      if (removeError) {
+        return res.status(500).json({ error: removeError.message || "Could not delete image" });
+      }
+      return res.status(200).json({ ok: true });
+    }
+
+    res.setHeader("Allow", "GET, POST, PATCH, DELETE");
     return res.status(405).json({ error: "Method not allowed" });
   } catch (error) {
     console.error("admin-blog-images handler:", error);
