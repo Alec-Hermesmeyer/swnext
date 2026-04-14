@@ -943,6 +943,7 @@ export default function AssistantTaskSurface({
   const [submitting, setSubmitting] = useState(false);
   const [activeActionJobId, setActiveActionJobId] = useState("");
   const [activeSalesActionKey, setActiveSalesActionKey] = useState("");
+  const [activeHiringActionKey, setActiveHiringActionKey] = useState("");
   const [error, setError] = useState("");
   const [completed, setCompleted] = useState(!!surface?.completed);
   const [completedMessage, setCompletedMessage] = useState(
