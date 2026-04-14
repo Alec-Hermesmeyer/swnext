@@ -471,6 +471,8 @@ const MODULE_TO_PAGE = {
 export default function AdminAssistantWorkspace({
   variant = "page",
   onClose,
+  hideSideRail = false,
+  onThreadsReady,
 }) {
   const { profile, role, department, logout } = useAuth();
 
@@ -678,6 +680,35 @@ export default function AdminAssistantWorkspace({
     if (!historyLoading) fetchThreads();
   }, [historyLoading, fetchThreads]);
 
+  // Expose thread data + controls to parent (for sidebar rendering)
+  useEffect(() => {
+    if (typeof onThreadsReady === "function") {
+      onThreadsReady({
+        threads: otherThreads,
+        threadsLoading,
+        sessionId,
+        conversationTitle,
+        hasUserMessages,
+        startNewConversation: () => {
+          const nextSessionId = createSessionId();
+          setStoredSessionId(nextSessionId);
+          setSessionId(nextSessionId);
+          setMessages([welcomeMessage]);
+          setInput("");
+          setHistoryError("");
+          setHistoryLoading(false);
+          setMobileRailOpen(false);
+        },
+        switchThread: (targetSessionId) => {
+          if (targetSessionId === sessionId) return;
+          setStoredSessionId(targetSessionId);
+          setSessionId(targetSessionId);
+          hasHydratedRef.current = false;
+          setMobileRailOpen(false);
+        },
+      });
+    }
+  }, [otherThreads, threadsLoading, sessionId, conversationTitle, hasUserMessages, onThreadsReady, welcomeMessage]);
 
   const startNewConversation = () => {
     const nextSessionId = createSessionId();
@@ -1192,10 +1223,10 @@ export default function AdminAssistantWorkspace({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] lg:grid-rows-1 xl:rounded-[2.5rem] xl:grid-cols-[320px_minmax(0,1fr)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(11,42,90,0.05),_transparent_28%)]" />
+    <div className={`relative flex h-full min-h-0 flex-col overflow-hidden ${hideSideRail ? "bg-[#f7f9fc]/96" : "rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] lg:grid-rows-1 xl:rounded-[2.5rem] xl:grid-cols-[320px_minmax(0,1fr)]"}`}>
+      {!hideSideRail && <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(11,42,90,0.05),_transparent_28%)]" />}
 
-      <aside className="relative z-10 hidden min-h-0 shrink-0 flex-col overflow-hidden border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] lg:flex lg:h-full lg:max-h-none lg:min-h-0 lg:border-b-0 lg:border-r">
+      {!hideSideRail && <aside className="relative z-10 hidden min-h-0 shrink-0 flex-col overflow-hidden border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] lg:flex lg:h-full lg:max-h-none lg:min-h-0 lg:border-b-0 lg:border-r">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.28),_transparent_58%)]" />
 
         <div className="relative border-b border-[#dbe4f0] px-5 py-5">
@@ -1387,7 +1418,7 @@ export default function AdminAssistantWorkspace({
             ) : null}
           </div>
         </div>
-      </aside>
+      </aside>}
 
       <section className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)] lg:h-full lg:min-h-0">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_rgba(11,42,90,0.06),_transparent_62%)]" />
@@ -1400,18 +1431,20 @@ export default function AdminAssistantWorkspace({
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-bold text-neutral-900">S&W Assistant</div>
-                <div className="text-xs text-neutral-500">Ask anything about your operations</div>
+                {!hideSideRail && <div className="text-xs text-neutral-500">Ask anything about your operations</div>}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setMobileRailOpen((value) => !value)}
-                className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a] lg:hidden"
-              >
-                {mobileRailOpen ? "Hide tools" : "Tools"}
-              </button>
-              {role && (
+              {!hideSideRail && (
+                <button
+                  type="button"
+                  onClick={() => setMobileRailOpen((value) => !value)}
+                  className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-[#0b2a5a]/18 hover:text-[#0b2a5a] lg:hidden"
+                >
+                  {mobileRailOpen ? "Hide tools" : "Tools"}
+                </button>
+              )}
+              {!hideSideRail && role && (
                 <span className="hidden rounded-full border border-[#dbe4f0] bg-[#f8fbff] px-3 py-1 text-xs font-medium text-neutral-600 sm:inline-flex">
                   {role}
                 </span>
@@ -1429,7 +1462,7 @@ export default function AdminAssistantWorkspace({
           </div>
         </header>
 
-        {mobileRailOpen ? (
+        {!hideSideRail && mobileRailOpen ? (
           <div className="relative z-10 border-b border-[#dbe4f0] bg-white/72 backdrop-blur-sm lg:hidden">
             <div className="max-h-[min(58vh,34rem)] space-y-4 overflow-y-auto px-4 py-4 sm:px-5 md:px-6">
               <section className="rounded-[1.35rem] border border-white/90 bg-white/92 p-4 shadow-[0_12px_28px_rgba(11,42,90,0.06)]">
