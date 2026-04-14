@@ -694,6 +694,198 @@ function renderSalesPipelineList(surface, activeActionKey, onSalesAction) {
   );
 }
 
+// ── Hiring pipeline helpers ──
+
+function hiringTone(stage) {
+  switch (stage) {
+    case "new":
+      return "border-slate-200 bg-slate-50 text-slate-800";
+    case "reviewing":
+      return "border-sky-200 bg-sky-50 text-sky-900";
+    case "interview":
+      return "border-violet-200 bg-violet-50 text-violet-900";
+    case "offer":
+      return "border-amber-200 bg-amber-50 text-amber-900";
+    case "hired":
+      return "border-emerald-200 bg-emerald-50 text-emerald-900";
+    case "declined":
+      return "border-rose-200 bg-rose-50 text-rose-900";
+    default:
+      return "border-[#dbe4f0] bg-[#f7f9fc] text-neutral-600";
+  }
+}
+
+function getNextHiringStage(stage) {
+  const idx = HIRING_PIPELINE_STAGES.findIndex((s) => s.id === stage);
+  if (idx === -1) return "";
+  return HIRING_PIPELINE_STAGES[idx + 1]?.id || "";
+}
+
+function renderHiringPipeline(surface, activeActionKey, onHiringAction) {
+  const rows = surface.candidates || [];
+  const canManage = surface.canManage === true;
+
+  return (
+    <div className="px-4 py-4 md:px-5">
+      {surface.summary?.length ? (
+        <div className="mb-4 grid gap-3 grid-cols-2 md:grid-cols-4">
+          {surface.summary.map((item) => (
+            <div
+              key={`${surface.id}-${item.label}`}
+              className="rounded-[1.1rem] border border-[#e6edf5] bg-white/84 px-3 py-3 text-center"
+            >
+              <div className="text-lg font-bold text-[#0b2a5a]">{item.value}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {rows.length ? (
+        <div className="space-y-3">
+          {rows.map((row) => {
+            const nextStage = getNextHiringStage(row.stage);
+            const editActionKey = `${row.id}:edit`;
+            const advanceActionKey = `${row.id}:advance`;
+            const hiredActionKey = `${row.id}:hired`;
+            const declinedActionKey = `${row.id}:declined`;
+            const isClosed = row.stage === "hired" || row.stage === "declined";
+
+            return (
+              <div
+                key={row.id}
+                className="rounded-[1.2rem] border border-[#e6edf5] bg-white/84 p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold tracking-tight text-neutral-950">
+                      {row.applicant_name || row.title}
+                    </div>
+                    {row.position_applied ? (
+                      <div className="mt-0.5 text-sm text-neutral-600">{row.position_applied}</div>
+                    ) : null}
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${hiringTone(row.stage)}`}
+                  >
+                    {hiringStageLabel(row.stage)}
+                  </span>
+                </div>
+                <div className="mt-3 grid gap-1 text-xs text-neutral-500 sm:grid-cols-2">
+                  {row.contact_email ? (
+                    <div>
+                      <span className="font-medium text-neutral-700">Email:</span> {row.contact_email}
+                    </div>
+                  ) : null}
+                  {row.contact_phone ? (
+                    <div>
+                      <span className="font-medium text-neutral-700">Phone:</span> {row.contact_phone}
+                    </div>
+                  ) : null}
+                  {row.next_follow_up ? (
+                    <div>
+                      <span className="font-medium text-neutral-700">Follow-up:</span>{" "}
+                      {formatSalesDate(row.next_follow_up)}
+                    </div>
+                  ) : null}
+                  {row.notes ? (
+                    <div className="sm:col-span-2">
+                      <span className="font-medium text-neutral-700">Notes:</span>{" "}
+                      {row.notes.length > 120 ? `${row.notes.substring(0, 120)}...` : row.notes}
+                    </div>
+                  ) : null}
+                </div>
+
+                {canManage ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onHiringAction?.("edit", row)}
+                      disabled={activeActionKey === editActionKey}
+                      className="rounded-full border border-[#dbe4f0] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-all hover:border-[#0b2a5a]/30 hover:bg-[#f0f5ff] disabled:cursor-not-allowed disabled:opacity-55"
+                    >
+                      {activeActionKey === editActionKey ? "Opening..." : "Edit in chat"}
+                    </button>
+
+                    {!isClosed && nextStage && nextStage !== row.stage && nextStage !== "hired" ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onHiringAction?.("set_stage", row, {
+                            stage: nextStage,
+                            actionKey: advanceActionKey,
+                          })
+                        }
+                        disabled={activeActionKey === advanceActionKey}
+                        className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 transition-all hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-55"
+                      >
+                        {activeActionKey === advanceActionKey
+                          ? "Updating..."
+                          : `Move to ${hiringStageLabel(nextStage)}`}
+                      </button>
+                    ) : null}
+
+                    {!isClosed ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onHiringAction?.("set_stage", row, {
+                            stage: "hired",
+                            actionKey: hiredActionKey,
+                          })
+                        }
+                        disabled={activeActionKey === hiredActionKey}
+                        className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition-all hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-55"
+                      >
+                        {activeActionKey === hiredActionKey ? "Updating..." : "Mark hired"}
+                      </button>
+                    ) : null}
+
+                    {!isClosed && row.stage !== "declined" ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onHiringAction?.("set_stage", row, {
+                            stage: "declined",
+                            actionKey: declinedActionKey,
+                          })
+                        }
+                        disabled={activeActionKey === declinedActionKey}
+                        className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 transition-all hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-55"
+                      >
+                        {activeActionKey === declinedActionKey ? "Declining..." : "Decline"}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-[1.2rem] border border-dashed border-[#dbe4f0] bg-white/80 px-4 py-4 text-sm text-neutral-500">
+          {surface.emptyMessage || "No candidates in the pipeline."}
+        </div>
+      )}
+
+      {surface.tips?.length ? (
+        <div className="mt-4 rounded-[1.15rem] border border-[#e6edf5] bg-white/72 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            Pipeline stages
+          </div>
+          <div className="mt-2 space-y-1 text-sm leading-6 text-neutral-500">
+            {surface.tips.map((tip) => (
+              <div key={tip}>{tip}</div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function renderQuickActions(actions, onQuickAction, onOpenWorkspace) {
   if (!actions?.length) return null;
 
