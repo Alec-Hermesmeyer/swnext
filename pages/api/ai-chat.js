@@ -1348,6 +1348,8 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
       scheduledSocialPosts: (socialPosts || []).filter((p) => p.status === "scheduled").length,
       totalSchedulesInWindow: (schedules || []).length,
       totalSalesOpportunities: salesOpportunitiesNormalized.length,
+      totalHiringCandidates: (hiringCandidates || []).length,
+      activeHiringCandidates: (hiringCandidates || []).filter((h) => h.stage !== "hired" && h.stage !== "declined").length,
     },
     workers: activeWorkers.map((w) => ({
       name: w.name,
