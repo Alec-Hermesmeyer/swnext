@@ -1223,10 +1223,10 @@ export default function AdminAssistantWorkspace({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] lg:grid-rows-1 xl:rounded-[2.5rem] xl:grid-cols-[320px_minmax(0,1fr)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(11,42,90,0.05),_transparent_28%)]" />
+    <div className={`relative flex h-full min-h-0 flex-col overflow-hidden ${hideSideRail ? "bg-[#f7f9fc]/96" : "rounded-[1.25rem] border border-white/85 bg-[#f7f9fc]/96 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] lg:grid-rows-1 xl:rounded-[2.5rem] xl:grid-cols-[320px_minmax(0,1fr)]"}`}>
+      {!hideSideRail && <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(11,42,90,0.05),_transparent_28%)]" />}
 
-      <aside className="relative z-10 hidden min-h-0 shrink-0 flex-col overflow-hidden border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] lg:flex lg:h-full lg:max-h-none lg:min-h-0 lg:border-b-0 lg:border-r">
+      {!hideSideRail && <aside className="relative z-10 hidden min-h-0 shrink-0 flex-col overflow-hidden border-b border-[#dbe4f0] bg-[linear-gradient(180deg,#fbfcfe_0%,#f4f7fb_100%)] lg:flex lg:h-full lg:max-h-none lg:min-h-0 lg:border-b-0 lg:border-r">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top_left,_rgba(155,199,247,0.28),_transparent_58%)]" />
 
         <div className="relative border-b border-[#dbe4f0] px-5 py-5">
