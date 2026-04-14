@@ -153,6 +153,61 @@ function toNumberOrZero(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function normalizeDraftPayload(draft) {
+  return {
+    title: String(draft?.title || ""),
+    project_name: String(draft?.project_name || ""),
+    client_name: String(draft?.client_name || ""),
+    due_date: String(draft?.due_date || ""),
+    intro: String(draft?.intro || ""),
+    scope_items: Array.isArray(draft?.scope_items) ? draft.scope_items.map((x) => String(x).trim()).filter(Boolean) : [],
+    assumptions: Array.isArray(draft?.assumptions) ? draft.assumptions.map((x) => String(x).trim()).filter(Boolean) : [],
+    exclusions: Array.isArray(draft?.exclusions) ? draft.exclusions.map((x) => String(x).trim()).filter(Boolean) : [],
+    pricing_items: Array.isArray(draft?.pricing_items)
+      ? draft.pricing_items
+          .map((item) => ({
+            label: String(item?.label || "").trim(),
+            amount: String(item?.amount || "").trim(),
+          }))
+          .filter((item) => item.label || item.amount)
+      : [],
+    terms: String(draft?.terms || ""),
+    notes: String(draft?.notes || ""),
+  };
+}
+
+function listToTextarea(values) {
+  return (Array.isArray(values) ? values : []).join("\n");
+}
+
+function textareaToList(value) {
+  return String(value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function pricingItemsToTextarea(items) {
+  return (Array.isArray(items) ? items : [])
+    .map((item) => `${item?.label || "Line item"} | ${item?.amount || ""}`.trim())
+    .join("\n");
+}
+
+function textareaToPricingItems(value) {
+  return String(value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [labelPart, ...rest] = line.split("|");
+      return {
+        label: String(labelPart || "").trim(),
+        amount: String(rest.join("|") || "").trim(),
+      };
+    })
+    .filter((item) => item.label || item.amount);
+}
+
 function PriceRollupPanel({ pricedItems }) {
   const [expandedGroups, setExpandedGroups] = useState({});
   const safeItems = Array.isArray(pricedItems) ? pricedItems : [];
@@ -280,6 +335,10 @@ function BidAssistantPanel() {
   const [metrics, setMetrics] = useState(getDefaultBidFitMetrics());
   const [loadingMetrics, setLoadingMetrics] = useState(false);
   const [savingMetrics, setSavingMetrics] = useState(false);
+  const [draft, setDraft] = useState(normalizeDraftPayload({}));
+  const [loadingDraft, setLoadingDraft] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [exportingDraft, setExportingDraft] = useState(false);
 
   const fetchDocumentById = useCallback(async (documentId) => {
     if (!documentId) return null;
@@ -343,6 +402,32 @@ function BidAssistantPanel() {
     loadMetrics();
   }, [loadMetrics]);
 
+  const loadDraft = useCallback(async (documentId) => {
+    if (!documentId) {
+      setDraft(normalizeDraftPayload({}));
+      return;
+    }
+    setLoadingDraft(true);
+    try {
+      const response = await fetch(`/api/bidding/ai-bidding/documents/${documentId}/draft`);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Could not load draft");
+      setDraft(normalizeDraftPayload(data?.draft || {}));
+    } catch (error) {
+      setStatus(error.message || "Could not load draft");
+    } finally {
+      setLoadingDraft(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedDoc?.id) {
+      setDraft(normalizeDraftPayload({}));
+      return;
+    }
+    loadDraft(selectedDoc.id);
+  }, [loadDraft, selectedDoc?.id]);
+
   const handleUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file || uploading) return;
@@ -405,6 +490,71 @@ function BidAssistantPanel() {
       setStatus(error.message || "Could not delete document");
     } finally {
       setDeletingDocId("");
+    }
+  };
+
+  const updateDraftField = (field, value) => {
+    setDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const saveDraft = async () => {
+    if (!selectedDoc?.id) return;
+    setSavingDraft(true);
+    setStatus("");
+    const payload = normalizeDraftPayload(draft);
+    try {
+      const response = await fetch(`/api/bidding/ai-bidding/documents/${selectedDoc.id}/draft`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Could not save draft");
+      setDraft(normalizeDraftPayload(data?.draft || payload));
+      setStatus("Bid draft saved.");
+    } catch (error) {
+      setStatus(error.message || "Could not save draft");
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const exportDraft = async (format = "docx") => {
+    if (!selectedDoc?.id) return;
+    setExportingDraft(true);
+    setStatus("");
+    const payload = {
+      format,
+      draft: normalizeDraftPayload(draft),
+    };
+    try {
+      const response = await fetch(`/api/bidding/ai-bidding/documents/${selectedDoc.id}/draft/export`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err?.detail || err?.error || `Could not export ${format.toUpperCase()}`);
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get("content-disposition") || "";
+      const fromHeader = disposition.match(/filename="?([^"]+)"?/i)?.[1] || "";
+      const fallbackName = `${(selectedDoc.filename || "bid_draft").replace(/\.[^/.]+$/, "")}_draft.${format}`;
+      const fileName = fromHeader || fallbackName;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setStatus(`Exported ${fileName}`);
+    } catch (error) {
+      setStatus(error.message || "Could not export draft");
+    } finally {
+      setExportingDraft(false);
     }
   };
 
@@ -899,6 +1049,150 @@ function BidAssistantPanel() {
                 <p className="mt-2 text-xs text-neutral-600">
                   Floor formula: max(min contract, cost + min profit, margin target) with risk buffer applied.
                 </p>
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Bid Builder Draft</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={saveDraft}
+                      disabled={savingDraft || loadingDraft || !selectedDoc?.id}
+                      className="rounded-md bg-[#0b2a5a] px-3 py-1 text-xs font-semibold text-white hover:bg-[#143a75] disabled:opacity-60"
+                    >
+                      {savingDraft ? "Saving..." : "Save draft"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => exportDraft("docx")}
+                      disabled={exportingDraft || loadingDraft || !selectedDoc?.id}
+                      className="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+                    >
+                      {exportingDraft ? "Exporting..." : "Download DOCX"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => exportDraft("txt")}
+                      disabled={exportingDraft || loadingDraft || !selectedDoc?.id}
+                      className="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+                    >
+                      Download TXT
+                    </button>
+                  </div>
+                </div>
+                {loadingDraft ? (
+                  <p className="text-sm text-neutral-500">Loading draft...</p>
+                ) : (
+                  <>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <label className="text-xs text-neutral-600">
+                        Draft title
+                        <input
+                          type="text"
+                          value={draft.title}
+                          onChange={(e) => updateDraftField("title", e.target.value)}
+                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Due date
+                        <input
+                          type="text"
+                          value={draft.due_date}
+                          onChange={(e) => updateDraftField("due_date", e.target.value)}
+                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Project name
+                        <input
+                          type="text"
+                          value={draft.project_name}
+                          onChange={(e) => updateDraftField("project_name", e.target.value)}
+                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Client name
+                        <input
+                          type="text"
+                          value={draft.client_name}
+                          onChange={(e) => updateDraftField("client_name", e.target.value)}
+                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                        />
+                      </label>
+                    </div>
+
+                    <label className="mt-2 block text-xs text-neutral-600">
+                      Intro
+                      <textarea
+                        rows={3}
+                        value={draft.intro}
+                        onChange={(e) => updateDraftField("intro", e.target.value)}
+                        className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                      />
+                    </label>
+
+                    <div className="mt-2 grid gap-2 lg:grid-cols-2">
+                      <label className="text-xs text-neutral-600">
+                        Pricing lines (one per line: label | amount)
+                        <textarea
+                          rows={5}
+                          value={pricingItemsToTextarea(draft.pricing_items)}
+                          onChange={(e) => updateDraftField("pricing_items", textareaToPricingItems(e.target.value))}
+                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Scope items (one per line)
+                        <textarea
+                          rows={5}
+                          value={listToTextarea(draft.scope_items)}
+                          onChange={(e) => updateDraftField("scope_items", textareaToList(e.target.value))}
+                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Assumptions (one per line)
+                        <textarea
+                          rows={5}
+                          value={listToTextarea(draft.assumptions)}
+                          onChange={(e) => updateDraftField("assumptions", textareaToList(e.target.value))}
+                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Exclusions (one per line)
+                        <textarea
+                          rows={5}
+                          value={listToTextarea(draft.exclusions)}
+                          onChange={(e) => updateDraftField("exclusions", textareaToList(e.target.value))}
+                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                    </div>
+
+                    <label className="mt-2 block text-xs text-neutral-600">
+                      Terms
+                      <textarea
+                        rows={3}
+                        value={draft.terms}
+                        onChange={(e) => updateDraftField("terms", e.target.value)}
+                        className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                    <label className="mt-2 block text-xs text-neutral-600">
+                      Internal notes
+                      <textarea
+                        rows={2}
+                        value={draft.notes}
+                        onChange={(e) => updateDraftField("notes", e.target.value)}
+                        className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                  </>
+                )}
               </div>
 
               <PriceRollupPanel pricedItems={pricedItems} />

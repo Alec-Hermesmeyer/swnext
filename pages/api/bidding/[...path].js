@@ -55,12 +55,20 @@ export default async function handler(req, res) {
 
     const response = await fetch(fullUrl, fetchOptions);
     const contentType = response.headers.get("content-type") || "";
-    const raw = await response.text();
+    const contentDisposition = response.headers.get("content-disposition") || "";
+    const rawBuffer = Buffer.from(await response.arrayBuffer());
 
     res.status(response.status);
+    if (contentType) {
+      res.setHeader("Content-Type", contentType);
+    }
+    if (contentDisposition) {
+      res.setHeader("Content-Disposition", contentDisposition);
+    }
     if (contentType.includes("application/json")) {
       try {
-        res.json(raw ? JSON.parse(raw) : {});
+        const rawText = rawBuffer.toString("utf-8");
+        res.json(rawText ? JSON.parse(rawText) : {});
       } catch {
         res.status(502).json({
           error: "Invalid JSON from bidding backend",
@@ -70,7 +78,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    res.send(raw);
+    res.send(rawBuffer);
   } catch (error) {
     const status = error?.name === "AbortError" ? 504 : 502;
     res.status(status).json({

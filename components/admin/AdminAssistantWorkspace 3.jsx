@@ -197,7 +197,7 @@ function getModulePriorityStyles(priority) {
 function getFeatureStatusMeta(status) {
   if (status === "coming_soon") {
     return {
-      label: "Coming soon",
+      label: "In beta",
       styles: "border-amber-200 bg-amber-50 text-amber-700",
     };
   }
@@ -423,7 +423,7 @@ function SolutionForm({ initial, saving, onSave, onDelete }) {
           <label className={labelClass}>Status</label>
           <select value={status} onChange={(e) => setStatus(e.target.value)} className={fieldClass}>
             <option value="active">Active</option>
-            <option value="coming_soon">Coming soon</option>
+            <option value="coming_soon">In beta</option>
             <option value="beta">Beta</option>
             <option value="hidden">Hidden</option>
           </select>
@@ -1902,7 +1902,7 @@ export default function AdminAssistantWorkspace({
                               {solutionSummary.beta + solutionSummary.pipeline}
                             </div>
                             <div className="mt-1 text-xs leading-5 text-neutral-500">
-                              beta or coming soon
+                              in beta
                             </div>
                           </div>
                         </div>
