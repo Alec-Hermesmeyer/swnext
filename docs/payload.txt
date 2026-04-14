@@ -1,144 +1,64 @@
-alechermesmeyer@Mac final % curl -X POST http://localhost:5001/voice/analyze
 {
-  "voice_profile": {
-    "avg_length": "medium",
-    "best_posting_times": "Weekdays between 10 AM - 2 PM to reach professionals during work hours",
-    "common_phrases": [
-      "strong foundations",
-      "keep turning right",
-      "pier drilling",
-      "safety first",
-      "grateful"
-    ],
-    "competitor_edge": "Integrate more multimedia content such as video demonstrations to effectively showcase complex drilling processes.",
-    "content_gaps": [
-      "Environmental impact considerations",
-      "Client success stories",
-      "Future trends in drilling technology"
-    ],
-    "cta_style": "Direct calls-to-action with contact information; engagement through celebrations and recognition.",
-    "emoji_usage": "moderate",
-    "hashtag_style": "Hashtags are relevant and industry-specific, often used in bulk at the end of posts.",
-    "improvements": [
-      "Increase interactivity by asking followers questions or opinions",
-      "Provide more behind-the-scenes content or project showcases",
-      "Include customer testimonials to build trust"
-    ],
-    "overall_grade": "B+",
-    "quick_wins": [
-      "Incorporate more video content showcasing drilling activities",
-      "Engage more with followers by asking for their input or feedback",
-      "Highlight community and charitable initiatives to build rapport"
-    ],
-    "strengths": [
-      "Consistent emphasis on safety and quality",
-      "Frequent appreciation of staff and partners",
-      "Strong community and patriotic spirit",
-      "Clear communication of technical processes"
-    ],
-    "technical_score": 8,
-    "tone_score": 7,
-    "topics": [
-      "foundation drilling",
-      "safety",
-      "employee appreciation",
-      "patriotism",
-      "community engagement"
-    ]
-  }
-}
-alechermesmeyer@Mac final % curl http://localhost:5001/posts/queue
-{
-  "posts": [
-    {
-      "auto_generated": true,
-      "content": "Meet our client, XYZ Corp, whose vision turned into reality with our help! \ud83c\udf1f Read their story and see how we met their unique needs with precision. #ClientSuccess #BuildingDreams",
-      "created_at": "2025-12-12T18:52:42.418843+00:00",
-      "id": "e51d0218-9f8d-495b-a6ed-fb470f6283cb",
-      "image_ids": [],
-      "image_suggestion": "A before-and-after image collage of the project site, along with a photo of happy clients and the project team.",
-      "metadata": {
-        "auto_generated": true,
-        "image_suggestion": "A before-and-after image collage of the project site, along with a photo of happy clients and the project team.",
-        "reasoning": "Sharing client success stories addresses a content gap, while testimonials build trust and showcase the company's commitment to customer satisfaction."
-      },
-      "platform_post_ids": {},
-      "platforms": [
-        "facebook"
-      ],
-      "post_type": "community",
-      "published_at": null,
-      "reasoning": "Sharing client success stories addresses a content gap, while testimonials build trust and showcase the company's commitment to customer satisfaction.",
-      "rejection_reason": null,
-      "scheduled_for": null,
-      "status": "pending",
-      "tone_settings": {
-        "brevity_detail": 5,
-        "professional_casual": 5,
-        "salesy_informative": 5,
-        "technical_accessible": 5
-      },
-      "updated_at": "2025-12-12T18:52:42.418843+00:00"
-    },
-    {
-      "auto_generated": true,
-      "content": "Behind every successful pier is a team committed to quality and safety. \ud83d\udd0d\ud83d\udd28 Get a sneak peek into a day at our latest project site and see what goes into delivering excellence. #BehindTheScenes #HardAtWork",
-      "created_at": "2025-12-12T18:52:42.331941+00:00",
-      "id": "c109932f-a622-4986-ba8c-993a6a581baa",
-      "image_ids": [],
-      "image_suggestion": "A series of candid behind-the-scenes photos showcasing team members at work, equipment setup, and project details.",
-      "metadata": {
-        "auto_generated": true,
-        "image_suggestion": "A series of candid behind-the-scenes photos showcasing team members at work, equipment setup, and project details.",
-        "reasoning": "Providing behind-the-scenes content satisfies improvement needs for engagement and transparency, helping to build trust with the audience."
-      },
-      "platform_post_ids": {},
-      "platforms": [
-        "facebook"
-      ],
-      "post_type": "project_showcase",
-      "published_at": null,
-      "reasoning": "Providing behind-the-scenes content satisfies improvement needs for engagement and transparency, helping to build trust with the audience.",
-      "rejection_reason": null,
-      "scheduled_for": null,
-      "status": "pending",
-      "tone_settings": {
-        "brevity_detail": 5,
-        "professional_casual": 5,
-        "salesy_informative": 5,
-        "technical_accessible": 5
-      },
-      "updated_at": "2025-12-12T18:52:42.331941+00:00"
-    },
-    {
-      "auto_generated": true,
-      "content": "What's your vision for the future of drilling technology? \ud83e\udd14\ud83d\udcad Share your thoughts and let's spark a discussion on how innovation could shape our industry! #DrillingTech #InnovationInMotion",
-      "created_at": "2025-12-12T18:52:42.236239+00:00",
-      "id": "13039aff-a963-4f47-a4d3-0da4712da1d3",
-      "image_ids": [],
-      "image_suggestion": "An image of cutting-edge drilling equipment in action, paired with a futuristic tech overlay to convey innovation.",
-      "metadata": {
-        "auto_generated": true,
-        "image_suggestion": "An image of cutting-edge drilling equipment in action, paired with a futuristic tech overlay to convey innovation.",
-        "reasoning": "This post addresses the content gap related to future trends in drilling technology while encouraging interactivity by inviting followers to share their opinions."
-      },
-      "platform_post_ids": {},
-      "platforms": [
-        "facebook"
-      ],
-      "post_type": "industry_tip",
-      "published_at": null,
-      "reasoning": "This post addresses the content gap related to future trends in drilling technology while encouraging interactivity by inviting followers to share their opinions.",
-      "rejection_reason": null,
-      "scheduled_for": null,
-      "status": "pending",
-      "tone_settings": {
-        "brevity_detail": 5,
-        "professional_casual": 5,
-        "salesy_informative": 5,
-        "technical_accessible": 5
-      },
-      "updated_at": "2025-12-12T18:52:42.236239+00:00"
+    "document": {
+        "id": "8f971bb8-3c66-4811-80e1-8ae107d15b54",
+        "opportunity_id": null,
+        "source_label": "swnext-admin",
+        "filename": "Metroplex BSW Health Celina ACP.docx",
+        "file_type": "docx",
+        "file_size_bytes": 72783,
+        "raw_text": "Project Details\nProject: BSW Health Celina\t\t\t   \t\t\nCustomer: Metroplex Concrete\nBase\nAlt\nUnits: \nGeneral Contractor Responsibilities\nGeneral Contractor (GC) to furnish all engineering (unless otherwise discussed), provide a clear and accessible work way and remove all soil as well as provide, place, and maintain hole cover and Dig Test notification.\nNo ditches or beams are to be cut prior to drilling of piers.  All utilities and structures, underground or otherwise, which interfere with the drilling of piers to be removed by the GC prior to drilling.\nGC to provide water source (at drill location) necessary for Drilling operations.\nGC to provide layout of pier locations, adequate clearance for drilling rig and traffic control (if necessary).\nThird party testing. S&W will not be responsible for making, taking, or handling samples.\nGC to ensure that ground conditions for all drilling equipment are firm, drained (except for marshes/wetlands) and graded to the extent that the equipment manufacturer’s specifications for adequate support and degree of level are met.\nRequire access for loaded tractor/trailers and ready-mix trucks to get to and from the site under their own power. If material delivery delays, material shortages or allocations impede our progress, our contract duration will automatically be extended without penalty.\nGC is responsible for cleaning streets, providing ice or chilled water to maintain grout temperature, overtime, or shift work, staking, restaking, shooting grades on the piles, and pile reinforcing steel or other field engineering. Our sole responsibility for pile location will be to accurately spot the auger on the stakes that you provide and drill the pile using our normal care. GC will need to complete as-built surveys before we leave the site or pay for remobilization if needed.\nGC will provide final clean-up and grade restoration, third-party testing or inspection, survey, and layout, wash out pit(s) for ready-mix trucks, labor and equipment for spoils handling beyond stockpiling within 150 feet of work area, job sight lighting as required, and reinforcement steel and accessories, unless stated otherwise in our proposal.\nGC initial __________\nAssumptions\nThis quote includes one drill rig unless otherwise specified above or agreed upon in writing between S&W and the hiring contractor. Any arrangements regarding the number of drill rigs on site made without S&W’s written consent are invalid, regardless of specifications or schedules.\nThis proposal may be withdrawn by S&W if not accepted within 30 days.  New quote at the request of the GC.\nIf Mats are required because site condition are too unstable for safe operation of equipment, they will be charged PER MAT to contractor for the number of mats required to stabilize the equipment safely.\nIf non-auger able material is encountered above the desired pile tip elevation such as cobbles, boulders, rock, metal, timbers or debris which causes auger refusal (< 1ft./ minute) then the pile shall be completed to the depth of the non-auger able material in accordance with these specifications. The length of such short piles shall be included in the tlf of pile for payment.\nPartial payment for our work shall be made monthly based on the work completed and material on hand the previous month with a maximum retained percentage of five percent (5%) of our lump sum. Full and final payment (100%) shall be paid to us within thirty days after the pile installation is completed. Piles shall be considered complete and accepted for payment, warranty, and guarantee purposes when approved by the Engineer, when the pile grout reaches the required strength, or when subsequent construction activities make the piles inaccessible (such as placement of pile caps), whichever occurs first. Our payment from you will not be contingent or conditional upon your receipt of payment. Past due payments will incur interest charges of one- and one-half percent per month applied to the unpaid total. Additionally, we shall be entitled to recover any reasonable attorneys’ fees incurred to enforce the terms of this agreement.\nFor unavoidable shutdown of work due to owner, architect, contractor, etc. or job conditions beyond S&W’s control, S&W shall be paid for all labor and equipment employed during the time of such forced delay.\nWhile S&W will hold Contractor and Owner harmless from claims caused by S&W negligence, S&W assumes no responsibility for negligence of Contractor or Owner.\nNo Crane is included and if needed will be charged based on what is required for the work.\nLesser depth is zero unless otherwise agreed upon between S&W and Contractor and denoted on this agreement.\nAuger Refusal is defined as a rate of Auger penetration of less than 1 ft (300 mm) per minute of drilling. If this is encountered S&W reserves the right to terminate the pile and seek clarification from EOR or Change order.\nAny change orders must be made via email and accepted (via signature) by both S&W & Contractor.\nScope\nInstalling and performing (1) pile load test (Unless otherwise stated). Test and reaction piles will be vertical piles only. The maximum test load will be 290 tons. We have not included the cost of independent inspection or an engineer to monitor the tests, analyze or report the results, nor have we included tell-tales or strain gages. We will be paid for all load tests performed regardless of the ultimate capacity.\nFurnishing equipment capable of drilling up to depth per bid from working grade. \nAuger cast grout material. \nInstallation of reinforcing steel within the auger cast piles.\nLabor and equipment to stockpile spoils at a location within 100 feet of work area.\nExcludes furnishing or assembly of reinforcing steel for auger cast piles (Unless Stated Above).\nExcludes excavation and/or removal of obstructions within the limits of the auger cast pile construction.\nExcludes repair or relocation of utilities.\nExcludes any erosion control measures.\nExcludes Providing Dowels Embed plates or Anchor Bolts and or placing them.\nExcludes any pile safety measures after pile installation are completed.\nExcludes all Steel for Pile Caps.\nThis proposal does not include low clearance or limited access drilling. (Unless stated above)\nThis proposal does not include any soil removal. (Unless stated above)\nContingency Costs\nProposal is based on one auger size change to each diameter. If additional auger changes are required add $3,850 PER CHANGE\nAny downtime on site due to others is subject to a fee of $750 per hour.\nIf a Third-party inspection of the Crane is required by others it will be charged at $550.00 per Inspection.\nThis quote is based on S&W performing its work in a continuous and uninterrupted operation with (1) one move-in.  Any additional mobilizations shall be at a cost of $30,000.00 per instance.\nIf S&W has to De mobilize from the site due to others this shall be at a cost of $10,000.00 per instance.\nACCEPTANCE OF PROPOSAL, the above prices, specifications, and conditions are satisfactory and are hereby accepted.  You are authorized to do the work as specified.  Payment will be made as outlined above. RE: BSW Health Celina\nGeneral Contractor\t\t\nAddress\t\t\nProject Manager\t\t\nPhone #\t\t\nEmail\t\t\nBilling Contact\t\t\nPhone #\t\t\nEmail\t\t\nProject Name\t\t\nLegal Description of Property\t\t\nAddress\t\t\nBonded?                                        \t    _____________________________________________________\nCCIP/ROCIP/OCIP?                          _____________________________________________________\nTax Exempt?                                         _____________________________________________________\nIf yes, please provide a certificate.\nOwner of Property\t\t\nAddress\t\t\nCity – State – Zip Code\t\t\nContact Person\t\t\nPhone #\t\t\nEmail\t\t\nHiring Contractor\t\t\nAddress\t\t\nContact Person\t\t\nPhone #\t\t\nEmail\t\t\nBilling Contact\t\t\nPhone #\t\t\nEmail \t\t\nBond Company\t\t\nAddress\t\t\nContact Person\t\t\nPhone #\t\t\nEmail\t\t\nCertificate No.\t\t",
+        "extracted_json": {
+            "summary": {
+                "due_date": "",
+                "client_name": "",
+                "project_name": "BSW Health Celina",
+                "percentages_detected": [
+                    "5%"
+                ],
+                "currency_values_detected": [
+                    "$3,850",
+                    "$750",
+                    "$550.00",
+                    "$30,000.00",
+                    "$10,000.00"
+                ]
+            },
+            "exclusions": [
+                "Furnishing equipment capable of drilling up to depth per bid from working grade.",
+                "Auger cast grout material.",
+                "Installation of reinforcing steel within the auger cast piles.",
+                "Labor and equipment to stockpile spoils at a location within 100 feet of work area.",
+                "Excludes furnishing or assembly of reinforcing steel for auger cast piles (Unless Stated Above).",
+                "Excludes excavation and/or removal of obstructions within the limits of the auger cast pile construction.",
+                "Excludes repair or relocation of utilities.",
+                "Excludes any erosion control measures."
+            ],
+            "risk_flags": [],
+            "assumptions": [
+                "This quote includes one drill rig unless otherwise specified above or agreed upon in writing between S&W and the hiring contractor. Any arrangements regarding the number of drill rigs on site made without S&W’s written consent are invalid, regardless of specifications or schedules.",
+                "This proposal may be withdrawn by S&W if not accepted within 30 days.  New quote at the request of the GC.",
+                "If Mats are required because site condition are too unstable for safe operation of equipment, they will be charged PER MAT to contractor for the number of mats required to stabilize the equipment safely.",
+                "If non-auger able material is encountered above the desired pile tip elevation such as cobbles, boulders, rock, metal, timbers or debris which causes auger refusal (< 1ft./ minute) then the pile shall be completed to the depth of the non-auger able material in accordance with these specifications. The length of such short piles shall be included in the tlf of pile for payment.",
+                "Partial payment for our work shall be made monthly based on the work completed and material on hand the previous month with a maximum retained percentage of five percent (5%) of our lump sum. Full and final payment (100%) shall be paid to us within thirty days after the pile installation is completed. Piles shall be considered complete and accepted for payment, warranty, and guarantee purposes when approved by the Engineer, when the pile grout reaches the required strength, or when subsequent construction activities make the piles inaccessible (such as placement of pile caps), whichever occurs first. Our payment from you will not be contingent or conditional upon your receipt of payment. Past due payments will incur interest charges of one- and one-half percent per month applied to the unpaid total. Additionally, we shall be entitled to recover any reasonable attorneys’ fees incurred to enforce the terms of this agreement.",
+                "For unavoidable shutdown of work due to owner, architect, contractor, etc. or job conditions beyond S&W’s control, S&W shall be paid for all labor and equipment employed during the time of such forced delay.",
+                "While S&W will hold Contractor and Owner harmless from claims caused by S&W negligence, S&W assumes no responsibility for negligence of Contractor or Owner.",
+                "No Crane is included and if needed will be charged based on what is required for the work."
+            ],
+            "scope_items": [
+                "Installing and performing (1) pile load test (Unless otherwise stated). Test and reaction piles will be vertical piles only. The maximum test load will be 290 tons. We have not included the cost of independent inspection or an engineer to monitor the tests, analyze or report the results, nor have we included tell-tales or strain gages. We will be paid for all load tests performed regardless of the ultimate capacity.",
+                "Furnishing equipment capable of drilling up to depth per bid from working grade.",
+                "Auger cast grout material.",
+                "Installation of reinforcing steel within the auger cast piles.",
+                "Labor and equipment to stockpile spoils at a location within 100 feet of work area.",
+                "Excludes furnishing or assembly of reinforcing steel for auger cast piles (Unless Stated Above).",
+                "Excludes excavation and/or removal of obstructions within the limits of the auger cast pile construction.",
+                "Excludes repair or relocation of utilities."
+            ],
+            "suggestions": [],
+            "source_filename": "Metroplex BSW Health Celina ACP.docx"
+        },
+        "suggestions_json": [],
+        "created_at": "2026-04-14T18:01:02.814515+00:00",
+        "updated_at": "2026-04-14T18:01:02.814515+00:00"
     }
-  ]
 }

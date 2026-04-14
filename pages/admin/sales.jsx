@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import withAuthTw from "@/components/withAuthTw";
@@ -10,6 +10,989 @@ import { getSalesData } from "@/actions/jobInfo";
 import SalesPipeline from "@/components/admin/SalesPipeline";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+const METRICS_SOURCE_LABEL = "swnext-admin";
+const METRICS_PROFILE_KEY = "default";
+
+function getDefaultBidFitMetrics() {
+  return {
+    source_label: METRICS_SOURCE_LABEL,
+    profile_key: METRICS_PROFILE_KEY,
+    target_margin_percent: 18,
+    minimum_profit_usd: 75000,
+    minimum_contract_value_usd: 300000,
+    risk_buffer_percent: 8,
+    default_estimated_cost_usd: 550000,
+    notes: "",
+  };
+}
+
+function ExpandableInsightList({ title, items, emptyLabel = "None extracted.", initialVisible = 3 }) {
+  const [expanded, setExpanded] = useState(false);
+  const safeItems = Array.isArray(items) ? items : [];
+  const visibleItems = expanded ? safeItems : safeItems.slice(0, initialVisible);
+  const hasMore = safeItems.length > initialVisible;
+
+  return (
+    <div className="rounded-lg border border-neutral-200 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{title}</p>
+      <ul className="mt-2 space-y-1 text-sm text-neutral-700">
+        {safeItems.length ? visibleItems.map((item, idx) => <li key={idx}>- {item}</li>) : <li>- {emptyLabel}</li>}
+      </ul>
+      {hasMore ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="mt-2 text-xs font-semibold text-[#0b2a5a] hover:underline"
+        >
+          {expanded ? "Show less" : `Show all ${safeItems.length}`}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function inferPriceCategory(text) {
+  const lower = String(text || "").toLowerCase();
+  if (lower.includes("de mobil") || lower.includes("demobil")) return "demobilization";
+  if (lower.includes("mobil")) return "mobilization";
+  if (lower.includes("downtime") || lower.includes("delay") || lower.includes("per hour")) return "delay_or_downtime";
+  if (lower.includes("inspection")) return "inspection";
+  if (lower.includes("mat")) return "mat_support";
+  if (lower.includes("auger change") || lower.includes("per change")) return "auger_change";
+  if (lower.includes("allowance") || lower.includes("contingency")) return "contingency_or_allowance";
+  if (lower.includes("pile") || lower.includes("hole") || lower.includes("depth")) return "pile_or_hole_pricing";
+  return "other";
+}
+
+function extractPricedItemsFromRawText(rawText) {
+  if (!rawText) return [];
+  const lines = rawText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const items = [];
+  const seen = new Set();
+  for (let idx = 0; idx < lines.length; idx += 1) {
+    const line = lines[idx];
+    const amounts = line.match(/\$[\d,]+(?:\.\d{1,2})?/g) || [];
+    if (!amounts.length) continue;
+    const previous = idx > 0 ? lines[idx - 1] : "";
+    const next = idx + 1 < lines.length ? lines[idx + 1] : "";
+    const context = [previous, line, next].filter(Boolean).join(" | ").replace(/\s+/g, " ").trim();
+    const holeCount = context.match(/(\d+)\s*(?:holes?|piers?)\b/i)?.[1] || null;
+    const depthFt = context.match(/(\d+(?:\.\d+)?)\s*(?:ft|feet|foot)\b/i)?.[1] || null;
+    const diameterIn = context.match(/(\d+(?:\.\d+)?)\s*(?:in|inch|inches|\"|”)\b/i)?.[1] || null;
+    const unit = context.match(/\b(per\s+(?:hour|day|shift|mat|change|inspection|instance|pile|hole|lf|foot))\b/i)?.[1] || "";
+    for (const amount of amounts) {
+      const key = `${amount}|${context}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push({
+        amount,
+        category: inferPriceCategory(context),
+        context: context.slice(0, 400),
+        hole_count_hint: holeCount ? Number(holeCount) : null,
+        depth_hint_ft: depthFt ? Number(depthFt) : null,
+        diameter_hint_in: diameterIn ? Number(diameterIn) : null,
+        unit_hint: unit,
+      });
+    }
+  }
+  return items.slice(0, 80);
+}
+
+function parseCurrencyAmount(value) {
+  const numeric = String(value || "").replace(/[^0-9.-]/g, "");
+  const parsed = Number(numeric);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatCurrencyAmount(value) {
+  const amount = Number(value || 0);
+  return amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+function formatCategoryLabel(category) {
+  const safe = String(category || "other").replace(/_/g, " ");
+  return safe.charAt(0).toUpperCase() + safe.slice(1);
+}
+
+function classifyHeadlineLabel(label) {
+  const lower = String(label || "").toLowerCase();
+  if (lower.includes("base")) return "base";
+  if (lower.includes("alt") || lower.includes("alternate")) return "alt";
+  return "other";
+}
+
+function buildScenarioTotals(headlineTotals) {
+  const safe = Array.isArray(headlineTotals) ? headlineTotals : [];
+  const buckets = { base: [], alt: [], other: [] };
+
+  for (const row of safe) {
+    const amount = parseCurrencyAmount(row?.amount);
+    if (!amount) continue;
+    const category = classifyHeadlineLabel(row?.label);
+    buckets[category].push({ amount, label: row?.label || "" });
+  }
+
+  const bestOf = (rows) => rows.reduce((max, row) => (row.amount > max ? row.amount : max), 0);
+  const baseBest = bestOf(buckets.base);
+  const altBest = bestOf(buckets.alt);
+  const otherBest = bestOf(buckets.other);
+
+  return {
+    auto: baseBest || altBest || otherBest || 0,
+    base: baseBest || 0,
+    alt: altBest || 0,
+    basePlusAlt: (baseBest || 0) + (altBest || 0),
+  };
+}
+
+function toNumberOrZero(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function PriceRollupPanel({ pricedItems }) {
+  const [expandedGroups, setExpandedGroups] = useState({});
+  const safeItems = Array.isArray(pricedItems) ? pricedItems : [];
+  const groupedMap = safeItems.reduce((acc, item) => {
+    const category = item?.category || "other";
+    if (!acc[category]) {
+      acc[category] = { category, totalAmount: 0, count: 0, items: [] };
+    }
+    acc[category].count += 1;
+    acc[category].totalAmount += parseCurrencyAmount(item?.amount);
+    acc[category].items.push(item);
+    return acc;
+  }, {});
+  const grouped = Object.values(groupedMap).sort((a, b) => b.totalAmount - a.totalAmount);
+  const grandTotal = grouped.reduce((sum, group) => sum + group.totalAmount, 0);
+  const categoriesCount = grouped.length;
+
+  const toggleGroup = (category) => {
+    setExpandedGroups((prev) => ({ ...prev, [category]: !prev[category] }));
+  };
+
+  return (
+    <div className="rounded-lg border border-neutral-200 p-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Pricing Rollup</p>
+        <p className="text-xs text-neutral-500">{safeItems.length} mapped line items</p>
+      </div>
+
+      {!safeItems.length ? (
+        <p className="text-sm text-neutral-500">No pricing rows available to roll up yet.</p>
+      ) : (
+        <>
+          <div className="mb-3 grid gap-2 sm:grid-cols-3">
+            <div className="rounded-md bg-neutral-50 p-2">
+              <p className="text-[11px] uppercase tracking-wide text-neutral-500">Total mapped amount</p>
+              <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(grandTotal)}</p>
+            </div>
+            <div className="rounded-md bg-neutral-50 p-2">
+              <p className="text-[11px] uppercase tracking-wide text-neutral-500">Pricing categories</p>
+              <p className="mt-1 text-sm font-semibold text-neutral-900">{categoriesCount}</p>
+            </div>
+            <div className="rounded-md bg-neutral-50 p-2">
+              <p className="text-[11px] uppercase tracking-wide text-neutral-500">Average line value</p>
+              <p className="mt-1 text-sm font-semibold text-neutral-900">
+                {formatCurrencyAmount(safeItems.length ? grandTotal / safeItems.length : 0)}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {grouped.map((group) => {
+              const isExpanded = !!expandedGroups[group.category];
+              return (
+                <div key={group.category} className="rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.category)}
+                    className="flex w-full flex-wrap items-center justify-between gap-2 text-left"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-semibold text-neutral-700">
+                        {formatCategoryLabel(group.category)}
+                      </span>
+                      <span className="text-xs text-neutral-600">{group.count} lines</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-neutral-900">{formatCurrencyAmount(group.totalAmount)}</span>
+                      <span className="text-xs font-semibold text-[#0b2a5a]">{isExpanded ? "Hide details" : "Show details"}</span>
+                    </div>
+                  </button>
+
+                  {isExpanded ? (
+                    <div className="mt-2 space-y-1.5 border-t border-neutral-200 pt-2">
+                      {group.items.map((item, idx) => (
+                        <div key={`${group.category}-${idx}`} className="rounded-md border border-neutral-200 bg-white p-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                              {item.amount}
+                            </span>
+                            {item.unit_hint ? (
+                              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-800">{item.unit_hint}</span>
+                            ) : null}
+                            {item.hole_count_hint ? (
+                              <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-800">
+                                {item.hole_count_hint} holes
+                              </span>
+                            ) : null}
+                            {item.depth_hint_ft ? (
+                              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                                {item.depth_hint_ft} ft
+                              </span>
+                            ) : null}
+                            {item.diameter_hint_in ? (
+                              <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-cyan-800">
+                                {item.diameter_hint_in} in
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-1 text-xs text-neutral-700">{item.context || "No context found."}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function BidAssistantPanel() {
+  const [uploading, setUploading] = useState(false);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState("");
+  const [documents, setDocuments] = useState([]);
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [status, setStatus] = useState("");
+  const [feedbackState, setFeedbackState] = useState({});
+  const [showExtractedJson, setShowExtractedJson] = useState(false);
+  const [showRawText, setShowRawText] = useState(false);
+  const [scenarioMode, setScenarioMode] = useState("auto");
+  const [metrics, setMetrics] = useState(getDefaultBidFitMetrics());
+  const [loadingMetrics, setLoadingMetrics] = useState(false);
+  const [savingMetrics, setSavingMetrics] = useState(false);
+
+  const fetchDocumentById = useCallback(async (documentId) => {
+    if (!documentId) return null;
+    const response = await fetch(`/api/bidding/ai-bidding/documents/${documentId}`);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.detail || data?.error || "Could not load document details");
+    return data?.document || null;
+  }, []);
+
+  const loadDocuments = useCallback(async () => {
+    setLoadingDocs(true);
+    try {
+      const response = await fetch("/api/bidding/ai-bidding/documents");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Could not load documents");
+      const rows = Array.isArray(data?.documents) ? data.documents : [];
+      setDocuments(rows);
+      if (selectedDoc?.id) {
+        const fresh = rows.find((doc) => doc.id === selectedDoc.id) || null;
+        if (!fresh) {
+          setSelectedDoc(null);
+        } else {
+          try {
+            const detailed = await fetchDocumentById(fresh.id);
+            setSelectedDoc(detailed || fresh);
+          } catch {
+            setSelectedDoc(fresh);
+          }
+        }
+      }
+    } catch (error) {
+      setStatus(error.message || "Could not load documents");
+    } finally {
+      setLoadingDocs(false);
+    }
+  }, [fetchDocumentById, selectedDoc?.id]);
+
+  useEffect(() => {
+    loadDocuments();
+  }, [loadDocuments]);
+
+  const loadMetrics = useCallback(async () => {
+    setLoadingMetrics(true);
+    try {
+      const params = new URLSearchParams({
+        source_label: METRICS_SOURCE_LABEL,
+        profile_key: METRICS_PROFILE_KEY,
+      });
+      const response = await fetch(`/api/bidding/ai-bidding/metrics?${params.toString()}`);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Could not load fit metrics");
+      setMetrics({ ...getDefaultBidFitMetrics(), ...(data?.metrics || {}) });
+    } catch (error) {
+      setStatus(error.message || "Could not load fit metrics");
+    } finally {
+      setLoadingMetrics(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMetrics();
+  }, [loadMetrics]);
+
+  const handleUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || uploading) return;
+    setUploading(true);
+    setStatus("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("source_label", "swnext-admin");
+      const response = await fetch("/api/bidding/ai-bidding/documents/upload-assist", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Upload failed");
+      setStatus("Bid document analyzed. Review suggestions below.");
+      await loadDocuments();
+      if (data?.document?.id) {
+        setSelectedDoc(data.document);
+      }
+    } catch (error) {
+      setStatus(error.message || "Could not analyze uploaded file");
+    } finally {
+      setUploading(false);
+      if (event.target) event.target.value = "";
+    }
+  };
+
+  const handleSelectDocument = async (doc) => {
+    if (!doc?.id) return;
+    setSelectedDoc(doc);
+    setStatus("");
+    try {
+      const detailed = await fetchDocumentById(doc.id);
+      if (detailed) setSelectedDoc(detailed);
+    } catch (error) {
+      setStatus(error.message || "Could not load document details");
+    }
+  };
+
+  const handleDeleteDocument = async (doc) => {
+    if (!doc?.id || deletingDocId) return;
+    const confirmed = window.confirm(`Delete "${doc.filename}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeletingDocId(doc.id);
+    setStatus("");
+    try {
+      const response = await fetch(`/api/bidding/ai-bidding/documents/${doc.id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Could not delete document");
+      setStatus("Document deleted. Upload again to re-analyze with latest logic.");
+      if (selectedDoc?.id === doc.id) {
+        setSelectedDoc(null);
+      }
+      await loadDocuments();
+    } catch (error) {
+      setStatus(error.message || "Could not delete document");
+    } finally {
+      setDeletingDocId("");
+    }
+  };
+
+  const updateMetricField = (field, value) => {
+    setMetrics((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const saveMetrics = async () => {
+    setSavingMetrics(true);
+    setStatus("");
+    const payload = {
+      source_label: METRICS_SOURCE_LABEL,
+      profile_key: METRICS_PROFILE_KEY,
+      target_margin_percent: toNumberOrZero(metrics.target_margin_percent),
+      minimum_profit_usd: toNumberOrZero(metrics.minimum_profit_usd),
+      minimum_contract_value_usd: toNumberOrZero(metrics.minimum_contract_value_usd),
+      risk_buffer_percent: toNumberOrZero(metrics.risk_buffer_percent),
+      default_estimated_cost_usd: toNumberOrZero(metrics.default_estimated_cost_usd),
+      notes: String(metrics.notes || ""),
+    };
+
+    try {
+      const response = await fetch("/api/bidding/ai-bidding/metrics", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Could not save fit metrics");
+      setMetrics({ ...getDefaultBidFitMetrics(), ...(data?.metrics || payload) });
+      setStatus("Bid Fit Metrics saved.");
+    } catch (error) {
+      setStatus(error.message || "Could not save fit metrics");
+    } finally {
+      setSavingMetrics(false);
+    }
+  };
+
+  const submitFeedback = async (suggestion, statusValue) => {
+    if (!selectedDoc?.id) return;
+    const key = `${selectedDoc.id}:${suggestion.id || suggestion.text}`;
+    setFeedbackState((prev) => ({ ...prev, [key]: "saving" }));
+    try {
+      const response = await fetch(`/api/bidding/ai-bidding/documents/${selectedDoc.id}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          suggestion_id: suggestion.id || null,
+          status: statusValue,
+          original_text: suggestion.text || "",
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Feedback failed");
+      setFeedbackState((prev) => ({ ...prev, [key]: "saved" }));
+      setTimeout(() => {
+        setFeedbackState((prev) => ({ ...prev, [key]: "" }));
+      }, 1200);
+    } catch {
+      setFeedbackState((prev) => ({ ...prev, [key]: "error" }));
+    }
+  };
+
+  const extracted = selectedDoc?.extracted_json || {};
+  const suggestions = Array.isArray(selectedDoc?.suggestions_json) ? selectedDoc.suggestions_json : [];
+  const riskFlags = Array.isArray(extracted?.risk_flags) ? extracted.risk_flags : [];
+  const summary = extracted?.summary || {};
+  const clientMatchFromRaw =
+    selectedDoc?.raw_text
+      ?.match(/(?:customer|client|owner|company|hiring contractor)\s*[:\-]\s*([^\n\r]+)/i)?.[1]
+      ?.trim() || "";
+  const clientName =
+    summary?.client_name ||
+    summary?.customer_name ||
+    extracted?.client_name ||
+    extracted?.customer_name ||
+    clientMatchFromRaw ||
+    "";
+  const projectName = summary?.project_name || extracted?.project_name || "Not detected";
+  const dueDate = summary?.due_date || extracted?.due_date || "";
+  const currencyValues = Array.isArray(summary?.currency_values_detected) ? summary.currency_values_detected : [];
+  const percentages = Array.isArray(summary?.percentages_detected) ? summary.percentages_detected : [];
+  const headlineTotals = Array.isArray(summary?.headline_totals) ? summary.headline_totals : [];
+  const assumptions = Array.isArray(extracted?.assumptions) ? extracted.assumptions : [];
+  const scopeItems = Array.isArray(extracted?.scope_items) ? extracted.scope_items : [];
+  const exclusions = Array.isArray(extracted?.exclusions) ? extracted.exclusions : [];
+  const pricedItemsFromJson = Array.isArray(extracted?.priced_items) ? extracted.priced_items : [];
+  const pricedItems = pricedItemsFromJson.length ? pricedItemsFromJson : extractPricedItemsFromRawText(selectedDoc?.raw_text || "");
+  const scenarioTotals = useMemo(() => buildScenarioTotals(headlineTotals), [headlineTotals]);
+  const selectedScenarioTotal =
+    scenarioMode === "base"
+      ? scenarioTotals.base
+      : scenarioMode === "alt"
+      ? scenarioTotals.alt
+      : scenarioMode === "basePlusAlt"
+      ? scenarioTotals.basePlusAlt
+      : scenarioTotals.auto;
+  const mappedRollupTotal = pricedItems.reduce((sum, item) => sum + parseCurrencyAmount(item?.amount), 0);
+  const estimatedCost = toNumberOrZero(metrics.default_estimated_cost_usd);
+  const minProfit = toNumberOrZero(metrics.minimum_profit_usd);
+  const minContract = toNumberOrZero(metrics.minimum_contract_value_usd);
+  const targetMargin = Math.min(95, Math.max(0, toNumberOrZero(metrics.target_margin_percent)));
+  const riskBuffer = Math.max(0, toNumberOrZero(metrics.risk_buffer_percent));
+  const requiredByProfit = estimatedCost + minProfit;
+  const requiredByMargin = targetMargin >= 95 ? requiredByProfit : estimatedCost / (1 - targetMargin / 100 || 1);
+  const baseFloor = Math.max(requiredByProfit, requiredByMargin, minContract);
+  const recommendedMinimumBid = baseFloor * (1 + riskBuffer / 100);
+  const expectedProfit = selectedScenarioTotal - estimatedCost;
+  const expectedMargin = selectedScenarioTotal > 0 ? (expectedProfit / selectedScenarioTotal) * 100 : 0;
+  const worthIt = selectedScenarioTotal > 0 && selectedScenarioTotal >= recommendedMinimumBid;
+
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className={`${lato.className} text-xl font-bold text-[#0b2a5a]`}>Bid Document Assistant</h2>
+          <p className="mt-1 text-sm text-neutral-600">
+            Upload current PDF/Word/Excel bid files and get instant risk + clarification suggestions.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a75] cursor-pointer">
+            {uploading ? "Analyzing..." : "Upload Bid File"}
+            <input
+              type="file"
+              accept=".pdf,.docx,.xlsx,.csv,.txt"
+              className="hidden"
+              disabled={uploading}
+              onChange={handleUpload}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={loadDocuments}
+            disabled={loadingDocs}
+            className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+          >
+            {loadingDocs ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+      </div>
+
+      {status ? (
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">{status}</div>
+      ) : null}
+
+      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+        <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Recent analyses</p>
+          <div className="mt-2 space-y-2 max-h-[460px] overflow-y-auto">
+            {documents.map((doc) => (
+              <div
+                key={doc.id}
+                className={`w-full rounded-lg border px-3 py-2 text-sm transition-colors ${
+                  selectedDoc?.id === doc.id ? "border-[#0b2a5a] bg-white" : "border-neutral-200 bg-white hover:border-neutral-300"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <button type="button" onClick={() => handleSelectDocument(doc)} className="min-w-0 flex-1 text-left">
+                    <p className="font-semibold text-neutral-800 truncate">{doc.filename}</p>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      {doc.file_type?.toUpperCase() || "FILE"} • {new Date(doc.created_at).toLocaleString()}
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDocument(doc)}
+                    disabled={deletingDocId === doc.id}
+                    className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                    title="Delete report"
+                  >
+                    {deletingDocId === doc.id ? "..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            ))}
+            {!documents.length ? (
+              <p className="py-4 text-center text-sm text-neutral-500">No uploads yet.</p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-neutral-200 bg-white p-4">
+          {!selectedDoc ? (
+            <p className="text-sm text-neutral-500">Select an analyzed document to review extracted insights.</p>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-neutral-900">{selectedDoc.filename}</h3>
+                <p className="text-xs text-neutral-500">
+                  {selectedDoc.file_type?.toUpperCase() || "FILE"} • Uploaded {new Date(selectedDoc.created_at).toLocaleString()}
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Project</p>
+                  <p className="mt-1 font-medium text-neutral-800">{projectName}</p>
+                </div>
+                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Client</p>
+                  <p className="mt-1 font-medium text-neutral-800">{clientName || "Not detected"}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Due Date</p>
+                  <p className="mt-1 font-medium text-neutral-800">{dueDate || "Not detected"}</p>
+                </div>
+                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Source Label</p>
+                  <p className="mt-1 font-medium text-neutral-800">{selectedDoc?.source_label || "Unknown source"}</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Bid Fit Metrics</p>
+                  <button
+                    type="button"
+                    onClick={saveMetrics}
+                    disabled={savingMetrics || loadingMetrics}
+                    className="rounded-md bg-[#0b2a5a] px-3 py-1 text-xs font-semibold text-white hover:bg-[#143a75] disabled:opacity-60"
+                  >
+                    {savingMetrics ? "Saving..." : "Save Metrics"}
+                  </button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <label className="text-xs text-neutral-600">
+                    Target margin %
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="95"
+                      value={metrics.target_margin_percent}
+                      onChange={(e) => updateMetricField("target_margin_percent", e.target.value)}
+                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                    />
+                  </label>
+                  <label className="text-xs text-neutral-600">
+                    Minimum profit ($)
+                    <input
+                      type="number"
+                      step="1000"
+                      min="0"
+                      value={metrics.minimum_profit_usd}
+                      onChange={(e) => updateMetricField("minimum_profit_usd", e.target.value)}
+                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                    />
+                  </label>
+                  <label className="text-xs text-neutral-600">
+                    Minimum contract value ($)
+                    <input
+                      type="number"
+                      step="10000"
+                      min="0"
+                      value={metrics.minimum_contract_value_usd}
+                      onChange={(e) => updateMetricField("minimum_contract_value_usd", e.target.value)}
+                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                    />
+                  </label>
+                  <label className="text-xs text-neutral-600">
+                    Risk buffer %
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      value={metrics.risk_buffer_percent}
+                      onChange={(e) => updateMetricField("risk_buffer_percent", e.target.value)}
+                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                    />
+                  </label>
+                  <label className="text-xs text-neutral-600">
+                    Estimated job cost ($)
+                    <input
+                      type="number"
+                      step="1000"
+                      min="0"
+                      value={metrics.default_estimated_cost_usd}
+                      onChange={(e) => updateMetricField("default_estimated_cost_usd", e.target.value)}
+                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                    />
+                  </label>
+                </div>
+                <label className="mt-2 block text-xs text-neutral-600">
+                  Notes
+                  <textarea
+                    rows={2}
+                    value={metrics.notes || ""}
+                    onChange={(e) => updateMetricField("notes", e.target.value)}
+                    className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                    placeholder="Example: Prefer margins over volume this quarter."
+                  />
+                </label>
+                <p className="mt-2 text-xs text-neutral-500">
+                  These metrics are saved for this assistant profile and used to decide if a scenario is worth pursuing.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-neutral-200 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Detected Currency Values</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {currencyValues.length ? (
+                      currencyValues.map((value, idx) => (
+                        <span key={`${value}-${idx}`} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800">
+                          {value}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-neutral-500">None detected</span>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-neutral-200 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Detected Percentages</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {percentages.length ? (
+                      percentages.map((value, idx) => (
+                        <span key={`${value}-${idx}`} className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-800">
+                          {value}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-neutral-500">None detected</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Price Mapping</p>
+                  <p className="text-xs text-neutral-500">{pricedItems.length} mapped values</p>
+                </div>
+                {pricedItems.length ? (
+                  <div className="space-y-2">
+                    {pricedItems.slice(0, 20).map((item, idx) => (
+                      <div key={`${item.amount}-${idx}`} className="rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                            {item.amount}
+                          </span>
+                          <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-semibold text-neutral-700">
+                            {item.category || "other"}
+                          </span>
+                          {item.unit_hint ? (
+                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-800">{item.unit_hint}</span>
+                          ) : null}
+                          {item.hole_count_hint ? (
+                            <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-800">
+                              {item.hole_count_hint} holes
+                            </span>
+                          ) : null}
+                          {item.depth_hint_ft ? (
+                            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                              {item.depth_hint_ft} ft
+                            </span>
+                          ) : null}
+                          {item.diameter_hint_in ? (
+                            <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-cyan-800">
+                              {item.diameter_hint_in} in
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-1 text-xs text-neutral-700">{item.context || "No context found."}</p>
+                      </div>
+                    ))}
+                    {pricedItems.length > 20 ? (
+                      <p className="text-xs text-neutral-500">Showing first 20 mapped values. Open raw text/JSON for the full set.</p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-500">No mapped price context detected yet.</p>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Detected Bid Totals</p>
+                  <p className="text-xs text-neutral-500">{headlineTotals.length} candidates</p>
+                </div>
+                {headlineTotals.length ? (
+                  <div className="space-y-2">
+                    {headlineTotals.map((item, idx) => (
+                      <div key={`${item.amount}-${idx}`} className="rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                          {item.amount}
+                        </span>
+                        <p className="mt-1 text-xs text-neutral-700">{item.label || "No label context found."}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-500">
+                    No headline bid totals detected yet. Re-analyze this file after table extraction update.
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Total Scenario</p>
+                  <span className="text-xs text-neutral-500">Use this as target contract value</span>
+                </div>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setScenarioMode("auto")}
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                      scenarioMode === "auto" ? "bg-[#0b2a5a] text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    }`}
+                  >
+                    Auto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScenarioMode("base")}
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                      scenarioMode === "base" ? "bg-[#0b2a5a] text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    }`}
+                  >
+                    Base
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScenarioMode("alt")}
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                      scenarioMode === "alt" ? "bg-[#0b2a5a] text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    }`}
+                  >
+                    Alt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScenarioMode("basePlusAlt")}
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                      scenarioMode === "basePlusAlt"
+                        ? "bg-[#0b2a5a] text-white"
+                        : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    }`}
+                  >
+                    Base + Alt
+                  </button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="rounded-md bg-neutral-50 p-2">
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Selected scenario total</p>
+                    <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(selectedScenarioTotal)}</p>
+                  </div>
+                  <div className="rounded-md bg-neutral-50 p-2">
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Current mapped rollup total</p>
+                    <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(mappedRollupTotal)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`rounded-lg border p-3 ${
+                  worthIt ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+                }`}
+              >
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-700">Worth-It Evaluation</p>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${worthIt ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                    {worthIt ? "Worth pursuing" : "Below threshold"}
+                  </span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-md bg-white/80 p-2">
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Recommended minimum bid</p>
+                    <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(recommendedMinimumBid)}</p>
+                  </div>
+                  <div className="rounded-md bg-white/80 p-2">
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Selected scenario amount</p>
+                    <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(selectedScenarioTotal)}</p>
+                  </div>
+                  <div className="rounded-md bg-white/80 p-2">
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Expected gross profit</p>
+                    <p className={`mt-1 text-sm font-semibold ${expectedProfit >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                      {formatCurrencyAmount(expectedProfit)}
+                    </p>
+                  </div>
+                  <div className="rounded-md bg-white/80 p-2">
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Expected margin</p>
+                    <p className="mt-1 text-sm font-semibold text-neutral-900">{expectedMargin.toFixed(1)}%</p>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-neutral-600">
+                  Floor formula: max(min contract, cost + min profit, margin target) with risk buffer applied.
+                </p>
+              </div>
+
+              <PriceRollupPanel pricedItems={pricedItems} />
+
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Risk Flags</p>
+                <ul className="mt-2 space-y-1 text-sm text-amber-900">
+                  {riskFlags.length ? riskFlags.map((flag, idx) => <li key={idx}>- {flag}</li>) : <li>- No major risks flagged.</li>}
+                </ul>
+              </div>
+
+              <div className="grid gap-3 lg:grid-cols-3">
+                <ExpandableInsightList title="Assumptions" items={assumptions} />
+                <ExpandableInsightList title="Scope Items" items={scopeItems} />
+                <ExpandableInsightList title="Exclusions" items={exclusions} />
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Suggestions</p>
+                <div className="mt-2 space-y-2">
+                  {suggestions.length ? suggestions.map((suggestion, idx) => {
+                    const key = `${selectedDoc.id}:${suggestion.id || suggestion.text}`;
+                    return (
+                      <div key={suggestion.id || idx} className="rounded-md border border-neutral-200 bg-neutral-50 p-2">
+                        <p className="text-sm text-neutral-800">{suggestion.text || "Untitled suggestion"}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => submitFeedback(suggestion, "accepted")}
+                            className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => submitFeedback(suggestion, "edited")}
+                            className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                          >
+                            Edited
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => submitFeedback(suggestion, "rejected")}
+                            className="rounded-md bg-neutral-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-neutral-800"
+                          >
+                            Reject
+                          </button>
+                          {feedbackState[key] === "saving" ? <span className="text-xs text-neutral-500">Saving...</span> : null}
+                          {feedbackState[key] === "saved" ? <span className="text-xs text-emerald-700">Saved</span> : null}
+                          {feedbackState[key] === "error" ? <span className="text-xs text-red-700">Failed</span> : null}
+                        </div>
+                      </div>
+                    );
+                  }) : (
+                    <p className="text-sm text-neutral-500">No suggestions generated for this file.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowExtractedJson((prev) => !prev)}
+                    className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+                  >
+                    {showExtractedJson ? "Hide extracted JSON" : "View extracted JSON"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRawText((prev) => !prev)}
+                    className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+                  >
+                    {showRawText ? "Hide raw text" : "View raw text"}
+                  </button>
+                </div>
+                {showExtractedJson ? (
+                  <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-neutral-950 p-3 text-xs text-neutral-100">
+                    {JSON.stringify(extracted, null, 2)}
+                  </pre>
+                ) : null}
+                {showRawText ? (
+                  <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-md bg-neutral-100 p-3 text-xs text-neutral-800">
+                    {selectedDoc?.raw_text || "Raw text not loaded for this row yet."}
+                  </pre>
+                ) : null}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function SalesTW() {
   const router = useRouter();
@@ -28,7 +1011,7 @@ function SalesTW() {
   const [estimatorFilter, setEstimatorFilter] = useState("");
   const wonJobsRequestRef = useRef(0);
   const tabFromRoute =
-    router.isReady && (router.query.tab === "won" || router.query.tab === "pipeline")
+    router.isReady && (router.query.tab === "won" || router.query.tab === "pipeline" || router.query.tab === "assistant")
       ? router.query.tab
       : null;
   const tab = selectedTab || tabFromRoute || "pipeline";
@@ -141,10 +1124,23 @@ function SalesTW() {
           >
             Won jobs
           </button>
+          <button
+            type="button"
+            onClick={() => setSelectedTab("assistant")}
+            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+              tab === "assistant"
+                ? "bg-white text-[#0b2a5a] shadow-sm"
+                : "text-neutral-600 hover:text-neutral-900"
+            }`}
+          >
+            Bid Assistant
+          </button>
         </div>
 
         {tab === "pipeline" ? (
           <SalesPipeline />
+        ) : tab === "assistant" ? (
+          <BidAssistantPanel />
         ) : (
           <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
             <p className="mb-4 text-sm text-neutral-600">
