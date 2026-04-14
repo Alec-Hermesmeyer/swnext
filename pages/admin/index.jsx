@@ -1,9 +1,16 @@
 import Head from "next/head";
+import { useCallback, useState } from "react";
 import withAuthTw from "@/components/withAuthTw";
-import AdminAssistantLayout from "@/components/admin/AdminAssistantLayout";
+import TWAdminLayout from "@/components/TWAdminLayout";
 import AdminAssistantWorkspace from "@/components/admin/AdminAssistantWorkspace";
 
 function AdminHomeTW() {
+  const [threadData, setThreadData] = useState(null);
+
+  const handleThreadsReady = useCallback((data) => {
+    setThreadData(data);
+  }, []);
+
   return (
     <>
       <Head>
@@ -11,13 +18,21 @@ function AdminHomeTW() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <AdminAssistantWorkspace variant="page" />
+      <div className="flex h-[calc(100vh-115px)] min-h-0 flex-col">
+        <AdminAssistantWorkspace
+          variant="page"
+          hideSideRail
+          onThreadsReady={handleThreadsReady}
+        />
+      </div>
     </>
   );
 }
 
 AdminHomeTW.getLayout = function getLayout(page) {
-  return <AdminAssistantLayout>{page}</AdminAssistantLayout>;
+  return <TWAdminLayout>{page}</TWAdminLayout>;
 };
+
+AdminHomeTW.chatThreadData = true;
 
 export default withAuthTw(AdminHomeTW);
