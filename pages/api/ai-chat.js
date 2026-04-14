@@ -1894,7 +1894,8 @@ RULES:
 - If asked about a date inside the window but there is no matching schedule/assignment, say no schedule is recorded for that date.
 - Use plain language and keep responses short.
 - When listing a day, group by rig/category.
-- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, and create_sales_opportunity / update_sales_opportunity for the pre-award pipeline.
+- Use tools for WRITE actions: create/toggle career positions, add/delete company contacts, create/update crew jobs, finalize schedules, send schedule emails, send packets, update job progress, create/update social posts, create_sales_opportunity / update_sales_opportunity for the pre-award pipeline, and create_hiring_candidate / update_hiring_candidate for the hiring pipeline.
+- HIRING PIPELINE: Stages are New → Reviewing → Interview → Offer → Hired / Declined. When the user asks about applicants, hiring, candidates, or the hiring pipeline, reference the HIRING PIPELINE data. Use create_hiring_candidate to add someone and update_hiring_candidate to advance stages, add notes, or decline. Job applications from the RECENT JOB APPLICATIONS section can be promoted into the hiring pipeline by creating a candidate with their details.
 - For contact-form spam control, use add_spam_block_rule, list_spam_block_rules, toggle_spam_block_rule, and remove_spam_block_rule.
 - If the user pastes multiple spreadsheet rows for job intake, call bulk_create_crew_jobs.
 - You can finalize schedules, send schedule emails, send packets, and update job progress. Always confirm with the user before finalizing or sending emails/packets.
