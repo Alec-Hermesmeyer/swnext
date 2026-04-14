@@ -585,6 +585,114 @@ export default async function handler(req, res) {
       }
     }
 
+    if (surfaceType === "hiring_pipeline") {
+      const action = String(values.action || "").trim().toLowerCase();
+
+      if (action === "edit") {
+        const userMessage = summarizeUserSubmission(surfaceType, values);
+        const assistantMessage = `Tell me what you'd like to update on "${values.title || "this candidate"}". You can change stage, add notes, set a follow-up date, etc.`;
+
+        await storeMessages(sessionId, userContext, [
+          {
+            role: "user",
+            content: userMessage,
+            metadata: {
+              submittedSurfaceType: surfaceType,
+              submittedSurfaceId: surfaceId,
+            },
+          },
+          {
+            role: "assistant",
+            content: assistantMessage,
+            metadata: {
+              actionsPerformed: false,
+              completedSurfaceId: surfaceId,
+              submittedSurfaceType: surfaceType,
+            },
+          },
+        ]);
+
+        return res.status(200).json({
+          userMessage,
+          assistantMessage,
+          actionsPerformed: false,
+          completedSurfaceId: surfaceId,
+        });
+      }
+
+      if (action === "set_stage") {
+        if (!hasToolAccess(userRole, "update_hiring_candidate", userAccessLevel)) {
+          return res.status(403).json({ error: "Your role does not have permission for this action" });
+        }
+
+        const result = await executeAdminAssistantMutation(supabase, "update_hiring_candidate", {
+          candidate_id: values.candidate_id,
+          stage: values.stage,
+        }, { userId: userContext.id });
+
+        if (!result.success) {
+          return res.status(400).json({ error: result.error || "Could not update hiring candidate" });
+        }
+
+        const { data: freshCandidates } = await supabase
+          .from("hiring_opportunities")
+          .select("id, title, applicant_name, contact_email, contact_phone, position_applied, stage, next_follow_up, notes, decline_reason, created_at, updated_at")
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        const nextSurface = buildHiringPipelineSurface(
+          {
+            hiringCandidates: (freshCandidates || []).map((h) => ({
+              id: h.id,
+              title: h.title || "",
+              applicant_name: h.applicant_name || "",
+              contact_email: h.contact_email || "",
+              contact_phone: h.contact_phone || "",
+              position_applied: h.position_applied || "",
+              stage: h.stage || "new",
+              next_follow_up: h.next_follow_up || "",
+              notes: h.notes || "",
+              decline_reason: h.decline_reason || "",
+              updated_at: h.updated_at || null,
+            })),
+          },
+          { writeAccessEnabled: roleCanWrite(userRole, userAccessLevel) }
+        );
+
+        const userMessage = summarizeUserSubmission(surfaceType, values);
+        const assistantMessage = `${result.message}. I refreshed the hiring pipeline below.`;
+
+        await storeMessages(sessionId, userContext, [
+          {
+            role: "user",
+            content: userMessage,
+            metadata: {
+              submittedSurfaceType: surfaceType,
+              submittedSurfaceId: surfaceId,
+            },
+          },
+          {
+            role: "assistant",
+            content: assistantMessage,
+            metadata: {
+              actionsPerformed: true,
+              completedSurfaceId: surfaceId,
+              submittedSurfaceType: surfaceType,
+              surface: nextSurface,
+            },
+          },
+        ]);
+
+        return res.status(200).json({
+          userMessage,
+          assistantMessage,
+          actionsPerformed: true,
+          completedSurfaceId: surfaceId,
+          surface: nextSurface,
+        });
+      }
+    }
+
     if (surfaceType === "sales_opportunity_update") {
       const { row, level1SalesUserIds } = await fetchSalesOpportunityForUser(values.id, userContext);
       if (!row) {
