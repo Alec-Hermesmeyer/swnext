@@ -1418,7 +1418,7 @@ export default function AdminAssistantWorkspace({
             ) : null}
           </div>
         </div>
-      </aside>
+      {!hideSideRail && </aside>}
 
       <section className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#f6f8fb_24%,#ffffff_100%)] lg:h-full lg:min-h-0">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,_rgba(11,42,90,0.06),_transparent_62%)]" />
