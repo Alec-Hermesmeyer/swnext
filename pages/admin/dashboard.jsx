@@ -6,9 +6,12 @@ import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { useAuth } from "@/context/AuthContext";
+import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+const DASHBOARD_CACHE_KEY = "admin-dashboard-data";
+const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
 
 function getGreeting(name) {
   const hour = new Date().getHours();
@@ -107,10 +110,78 @@ function ActivityItem({ label, detail, time, status }) {
   );
 }
 
+async function fetchDashboardSnapshot() {
+  const today = new Date().toISOString().split("T")[0];
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+
+  const [
+    { count: activeJobs },
+    { count: totalJobs },
+    { data: recentJobs },
+    { count: activeWorkers },
+    { data: todaySchedule },
+    { count: contactSubs },
+    { count: recentContactSubs },
+    { count: jobApps },
+    { count: recentJobApps },
+    { data: salesOpps },
+    { data: hiringRows },
+    { count: socialPosts },
+    { data: recentSubmissions },
+  ] = await Promise.all([
+    supabase.from("crew_jobs").select("*", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("crew_jobs").select("*", { count: "exact", head: true }),
+    supabase.from("crew_jobs").select("job_name, job_number, customer_name, job_status, bid_amount, contract_amount, created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(5),
+    supabase.from("crew_workers").select("*", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("crew_schedules").select("id, is_finalized").eq("schedule_date", today).limit(1),
+    supabase.from("contact_form").select("*", { count: "exact", head: true }),
+    supabase.from("contact_form").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
+    supabase.from("job_form").select("*", { count: "exact", head: true }),
+    supabase.from("job_form").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
+    supabase.from("sales_opportunities").select("id, title, company, stage, value_estimate, updated_at").order("updated_at", { ascending: false }).limit(50),
+    supabase.from("hiring_opportunities").select("id, title, applicant_name, stage, position_applied, updated_at").order("created_at", { ascending: false }).limit(20),
+    supabase.from("social_posts").select("*", { count: "exact", head: true }),
+    supabase.from("contact_form").select("name, email, message, created_at").order("created_at", { ascending: false }).limit(5),
+  ]);
+
+  const opps = salesOpps || [];
+  const pipelineValue = opps
+    .filter((o) => o.stage !== "lost")
+    .reduce((sum, o) => sum + (Number(o.value_estimate) || 0), 0);
+  const wonCount = opps.filter((o) => o.stage === "won").length;
+  const activeOpps = opps.filter((o) => !["won", "lost"].includes(o.stage)).length;
+  const hiring = hiringRows || [];
+  const activeHiring = hiring.filter((h) => !["hired", "declined"].includes(h.stage)).length;
+
+  return {
+    activeJobs: activeJobs || 0,
+    totalJobs: totalJobs || 0,
+    recentJobs: recentJobs || [],
+    activeWorkers: activeWorkers || 0,
+    todayFinalized: todaySchedule?.[0]?.is_finalized || false,
+    hasTodaySchedule: (todaySchedule || []).length > 0,
+    contactSubs: contactSubs || 0,
+    recentContactSubs: recentContactSubs || 0,
+    jobApps: jobApps || 0,
+    recentJobApps: recentJobApps || 0,
+    pipelineValue,
+    wonCount,
+    activeOpps,
+    totalOpps: opps.length,
+    activeHiring,
+    totalHiring: hiring.length,
+    socialPosts: socialPosts || 0,
+    recentSubmissions: recentSubmissions || [],
+    hiring,
+  };
+}
+
 function DashboardTW() {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   const firstName = useMemo(() => {
     const name = profile?.full_name || profile?.username || "";
@@ -119,78 +190,26 @@ function DashboardTW() {
 
   useEffect(() => {
     let active = true;
+
     const load = async () => {
       try {
-        const today = new Date().toISOString().split("T")[0];
-        const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+        const cached = readCachedValue(DASHBOARD_CACHE_KEY, DASHBOARD_CACHE_TTL_MS);
+        if (cached?.value && active) {
+          setData(cached.value);
+          setLoading(false);
+          setLastUpdatedAt(cached.savedAt || null);
+        }
 
-        const [
-          { count: activeJobs },
-          { count: totalJobs },
-          { data: recentJobs },
-          { count: activeWorkers },
-          { data: todaySchedule },
-          { count: contactSubs },
-          { count: recentContactSubs },
-          { count: jobApps },
-          { count: recentJobApps },
-          { data: salesOpps },
-          { data: hiringRows },
-          { count: socialPosts },
-          { data: recentSubmissions },
-        ] = await Promise.all([
-          supabase.from("crew_jobs").select("*", { count: "exact", head: true }).eq("is_active", true),
-          supabase.from("crew_jobs").select("*", { count: "exact", head: true }),
-          supabase.from("crew_jobs").select("job_name, job_number, customer_name, job_status, bid_amount, contract_amount, created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(5),
-          supabase.from("crew_workers").select("*", { count: "exact", head: true }).eq("is_active", true),
-          supabase.from("crew_schedules").select("id, is_finalized").eq("schedule_date", today).limit(1),
-          supabase.from("contact_form").select("*", { count: "exact", head: true }),
-          supabase.from("contact_form").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
-          supabase.from("job_form").select("*", { count: "exact", head: true }),
-          supabase.from("job_form").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
-          supabase.from("sales_opportunities").select("id, title, company, stage, value_estimate, updated_at").order("updated_at", { ascending: false }).limit(50),
-          supabase.from("hiring_opportunities").select("id, title, applicant_name, stage, position_applied, updated_at").order("created_at", { ascending: false }).limit(20),
-          supabase.from("social_posts").select("*", { count: "exact", head: true }),
-          supabase.from("contact_form").select("name, email, message, created_at").order("created_at", { ascending: false }).limit(5),
-        ]);
-
+        const nextData = await fetchDashboardSnapshot();
         if (!active) return;
-
-        const opps = salesOpps || [];
-        const pipelineValue = opps
-          .filter((o) => o.stage !== "lost")
-          .reduce((sum, o) => sum + (Number(o.value_estimate) || 0), 0);
-        const wonCount = opps.filter((o) => o.stage === "won").length;
-        const activeOpps = opps.filter((o) => !["won", "lost"].includes(o.stage)).length;
-
-        const hiring = hiringRows || [];
-        const activeHiring = hiring.filter((h) => !["hired", "declined"].includes(h.stage)).length;
-
-        setData({
-          activeJobs: activeJobs || 0,
-          totalJobs: totalJobs || 0,
-          recentJobs: recentJobs || [],
-          activeWorkers: activeWorkers || 0,
-          todayFinalized: todaySchedule?.[0]?.is_finalized || false,
-          hasTodaySchedule: (todaySchedule || []).length > 0,
-          contactSubs: contactSubs || 0,
-          recentContactSubs: recentContactSubs || 0,
-          jobApps: jobApps || 0,
-          recentJobApps: recentJobApps || 0,
-          pipelineValue,
-          wonCount,
-          activeOpps,
-          totalOpps: opps.length,
-          activeHiring,
-          totalHiring: hiring.length,
-          socialPosts: socialPosts || 0,
-          recentSubmissions: recentSubmissions || [],
-          hiring,
-        });
+        setData(nextData);
+        writeCachedValue(DASHBOARD_CACHE_KEY, nextData);
+        setLastUpdatedAt(Date.now());
       } catch (err) {
         console.error("Dashboard load error:", err);
       } finally {
         if (active) setLoading(false);
+        if (active) setRefreshing(false);
       }
     };
 
@@ -252,6 +271,11 @@ function DashboardTW() {
               <p className="mt-1 text-sm text-neutral-500">
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
               </p>
+              {lastUpdatedAt ? (
+                <p className="mt-1 text-xs text-neutral-400">
+                  Last updated {new Date(lastUpdatedAt).toLocaleTimeString()}
+                </p>
+              ) : null}
               {!loading && data && (
                 <div className="mt-3 flex flex-wrap gap-3 text-xs">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 font-medium text-neutral-600">
@@ -277,7 +301,29 @@ function DashboardTW() {
                 </div>
               )}
             </div>
-            {!loading && <HealthRing score={healthScore} label={healthLabel} />}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  setRefreshing(true);
+                  try {
+                    const nextData = await fetchDashboardSnapshot();
+                    setData(nextData);
+                    writeCachedValue(DASHBOARD_CACHE_KEY, nextData);
+                    setLastUpdatedAt(Date.now());
+                  } catch (err) {
+                    console.error("Dashboard refresh error:", err);
+                  } finally {
+                    setRefreshing(false);
+                  }
+                }}
+                className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+                disabled={refreshing}
+              >
+                {refreshing ? "Refreshing..." : "Refresh"}
+              </button>
+              {!loading && <HealthRing score={healthScore} label={healthLabel} />}
+            </div>
           </div>
         </div>
 
