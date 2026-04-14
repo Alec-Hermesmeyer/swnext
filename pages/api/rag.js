@@ -61,10 +61,6 @@ export default async function handler(req, res) {
 
   // POST — add document(s) to the knowledge base
   if (req.method === "POST") {
-    if (!OPENAI_API_KEY) {
-      return res.status(500).json({ error: "OPENAI_API_KEY not configured — needed to generate embeddings" });
-    }
-
     const { documents: docs, content, category, source, metadata } = req.body || {};
 
     // Single document
