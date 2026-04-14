@@ -1658,6 +1658,7 @@ OVERVIEW:
 - ${data.summary.totalContactSubmissions} recent contact form submissions
 - ${data.summary.totalJobApplications} recent job applications
 - ${data.summary.totalSalesOpportunities ?? 0} sales opportunities (pre-award pipeline)
+- ${data.summary.totalHiringCandidates ?? 0} hiring pipeline candidates (${data.summary.activeHiringCandidates ?? 0} active)
 - ${data.summary.totalSocialPosts} social posts (${data.summary.pendingSocialPosts} pending review, ${data.summary.scheduledSocialPosts} scheduled)
 
 CREW WORKERS:
