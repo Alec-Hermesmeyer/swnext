@@ -955,6 +955,7 @@ export default function AssistantTaskSurface({
     setSubmitting(false);
     setActiveActionJobId("");
     setActiveSalesActionKey("");
+    setActiveHiringActionKey("");
     setError("");
     setCompleted(!!surface?.completed);
     setCompletedMessage(
