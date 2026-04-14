@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import AdminAssistantWorkspace from "@/components/admin/AdminAssistantWorkspace";
+import { GridPatternTailwind } from "@/components/GridPatternTailwind";
 import { useSetSidebarExtra } from "@/context/SidebarContext";
 
 /* ── Thread list rendered inside the sidebar ── */
