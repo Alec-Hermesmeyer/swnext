@@ -211,8 +211,8 @@ export default function TWAdminLayout({ children }) {
         )}
       </div>
 
-      {/* AI Assistant bubble */}
-      <AIChatBubble />
+      {/* AI Assistant bubble — hidden on the chat page since it IS the chat */}
+      {currentPath !== "/admin" && <AIChatBubble />}
     </div>
   );
 }
