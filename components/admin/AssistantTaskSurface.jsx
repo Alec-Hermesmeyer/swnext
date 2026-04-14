@@ -1227,6 +1227,17 @@ export default function AssistantTaskSurface({
             </div>
           ) : null}
         </>
+      ) : surface.type === "hiring_pipeline" ? (
+        <>
+          {renderHiringPipeline(surface, activeHiringActionKey, handleHiringPipelineAction)}
+          {error ? (
+            <div className="px-4 pb-4 md:px-5">
+              <div className="rounded-[1.1rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                {error}
+              </div>
+            </div>
+          ) : null}
+        </>
       ) : surface.readOnly ? (
         renderScheduleOverview(surface)
       ) : completed ? (
