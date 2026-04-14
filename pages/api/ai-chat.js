@@ -1455,6 +1455,19 @@ async function fetchDataContext(modules = [], { skipCache = false, userContext =
       href: f.href || "",
     })),
     salesOpportunities: salesOpportunitiesNormalized,
+    hiringCandidates: (hiringCandidates || []).map((h) => ({
+      id: h.id,
+      title: h.title || "",
+      applicant_name: h.applicant_name || "",
+      contact_email: h.contact_email || "",
+      contact_phone: h.contact_phone || "",
+      position_applied: h.position_applied || "",
+      stage: h.stage || "new",
+      next_follow_up: h.next_follow_up || "",
+      notes: h.notes || "",
+      decline_reason: h.decline_reason || "",
+      updated_at: h.updated_at || null,
+    })),
   };
 
   setCachedDataContext(modules, userId, result);
