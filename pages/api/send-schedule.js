@@ -1,7 +1,5 @@
-import { createTransport } from "nodemailer";
+import { sendMail } from "@/lib/mailer";
 
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const EMAIL_USER = process.env.MAIL_USER;
 const CESAR_EMAIL = process.env.CESAR_EMAIL;
 const PHIL_EMAIL = process.env.PHIL_EMAIL;
 
@@ -15,14 +13,6 @@ export default async function handler(req, res) {
   if (!scheduleDate || !categories) {
     return res.status(400).json({ message: "Missing required fields" });
   }
-
-  const transporter = createTransport({
-    service: "gmail",
-    auth: {
-      user: EMAIL_USER,
-      pass: EMAIL_PASS,
-    },
-  });
 
   // Build the schedule HTML
   const dateStr = new Date(scheduleDate + "T12:00:00").toLocaleDateString("en-US", {
@@ -114,8 +104,7 @@ export default async function handler(req, res) {
   try {
     // Send schedule to Cesar
     if (CESAR_EMAIL) {
-      await transporter.sendMail({
-        from: EMAIL_USER,
+      await sendMail({
         to: CESAR_EMAIL,
         subject: `Crew Schedule - ${dateStr}`,
         html: scheduleHtml,
@@ -124,8 +113,7 @@ export default async function handler(req, res) {
 
     // Send notification to Phil
     if (PHIL_EMAIL) {
-      await transporter.sendMail({
-        from: EMAIL_USER,
+      await sendMail({
         to: PHIL_EMAIL,
         subject: `Crew Schedule Ready - ${dateStr}`,
         html: `
