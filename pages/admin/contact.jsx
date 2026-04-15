@@ -435,89 +435,109 @@ function ContactTW() {
         <meta name="robots" content="noindex" />
       </Head>
       <div>
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Form Submissions</h1>
-          <p className="mt-1 text-sm text-neutral-600">View and manage contact form and job application submissions</p>
+        {/* ── Header ── */}
+        <div className="mb-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className={`${lato.className} text-2xl font-black text-neutral-900`}>Submissions</h1>
+              <p className="mt-1 text-sm text-neutral-500">Leads and applications from the website — review, promote to pipeline, or block.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => loadSubmissions({ force: true })}
+                disabled={refreshing}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+              >
+                <svg className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                {refreshing ? "Refreshing" : "Refresh"}
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => loadSubmissions({ force: true })}
-            disabled={refreshing}
-            className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
-          >
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
+
+          {/* At-a-glance pills */}
+          {!loading && (
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              {(todayContacts + todayJobs) > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  {todayContacts + todayJobs} new today
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 font-medium text-neutral-600">
+                {thisWeekContacts + thisWeekJobs} this week
+              </span>
+              {blockRules.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 font-medium text-rose-700">
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                  {activeRuleCount} spam rule{activeRuleCount === 1 ? "" : "s"} active
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Stats Cards */}
-        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* ── Tabs ── */}
+        <div className="mb-5 flex gap-1 rounded-xl border border-neutral-200 bg-neutral-100/60 p-1">
           <button
+            type="button"
             onClick={() => setActiveTab("contact")}
-            className={`rounded-xl border-2 p-4 text-left transition-all ${
-              activeTab === "contact"
-                ? "border-red-500 bg-red-50"
-                : "border-neutral-200 bg-white hover:border-neutral-300"
+            className={`flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
+              activeTab === "contact" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-600 hover:text-neutral-800"
             }`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-500">Contact Form</p>
-                <p className={`${lato.className} text-2xl font-bold text-neutral-900`}>
-                  {loading ? "—" : contactRows.length}
-                </p>
-              </div>
-              <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center text-xl">📧</div>
-            </div>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
+            Contact Form
+            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${activeTab === "contact" ? "bg-[#0b2a5a] text-white" : "bg-neutral-200 text-neutral-700"}`}>
+              {loading ? "—" : contactRows.length}
+            </span>
+            {thisWeekContacts > 0 && (
+              <span className="text-xs font-semibold text-emerald-600">+{thisWeekContacts}</span>
+            )}
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab("job")}
-            className={`rounded-xl border-2 p-4 text-left transition-all ${
-              activeTab === "job"
-                ? "border-red-500 bg-red-50"
-                : "border-neutral-200 bg-white hover:border-neutral-300"
+            className={`flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
+              activeTab === "job" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-600 hover:text-neutral-800"
             }`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-500">Job Applications</p>
-                <p className={`${lato.className} text-2xl font-bold text-neutral-900`}>
-                  {loading ? "—" : jobRows.length}
-                </p>
-              </div>
-              <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center text-xl">💼</div>
-            </div>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+            Job Applications
+            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${activeTab === "job" ? "bg-[#0b2a5a] text-white" : "bg-neutral-200 text-neutral-700"}`}>
+              {loading ? "—" : jobRows.length}
+            </span>
+            {thisWeekJobs > 0 && (
+              <span className="text-xs font-semibold text-emerald-600">+{thisWeekJobs}</span>
+            )}
           </button>
-          <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-neutral-500">Submission queue</p>
-            <p className={`${lato.className} mt-1 text-2xl font-bold text-neutral-900`}>
-              {loading ? "—" : currentData.length}
-            </p>
-            <p className="mt-1 text-xs text-neutral-500">
-              {activeTab === "contact"
-                ? "Contact submissions currently in review."
-                : "Job applications currently in review."}
-            </p>
-          </div>
         </div>
 
         {/* Filter for Job Applications */}
         {activeTab === "job" && positions.length > 0 && (
-          <div className="mb-4 flex items-center gap-3">
-            <label className="text-sm font-semibold text-neutral-700">Filter by Position:</label>
-            <select
-              className="h-9 rounded-lg border border-neutral-300 px-3 text-sm"
-              value={selectedPosition}
-              onChange={(e) => setSelectedPosition(e.target.value)}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedPosition("")}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                !selectedPosition ? "border-[#0b2a5a] bg-[#0b2a5a] text-white" : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+              }`}
             >
-              <option value="">All Positions ({jobRows.length})</option>
-              {positions.map((pos) => (
-                <option key={pos} value={pos}>
-                  {pos} ({jobRows.filter((r) => r.position === pos).length})
-                </option>
-              ))}
-            </select>
-            {selectedPosition && (
+              All positions ({jobRows.length})
+            </button>
+            {positions.slice(0, 8).map((pos) => (
+              <button
+                key={pos}
+                type="button"
+                onClick={() => setSelectedPosition(pos)}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                  selectedPosition === pos ? "border-[#0b2a5a] bg-[#0b2a5a] text-white" : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                }`}
+              >
+                {pos} ({jobRows.filter((r) => r.position === pos).length})
+              </button>
+            ))}
+            {positions.length > 8 && (
               <button
                 onClick={() => setSelectedPosition("")}
                 className="text-sm text-red-600 hover:underline"
