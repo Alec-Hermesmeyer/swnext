@@ -256,3 +256,37 @@ Task: Enhance the crew selection process to make it easier for admins. Consider 
 
 [ADDITIONAL CONTEXT]
 - Recent focus areas: refactoring
+[2026-04-15T15:57:01.243Z] CLAUDE DONE (exit 0, 355s, 89 lines):
+Let me start by understanding the current crew scheduler implementation:
+Excellent analysis. Now let me read the exact sections I need to modify:
+Now let me find the `formatWorkerOption` and `formatWorkerLabel` functions, and the `setRigWorkerDraft` / `addDraftWorkerToRig` functions:
+Now let me check how many distinct roles exist to understand the grouping needs:
+Now I have the complete picture. The fix is to replace the plain `<select>` dropdown with a searchable combobox component that groups workers by role and shows assignment status. Let me build it:
+Now I need to integrate it into the crew-scheduler page. I need to:
+1. Add the import
+2. Build the `availableIds` set and `assignedMap` that the combobox needs
+3. Replace the `<select>` dropdown with `<CrewCombobox>`
+
+Let me check where the imports are:
+Add the import:
+Now I need to build the `assignedMap` that maps worker IDs to rig/category names. Let me find where `workerAssignmentMap` is defined:
+I need to add a `workerRigNameMap` that maps worker IDs to the rig names they're assigned to. Let me add it right after `workerAssignmentMap`:
+Now replace the `<select>` dropdown with `<CrewCombobox>`. Let me re-read the exact section to get the current code:
+I also need to compute `availableIds` as a Set for the combobox. Let me look at how `availableWorkers` is computed to ensure I replicate the logic correctly:
+Now I'll replace the select dropdown with the CrewCombobox. I need to compute `availableIds` from the same logic:
+Now replace the `<select>` dropdown and its label with the `<CrewCombobox>`:
+Now let me verify both files parse and the build compiles:
+Compiled successfully — same pre-existing `blog/[slug]` error, nothing new.
+All done. Here's a summary:
+
+---
+
+## Changes Summary
+
+### Files Modified: 1 · Files Created: 1
+
+| File | Action | Lines |
+|---|---|---|
+| `components/admin/crew-scheduler/CrewCombobox.jsx` | **Created** | 279 lines |
+| `pages/admin/crew-scheduler.jsx` | **Edited** | 3 edits (~30 net lines)
+[2026-04-15T15:57:03.866Z] KNOXIS (review): Claude has successfully implemented the crew combobox component, replacing the plain select dropdown with a searchable, role-grouped, and assignment-status-aware combobox. The changes include creating a new CrewCombobox component and integrating it into the crew-scheduler page. The code has been verified to compile successfully, and all changes are now ready for review and testing.
