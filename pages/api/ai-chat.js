@@ -721,6 +721,11 @@ const tools = [
             description:
               'Optional. Set exactly to the word bidding when the user asks about bid proposals, RFQs, uploaded bid PDFs, scope/exclusion language, alternates, or line-item text from the sales pipeline. Omit for general searches.',
           },
+          section_filter: {
+            type: "string",
+            description:
+              'Optional. Narrow results to a specific bid document section. Use "scope_items" for scope of work, "exclusions" for exclusions, "assumptions" for assumptions, "priced_items" for pricing/line items, or "raw_text" for full document text. Only useful with category_focus "bidding".',
+          },
         },
         required: ["query"],
       },
