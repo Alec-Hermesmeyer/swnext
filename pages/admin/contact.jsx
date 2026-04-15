@@ -682,25 +682,33 @@ function ContactTW() {
           )}
         </div>
 
-        <div className="mt-6 rounded-xl border border-neutral-200 bg-white shadow-sm">
+        <div className="mt-8 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
           <button
             type="button"
             onClick={() => setShowSpamControls((prev) => !prev)}
-            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-neutral-100"
           >
-            <div>
-              <h2 className={`${lato.className} text-lg font-bold text-[#0b2a5a]`}>Safety & spam controls</h2>
-              <p className="text-sm text-neutral-600">
-                {activeRuleCount} active rule{activeRuleCount === 1 ? "" : "s"} across {blockRules.length} total.
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M9.528 1.718a.75.75 0 0 1 .162.819A8.97 8.97 0 0 0 9 6a9 9 0 0 0 9 9 8.97 8.97 0 0 0 3.463-.69.75.75 0 0 1 .981.98 10.503 10.503 0 0 1-9.694 6.46c-5.799 0-10.5-4.7-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 0 1 .818.162Z" /></svg>
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-neutral-900">Spam controls</h2>
+                <p className="text-xs text-neutral-500">
+                  {activeRuleCount} active block rule{activeRuleCount === 1 ? "" : "s"}{blockRules.length > activeRuleCount ? ` · ${blockRules.length - activeRuleCount} disabled` : ""}
+                </p>
+              </div>
             </div>
-            <span className="text-sm font-semibold text-neutral-600">{showSpamControls ? "Hide" : "Manage"}</span>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-500">
+              {showSpamControls ? "Hide" : "Manage"}
+              <svg className={`h-3.5 w-3.5 transition-transform ${showSpamControls ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </span>
           </button>
 
           {showSpamControls ? (
-            <div className="border-t border-neutral-200 px-4 pb-4 pt-3">
-              <p className="mb-3 text-sm text-neutral-600">
-                Block specific emails or domains. Blocked senders are silently accepted, but notification emails are skipped.
+            <div className="border-t border-neutral-200 bg-white px-4 pb-4 pt-3">
+              <p className="mb-3 text-xs text-neutral-500">
+                Block specific emails or domains. Blocked senders are silently accepted — no notification email is sent.
               </p>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-[130px_1fr_1fr_auto]">
                 <select
