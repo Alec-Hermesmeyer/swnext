@@ -2182,11 +2182,11 @@ async function prefetchBidResearchSnippets(supabase, message, context, userRole,
     if (recent) {
       const [rB, rG] = await Promise.all([
         executeAdminAssistantMutation(supabase, "search_knowledge_base", {
-          query: "Recent bid proposals RFQs quotes opportunities scope exclusions pricing alternates",
+          query: "What projects have we bid on recently? List our bid proposals with client names, scope of work, and pricing totals.",
           category_focus: "bidding",
         }, toolCtx),
         executeAdminAssistantMutation(supabase, "search_knowledge_base", {
-          query: "Construction bids proposals sales opportunities pre-award projects",
+          query: "Recent construction projects, sales pipeline activity, and pre-award bid opportunities.",
         }, toolCtx),
       ]);
       blocks.push(formatMutationSnippet(rB, "Bidding documents (vector)"));
