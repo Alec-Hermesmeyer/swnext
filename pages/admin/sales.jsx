@@ -208,6 +208,166 @@ function textareaToPricingItems(value) {
     .filter((item) => item.label || item.amount);
 }
 
+function DraftPricingTableEditor({ items, onChange }) {
+  const safeItems = Array.isArray(items) ? items : [];
+
+  const updateRow = (index, field, value) => {
+    const next = safeItems.map((row, idx) =>
+      idx === index ? { ...row, [field]: value } : row
+    );
+    onChange(next);
+  };
+
+  const addRow = () => {
+    onChange([...safeItems, { label: "", amount: "" }]);
+  };
+
+  const removeRow = (index) => {
+    onChange(safeItems.filter((_, idx) => idx !== index));
+  };
+
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white">
+      <div className="flex items-center justify-between border-b border-neutral-200 px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Pricing Table</p>
+        <button
+          type="button"
+          onClick={addRow}
+          className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+        >
+          + Add row
+        </button>
+      </div>
+      {!safeItems.length ? (
+        <div className="px-3 py-4 text-sm text-neutral-500">No pricing lines yet. Add a row to build the table.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+              <tr>
+                <th className="px-3 py-2 font-semibold">Line item</th>
+                <th className="px-3 py-2 font-semibold">Amount</th>
+                <th className="px-3 py-2 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {safeItems.map((row, index) => (
+                <tr key={`draft-pricing-${index}`} className="border-t border-neutral-200">
+                  <td className="px-3 py-2 align-top">
+                    <input
+                      type="text"
+                      value={row?.label || ""}
+                      onChange={(e) => updateRow(index, "label", e.target.value)}
+                      placeholder="Line description"
+                      className="h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                    />
+                  </td>
+                  <td className="px-3 py-2 align-top">
+                    <input
+                      type="text"
+                      value={row?.amount || ""}
+                      onChange={(e) => updateRow(index, "amount", e.target.value)}
+                      placeholder="$0.00"
+                      className="h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-right align-top">
+                    <button
+                      type="button"
+                      onClick={() => removeRow(index)}
+                      className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DraftDocumentPreview({ draft }) {
+  const pricingRows = Array.isArray(draft?.pricing_items) ? draft.pricing_items : [];
+
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Live Export Preview</p>
+        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-neutral-500">DOCX-style layout</span>
+      </div>
+
+      <div className="rounded-md border border-neutral-200 bg-white p-4 text-sm text-neutral-800">
+        <h3 className="text-base font-bold text-neutral-900">{draft?.title || "Bid Proposal"}</h3>
+        <div className="mt-2 grid gap-2 text-xs text-neutral-600 sm:grid-cols-3">
+          <p><span className="font-semibold text-neutral-700">Project:</span> {draft?.project_name || "—"}</p>
+          <p><span className="font-semibold text-neutral-700">Client:</span> {draft?.client_name || "—"}</p>
+          <p><span className="font-semibold text-neutral-700">Due:</span> {draft?.due_date || "—"}</p>
+        </div>
+
+        {draft?.intro ? <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-800">{draft.intro}</p> : null}
+
+        <div className="mt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Pricing Table</p>
+          {!pricingRows.length ? (
+            <p className="mt-1 text-sm text-neutral-500">No pricing rows yet.</p>
+          ) : (
+            <div className="mt-2 overflow-x-auto rounded-md border border-neutral-200">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+                  <tr>
+                    <th className="px-3 py-2 font-semibold">Description</th>
+                    <th className="px-3 py-2 font-semibold">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pricingRows.map((row, idx) => (
+                    <tr key={`preview-pricing-${idx}`} className="border-t border-neutral-200">
+                      <td className="px-3 py-2">{row?.label || "—"}</td>
+                      <td className="px-3 py-2">{row?.amount || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Scope</p>
+            <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-neutral-700">
+              {(draft?.scope_items || []).length ? draft.scope_items.map((row, idx) => <li key={`scope-${idx}`}>{row}</li>) : <li>—</li>}
+            </ul>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Assumptions</p>
+            <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-neutral-700">
+              {(draft?.assumptions || []).length ? draft.assumptions.map((row, idx) => <li key={`assumption-${idx}`}>{row}</li>) : <li>—</li>}
+            </ul>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Exclusions</p>
+            <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-neutral-700">
+              {(draft?.exclusions || []).length ? draft.exclusions.map((row, idx) => <li key={`exclusion-${idx}`}>{row}</li>) : <li>—</li>}
+            </ul>
+          </div>
+        </div>
+
+        {draft?.terms ? (
+          <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Terms</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-700">{draft.terms}</p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function PriceRollupPanel({ pricedItems }) {
   const [expandedGroups, setExpandedGroups] = useState({});
   const safeItems = Array.isArray(pricedItems) ? pricedItems : [];
@@ -1301,15 +1461,24 @@ function BidAssistantPanel() {
                       </label>
 
                       <div className="mt-2 grid gap-2 lg:grid-cols-2">
-                        <label className="text-xs text-neutral-600">
-                          Pricing lines (one per line: label | amount)
-                          <textarea
-                            rows={5}
-                            value={pricingItemsToTextarea(draft.pricing_items)}
-                            onChange={(e) => updateDraftField("pricing_items", textareaToPricingItems(e.target.value))}
-                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        <div className="text-xs text-neutral-600">
+                          <p className="mb-1">Pricing lines (editable table)</p>
+                          <DraftPricingTableEditor
+                            items={draft.pricing_items}
+                            onChange={(items) => updateDraftField("pricing_items", normalizeDraftPayload({ pricing_items: items }).pricing_items)}
                           />
-                        </label>
+                          <details className="mt-2 rounded-md border border-neutral-200 bg-white p-2">
+                            <summary className="cursor-pointer text-xs font-semibold text-neutral-700">
+                              Paste/edit as text (label | amount)
+                            </summary>
+                            <textarea
+                              rows={4}
+                              value={pricingItemsToTextarea(draft.pricing_items)}
+                              onChange={(e) => updateDraftField("pricing_items", textareaToPricingItems(e.target.value))}
+                              className="mt-2 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                            />
+                          </details>
+                        </div>
                         <label className="text-xs text-neutral-600">
                           Scope items (one per line)
                           <textarea
@@ -1357,6 +1526,11 @@ function BidAssistantPanel() {
                           className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
                         />
                       </label>
+
+                      <p className="text-xs text-neutral-500">
+                        This preview uses your current edits immediately; export uses the same in-memory draft payload, so Save is optional before Download.
+                      </p>
+                      <DraftDocumentPreview draft={draft} />
                     </>
                   )}
                 </div>
