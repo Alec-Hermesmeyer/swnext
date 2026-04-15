@@ -160,20 +160,19 @@ function buildOpportunityFlags(row, today) {
 }
 
 function SummaryCard({ label, value, helper, tone = "neutral" }) {
-  const toneClass =
-    tone === "amber"
-      ? "border-amber-200 bg-amber-50"
-      : tone === "sky"
-        ? "border-sky-200 bg-sky-50"
-        : tone === "emerald"
-          ? "border-emerald-200 bg-emerald-50"
-          : "border-neutral-200 bg-white";
+  const toneMap = {
+    neutral: "border-neutral-200 bg-white",
+    amber: "border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50",
+    sky: "border-sky-200 bg-gradient-to-br from-sky-50 to-sky-100/50",
+    emerald: "border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50",
+  };
 
   return (
-    <div className={`rounded-xl border p-4 shadow-sm ${toneClass}`}>
-      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">{label}</div>
-      <div className="mt-2 text-3xl font-black tracking-tight text-neutral-950">{value}</div>
-      <p className="mt-2 text-sm text-neutral-600">{helper}</p>
+    <div className={`group relative overflow-hidden rounded-2xl border p-5 shadow-card transition-shadow hover:shadow-card-hover ${toneMap[tone] || toneMap.neutral}`}>
+      <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-neutral-950/[0.02]" />
+      <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">{label}</p>
+      <p className="mt-3 text-4xl font-black tracking-tight text-neutral-950">{value}</p>
+      <p className="mt-2 text-sm leading-relaxed text-neutral-500">{helper}</p>
     </div>
   );
 }
@@ -182,11 +181,11 @@ function QueueSection({ title, rows, emptyText, countToneClass, detailForRow, on
   const previewRows = rows.slice(0, 4);
 
   return (
-    <section className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+    <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-[#0b2a5a]">{title}</h3>
-          <p className="mt-1 text-sm text-neutral-600">{emptyText}</p>
+          <h3 className="text-sm font-bold uppercase tracking-widest text-brand">{title}</h3>
+          <p className="mt-1 text-sm text-neutral-500">{emptyText}</p>
         </div>
         <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${countToneClass}`}>
           {rows.length}
@@ -194,30 +193,30 @@ function QueueSection({ title, rows, emptyText, countToneClass, detailForRow, on
       </div>
 
       {previewRows.length ? (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-2.5">
           {previewRows.map((row) => {
             const detail = detailForRow(row);
             return (
-              <div key={row.id} className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+              <div key={row.id} className="rounded-xl border border-neutral-200 bg-neutral-50/80 p-3 transition-shadow hover:shadow-card">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="truncate font-semibold text-neutral-900">{row.title}</div>
-                    <div className="mt-1 truncate text-xs text-neutral-600">
+                    <div className="mt-1 truncate text-xs text-neutral-500">
                       {[row.company, row.owner_name].filter(Boolean).join(" · ") || "No company or owner yet"}
                     </div>
                   </div>
                   {detail.badge ? (
-                    <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${flagClass(detail.tone)}`}>
+                    <span className={`whitespace-nowrap rounded-full border px-2 py-1 text-[11px] font-semibold ${flagClass(detail.tone)}`}>
                       {detail.badge}
                     </span>
                   ) : null}
                 </div>
-                {detail.meta ? <div className="mt-2 text-xs text-neutral-500">{detail.meta}</div> : null}
+                {detail.meta ? <div className="mt-2 text-xs text-neutral-400">{detail.meta}</div> : null}
                 <div className="mt-3 flex justify-end">
                   <button
                     type="button"
                     onClick={() => onEdit(row)}
-                    className="text-sm font-semibold text-[#0b2a5a] hover:underline"
+                    className="text-sm font-semibold text-brand hover:underline"
                   >
                     Edit
                   </button>
@@ -226,13 +225,104 @@ function QueueSection({ title, rows, emptyText, countToneClass, detailForRow, on
             );
           })}
           {rows.length > previewRows.length ? (
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-neutral-400">
               {rows.length - previewRows.length} more in the pipeline table below.
             </p>
           ) : null}
         </div>
       ) : null}
     </section>
+  );
+}
+
+function stageColorDot(stage) {
+  const map = {
+    qualify: "bg-slate-400",
+    pursuing: "bg-sky-500",
+    quoted: "bg-violet-500",
+    negotiation: "bg-amber-500",
+    won: "bg-emerald-500",
+    lost: "bg-rose-400",
+  };
+  return map[stage] || "bg-neutral-400";
+}
+
+function KanbanBoard({ rows, onEdit, today }) {
+  return (
+    <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
+      {SALES_PIPELINE_STAGES.map((stage) => {
+        const stageRows = rows.filter((r) => r.stage === stage.id);
+        return (
+          <div key={stage.id} className="flex w-72 flex-shrink-0 snap-start flex-col">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`inline-block h-2.5 w-2.5 rounded-full ${stageColorDot(stage.id)}`} />
+                <h3 className="text-sm font-bold text-neutral-800">{stage.label}</h3>
+              </div>
+              <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-500">
+                {stageRows.length}
+              </span>
+            </div>
+            <div className="flex-1 space-y-2.5 rounded-xl bg-neutral-50/80 p-2.5 min-h-[120px]">
+              {stageRows.map((row) => (
+                <button
+                  key={row.id}
+                  type="button"
+                  onClick={() => onEdit(row)}
+                  className="w-full rounded-xl border border-neutral-200 bg-white p-3 text-left shadow-card transition-shadow hover:shadow-card-hover focus:shadow-card-active focus:outline-none"
+                >
+                  <p className="font-semibold text-neutral-900 truncate">{row.title}</p>
+                  <p className="mt-1 text-xs text-neutral-500 truncate">
+                    {[row.company, row.owner_name].filter(Boolean).join(" · ")}
+                  </p>
+                  {row.value_estimate ? (
+                    <p className="mt-2 text-sm font-bold text-brand">{formatMoney(row.value_estimate)}</p>
+                  ) : null}
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {buildOpportunityFlags(row, today).map((flag) => (
+                      <span
+                        key={flag.label}
+                        className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${flagClass(flag.tone)}`}
+                      >
+                        {flag.label}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              ))}
+              {!stageRows.length && (
+                <p className="py-6 text-center text-xs text-neutral-400">No opportunities</p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PipelineViewToggle({ view, setView }) {
+  return (
+    <div className="inline-flex rounded-lg border border-neutral-200 bg-neutral-50 p-0.5">
+      <button
+        type="button"
+        onClick={() => setView("board")}
+        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+          view === "board" ? "bg-white text-brand shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+        }`}
+      >
+        Board
+      </button>
+      <button
+        type="button"
+        onClick={() => setView("table")}
+        className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+          view === "table" ? "bg-white text-brand shadow-sm" : "text-neutral-500 hover:text-neutral-700"
+        }`}
+      >
+        Table
+      </button>
+    </div>
   );
 }
 
@@ -246,6 +336,7 @@ export default function SalesPipeline() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [pipelineView, setPipelineView] = useState("board");
   const loadRequestRef = useRef(0);
   const today = useMemo(() => parseDateOnly(localDateKey()), []);
 
@@ -464,7 +555,7 @@ export default function SalesPipeline() {
           </div>
           <Link
             href="/admin/contact"
-            className="inline-flex h-10 items-center justify-center rounded-lg border border-sky-300 bg-white px-4 text-sm font-semibold text-sky-950 hover:bg-sky-100"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-sky-300 bg-white px-5 text-sm font-semibold text-sky-950 hover:bg-sky-100"
           >
             Review submissions
           </Link>
@@ -537,23 +628,26 @@ export default function SalesPipeline() {
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-neutral-600">
-          Track bids and pursuits before they become won jobs. For historical wins, use the{" "}
-          <strong>Won jobs</strong> tab.
-        </p>
+        <div className="flex items-center gap-3">
+          <PipelineViewToggle view={pipelineView} setView={setPipelineView} />
+          <p className="text-sm text-neutral-600">
+            Track bids and pursuits before they become won jobs. For historical wins, use the{" "}
+            <strong>Won jobs</strong> tab.
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search opportunity, company, contact, owner"
-            className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm sm:w-80"
+            className="h-11 w-full rounded-xl border border-neutral-300 bg-white px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none sm:w-80"
             aria-label="Search opportunities"
           />
           <select
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
-            className="h-10 rounded-lg border border-neutral-300 bg-white px-3 text-sm"
+            className="h-11 rounded-xl border border-neutral-300 bg-white px-4 text-sm"
             aria-label="Filter by stage"
           >
             <option value="">All stages</option>
@@ -566,7 +660,7 @@ export default function SalesPipeline() {
           <button
             type="button"
             onClick={openNew}
-            className="h-10 rounded-lg bg-[#0b2a5a] px-4 text-sm font-semibold text-white hover:bg-[#143a75]"
+            className="h-11 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm hover:bg-brand-light"
           >
             New opportunity
           </button>
@@ -580,36 +674,38 @@ export default function SalesPipeline() {
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{error}</div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow">
-        {loading ? (
-          <div className="p-8 text-center text-sm text-neutral-500">Loading pipeline…</div>
-        ) : rows.length === 0 ? (
-          <div className="p-8 text-center text-sm text-neutral-500">
-            No opportunities yet. Add one from a lead in{" "}
-            <Link href="/admin/contact" className="font-semibold text-[#0b2a5a] underline">
-              Submissions
-            </Link>{" "}
-            or click <strong>New opportunity</strong>.
-          </div>
-        ) : filteredRows.length === 0 ? (
-          <div className="p-8 text-center text-sm text-neutral-500">
-            No opportunities match the current filters. Clear the search or stage filter to see
-            the full pipeline.
-          </div>
-        ) : (
+      {loading ? (
+        <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500 shadow">Loading pipeline…</div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500 shadow">
+          No opportunities yet. Add one from a lead in{" "}
+          <Link href="/admin/contact" className="font-semibold text-brand underline">
+            Submissions
+          </Link>{" "}
+          or click <strong>New opportunity</strong>.
+        </div>
+      ) : filteredRows.length === 0 ? (
+        <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500 shadow">
+          No opportunities match the current filters. Clear the search or stage filter to see
+          the full pipeline.
+        </div>
+      ) : pipelineView === "board" ? (
+        <KanbanBoard rows={filteredRows} onEdit={openEdit} today={today} />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow">
           <table className="min-w-full table-auto text-left text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
+            <thead className="border-b border-neutral-200 bg-neutral-50">
               <tr>
-                <th className="p-3 font-semibold">Opportunity</th>
-                <th className="p-3 font-semibold">Stage</th>
-                <th className="p-3 font-semibold">Owner</th>
-                <th className="p-3 font-semibold">Next follow-up</th>
-                <th className="p-3 font-semibold">Bid due</th>
-                <th className="p-3 font-semibold">Est. value</th>
-                <th className="p-3 font-semibold" />
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Opportunity</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Stage</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Owner</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Next follow-up</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Bid due</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Est. value</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500" />
               </tr>
             </thead>
-            <tbody className="text-neutral-800">
+            <tbody className="divide-y divide-neutral-100 text-neutral-800">
               {filteredRows.map((row) => {
                 const flags = buildOpportunityFlags(row, today);
                 const followUpDate = parseDateOnly(row.next_follow_up);
@@ -621,9 +717,9 @@ export default function SalesPipeline() {
                 return (
                   <tr
                     key={row.id}
-                    className={`border-t border-neutral-100 ${isDueNow ? "bg-amber-50/40" : ""}`}
+                    className={`transition-colors hover:bg-neutral-50/60 ${isDueNow ? "bg-amber-50/40" : ""}`}
                   >
-                    <td className="max-w-[280px] p-3">
+                    <td className="max-w-[280px] px-4 py-3">
                       <div className="font-semibold text-neutral-900">{row.title}</div>
                       {row.company ? <div className="text-xs text-neutral-500">{row.company}</div> : null}
                       {row.contact_name || row.contact_email || row.contact_phone ? (
@@ -644,22 +740,22 @@ export default function SalesPipeline() {
                         </div>
                       ) : null}
                     </td>
-                    <td className="p-3 align-top">
+                    <td className="px-4 py-3 align-top">
                       <span
                         className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-semibold ${stageBadgeClass(row.stage)}`}
                       >
                         {stageLabel(row.stage)}
                       </span>
                     </td>
-                    <td className="p-3 align-top text-neutral-700">{row.owner_name || "—"}</td>
-                    <td className="p-3 align-top whitespace-nowrap">{formatDate(row.next_follow_up)}</td>
-                    <td className="p-3 align-top whitespace-nowrap">{formatDate(row.bid_due)}</td>
-                    <td className="p-3 align-top">{formatMoney(row.value_estimate)}</td>
-                    <td className="p-3 align-top text-right whitespace-nowrap">
+                    <td className="px-4 py-3 align-top text-neutral-700">{row.owner_name || "—"}</td>
+                    <td className="px-4 py-3 align-top whitespace-nowrap">{formatDate(row.next_follow_up)}</td>
+                    <td className="px-4 py-3 align-top whitespace-nowrap">{formatDate(row.bid_due)}</td>
+                    <td className="px-4 py-3 align-top">{formatMoney(row.value_estimate)}</td>
+                    <td className="px-4 py-3 align-top text-right whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => openEdit(row)}
-                        className="mr-2 text-[#0b2a5a] font-semibold hover:underline"
+                        className="mr-2 text-brand font-semibold hover:underline"
                       >
                         Edit
                       </button>
@@ -676,58 +772,72 @@ export default function SalesPipeline() {
               })}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
 
       {modalOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm p-0 sm:items-center sm:p-4"
           onClick={() => setModalOpen(false)}
           onKeyDown={(e) => e.key === "Escape" && setModalOpen(false)}
           role="presentation"
         >
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl"
+            className="w-full max-w-lg overflow-y-auto rounded-t-3xl border-t border-neutral-200 bg-white shadow-2xl sm:max-h-[85vh] sm:rounded-2xl sm:border"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="pipeline-modal-title"
           >
-            <h2 id="pipeline-modal-title" className="text-lg font-bold text-[#0b2a5a]">
-              {form.id ? "Edit opportunity" : "New opportunity"}
-            </h2>
-            <form onSubmit={save} className="mt-4 space-y-3">
+            <div className="flex justify-center pt-3 sm:hidden">
+              <div className="h-1 w-8 rounded-full bg-neutral-300" />
+            </div>
+            <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4">
+              <h2 id="pipeline-modal-title" className="text-lg font-bold text-brand">
+                {form.id ? "Edit opportunity" : "New opportunity"}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={save} className="space-y-4 p-6">
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Title</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Title</label>
                 <input
                   required
-                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                  className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="e.g. Little Elm tower foundations"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Company / GC</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Company / GC</label>
                 <input
-                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                  className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                   value={form.company}
                   onChange={(e) => setForm({ ...form, company: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Contact name</label>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Contact name</label>
                   <input
-                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                    className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     value={form.contact_name}
                     onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Owner (internal)</label>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Owner (internal)</label>
                   <input
-                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                    className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     value={form.owner_name}
                     onChange={(e) => setForm({ ...form, owner_name: e.target.value })}
                     placeholder="Estimator name"
@@ -736,27 +846,27 @@ export default function SalesPipeline() {
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Email</label>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Email</label>
                   <input
                     type="email"
-                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                    className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     value={form.contact_email}
                     onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Phone</label>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Phone</label>
                   <input
-                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                    className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     value={form.contact_phone}
                     onChange={(e) => setForm({ ...form, contact_phone: e.target.value })}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Stage</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Stage</label>
                 <select
-                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                  className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                   value={form.stage}
                   onChange={(e) => setForm({ ...form, stage: e.target.value })}
                 >
@@ -769,29 +879,29 @@ export default function SalesPipeline() {
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Next follow-up</label>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Next follow-up</label>
                   <input
                     type="date"
-                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                    className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     value={form.next_follow_up}
                     onChange={(e) => setForm({ ...form, next_follow_up: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Bid due</label>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Bid due</label>
                   <input
                     type="date"
-                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                    className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     value={form.bid_due}
                     onChange={(e) => setForm({ ...form, bid_due: e.target.value })}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Est. value (USD)</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Est. value (USD)</label>
                 <input
                   inputMode="decimal"
-                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                  className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                   value={form.value_estimate}
                   onChange={(e) => setForm({ ...form, value_estimate: e.target.value })}
                   placeholder="Optional"
@@ -799,9 +909,9 @@ export default function SalesPipeline() {
               </div>
               {form.stage === "lost" ? (
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Lost reason</label>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Lost reason</label>
                   <input
-                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                    className="h-11 w-full rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     value={form.lost_reason}
                     onChange={(e) => setForm({ ...form, lost_reason: e.target.value })}
                     placeholder="Price, timing, GC, etc."
@@ -809,10 +919,10 @@ export default function SalesPipeline() {
                 </div>
               ) : null}
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Notes</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-neutral-500">Notes</label>
                 <textarea
                   rows={3}
-                  className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
@@ -821,14 +931,14 @@ export default function SalesPipeline() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="h-10 rounded-lg border border-neutral-300 px-4 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                  className="h-11 rounded-xl border border-neutral-300 px-5 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="h-10 rounded-lg bg-[#0b2a5a] px-4 text-sm font-semibold text-white hover:bg-[#143a75] disabled:opacity-50"
+                  className="h-11 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm hover:bg-brand-light disabled:opacity-50"
                 >
                   {saving ? "Saving…" : "Save"}
                 </button>
