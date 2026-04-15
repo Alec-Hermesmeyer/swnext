@@ -13,7 +13,7 @@ This document tracks the migration from CSS modules to Tailwind CSS components.
 **Location**: `/components/HeroTailwind.jsx`  
 **Original**: `/components/Hero.jsx` (uses CSS modules)  
 **Status**: ✅ Complete and tested
-
+     
 #### Features:
 - **Responsive Design**: Mobile-first approach with responsive breakpoints
 - **Modern Styling**: Gradient background, glass morphism cards, smooth animations  
