@@ -538,12 +538,7 @@ function ContactTW() {
               </button>
             ))}
             {positions.length > 8 && (
-              <button
-                onClick={() => setSelectedPosition("")}
-                className="text-sm text-red-600 hover:underline"
-              >
-                Clear filter
-              </button>
+              <span className="text-xs text-neutral-400">+{positions.length - 8} more</span>
             )}
           </div>
         )}
