@@ -42,7 +42,7 @@ function ExpandableInsightList({ title, items, emptyLabel = "None extracted.", i
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
-          className="mt-2 text-xs font-semibold text-[#0b2a5a] hover:underline"
+          className="mt-2 text-xs font-semibold text-brand hover:underline"
         >
           {expanded ? "Show less" : `Show all ${safeItems.length}`}
         </button>
@@ -81,7 +81,7 @@ function extractPricedItemsFromRawText(rawText) {
     const context = [previous, line, next].filter(Boolean).join(" | ").replace(/\s+/g, " ").trim();
     const holeCount = context.match(/(\d+)\s*(?:holes?|piers?)\b/i)?.[1] || null;
     const depthFt = context.match(/(\d+(?:\.\d+)?)\s*(?:ft|feet|foot)\b/i)?.[1] || null;
-    const diameterIn = context.match(/(\d+(?:\.\d+)?)\s*(?:in|inch|inches|\"|”)\b/i)?.[1] || null;
+    const diameterIn = context.match(/(\d+(?:\.\d+)?)\s*(?:in|inch|inches|\"|")\b/i)?.[1] || null;
     const unit = context.match(/\b(per\s+(?:hour|day|shift|mat|change|inspection|instance|pile|hole|lf|foot))\b/i)?.[1] || "";
     for (const amount of amounts) {
       const key = `${amount}|${context}`;
@@ -275,7 +275,7 @@ function PriceRollupPanel({ pricedItems }) {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold text-neutral-900">{formatCurrencyAmount(group.totalAmount)}</span>
-                      <span className="text-xs font-semibold text-[#0b2a5a]">{isExpanded ? "Hide details" : "Show details"}</span>
+                      <span className="text-xs font-semibold text-brand">{isExpanded ? "Hide details" : "Show details"}</span>
                     </div>
                   </button>
 
@@ -321,6 +321,44 @@ function PriceRollupPanel({ pricedItems }) {
   );
 }
 
+function CollapsibleSection({ title, badge, badgeTone, isOpen, onToggle, children }) {
+  return (
+    <div className="rounded-xl border border-neutral-200 overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-3 bg-neutral-50/50 px-4 py-3 text-left transition-colors hover:bg-neutral-50"
+      >
+        <div className="flex items-center gap-3">
+          <svg
+            className={`h-4 w-4 text-neutral-400 transition-transform ${isOpen ? "rotate-90" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <h3 className="text-sm font-bold text-neutral-800">{title}</h3>
+        </div>
+        {badge ? (
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+              badgeTone === "emerald"
+                ? "bg-emerald-100 text-emerald-800"
+                : badgeTone === "red"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-neutral-100 text-neutral-600"
+            }`}
+          >
+            {badge}
+          </span>
+        ) : null}
+      </button>
+      {isOpen ? <div className="border-t border-neutral-100 p-4">{children}</div> : null}
+    </div>
+  );
+}
+
 function BidAssistantPanel() {
   const [uploading, setUploading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
@@ -343,6 +381,16 @@ function BidAssistantPanel() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
+  const [expandedSections, setExpandedSections] = useState({
+    overview: true,
+    financials: true,
+    draft: false,
+    insights: false,
+    chat: false,
+    debug: false,
+  });
+  const toggleSection = (key) =>
+    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const fetchDocumentById = useCallback(async (documentId) => {
     if (!documentId) return null;
@@ -736,16 +784,16 @@ function BidAssistantPanel() {
   const worthIt = selectedScenarioTotal > 0 && selectedScenarioTotal >= recommendedMinimumBid;
 
   return (
-    <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <section className="rounded-2xl border border-neutral-200 bg-white shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 px-6 py-4">
         <div>
-          <h2 className={`${lato.className} text-xl font-bold text-[#0b2a5a]`}>Bid Document Assistant</h2>
-          <p className="mt-1 text-sm text-neutral-600">
-            Upload current PDF/Word/Excel bid files and get instant risk + clarification suggestions.
+          <h2 className={`${lato.className} text-lg font-bold text-brand`}>Bid Document Assistant</h2>
+          <p className="mt-0.5 text-sm text-neutral-500">
+            Upload bid files for instant risk + clarification suggestions.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <label className="rounded-lg bg-[#0b2a5a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a75] cursor-pointer">
+          <label className="cursor-pointer rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-light">
             {uploading ? "Analyzing..." : "Upload Bid File"}
             <input
               type="file"
@@ -759,376 +807,426 @@ function BidAssistantPanel() {
             type="button"
             onClick={loadDocuments}
             disabled={loadingDocs}
-            className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+            className="rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
           >
             {loadingDocs ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </div>
 
-      {status ? (
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">{status}</div>
-      ) : null}
-
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-        <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Recent analyses</p>
-          <div className="mt-2 space-y-2 max-h-[460px] overflow-y-auto">
-            {documents.map((doc) => (
-              <div
-                key={doc.id}
-                className={`w-full rounded-lg border px-3 py-2 text-sm transition-colors ${
-                  selectedDoc?.id === doc.id ? "border-[#0b2a5a] bg-white" : "border-neutral-200 bg-white hover:border-neutral-300"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <button type="button" onClick={() => handleSelectDocument(doc)} className="min-w-0 flex-1 text-left">
-                    <p className="font-semibold text-neutral-800 truncate">{doc.filename}</p>
-                    <p className="mt-1 text-xs text-neutral-500">
-                      {doc.file_type?.toUpperCase() || "FILE"} • {new Date(doc.created_at).toLocaleString()}
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteDocument(doc)}
-                    disabled={deletingDocId === doc.id}
-                    className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
-                    title="Delete report"
-                  >
-                    {deletingDocId === doc.id ? "..." : "Delete"}
-                  </button>
-                </div>
-              </div>
-            ))}
-            {!documents.length ? (
-              <p className="py-4 text-center text-sm text-neutral-500">No uploads yet.</p>
+      <div className="grid lg:grid-cols-[300px_1fr]">
+        {/* Left: Document list */}
+        <div className="border-b border-neutral-100 lg:border-b-0 lg:border-r lg:max-h-[calc(100vh-16rem)] lg:overflow-y-auto">
+          <div className="p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">Documents</p>
+            {/* status message */}
+            {status ? (
+              <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">{status}</div>
             ) : null}
+            <div className="space-y-2 max-h-[460px] overflow-y-auto lg:max-h-none">
+              {documents.map((doc) => (
+                <div
+                  key={doc.id}
+                  className={`rounded-xl border p-3 transition-all ${
+                    selectedDoc?.id === doc.id
+                      ? "border-brand bg-brand-50 shadow-card-active"
+                      : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-card"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <button type="button" onClick={() => handleSelectDocument(doc)} className="min-w-0 flex-1 text-left">
+                      <p className="font-semibold text-neutral-800 truncate text-sm">{doc.filename}</p>
+                      <p className="mt-1 text-xs text-neutral-400">
+                        {doc.file_type?.toUpperCase() || "FILE"} &middot; {new Date(doc.created_at).toLocaleDateString()}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDocument(doc)}
+                      disabled={deletingDocId === doc.id}
+                      className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                      title="Delete report"
+                    >
+                      {deletingDocId === doc.id ? "..." : "Del"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {!documents.length ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-neutral-400">No uploads yet.</p>
+                  <p className="mt-1 text-xs text-neutral-400">Upload a bid file to get started.</p>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-neutral-200 bg-white p-4">
+        {/* Right: Document detail with collapsible sections */}
+        <div className="p-6 lg:max-h-[calc(100vh-16rem)] lg:overflow-y-auto">
           {!selectedDoc ? (
-            <p className="text-sm text-neutral-500">Select an analyzed document to review extracted insights.</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="rounded-2xl bg-neutral-50 p-6">
+                <svg className="mx-auto h-10 w-10 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p className="mt-4 text-sm font-medium text-neutral-500">Select a document to review</p>
+              <p className="mt-1 text-xs text-neutral-400">Upload a bid file or choose from the list.</p>
+            </div>
           ) : (
             <div className="space-y-4">
-              <div>
-                <h3 className="text-base font-bold text-neutral-900">{selectedDoc.filename}</h3>
-                <p className="text-xs text-neutral-500">
-                  {selectedDoc.file_type?.toUpperCase() || "FILE"} • Uploaded {new Date(selectedDoc.created_at).toLocaleString()}
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Project</p>
-                  <p className="mt-1 font-medium text-neutral-800">{projectName}</p>
-                </div>
-                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Client</p>
-                  <p className="mt-1 font-medium text-neutral-800">{clientName || "Not detected"}</p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Due Date</p>
-                  <p className="mt-1 font-medium text-neutral-800">{dueDate || "Not detected"}</p>
-                </div>
-                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Source Label</p>
-                  <p className="mt-1 font-medium text-neutral-800">{selectedDoc?.source_label || "Unknown source"}</p>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-neutral-200 p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Bid Fit Metrics</p>
-                  <button
-                    type="button"
-                    onClick={saveMetrics}
-                    disabled={savingMetrics || loadingMetrics}
-                    className="rounded-md bg-[#0b2a5a] px-3 py-1 text-xs font-semibold text-white hover:bg-[#143a75] disabled:opacity-60"
-                  >
-                    {savingMetrics ? "Saving..." : "Save Metrics"}
-                  </button>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  <label className="text-xs text-neutral-600">
-                    Target margin %
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="95"
-                      value={metrics.target_margin_percent}
-                      onChange={(e) => updateMetricField("target_margin_percent", e.target.value)}
-                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
-                    />
-                  </label>
-                  <label className="text-xs text-neutral-600">
-                    Minimum profit ($)
-                    <input
-                      type="number"
-                      step="1000"
-                      min="0"
-                      value={metrics.minimum_profit_usd}
-                      onChange={(e) => updateMetricField("minimum_profit_usd", e.target.value)}
-                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
-                    />
-                  </label>
-                  <label className="text-xs text-neutral-600">
-                    Minimum contract value ($)
-                    <input
-                      type="number"
-                      step="10000"
-                      min="0"
-                      value={metrics.minimum_contract_value_usd}
-                      onChange={(e) => updateMetricField("minimum_contract_value_usd", e.target.value)}
-                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
-                    />
-                  </label>
-                  <label className="text-xs text-neutral-600">
-                    Risk buffer %
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      value={metrics.risk_buffer_percent}
-                      onChange={(e) => updateMetricField("risk_buffer_percent", e.target.value)}
-                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
-                    />
-                  </label>
-                  <label className="text-xs text-neutral-600">
-                    Estimated job cost ($)
-                    <input
-                      type="number"
-                      step="1000"
-                      min="0"
-                      value={metrics.default_estimated_cost_usd}
-                      onChange={(e) => updateMetricField("default_estimated_cost_usd", e.target.value)}
-                      className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
-                    />
-                  </label>
-                </div>
-                <label className="mt-2 block text-xs text-neutral-600">
-                  Notes
-                  <textarea
-                    rows={2}
-                    value={metrics.notes || ""}
-                    onChange={(e) => updateMetricField("notes", e.target.value)}
-                    className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                    placeholder="Example: Prefer margins over volume this quarter."
-                  />
-                </label>
-                <p className="mt-2 text-xs text-neutral-500">
-                  These metrics are saved for this assistant profile and used to decide if a scenario is worth pursuing.
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-neutral-200 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Detected Currency Values</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {currencyValues.length ? (
-                      currencyValues.map((value, idx) => (
-                        <span key={`${value}-${idx}`} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800">
-                          {value}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-sm text-neutral-500">None detected</span>
-                    )}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-neutral-200 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Detected Percentages</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {percentages.length ? (
-                      percentages.map((value, idx) => (
-                        <span key={`${value}-${idx}`} className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-800">
-                          {value}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-sm text-neutral-500">None detected</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-neutral-200 p-3">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Price Mapping</p>
-                  <p className="text-xs text-neutral-500">{pricedItems.length} mapped values</p>
-                </div>
-                {pricedItems.length ? (
-                  <div className="space-y-2">
-                    {pricedItems.slice(0, 20).map((item, idx) => (
-                      <div key={`${item.amount}-${idx}`} className="rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                            {item.amount}
-                          </span>
-                          <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-semibold text-neutral-700">
-                            {item.category || "other"}
-                          </span>
-                          {item.unit_hint ? (
-                            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-800">{item.unit_hint}</span>
-                          ) : null}
-                          {item.hole_count_hint ? (
-                            <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-800">
-                              {item.hole_count_hint} holes
-                            </span>
-                          ) : null}
-                          {item.depth_hint_ft ? (
-                            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                              {item.depth_hint_ft} ft
-                            </span>
-                          ) : null}
-                          {item.diameter_hint_in ? (
-                            <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-cyan-800">
-                              {item.diameter_hint_in} in
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="mt-1 text-xs text-neutral-700">{item.context || "No context found."}</p>
-                      </div>
-                    ))}
-                    {pricedItems.length > 20 ? (
-                      <p className="text-xs text-neutral-500">Showing first 20 mapped values. Open raw text/JSON for the full set.</p>
-                    ) : null}
-                  </div>
-                ) : (
-                  <p className="text-sm text-neutral-500">No mapped price context detected yet.</p>
-                )}
-              </div>
-
-              <div className="rounded-lg border border-neutral-200 p-3">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Detected Bid Totals</p>
-                  <p className="text-xs text-neutral-500">{headlineTotals.length} candidates</p>
-                </div>
-                {headlineTotals.length ? (
-                  <div className="space-y-2">
-                    {headlineTotals.map((item, idx) => (
-                      <div key={`${item.amount}-${idx}`} className="rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
-                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                          {item.amount}
-                        </span>
-                        <p className="mt-1 text-xs text-neutral-700">{item.label || "No label context found."}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-neutral-500">
-                    No headline bid totals detected yet. Re-analyze this file after table extraction update.
-                  </p>
-                )}
-              </div>
-
-              <div className="rounded-lg border border-neutral-200 p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Total Scenario</p>
-                  <span className="text-xs text-neutral-500">Use this as target contract value</span>
-                </div>
-                <div className="mb-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setScenarioMode("auto")}
-                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
-                      scenarioMode === "auto" ? "bg-[#0b2a5a] text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
-                    }`}
-                  >
-                    Auto
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setScenarioMode("base")}
-                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
-                      scenarioMode === "base" ? "bg-[#0b2a5a] text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
-                    }`}
-                  >
-                    Base
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setScenarioMode("alt")}
-                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
-                      scenarioMode === "alt" ? "bg-[#0b2a5a] text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
-                    }`}
-                  >
-                    Alt
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setScenarioMode("basePlusAlt")}
-                    className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
-                      scenarioMode === "basePlusAlt"
-                        ? "bg-[#0b2a5a] text-white"
-                        : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
-                    }`}
-                  >
-                    Base + Alt
-                  </button>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="rounded-md bg-neutral-50 p-2">
-                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Selected scenario total</p>
-                    <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(selectedScenarioTotal)}</p>
-                  </div>
-                  <div className="rounded-md bg-neutral-50 p-2">
-                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Current mapped rollup total</p>
-                    <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(mappedRollupTotal)}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className={`rounded-lg border p-3 ${
-                  worthIt ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
-                }`}
+              {/* Overview */}
+              <CollapsibleSection
+                title="Overview"
+                isOpen={expandedSections.overview}
+                onToggle={() => toggleSection("overview")}
               >
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-700">Worth-It Evaluation</p>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${worthIt ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
-                    {worthIt ? "Worth pursuing" : "Below threshold"}
-                  </span>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-md bg-white/80 p-2">
-                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Recommended minimum bid</p>
-                    <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(recommendedMinimumBid)}</p>
-                  </div>
-                  <div className="rounded-md bg-white/80 p-2">
-                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Selected scenario amount</p>
-                    <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(selectedScenarioTotal)}</p>
-                  </div>
-                  <div className="rounded-md bg-white/80 p-2">
-                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Expected gross profit</p>
-                    <p className={`mt-1 text-sm font-semibold ${expectedProfit >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-                      {formatCurrencyAmount(expectedProfit)}
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-base font-bold text-neutral-900">{selectedDoc.filename}</h3>
+                    <p className="text-xs text-neutral-500">
+                      {selectedDoc.file_type?.toUpperCase() || "FILE"} &middot; Uploaded {new Date(selectedDoc.created_at).toLocaleString()}
                     </p>
                   </div>
-                  <div className="rounded-md bg-white/80 p-2">
-                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">Expected margin</p>
-                    <p className="mt-1 text-sm font-semibold text-neutral-900">{expectedMargin.toFixed(1)}%</p>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Project</p>
+                      <p className="mt-1 font-medium text-neutral-800">{projectName}</p>
+                    </div>
+                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Client</p>
+                      <p className="mt-1 font-medium text-neutral-800">{clientName || "Not detected"}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Due Date</p>
+                      <p className="mt-1 font-medium text-neutral-800">{dueDate || "Not detected"}</p>
+                    </div>
+                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Source Label</p>
+                      <p className="mt-1 font-medium text-neutral-800">{selectedDoc?.source_label || "Unknown source"}</p>
+                    </div>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-neutral-600">
-                  Floor formula: max(min contract, cost + min profit, margin target) with risk buffer applied.
-                </p>
-              </div>
+              </CollapsibleSection>
 
-              <div className="rounded-lg border border-neutral-200 p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Bid Builder Draft</p>
-                  <div className="flex flex-wrap gap-2">
+              {/* Financial Analysis */}
+              <CollapsibleSection
+                title="Financial Analysis"
+                badge={worthIt ? "Worth pursuing" : "Below threshold"}
+                badgeTone={worthIt ? "emerald" : "red"}
+                isOpen={expandedSections.financials}
+                onToggle={() => toggleSection("financials")}
+              >
+                <div className="space-y-4">
+                  {/* Bid Fit Metrics */}
+                  <div className="rounded-lg border border-neutral-200 p-3">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Bid Fit Metrics</p>
+                      <button
+                        type="button"
+                        onClick={saveMetrics}
+                        disabled={savingMetrics || loadingMetrics}
+                        className="rounded-md bg-brand px-3 py-1 text-xs font-semibold text-white hover:bg-brand-light disabled:opacity-60"
+                      >
+                        {savingMetrics ? "Saving..." : "Save Metrics"}
+                      </button>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <label className="text-xs text-neutral-600">
+                        Target margin %
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="95"
+                          value={metrics.target_margin_percent}
+                          onChange={(e) => updateMetricField("target_margin_percent", e.target.value)}
+                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Minimum profit ($)
+                        <input
+                          type="number"
+                          step="1000"
+                          min="0"
+                          value={metrics.minimum_profit_usd}
+                          onChange={(e) => updateMetricField("minimum_profit_usd", e.target.value)}
+                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Minimum contract value ($)
+                        <input
+                          type="number"
+                          step="10000"
+                          min="0"
+                          value={metrics.minimum_contract_value_usd}
+                          onChange={(e) => updateMetricField("minimum_contract_value_usd", e.target.value)}
+                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Risk buffer %
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          value={metrics.risk_buffer_percent}
+                          onChange={(e) => updateMetricField("risk_buffer_percent", e.target.value)}
+                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-neutral-600">
+                        Estimated job cost ($)
+                        <input
+                          type="number"
+                          step="1000"
+                          min="0"
+                          value={metrics.default_estimated_cost_usd}
+                          onChange={(e) => updateMetricField("default_estimated_cost_usd", e.target.value)}
+                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                        />
+                      </label>
+                    </div>
+                    <label className="mt-2 block text-xs text-neutral-600">
+                      Notes
+                      <textarea
+                        rows={2}
+                        value={metrics.notes || ""}
+                        onChange={(e) => updateMetricField("notes", e.target.value)}
+                        className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        placeholder="Example: Prefer margins over volume this quarter."
+                      />
+                    </label>
+                    <p className="mt-2 text-xs text-neutral-500">
+                      These metrics are saved for this assistant profile and used to decide if a scenario is worth pursuing.
+                    </p>
+                  </div>
+
+                  {/* Currency Values and Percentages */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-neutral-200 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Detected Currency Values</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {currencyValues.length ? (
+                          currencyValues.map((value, idx) => (
+                            <span key={`${value}-${idx}`} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800">
+                              {value}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-sm text-neutral-500">None detected</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-neutral-200 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Detected Percentages</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {percentages.length ? (
+                          percentages.map((value, idx) => (
+                            <span key={`${value}-${idx}`} className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-800">
+                              {value}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-sm text-neutral-500">None detected</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Price Mapping */}
+                  <div className="rounded-lg border border-neutral-200 p-3">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Price Mapping</p>
+                      <p className="text-xs text-neutral-500">{pricedItems.length} mapped values</p>
+                    </div>
+                    {pricedItems.length ? (
+                      <div className="space-y-2">
+                        {pricedItems.slice(0, 20).map((item, idx) => (
+                          <div key={`${item.amount}-${idx}`} className="rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                                {item.amount}
+                              </span>
+                              <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-semibold text-neutral-700">
+                                {item.category || "other"}
+                              </span>
+                              {item.unit_hint ? (
+                                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-800">{item.unit_hint}</span>
+                              ) : null}
+                              {item.hole_count_hint ? (
+                                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-800">
+                                  {item.hole_count_hint} holes
+                                </span>
+                              ) : null}
+                              {item.depth_hint_ft ? (
+                                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                                  {item.depth_hint_ft} ft
+                                </span>
+                              ) : null}
+                              {item.diameter_hint_in ? (
+                                <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-cyan-800">
+                                  {item.diameter_hint_in} in
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="mt-1 text-xs text-neutral-700">{item.context || "No context found."}</p>
+                          </div>
+                        ))}
+                        {pricedItems.length > 20 ? (
+                          <p className="text-xs text-neutral-500">Showing first 20 mapped values. Open raw text/JSON for the full set.</p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-neutral-500">No mapped price context detected yet.</p>
+                    )}
+                  </div>
+
+                  {/* Detected Bid Totals */}
+                  <div className="rounded-lg border border-neutral-200 p-3">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Detected Bid Totals</p>
+                      <p className="text-xs text-neutral-500">{headlineTotals.length} candidates</p>
+                    </div>
+                    {headlineTotals.length ? (
+                      <div className="space-y-2">
+                        {headlineTotals.map((item, idx) => (
+                          <div key={`${item.amount}-${idx}`} className="rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                              {item.amount}
+                            </span>
+                            <p className="mt-1 text-xs text-neutral-700">{item.label || "No label context found."}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-neutral-500">
+                        No headline bid totals detected yet. Re-analyze this file after table extraction update.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Total Scenario */}
+                  <div className="rounded-lg border border-neutral-200 p-3">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Total Scenario</p>
+                      <span className="text-xs text-neutral-500">Use this as target contract value</span>
+                    </div>
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setScenarioMode("auto")}
+                        className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                          scenarioMode === "auto" ? "bg-brand text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                        }`}
+                      >
+                        Auto
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setScenarioMode("base")}
+                        className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                          scenarioMode === "base" ? "bg-brand text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                        }`}
+                      >
+                        Base
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setScenarioMode("alt")}
+                        className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                          scenarioMode === "alt" ? "bg-brand text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                        }`}
+                      >
+                        Alt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setScenarioMode("basePlusAlt")}
+                        className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                          scenarioMode === "basePlusAlt"
+                            ? "bg-brand text-white"
+                            : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                        }`}
+                      >
+                        Base + Alt
+                      </button>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="rounded-md bg-neutral-50 p-2">
+                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Selected scenario total</p>
+                        <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(selectedScenarioTotal)}</p>
+                      </div>
+                      <div className="rounded-md bg-neutral-50 p-2">
+                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Current mapped rollup total</p>
+                        <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(mappedRollupTotal)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Worth-It Evaluation */}
+                  <div
+                    className={`rounded-lg border p-3 ${
+                      worthIt ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+                    }`}
+                  >
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-700">Worth-It Evaluation</p>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${worthIt ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                        {worthIt ? "Worth pursuing" : "Below threshold"}
+                      </span>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="rounded-md bg-white/80 p-2">
+                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Recommended minimum bid</p>
+                        <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(recommendedMinimumBid)}</p>
+                      </div>
+                      <div className="rounded-md bg-white/80 p-2">
+                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Selected scenario amount</p>
+                        <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(selectedScenarioTotal)}</p>
+                      </div>
+                      <div className="rounded-md bg-white/80 p-2">
+                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Expected gross profit</p>
+                        <p className={`mt-1 text-sm font-semibold ${expectedProfit >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                          {formatCurrencyAmount(expectedProfit)}
+                        </p>
+                      </div>
+                      <div className="rounded-md bg-white/80 p-2">
+                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Expected margin</p>
+                        <p className="mt-1 text-sm font-semibold text-neutral-900">{expectedMargin.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-neutral-600">
+                      Floor formula: max(min contract, cost + min profit, margin target) with risk buffer applied.
+                    </p>
+                  </div>
+
+                  {/* Price Rollup */}
+                  <PriceRollupPanel pricedItems={pricedItems} />
+                </div>
+              </CollapsibleSection>
+
+              {/* Bid Builder Draft */}
+              <CollapsibleSection
+                title="Bid Builder Draft"
+                isOpen={expandedSections.draft}
+                onToggle={() => toggleSection("draft")}
+              >
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
                     <button
                       type="button"
                       onClick={saveDraft}
                       disabled={savingDraft || loadingDraft || !selectedDoc?.id}
-                      className="rounded-md bg-[#0b2a5a] px-3 py-1 text-xs font-semibold text-white hover:bg-[#143a75] disabled:opacity-60"
+                      className="rounded-md bg-brand px-3 py-1 text-xs font-semibold text-white hover:bg-brand-light disabled:opacity-60"
                     >
                       {savingDraft ? "Saving..." : "Save draft"}
                     </button>
@@ -1149,270 +1247,295 @@ function BidAssistantPanel() {
                       Download TXT
                     </button>
                   </div>
-                </div>
-                {loadingDraft ? (
-                  <p className="text-sm text-neutral-500">Loading draft...</p>
-                ) : (
-                  <>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <label className="text-xs text-neutral-600">
-                        Draft title
-                        <input
-                          type="text"
-                          value={draft.title}
-                          onChange={(e) => updateDraftField("title", e.target.value)}
-                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
-                        />
-                      </label>
-                      <label className="text-xs text-neutral-600">
-                        Due date
-                        <input
-                          type="text"
-                          value={draft.due_date}
-                          onChange={(e) => updateDraftField("due_date", e.target.value)}
-                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
-                        />
-                      </label>
-                      <label className="text-xs text-neutral-600">
-                        Project name
-                        <input
-                          type="text"
-                          value={draft.project_name}
-                          onChange={(e) => updateDraftField("project_name", e.target.value)}
-                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
-                        />
-                      </label>
-                      <label className="text-xs text-neutral-600">
-                        Client name
-                        <input
-                          type="text"
-                          value={draft.client_name}
-                          onChange={(e) => updateDraftField("client_name", e.target.value)}
-                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
-                        />
-                      </label>
-                    </div>
-
-                    <label className="mt-2 block text-xs text-neutral-600">
-                      Intro
-                      <textarea
-                        rows={3}
-                        value={draft.intro}
-                        onChange={(e) => updateDraftField("intro", e.target.value)}
-                        className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                      />
-                    </label>
-
-                    <div className="mt-2 grid gap-2 lg:grid-cols-2">
-                      <label className="text-xs text-neutral-600">
-                        Pricing lines (one per line: label | amount)
-                        <textarea
-                          rows={5}
-                          value={pricingItemsToTextarea(draft.pricing_items)}
-                          onChange={(e) => updateDraftField("pricing_items", textareaToPricingItems(e.target.value))}
-                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                        />
-                      </label>
-                      <label className="text-xs text-neutral-600">
-                        Scope items (one per line)
-                        <textarea
-                          rows={5}
-                          value={listToTextarea(draft.scope_items)}
-                          onChange={(e) => updateDraftField("scope_items", textareaToList(e.target.value))}
-                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                        />
-                      </label>
-                      <label className="text-xs text-neutral-600">
-                        Assumptions (one per line)
-                        <textarea
-                          rows={5}
-                          value={listToTextarea(draft.assumptions)}
-                          onChange={(e) => updateDraftField("assumptions", textareaToList(e.target.value))}
-                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                        />
-                      </label>
-                      <label className="text-xs text-neutral-600">
-                        Exclusions (one per line)
-                        <textarea
-                          rows={5}
-                          value={listToTextarea(draft.exclusions)}
-                          onChange={(e) => updateDraftField("exclusions", textareaToList(e.target.value))}
-                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                        />
-                      </label>
-                    </div>
-
-                    <label className="mt-2 block text-xs text-neutral-600">
-                      Terms
-                      <textarea
-                        rows={3}
-                        value={draft.terms}
-                        onChange={(e) => updateDraftField("terms", e.target.value)}
-                        className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                      />
-                    </label>
-                    <label className="mt-2 block text-xs text-neutral-600">
-                      Internal notes
-                      <textarea
-                        rows={2}
-                        value={draft.notes}
-                        onChange={(e) => updateDraftField("notes", e.target.value)}
-                        className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
-
-              <div className="rounded-lg border border-neutral-200 p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Ask This Bid (RAG)</p>
-                  <button
-                    type="button"
-                    onClick={vectorizeSelectedDocument}
-                    disabled={!selectedDoc?.id || vectorizingDocId === selectedDoc?.id}
-                    className="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
-                  >
-                    {vectorizingDocId === selectedDoc?.id ? "Vectorizing..." : "Vectorize now"}
-                  </button>
-                </div>
-                <div className="max-h-72 space-y-2 overflow-y-auto rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
-                  {chatHistory.length ? (
-                    chatHistory.map((entry, idx) => (
-                      <div
-                        key={`${entry.role}-${idx}`}
-                        className={`rounded-md border px-2.5 py-2 text-sm ${
-                          entry.role === "user" ? "border-blue-200 bg-blue-50 text-blue-900" : "border-neutral-200 bg-white text-neutral-800"
-                        }`}
-                      >
-                        <p className="whitespace-pre-wrap">{entry.text}</p>
-                        {entry.role === "assistant" && Array.isArray(entry.citations) && entry.citations.length ? (
-                          <div className="mt-2 space-y-1">
-                            {entry.citations.slice(0, 3).map((c, cIdx) => (
-                              <p key={`${idx}-citation-${cIdx}`} className="text-xs text-neutral-500">
-                                [{c.index}] {c.section}: {c.snippet}
-                              </p>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ))
+                  {loadingDraft ? (
+                    <p className="text-sm text-neutral-500">Loading draft...</p>
                   ) : (
-                    <p className="text-sm text-neutral-500">
-                      Ask questions like “What exclusions are risky?” or “Where is mobilization priced?” after vectorizing.
-                    </p>
-                  )}
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        askBidDocument();
-                      }
-                    }}
-                    placeholder="Ask this bid document..."
-                    className="h-10 flex-1 rounded-md border border-neutral-300 px-3 text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={askBidDocument}
-                    disabled={!chatInput.trim() || chatLoading || !selectedDoc?.id}
-                    className="rounded-md bg-[#0b2a5a] px-3 py-2 text-xs font-semibold text-white hover:bg-[#143a75] disabled:opacity-60"
-                  >
-                    {chatLoading ? "Asking..." : "Ask"}
-                  </button>
-                </div>
-              </div>
-
-              <PriceRollupPanel pricedItems={pricedItems} />
-
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Risk Flags</p>
-                <ul className="mt-2 space-y-1 text-sm text-amber-900">
-                  {riskFlags.length ? riskFlags.map((flag, idx) => <li key={idx}>- {flag}</li>) : <li>- No major risks flagged.</li>}
-                </ul>
-              </div>
-
-              <div className="grid gap-3 lg:grid-cols-3">
-                <ExpandableInsightList title="Assumptions" items={assumptions} />
-                <ExpandableInsightList title="Scope Items" items={scopeItems} />
-                <ExpandableInsightList title="Exclusions" items={exclusions} />
-              </div>
-
-              <div className="rounded-lg border border-neutral-200 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Suggestions</p>
-                <div className="mt-2 space-y-2">
-                  {suggestions.length ? suggestions.map((suggestion, idx) => {
-                    const key = `${selectedDoc.id}:${suggestion.id || suggestion.text}`;
-                    return (
-                      <div key={suggestion.id || idx} className="rounded-md border border-neutral-200 bg-neutral-50 p-2">
-                        <p className="text-sm text-neutral-800">{suggestion.text || "Untitled suggestion"}</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => submitFeedback(suggestion, "accepted")}
-                            className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => submitFeedback(suggestion, "edited")}
-                            className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
-                          >
-                            Edited
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => submitFeedback(suggestion, "rejected")}
-                            className="rounded-md bg-neutral-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-neutral-800"
-                          >
-                            Reject
-                          </button>
-                          {feedbackState[key] === "saving" ? <span className="text-xs text-neutral-500">Saving...</span> : null}
-                          {feedbackState[key] === "saved" ? <span className="text-xs text-emerald-700">Saved</span> : null}
-                          {feedbackState[key] === "error" ? <span className="text-xs text-red-700">Failed</span> : null}
-                        </div>
+                    <>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <label className="text-xs text-neutral-600">
+                          Draft title
+                          <input
+                            type="text"
+                            value={draft.title}
+                            onChange={(e) => updateDraftField("title", e.target.value)}
+                            className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                          />
+                        </label>
+                        <label className="text-xs text-neutral-600">
+                          Due date
+                          <input
+                            type="text"
+                            value={draft.due_date}
+                            onChange={(e) => updateDraftField("due_date", e.target.value)}
+                            className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                          />
+                        </label>
+                        <label className="text-xs text-neutral-600">
+                          Project name
+                          <input
+                            type="text"
+                            value={draft.project_name}
+                            onChange={(e) => updateDraftField("project_name", e.target.value)}
+                            className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                          />
+                        </label>
+                        <label className="text-xs text-neutral-600">
+                          Client name
+                          <input
+                            type="text"
+                            value={draft.client_name}
+                            onChange={(e) => updateDraftField("client_name", e.target.value)}
+                            className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                          />
+                        </label>
                       </div>
-                    );
-                  }) : (
-                    <p className="text-sm text-neutral-500">No suggestions generated for this file.</p>
+
+                      <label className="mt-2 block text-xs text-neutral-600">
+                        Intro
+                        <textarea
+                          rows={3}
+                          value={draft.intro}
+                          onChange={(e) => updateDraftField("intro", e.target.value)}
+                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+
+                      <div className="mt-2 grid gap-2 lg:grid-cols-2">
+                        <label className="text-xs text-neutral-600">
+                          Pricing lines (one per line: label | amount)
+                          <textarea
+                            rows={5}
+                            value={pricingItemsToTextarea(draft.pricing_items)}
+                            onChange={(e) => updateDraftField("pricing_items", textareaToPricingItems(e.target.value))}
+                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                          />
+                        </label>
+                        <label className="text-xs text-neutral-600">
+                          Scope items (one per line)
+                          <textarea
+                            rows={5}
+                            value={listToTextarea(draft.scope_items)}
+                            onChange={(e) => updateDraftField("scope_items", textareaToList(e.target.value))}
+                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                          />
+                        </label>
+                        <label className="text-xs text-neutral-600">
+                          Assumptions (one per line)
+                          <textarea
+                            rows={5}
+                            value={listToTextarea(draft.assumptions)}
+                            onChange={(e) => updateDraftField("assumptions", textareaToList(e.target.value))}
+                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                          />
+                        </label>
+                        <label className="text-xs text-neutral-600">
+                          Exclusions (one per line)
+                          <textarea
+                            rows={5}
+                            value={listToTextarea(draft.exclusions)}
+                            onChange={(e) => updateDraftField("exclusions", textareaToList(e.target.value))}
+                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                          />
+                        </label>
+                      </div>
+
+                      <label className="mt-2 block text-xs text-neutral-600">
+                        Terms
+                        <textarea
+                          rows={3}
+                          value={draft.terms}
+                          onChange={(e) => updateDraftField("terms", e.target.value)}
+                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                      <label className="mt-2 block text-xs text-neutral-600">
+                        Internal notes
+                        <textarea
+                          rows={2}
+                          value={draft.notes}
+                          onChange={(e) => updateDraftField("notes", e.target.value)}
+                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                    </>
                   )}
                 </div>
-              </div>
+              </CollapsibleSection>
 
-              <div className="rounded-lg border border-neutral-200 p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowExtractedJson((prev) => !prev)}
-                    className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
-                  >
-                    {showExtractedJson ? "Hide extracted JSON" : "View extracted JSON"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowRawText((prev) => !prev)}
-                    className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
-                  >
-                    {showRawText ? "Hide raw text" : "View raw text"}
-                  </button>
+              {/* Insights & Risk */}
+              <CollapsibleSection
+                title="Insights & Risk"
+                badge={riskFlags.length ? `${riskFlags.length} flags` : null}
+                badgeTone={riskFlags.length ? "red" : undefined}
+                isOpen={expandedSections.insights}
+                onToggle={() => toggleSection("insights")}
+              >
+                <div className="space-y-4">
+                  {/* Risk Flags */}
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Risk Flags</p>
+                    <ul className="mt-2 space-y-1 text-sm text-amber-900">
+                      {riskFlags.length ? riskFlags.map((flag, idx) => <li key={idx}>- {flag}</li>) : <li>- No major risks flagged.</li>}
+                    </ul>
+                  </div>
+
+                  {/* Assumptions / Scope / Exclusions */}
+                  <div className="grid gap-3 lg:grid-cols-3">
+                    <ExpandableInsightList title="Assumptions" items={assumptions} />
+                    <ExpandableInsightList title="Scope Items" items={scopeItems} />
+                    <ExpandableInsightList title="Exclusions" items={exclusions} />
+                  </div>
+
+                  {/* Suggestions */}
+                  <div className="rounded-lg border border-neutral-200 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Suggestions</p>
+                    <div className="mt-2 space-y-2">
+                      {suggestions.length ? suggestions.map((suggestion, idx) => {
+                        const key = `${selectedDoc.id}:${suggestion.id || suggestion.text}`;
+                        return (
+                          <div key={suggestion.id || idx} className="rounded-md border border-neutral-200 bg-neutral-50 p-2">
+                            <p className="text-sm text-neutral-800">{suggestion.text || "Untitled suggestion"}</p>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => submitFeedback(suggestion, "accepted")}
+                                className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => submitFeedback(suggestion, "edited")}
+                                className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                              >
+                                Edited
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => submitFeedback(suggestion, "rejected")}
+                                className="rounded-md bg-neutral-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-neutral-800"
+                              >
+                                Reject
+                              </button>
+                              {feedbackState[key] === "saving" ? <span className="text-xs text-neutral-500">Saving...</span> : null}
+                              {feedbackState[key] === "saved" ? <span className="text-xs text-emerald-700">Saved</span> : null}
+                              {feedbackState[key] === "error" ? <span className="text-xs text-red-700">Failed</span> : null}
+                            </div>
+                          </div>
+                        );
+                      }) : (
+                        <p className="text-sm text-neutral-500">No suggestions generated for this file.</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                {showExtractedJson ? (
-                  <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-neutral-950 p-3 text-xs text-neutral-100">
-                    {JSON.stringify(extracted, null, 2)}
-                  </pre>
-                ) : null}
-                {showRawText ? (
-                  <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-md bg-neutral-100 p-3 text-xs text-neutral-800">
-                    {selectedDoc?.raw_text || "Raw text not loaded for this row yet."}
-                  </pre>
-                ) : null}
-              </div>
+              </CollapsibleSection>
+
+              {/* Ask This Bid */}
+              <CollapsibleSection
+                title="Ask This Bid"
+                isOpen={expandedSections.chat}
+                onToggle={() => toggleSection("chat")}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={vectorizeSelectedDocument}
+                      disabled={!selectedDoc?.id || vectorizingDocId === selectedDoc?.id}
+                      className="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+                    >
+                      {vectorizingDocId === selectedDoc?.id ? "Vectorizing..." : "Vectorize now"}
+                    </button>
+                  </div>
+                  <div className="max-h-72 space-y-2 overflow-y-auto rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
+                    {chatHistory.length ? (
+                      chatHistory.map((entry, idx) => (
+                        <div
+                          key={`${entry.role}-${idx}`}
+                          className={`rounded-md border px-2.5 py-2 text-sm ${
+                            entry.role === "user" ? "border-blue-200 bg-blue-50 text-blue-900" : "border-neutral-200 bg-white text-neutral-800"
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap">{entry.text}</p>
+                          {entry.role === "assistant" && Array.isArray(entry.citations) && entry.citations.length ? (
+                            <div className="mt-2 space-y-1">
+                              {entry.citations.slice(0, 3).map((c, cIdx) => (
+                                <p key={`${idx}-citation-${cIdx}`} className="text-xs text-neutral-500">
+                                  [{c.index}] {c.section}: {c.snippet}
+                                </p>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-neutral-500">
+                        Ask questions like &quot;What exclusions are risky?&quot; or &quot;Where is mobilization priced?&quot; after vectorizing.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          askBidDocument();
+                        }
+                      }}
+                      placeholder="Ask this bid document..."
+                      className="h-10 flex-1 rounded-md border border-neutral-300 px-3 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={askBidDocument}
+                      disabled={!chatInput.trim() || chatLoading || !selectedDoc?.id}
+                      className="rounded-md bg-brand px-3 py-2 text-xs font-semibold text-white hover:bg-brand-light disabled:opacity-60"
+                    >
+                      {chatLoading ? "Asking..." : "Ask"}
+                    </button>
+                  </div>
+                </div>
+              </CollapsibleSection>
+
+              {/* Raw Data */}
+              <CollapsibleSection
+                title="Raw Data"
+                isOpen={expandedSections.debug}
+                onToggle={() => toggleSection("debug")}
+              >
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowExtractedJson((prev) => !prev)}
+                      className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+                    >
+                      {showExtractedJson ? "Hide extracted JSON" : "View extracted JSON"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowRawText((prev) => !prev)}
+                      className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+                    >
+                      {showRawText ? "Hide raw text" : "View raw text"}
+                    </button>
+                  </div>
+                  {showExtractedJson ? (
+                    <pre className="max-h-64 overflow-auto rounded-md bg-neutral-950 p-3 text-xs text-neutral-100">
+                      {JSON.stringify(extracted, null, 2)}
+                    </pre>
+                  ) : null}
+                  {showRawText ? (
+                    <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-md bg-neutral-100 p-3 text-xs text-neutral-800">
+                      {selectedDoc?.raw_text || "Raw text not loaded for this row yet."}
+                    </pre>
+                  ) : null}
+                </div>
+              </CollapsibleSection>
             </div>
           )}
         </div>
@@ -1522,150 +1645,133 @@ function SalesTW() {
       </Head>
       <div>
         <div className="mb-6">
-          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Sales</h1>
+          <h1 className={`${lato.className} text-2xl font-extrabold text-brand`}>Sales</h1>
           <p className="mt-1 text-sm text-neutral-600">
             Pipeline for open bids and pursuits, plus historical won-job data.
           </p>
         </div>
 
-        <div className="mb-6 flex gap-1 rounded-xl border border-neutral-200 bg-neutral-100/80 p-1">
-          <button
-            type="button"
-            onClick={() => setSelectedTab("pipeline")}
-            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
-              tab === "pipeline"
-                ? "bg-white text-[#0b2a5a] shadow-sm"
-                : "text-neutral-600 hover:text-neutral-900"
-            }`}
-          >
-            Pipeline
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedTab("won")}
-            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
-              tab === "won"
-                ? "bg-white text-[#0b2a5a] shadow-sm"
-                : "text-neutral-600 hover:text-neutral-900"
-            }`}
-          >
-            Won jobs
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedTab("assistant")}
-            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
-              tab === "assistant"
-                ? "bg-white text-[#0b2a5a] shadow-sm"
-                : "text-neutral-600 hover:text-neutral-900"
-            }`}
-          >
-            Bid Assistant
-          </button>
-        </div>
+        <nav className="mb-8 flex gap-1 border-b border-neutral-200">
+          {[
+            { id: "pipeline", label: "Pipeline" },
+            { id: "won", label: "Won Jobs" },
+            { id: "assistant", label: "Bid Assistant" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setSelectedTab(t.id)}
+              className={`relative px-4 py-3 text-sm font-semibold transition-colors ${
+                tab === t.id
+                  ? "text-brand after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-brand"
+                  : "text-neutral-500 hover:text-neutral-800"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
 
         {tab === "pipeline" ? (
           <SalesPipeline />
         ) : tab === "assistant" ? (
           <BidAssistantPanel />
         ) : (
-          <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow">
-            <p className="mb-4 text-sm text-neutral-600">
+          <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-card">
+            <p className="mb-4 text-sm text-neutral-500">
               Records from the legacy <strong>Customer</strong> table (sold work). For active pursuits, use the{" "}
               <strong>Pipeline</strong> tab.
             </p>
             {wonLoadError ? (
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <span>{wonLoadError} Use retry instead of refreshing the page.</span>
                 <button
                   type="button"
                   onClick={loadWonJobs}
                   disabled={loading}
-                  className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl border border-amber-300 bg-white px-3 py-2.5 text-sm font-semibold text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading ? "Retrying..." : "Retry won jobs"}
                 </button>
               </div>
             ) : null}
             <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
-              <input
-                className="h-10 rounded-md border border-neutral-300 px-3"
-                placeholder="Filter by Company"
-                value={companyFilter}
-                onChange={(e) => handleCompanyFilterChange(e.target.value)}
-              />
-              <input
-                className="h-10 rounded-md border border-neutral-300 px-3"
-                placeholder="Filter by Job Name"
-                value={jobNameFilter}
-                onChange={(e) => handleJobNameFilterChange(e.target.value)}
-              />
-              <input
-                className="h-10 rounded-md border border-neutral-300 px-3"
-                placeholder="Filter by Scope"
-                value={scopeFilter}
-                onChange={(e) => handleScopeFilterChange(e.target.value)}
-              />
-              <input
-                className="h-10 rounded-md border border-neutral-300 px-3"
-                placeholder="Filter by Month Sold"
-                value={monthSoldFilter}
-                onChange={(e) => handleMonthSoldFilterChange(e.target.value)}
-              />
-              <input
-                className="h-10 rounded-md border border-neutral-300 px-3"
-                placeholder="Filter by Estimator"
-                value={estimatorFilter}
-                onChange={(e) => handleEstimatorFilterChange(e.target.value)}
-              />
+              <input className="h-11 rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none" placeholder="Filter by Company" value={companyFilter} onChange={(e) => handleCompanyFilterChange(e.target.value)} />
+              <input className="h-11 rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none" placeholder="Filter by Job Name" value={jobNameFilter} onChange={(e) => handleJobNameFilterChange(e.target.value)} />
+              <input className="h-11 rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none" placeholder="Filter by Scope" value={scopeFilter} onChange={(e) => handleScopeFilterChange(e.target.value)} />
+              <input className="h-11 rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none" placeholder="Filter by Month Sold" value={monthSoldFilter} onChange={(e) => handleMonthSoldFilterChange(e.target.value)} />
+              <input className="h-11 rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none" placeholder="Filter by Estimator" value={estimatorFilter} onChange={(e) => handleEstimatorFilterChange(e.target.value)} />
             </div>
 
             {loading ? (
-              <div>Loading...</div>
+              <div className="py-8 text-center text-sm text-neutral-500">Loading...</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full table-auto">
-                  <thead>
-                    <tr className="text-left text-sm text-neutral-600">
-                      <th className="p-2">Company</th>
-                      <th className="p-2">Job Name</th>
-                      <th className="p-2">Amount</th>
-                      <th className="p-2">Scope</th>
-                      <th className="p-2">Day Sold</th>
-                      <th className="p-2">Month Sold</th>
-                      <th className="p-2">Estimator</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm text-neutral-800">
-                    {customers.map((c, idx) => (
-                      <tr key={idx} className="border-t">
-                        <td className="p-2">{c.name}</td>
-                        <td className="p-2">{c.jobName}</td>
-                        <td className="p-2">{c.amount}</td>
-                        <td className="p-2">{c.scope}</td>
-                        <td className="p-2">{c.dateSold}</td>
-                        <td className="p-2">{c.monthSold}</td>
-                        <td className="p-2">{c.estimator}</td>
+              <>
+                {/* Desktop table */}
+                <div className="hidden lg:block overflow-x-auto rounded-xl border border-neutral-200">
+                  <table className="min-w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-neutral-200 bg-neutral-50">
+                        <th className="sticky top-0 bg-neutral-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Company</th>
+                        <th className="sticky top-0 bg-neutral-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Job Name</th>
+                        <th className="sticky top-0 bg-neutral-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Amount</th>
+                        <th className="sticky top-0 bg-neutral-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Scope</th>
+                        <th className="sticky top-0 bg-neutral-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Day Sold</th>
+                        <th className="sticky top-0 bg-neutral-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Month Sold</th>
+                        <th className="sticky top-0 bg-neutral-50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Estimator</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100">
+                      {customers.map((c, idx) => (
+                        <tr key={idx} className="transition-colors hover:bg-neutral-50/60 even:bg-neutral-50/30">
+                          <td className="px-4 py-3 font-medium text-neutral-900">{c.name}</td>
+                          <td className="px-4 py-3 text-neutral-700">{c.jobName}</td>
+                          <td className="px-4 py-3 font-semibold text-brand">{c.amount}</td>
+                          <td className="px-4 py-3 text-neutral-600">{c.scope}</td>
+                          <td className="px-4 py-3 text-neutral-500 whitespace-nowrap">{c.dateSold}</td>
+                          <td className="px-4 py-3 text-neutral-500">{c.monthSold}</td>
+                          <td className="px-4 py-3 text-neutral-600">{c.estimator}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile cards */}
+                <div className="space-y-3 lg:hidden">
+                  {customers.map((c, idx) => (
+                    <div key={idx} className="rounded-xl border border-neutral-200 bg-white p-4 shadow-card">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-semibold text-neutral-900">{c.name}</p>
+                          <p className="text-sm text-neutral-500">{c.jobName}</p>
+                        </div>
+                        <p className="text-sm font-bold text-brand">{c.amount}</p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+                        <span>Scope: {c.scope}</span>
+                        <span>Sold: {c.dateSold}</span>
+                        <span>Est: {c.estimator}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
 
             <div className="mt-4 flex items-center justify-center gap-3">
               <button
-                className="rounded-md bg-neutral-100 px-3 py-1 ring-1 ring-neutral-300 disabled:opacity-50"
+                className="rounded-xl bg-neutral-100 px-4 py-2 text-sm font-semibold ring-1 ring-neutral-200 disabled:opacity-50"
                 onClick={handlePreviousPage}
                 disabled={page === 0}
               >
                 Previous
               </button>
-              <span className="text-sm">
+              <span className="text-sm text-neutral-500">
                 Page {page + 1} of {Math.max(1, totalPages)}
               </span>
               <button
-                className="rounded-md bg-neutral-100 px-3 py-1 ring-1 ring-neutral-300 disabled:opacity-50"
+                className="rounded-xl bg-neutral-100 px-4 py-2 text-sm font-semibold ring-1 ring-neutral-200 disabled:opacity-50"
                 onClick={handleNextPage}
                 disabled={page >= totalPages - 1}
               >
