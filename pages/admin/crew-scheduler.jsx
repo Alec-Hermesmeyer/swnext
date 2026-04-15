@@ -2928,6 +2928,23 @@ function CrewScheduler() {
     return map;
   }, [assignments]);
 
+  // Map worker IDs → rig/category names they're assigned to (for combobox display)
+  const workerRigNameMap = useMemo(() => {
+    const catById = {};
+    categories.forEach((c) => { catById[c.id] = c.name; });
+    const map = {};
+    assignments.forEach((a) => {
+      if (a.worker_id) {
+        if (!map[a.worker_id]) map[a.worker_id] = [];
+        const rigName = catById[a.category_id] || "Unknown rig";
+        if (!map[a.worker_id].includes(rigName)) {
+          map[a.worker_id].push(rigName);
+        }
+      }
+    });
+    return map;
+  }, [assignments, categories]);
+
   const scheduleRigStatusByCategoryId = useMemo(() => {
     const statusMap = {};
     categories.forEach((category) => {
@@ -4745,6 +4762,7 @@ function CrewScheduler() {
                   if (alreadyOnThisRig) return false;
                   return assignedCats.length === 0;
                 });
+                const availableWorkerIds = new Set(availableWorkers.map((w) => w.id));
                 const selectedWorkerForRig = rigWorkerDrafts[category.id] || "";
                 const statusBadge = status.isNonWorking
                   ? status.statusLabel || status.dayTypeLabel
@@ -4958,32 +4976,27 @@ function CrewScheduler() {
                       )}
 
                       <div className="mt-3 grid gap-2 md:grid-cols-[1fr,auto]">
-                        <label className="text-xs font-semibold text-neutral-500">
-                          Add Crew Member
-                          <select
+                        <div>
+                          <span className="mb-1 block text-xs font-semibold text-neutral-500">Add Crew Member</span>
+                          <CrewCombobox
+                            workers={workers}
+                            availableIds={availableWorkerIds}
+                            assignedMap={workerRigNameMap}
                             value={selectedWorkerForRig}
-                            onChange={(e) => {
-                              setRigWorkerDraft(category.id, e.target.value);
-                            }}
-                            className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          >
-                            <option value="">
-                              {availableWorkers.length > 0
-                                ? "Select available worker..."
-                                : "All workers are already assigned"}
-                            </option>
-                            {availableWorkers.map((worker) => (
-                              <option key={worker.id} value={worker.id}>
-                                {formatWorkerOption(worker)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                            onChange={(workerId) => setRigWorkerDraft(category.id, workerId)}
+                            placeholder={
+                              availableWorkers.length > 0
+                                ? "Search crew by name or role..."
+                                : "All workers assigned"
+                            }
+                            disabled={availableWorkers.length === 0}
+                          />
+                        </div>
                         <div className="flex items-end">
                           <button
                             onClick={() => addDraftWorkerToRig(category.id)}
                             disabled={!selectedWorkerForRig || saving}
-                            className="h-9 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                            className="h-10 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                           >
                             Add Crew
                           </button>
