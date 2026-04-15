@@ -407,6 +407,27 @@ function ContactTW() {
   const activeRuleCount = blockRules.filter((rule) => rule.is_active).length;
   const visibleRuleCount = blockRules.slice(0, 12).length;
 
+  // Quick stats — this week counts
+  const weekAgo = Date.now() - 7 * 86400000;
+  const thisWeekContacts = contactRows.filter((r) => r.created_at && new Date(r.created_at).getTime() >= weekAgo).length;
+  const thisWeekJobs = jobRows.filter((r) => r.created_at && new Date(r.created_at).getTime() >= weekAgo).length;
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const todayContacts = contactRows.filter((r) => r.created_at && new Date(r.created_at).getTime() >= todayStart.getTime()).length;
+  const todayJobs = jobRows.filter((r) => r.created_at && new Date(r.created_at).getTime() >= todayStart.getTime()).length;
+
+  const timeAgo = (iso) => {
+    if (!iso) return "";
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return `${days}d ago`;
+    return new Date(iso).toLocaleDateString();
+  };
+
   return (
     <>
       <Head>
