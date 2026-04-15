@@ -1992,6 +1992,7 @@ WHEN TO USE IT:
 HOW TO USE IT WELL:
 - Write a descriptive search query — "past pier drilling projects in Austin" is better than "Austin". For bids, include project name, client, or document keywords.
 - For bid uploads, pass **category_focus: "bidding"** so retrieval prefers proposal chunks.
+- When the user asks about a **specific section** of a bid (exclusions, scope, assumptions, pricing), also pass **section_filter** to narrow results: "scope_items", "exclusions", "assumptions", "priced_items", or "raw_text". Example: user asks "what are our exclusions on the Goodloe project?" → use category_focus "bidding", section_filter "exclusions", query "Goodloe exclusions".
 - Results come back ranked by relevance percentage. Focus on results above 75% relevance; treat lower-scoring results as supplementary.
 - Synthesize the results into a clear answer — do not dump raw chunks to the user. Cite the category (e.g. "from project history", "from bidding", or "from a contact form submission") when it adds clarity.
 - If no results are found, say so and suggest the user add or sync the information via the Knowledge Base page (Bid proposals sync for uploaded bids).
