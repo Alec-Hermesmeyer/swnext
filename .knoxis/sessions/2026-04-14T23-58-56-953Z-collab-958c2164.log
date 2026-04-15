@@ -200,3 +200,59 @@ When done, summarize what you changed (files, functions, lines).
 
 [ADDITIONAL CONTEXT]
 - Recent focus areas: refactoring
+[2026-04-15T10:41:20.225Z] CLAUDE DONE (exit 0, 207s, 80 lines):
+Let me read the exact lines I need to edit in both files:
+Good, I have the exact context. Now let me read the prefetch function:
+Now I have all the exact code. Let me apply the four changes:
+
+**Change 1:** Increase `RAG_MAX_CHUNK_CHARS` default from 600 → 1200
+**Change 2:** Add document-level deduplication after the top-5 slice and before rendering:
+**Change 3a:** Add `section_filter` to the search logic in admin-assistant-mutations.js. It needs to go after the category filtering and before deduplication:
+Now add the filtering logic after the category bidding filter and before deduplication. Let me re-read the exact area to get context:
+**Change 3b:** Add the `section_filter` parameter to the tool definition in ai-chat.js:
+Now let me also update the system prompt to teach the model about `section_filter`. Let me find the relevant section:
+**Change 4:** Improve the prefetch query phrasing — replace keyword-stuffed queries with natural-language queries that embed better:
+Now let me also enhance the result formatting in the mutations file to include section metadata when available, so the LLM knows what section each chunk came from:
+Now let me verify both files parse correctly:
+Both files parse cleanly. Let me run the build to make sure:
+Compiled successfully — the only failure is the pre-existing `blog/[slug]` remark/micromark issue, unrelated to our changes.
+All done. Here's a summary of what was changed:
+
+---
+
+## Changes Summary
+
+### Files Modified: 2
+
+| File | Change |
+|---|---|
+| `lib/admin-assistant-mutations.js` | 4 edits — chunk limit, deduplication, section filter logic, enriched result formatting |
+| `pages/api/ai-chat.js` | 2 edits — section_filter tool parameter, improved prefetch queries |
+
+---
+
+### Change 1: Increased chunk display limit (line 1293)
+**File:** `lib/admin-assistant-mutations.js`  
+**Before:** `RAG_MAX_CHUNK_CHARS` default `600`  
+**After:** Default `1200`  
+**Why:** Chunks are stored at 1300–1500 chars but the LLM was only seeing the first 
+[2026-04-15T10:41:21.813Z] KNOXIS (review): Claude has successfully implemented the 5 changes to improve the RAG feature. The changes include increasing the chunk display limit, adding document-level deduplication, implementing section filtering, enriching result formatting, and improving prefetch queries. The code has been verified to compile successfully, and all changes are now ready for review and testing.
+[2026-04-15T15:51:04.015Z] USER: on the admin crew scheduler we need to make the selecting of the crew alot easier
+[2026-04-15T15:51:06.652Z] KNOXIS (dispatch): Improving the crew selection process on the admin crew scheduler.
+[2026-04-15T15:51:06.652Z] DISPATCH #6:
+[AI CONTEXT ANALYSIS]
+Intent: general
+Priority: medium
+Complexity: simple
+Confidence: 30%
+
+[RECOMMENDATIONS]
+- This looks straightforward - should be quick to implement
+
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext
+Project: Node.js project: swnext · Next.js app · Git branch: tailwind-only
+File: pages/admin/crew-scheduler.jsx
+Task: Enhance the crew selection process to make it easier for admins. Consider adding features such as autocomplete, filtering, or grouping of crews. When done, summarize what you changed (files, functions, lines).
+
+[ADDITIONAL CONTEXT]
+- Recent focus areas: refactoring
