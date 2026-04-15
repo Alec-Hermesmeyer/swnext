@@ -15,6 +15,10 @@ const SOURCE_LABELS = {
   company_contacts: { label: "Company Contacts", description: "Internal company directory" },
   career_positions: { label: "Career Positions", description: "Job listings on the careers page" },
   workflow_profiles: { label: "Team Workflow Profiles", description: "What team members reported through 'Teach how I work'" },
+  bid_documents: {
+    label: "Bid proposals (sales)",
+    description: "Proposal PDFs/Docs uploaded in the bidding flow; re-sync after new uploads",
+  },
 };
 
 const CATEGORY_COLORS = {
@@ -25,6 +29,7 @@ const CATEGORY_COLORS = {
   team_insights: "bg-rose-100 text-rose-800",
   general: "bg-neutral-100 text-neutral-700",
   process: "bg-sky-100 text-sky-800",
+  bidding: "bg-orange-100 text-orange-900",
 };
 
 function KnowledgeBase() {

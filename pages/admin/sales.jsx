@@ -339,6 +339,10 @@ function BidAssistantPanel() {
   const [loadingDraft, setLoadingDraft] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [exportingDraft, setExportingDraft] = useState(false);
+  const [vectorizingDocId, setVectorizingDocId] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatHistory, setChatHistory] = useState([]);
 
   const fetchDocumentById = useCallback(async (documentId) => {
     if (!documentId) return null;
@@ -427,6 +431,11 @@ function BidAssistantPanel() {
     }
     loadDraft(selectedDoc.id);
   }, [loadDraft, selectedDoc?.id]);
+
+  useEffect(() => {
+    setChatHistory([]);
+    setChatInput("");
+  }, [selectedDoc?.id]);
 
   const handleUpload = async (event) => {
     const file = event.target.files?.[0];
@@ -555,6 +564,66 @@ function BidAssistantPanel() {
       setStatus(error.message || "Could not export draft");
     } finally {
       setExportingDraft(false);
+    }
+  };
+
+  const vectorizeSelectedDocument = async () => {
+    if (!selectedDoc?.id || vectorizingDocId) return;
+    setVectorizingDocId(selectedDoc.id);
+    setStatus("");
+    try {
+      const response = await fetch(`/api/bidding/ai-bidding/documents/${selectedDoc.id}/vectorize`, {
+        method: "POST",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Could not vectorize document");
+      const report = data?.vectorization || {};
+      if (report.vectorized) {
+        setStatus(`Vectorized ${report.stored_chunks || 0} chunks for chat.`);
+      } else {
+        setStatus(report.reason || "Vectorization did not complete.");
+      }
+    } catch (error) {
+      setStatus(error.message || "Could not vectorize document");
+    } finally {
+      setVectorizingDocId("");
+    }
+  };
+
+  const askBidDocument = async () => {
+    const question = String(chatInput || "").trim();
+    if (!selectedDoc?.id || !question || chatLoading) return;
+    setChatLoading(true);
+    const pendingEntry = { role: "user", text: question };
+    setChatHistory((prev) => [...prev, pendingEntry]);
+    setChatInput("");
+    try {
+      const response = await fetch(`/api/bidding/ai-bidding/documents/${selectedDoc.id}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: question, top_k: 6 }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || "Could not get chat response");
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: data?.answer || "No answer generated.",
+          citations: Array.isArray(data?.citations) ? data.citations : [],
+        },
+      ]);
+    } catch (error) {
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: error.message || "Could not get chat response",
+          citations: [],
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
     }
   };
 
@@ -1193,6 +1262,70 @@ function BidAssistantPanel() {
                     </label>
                   </>
                 )}
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Ask This Bid (RAG)</p>
+                  <button
+                    type="button"
+                    onClick={vectorizeSelectedDocument}
+                    disabled={!selectedDoc?.id || vectorizingDocId === selectedDoc?.id}
+                    className="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+                  >
+                    {vectorizingDocId === selectedDoc?.id ? "Vectorizing..." : "Vectorize now"}
+                  </button>
+                </div>
+                <div className="max-h-72 space-y-2 overflow-y-auto rounded-md border border-neutral-200 bg-neutral-50 p-2.5">
+                  {chatHistory.length ? (
+                    chatHistory.map((entry, idx) => (
+                      <div
+                        key={`${entry.role}-${idx}`}
+                        className={`rounded-md border px-2.5 py-2 text-sm ${
+                          entry.role === "user" ? "border-blue-200 bg-blue-50 text-blue-900" : "border-neutral-200 bg-white text-neutral-800"
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap">{entry.text}</p>
+                        {entry.role === "assistant" && Array.isArray(entry.citations) && entry.citations.length ? (
+                          <div className="mt-2 space-y-1">
+                            {entry.citations.slice(0, 3).map((c, cIdx) => (
+                              <p key={`${idx}-citation-${cIdx}`} className="text-xs text-neutral-500">
+                                [{c.index}] {c.section}: {c.snippet}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-neutral-500">
+                      Ask questions like “What exclusions are risky?” or “Where is mobilization priced?” after vectorizing.
+                    </p>
+                  )}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        askBidDocument();
+                      }
+                    }}
+                    placeholder="Ask this bid document..."
+                    className="h-10 flex-1 rounded-md border border-neutral-300 px-3 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={askBidDocument}
+                    disabled={!chatInput.trim() || chatLoading || !selectedDoc?.id}
+                    className="rounded-md bg-[#0b2a5a] px-3 py-2 text-xs font-semibold text-white hover:bg-[#143a75] disabled:opacity-60"
+                  >
+                    {chatLoading ? "Asking..." : "Ask"}
+                  </button>
+                </div>
               </div>
 
               <PriceRollupPanel pricedItems={pricedItems} />
