@@ -711,7 +711,7 @@ const tools = [
     function: {
       name: "search_knowledge_base",
       description:
-        "Search the company knowledge base (vector RAG). Includes project history, client inquiries, workflow profiles, company info, hiring data, and — when synced from the Knowledge Base — uploaded bid proposals/RFQs (PDF and doc text, scopes, exclusions, pricing language). Use for questions about document wording, past project context, or anything not fully in the live lists above. For questions about what an uploaded bid says, use category_focus \"bidding\".",
+        "Search the company knowledge base (vector RAG). Includes project history, client inquiries, workflow profiles, company info, hiring data, and — when synced from the Knowledge Base — uploaded bid proposals/RFQs (PDF and doc text, scopes, exclusions, pricing language). **Call this** when the user asks about recent bids, the bid pipeline in words, a named stadium/site/project/client, or proposal language — not only when the SALES OPPORTUNITIES list is empty. For uploaded bid/RFQ text use category_focus \"bidding\". When you summarize bidding hits, answer like a salesperson/estimator reviewing **our** proposal (we/our, deal-first, plain English) — not generic support tone.",
       parameters: {
         type: "object",
         properties: {
@@ -1732,6 +1732,7 @@ SALES — BID DOCUMENTS (RAG):
 The user is on /admin/sales. Uploaded proposal PDFs/docs are embedded in the knowledge base (category **bidding**) after an admin syncs **Bid proposals (sales)** on the Knowledge Base page.
 When they ask what a bid says, about scope/exclusions/pricing language in an upload, or to recall text from a proposal, call **search_knowledge_base** with **category_focus: "bidding"** and a query that names the project, client, or filename if known.
 That complements **analyze_bid** / **add_bid_details**, which use structured pipeline fields — RAG holds the actual document text.
+Answer in the **bid & proposal voice** below — they are at their own desk reviewing **our** work, not filing a ticket with IT.
 `
     : "";
 
@@ -1864,6 +1865,7 @@ ${linesOrFallback(
 )}
 
 SALES OPPORTUNITIES (pre-award pipeline — visible to you):
+This list is filtered by your login (e.g. some sales roles see a subset). If it is empty, that does NOT prove the company has no bids — always use search_knowledge_base (see BIDS & NAMED PROJECTS below) before telling the user nothing exists.
 ${linesOrFallback(
   (data.salesOpportunities || []).map((o) => {
     const money =
@@ -1872,7 +1874,7 @@ ${linesOrFallback(
         : "";
     return `- [${o.id}] ${o.title}${o.company ? ` | ${o.company}` : ""} | stage: ${o.stage}${money}${o.owner_name ? ` | owner: ${o.owner_name}` : ""}${o.bid_due ? ` | bid due: ${o.bid_due}` : ""}${o.next_follow_up ? ` | follow-up: ${o.next_follow_up}` : ""}`;
   }),
-  "None in your visible list."
+  "None in your visible list (still search the knowledge base for bids — see below)."
 )}
 
 APPLICATIONS BY POSITION: ${Object.entries(positionCounts)
@@ -1988,6 +1990,33 @@ HOW TO USE IT WELL:
 - Results come back ranked by relevance percentage. Focus on results above 75% relevance; treat lower-scoring results as supplementary.
 - Synthesize the results into a clear answer — do not dump raw chunks to the user. Cite the category (e.g. "from project history", "from bidding", or "from a contact form submission") when it adds clarity.
 - If no results are found, say so and suggest the user add or sync the information via the Knowledge Base page (Bid proposals sync for uploaded bids).
+- When the hit is **bidding** (our proposals), answer like **BID & PROPOSAL VOICE** — not like a generic chatbot or a vendor support script.
+
+BIDS & NAMED PROJECTS (MANDATORY — do not skip):
+Users ask about "recent bids", the pipeline, RFQs, proposals, or a **named** job/site/stadium/client. You often must **call tools in the same turn** before answering; do not rely only on the short lists in this prompt.
+- **Never** reply with only meta stage directions: no "(searching…)", "Please wait", "I'll call the tools", or "First I'll…" — either emit **tool_calls** (no user-facing filler) or answer with **facts**. If a **PRE-FETCHED SEARCH** block appears at the end of this system message, your answer must summarize that content concretely for the user.
+
+1. **"Recent bids" / "our bids" / pipeline overview**  
+   - Summarize any rows under SALES OPPORTUNITIES above (that is the live pipeline for this user).  
+   - **Also** call **search_knowledge_base** with **category_focus: "bidding"** and a query like "recent bid proposals opportunities RFQ scope pricing" (or the user's exact phrasing). Merge pipeline facts with anything useful from RAG.  
+   - If the pipeline list is empty, say clearly it may be access filtering, then still report what the knowledge base returned.
+
+2. **Specific names** (e.g. "Miller Sierra- Goodloe Stadium", a GC, or a job title)  
+   - **Before** saying you found nothing: call **search_knowledge_base** with **category_focus: "bidding"** and a query that includes the full name (and variants: drop punctuation, try last distinctive words like "Goodloe Stadium").  
+   - **Also** call **lookup_crew_job** with a short substring of the name (e.g. "Goodloe" or "Miller Sierra") in case it is already a crew job.  
+   - If bidding-focused search is thin, call **search_knowledge_base** again **without** category_focus using the same name for general KB / project history hits.  
+   - Then synthesize one answer from pipeline + tools; cite source (pipeline vs bidding vs crew job).
+
+3. Never answer "there are no bids" or "I couldn't find any information" about a named project **only** from an empty SALES OPPORTUNITIES line — you must have run the searches above (or be waiting for tool results).
+
+BID & PROPOSAL VOICE (read this whenever bids, RFQs, proposals, scope, exclusions, pricing, or pipeline deals are the topic):
+The user is usually a **salesperson or estimator talking about their own (S&W) bid** — same team, same deck, same risk. Your job is to sound like a sharp colleague at the whiteboard, not helpdesk copy or corporate AI filler.
+
+- **We / our / the proposal** — Describe what's in the documents as **our** offer ("we're carrying…", "our exclusions say…", "we priced…", "the quote ties mob to…"). Avoid distancing third person ("the document states that the contractor…") unless you're quoting verbatim for legal precision.
+- **Deal-first** — After you ground the answer in retrieved text, say what it **means for the pursuit**: risk, GC pushback, schedule, margin pressure, alternates, clarifications to chase. One short "so what" beats a wall of excerpt.
+- **Plain estimator English** — Short sentences, concrete numbers and units, bullets when listing scope lines or fee tables. No "I'd be happy to assist" / "please don't hesitate" / "leverage synergies".
+- **Honest limits** — If the chunk doesn't contain something they asked for, say it once plainly ("doesn't show pier count in what I pulled — want me to search for pier/table language?"). Don't pad with apologies or fake certainty.
+- **Tone** — Confident, direct, a little informal is fine. They're trying to **win work**; match that energy without hype.
 
 IMAGE MANAGEMENT GUIDE:
 The S&W website has two types of managed images:
@@ -2004,7 +2033,7 @@ When the user asks about "images", "page images", "gallery", "photos", "what ima
 - For page image changes, direct the user to /admin/image-assignments where they can visually browse and swap images.
 
 RULES:
-- Answer directly from the data above.
+- Answer directly from the data above **after** using tools when the question is about bids, opportunities, or a named project/site — see BIDS & NAMED PROJECTS.
 - Tailor suggestions to the current user's role, department, and saved workflow profile when it is useful.
 - Use the saved workflow profile to reduce repeated follow-up questions when that context is already known.
 - If asked about a date outside ${data.historyStart} to ${data.historyEnd}, say that date is outside the loaded history window.
@@ -2100,6 +2129,93 @@ function collectAffectedDates(messageHistory) {
     }
   }
   return Array.from(dates).sort();
+}
+
+/** User asks about bids / pipeline in the abstract — run KB search even if the model skips tools */
+const RECENT_BIDS_INTENT =
+  /\b(recent\s+bids?|our\s+bids?|tell\s+me\s+about\s+recent\s+bids?|tell\s+me\s+about\s+bids?\b|bid\s+opportunities|sales\s+bids?\b|bids?\s+in\s+the\s+pipeline)\b/i;
+
+function extractTellMeAboutSubject(message) {
+  const m = String(message || "").trim().match(/^tell\s+me\s+about\s+(.+)$/i);
+  if (!m) return null;
+  const subject = m[1].trim();
+  if (subject.length < 10) return null;
+  if (/^(recent|our|the)\s+bids?\b/i.test(subject)) return null;
+  return subject;
+}
+
+function formatMutationSnippet(result, label) {
+  if (!result) return "";
+  const text = result.message || result.error || JSON.stringify(result);
+  return `[${label}]\n${String(text).slice(0, 14000)}`;
+}
+
+/**
+ * Runs the same searches tools would run, and injects raw results into the system prompt
+ * so the model cannot reply with "(searching…)" or "details not provided" without seeing data.
+ */
+async function prefetchBidResearchSnippets(supabase, message, context, userRole, userAccessLevel) {
+  const text = String(message || "").trim();
+  if (!text || !process.env.OPENAI_API_KEY) return "";
+
+  const role = String(userRole || "").trim().toLowerCase();
+  const level = userAccessLevel ?? 3;
+  if (!hasToolAccess(role, "search_knowledge_base", level)) return "";
+
+  const recent = RECENT_BIDS_INTENT.test(text);
+  const named = !recent ? extractTellMeAboutSubject(text) : null;
+  if (!recent && !named) return "";
+
+  const toolCtx = {
+    cookieHeader: context.cookieHeader || "",
+    userId: context.userId || null,
+  };
+
+  try {
+    const blocks = [];
+    if (recent) {
+      const [rB, rG] = await Promise.all([
+        executeAdminAssistantMutation(supabase, "search_knowledge_base", {
+          query: "Recent bid proposals RFQs quotes opportunities scope exclusions pricing alternates",
+          category_focus: "bidding",
+        }, toolCtx),
+        executeAdminAssistantMutation(supabase, "search_knowledge_base", {
+          query: "Construction bids proposals sales opportunities pre-award projects",
+        }, toolCtx),
+      ]);
+      blocks.push(formatMutationSnippet(rB, "Bidding documents (vector)"));
+      blocks.push(formatMutationSnippet(rG, "General knowledge base (vector)"));
+    } else if (named) {
+      const canJobLookup = hasToolAccess(role, "lookup_crew_job", level);
+      const [rB, rG, rJ] = await Promise.all([
+        executeAdminAssistantMutation(
+          supabase,
+          "search_knowledge_base",
+          { query: named, category_focus: "bidding" },
+          toolCtx
+        ),
+        executeAdminAssistantMutation(supabase, "search_knowledge_base", { query: named }, toolCtx),
+        canJobLookup
+          ? executeAdminAssistantMutation(
+              supabase,
+              "lookup_crew_job",
+              { query: named.slice(0, 120) },
+              toolCtx
+            )
+          : Promise.resolve(null),
+      ]);
+      blocks.push(formatMutationSnippet(rB, `Bidding KB — "${named}"`));
+      blocks.push(formatMutationSnippet(rG, `General KB — "${named}"`));
+      if (rJ) blocks.push(formatMutationSnippet(rJ, "Crew job lookup"));
+    }
+
+    const body = blocks.filter(Boolean).join("\n\n---\n");
+    if (!body) return "";
+
+    return `\n\n--- PRE-FETCHED SEARCH (for this user message only; answer from this concretely) ---\n${body}\n--- END PRE-FETCH ---\n\nWhen this PRE-FETCHED block is present: summarize the actual text below for the user in **BID & PROPOSAL VOICE** (sales/estimator peer — we/our, deal-first, plain English). Do not say you are "about to" search, do not use "(searching…)" or "please wait", and do not claim details were omitted — the excerpts are your source. You may still call tools if you need more, but your first answer must use this data when relevant.\n`;
+  } catch (err) {
+    return `\n\n(PRE-FETCH failed: ${String(err.message || err)})\n`;
+  }
 }
 
 // ── Main handler ──
@@ -2203,7 +2319,18 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "AI service not configured" });
     }
 
-    const systemPrompt = buildSystemPrompt(data, userContext, assistantProfile, pagePath);
+    const prefetchBlock = await prefetchBidResearchSnippets(
+      supabase,
+      message,
+      {
+        cookieHeader: req.headers?.cookie || "",
+        userId: userContext?.id || null,
+      },
+      userRole,
+      userAccessLevel
+    );
+    const systemPrompt =
+      buildSystemPrompt(data, userContext, assistantProfile, pagePath) + prefetchBlock;
 
     const messages = [
       { role: "system", content: systemPrompt },
