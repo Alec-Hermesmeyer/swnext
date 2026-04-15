@@ -1,11 +1,9 @@
-import { createTransport } from "nodemailer";
 import fs from "fs";
 import path from "path";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import { sendMail } from "@/lib/mailer";
 
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const EMAIL_USER = process.env.MAIL_USER;
 const PHIL_EMAIL = process.env.PHIL_EMAIL;
 const EMAIL_ATTACHMENT_LIMIT_BYTES = 17 * 1024 * 1024;
 const EMAIL_MESSAGE_OVERHEAD_BYTES = 512 * 1024;
@@ -24,14 +22,6 @@ export default async function handler(req, res) {
   if (!scheduleDate || !packets || packets.length === 0) {
     return res.status(400).json({ message: "Missing required fields" });
   }
-
-  const transporter = createTransport({
-    service: "gmail",
-    auth: {
-      user: EMAIL_USER,
-      pass: EMAIL_PASS,
-    },
-  });
 
   const dateStr = new Date(scheduleDate + "T12:00:00").toLocaleDateString("en-US", {
     weekday: "long",
@@ -196,6 +186,9 @@ export default async function handler(req, res) {
       batches.push(currentBatch);
     }
 
+    // Read the PDF once (rather than per-batch) — Resend needs buffer content, not a path
+    const logPdfBuffer = fs.readFileSync(logAttachmentPath);
+
     for (let index = 0; index < batches.length; index += 1) {
       const batch = batches[index];
       const includeLogAttachment = index === 0;
@@ -207,8 +200,7 @@ export default async function handler(req, res) {
         logPdfUrl,
       });
 
-      await transporter.sendMail({
-        from: EMAIL_USER,
+      await sendMail({
         to: PHIL_EMAIL,
         subject:
           batches.length > 1
@@ -220,7 +212,7 @@ export default async function handler(req, res) {
             ? [
                 {
                   filename: "NEW LOG & INSPECTION.pdf",
-                  path: logAttachmentPath,
+                  content: logPdfBuffer,
                   contentType: "application/pdf",
                 },
               ]

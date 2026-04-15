@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { createTransport } from "nodemailer";
+import { sendMail, isMailerConfigured } from "@/lib/mailer";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -9,9 +9,6 @@ const SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
 
 const DEFAULT_RECIPIENTS = "mattm@swfoundation.com,colinw@swfoundation.com";
 const CONTACT_RECIPIENTS = process.env.CONTACT_FORM_RECIPIENTS || DEFAULT_RECIPIENTS;
-
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const EMAIL_USER = process.env.MAIL_USER;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -53,21 +50,15 @@ async function isBlockedSender(email) {
 }
 
 async function sendContactEmail({ name, email, number, company, message }) {
-  if (!EMAIL_USER || !EMAIL_PASS) return;
+  if (!isMailerConfigured()) return;
 
-  const transporter = createTransport({
-    service: "gmail",
-    auth: {
-      user: EMAIL_USER,
-      pass: EMAIL_PASS,
-    },
-  });
+  const recipients = CONTACT_RECIPIENTS.split(",").map((e) => e.trim()).filter(Boolean);
 
-  await transporter.sendMail({
-    from: EMAIL_USER,
-    to: CONTACT_RECIPIENTS,
+  await sendMail({
+    to: recipients,
     subject: "New Form Submission",
     text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nCompany: ${company}\nMessage: ${message}`,
+    replyTo: email,
   });
 }
 
