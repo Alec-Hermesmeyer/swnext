@@ -37,6 +37,118 @@ async function embedAndStore(docs) {
   return { stored, failed, errors: errors.slice(0, 5) };
 }
 
+/** Port of bidding API chunking: split long proposal text for embeddings. */
+function chunkBidText(text, maxChunkSize = 1400, overlap = 220) {
+  const source = String(text || "").trim();
+  if (!source) return [];
+  const chunks = [];
+  let start = 0;
+  const length = source.length;
+  while (start < length) {
+    let end = Math.min(length, start + maxChunkSize);
+    if (end < length) {
+      const window = source.slice(start, Math.min(length, end + 220));
+      const candidates = [
+        window.lastIndexOf("\n\n"),
+        window.lastIndexOf(". "),
+        window.lastIndexOf("\n"),
+        window.lastIndexOf(" "),
+      ];
+      for (const bp of candidates) {
+        if (bp > maxChunkSize / 2) {
+          end = start + bp + 1;
+          break;
+        }
+      }
+    }
+    const chunk = source.slice(start, end).trim();
+    if (chunk.length >= 60) chunks.push(chunk);
+    if (end >= length) break;
+    start = Math.max(0, end - overlap);
+  }
+  return chunks.slice(0, 80);
+}
+
+/**
+ * One bid_documents row → many `documents` rows (structured fields + raw_text chunks).
+ * Aligns with category "bidding" so sales chat (search_knowledge_base) can retrieve it.
+ */
+function rowsFromBidDocumentRow(doc) {
+  const extracted = doc.extracted_json || {};
+  const summary = extracted.summary || {};
+  const filename = doc.filename || "unknown";
+  const sourceLabel = doc.source_label || "upload";
+  const opportunity = doc.sales_opportunities;
+  const oppLine =
+    opportunity && [opportunity.title, opportunity.company].filter(Boolean).join(" — ");
+  const headerParts = [
+    `Bid document: ${filename}`,
+    `Uploaded via: ${sourceLabel}`,
+    oppLine ? `Opportunity: ${oppLine}` : null,
+  ];
+  const header = headerParts.filter(Boolean).join("\n");
+
+  const sections = [];
+
+  if (summary && Object.keys(summary).length) {
+    sections.push({
+      section: "summary",
+      text: JSON.stringify(summary),
+    });
+  }
+
+  for (const key of ["scope_items", "assumptions", "exclusions", "risk_flags"]) {
+    const values = extracted[key];
+    if (Array.isArray(values) && values.length) {
+      const lines = values.map((v) => `- ${String(v).trim()}`).filter((l) => l.length > 2);
+      if (lines.length) {
+        sections.push({ section: key, text: lines.join("\n") });
+      }
+    }
+  }
+
+  const priced = extracted.priced_items;
+  if (Array.isArray(priced) && priced.length) {
+    const lines = priced.slice(0, 40).map((item) => {
+      const amount = item.amount || "";
+      const cat = item.category || "other";
+      const ctx = item.context || "";
+      return `${amount} | ${cat} | ${ctx}`;
+    });
+    sections.push({ section: "priced_items", text: lines.join("\n") });
+  }
+
+  const raw = doc.raw_text || "";
+  for (const chunk of chunkBidText(raw, 1300, 180)) {
+    sections.push({ section: "raw_text", text: chunk });
+    if (sections.length >= 30) break;
+  }
+
+  const rows = [];
+  let chunkIndex = 0;
+  for (const s of sections) {
+    const body = String(s.text || "").trim();
+    if (body.length < 40) continue;
+    const content = `${header}\n\n---\n\n${body}`;
+    rows.push({
+      content,
+      category: "bidding",
+      source: "bid_documents",
+      metadata: {
+        bid_document_id: doc.id,
+        filename,
+        section: s.section,
+        chunk_index: chunkIndex,
+        opportunity_id: doc.opportunity_id || null,
+      },
+    });
+    chunkIndex += 1;
+    if (rows.length >= 30) break;
+  }
+
+  return rows;
+}
+
 // Backfill builders — convert existing DB rows into RAG documents
 const BACKFILL_SOURCES = {
   crew_jobs: async () => {
@@ -139,6 +251,45 @@ const BACKFILL_SOURCES = {
       metadata: { user_name: p.userNameSnapshot },
     }));
   },
+
+  /** Sales bid uploads (`bid_documents`) → RAG for admin/sales chat via search_knowledge_base */
+  bid_documents: async () => {
+    const { data: docs, error } = await supabase
+      .from("bid_documents")
+      .select("id, filename, source_label, raw_text, extracted_json, opportunity_id, created_at");
+    if (error) throw error;
+
+    const oppIds = [...new Set((docs || []).map((d) => d.opportunity_id).filter(Boolean))];
+    const oppById = {};
+    if (oppIds.length) {
+      const { data: opps, error: oppErr } = await supabase
+        .from("sales_opportunities")
+        .select("id, title, company")
+        .in("id", oppIds);
+      if (oppErr) throw oppErr;
+      (opps || []).forEach((o) => {
+        oppById[o.id] = o;
+      });
+    }
+
+    const out = [];
+    for (const doc of docs || []) {
+      const hasText = doc.raw_text && String(doc.raw_text).trim().length >= 40;
+      const ex = doc.extracted_json || {};
+      const hasExtracted =
+        (ex.summary && Object.keys(ex.summary).length > 0) ||
+        ["scope_items", "assumptions", "exclusions", "priced_items", "risk_flags"].some(
+          (k) => Array.isArray(ex[k]) && ex[k].length
+        );
+      if (!hasText && !hasExtracted) continue;
+      const enriched = {
+        ...doc,
+        sales_opportunities: doc.opportunity_id ? oppById[doc.opportunity_id] : null,
+      };
+      out.push(...rowsFromBidDocumentRow(enriched));
+    }
+    return out;
+  },
 };
 
 export default async function handler(req, res) {
@@ -165,7 +316,10 @@ export default async function handler(req, res) {
 
     const sources = Object.keys(BACKFILL_SOURCES).map((key) => ({
       key,
-      existing: sourceCounts[key] || 0,
+      existing:
+        key === "bid_documents"
+          ? (sourceCounts.bid_documents || 0) + (sourceCounts["bidding-upload"] || 0)
+          : sourceCounts[key] || 0,
     }));
 
     return res.status(200).json({ sources });
@@ -179,7 +333,11 @@ export default async function handler(req, res) {
 
   try {
     // Clear old documents from this source before re-backfilling
-    await supabase.from("documents").delete().eq("source", source);
+    if (source === "bid_documents") {
+      await supabase.from("documents").delete().in("source", ["bid_documents", "bidding-upload"]);
+    } else {
+      await supabase.from("documents").delete().eq("source", source);
+    }
 
     const docs = await BACKFILL_SOURCES[source]();
     if (!docs.length) {

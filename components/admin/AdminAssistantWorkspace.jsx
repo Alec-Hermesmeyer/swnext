@@ -1,5 +1,6 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -475,6 +476,7 @@ export default function AdminAssistantWorkspace({
   onThreadsReady,
 }) {
   const { profile, role, department, logout } = useAuth();
+  const router = useRouter();
 
   const visiblePromptCards = useMemo(
     () =>
@@ -766,6 +768,7 @@ export default function AdminAssistantWorkspace({
           message: text,
           history,
           sessionId: sessionIdRef.current,
+          pagePath: router.pathname || "",
         }),
       });
 
@@ -802,7 +805,7 @@ export default function AdminAssistantWorkspace({
     } finally {
       setLoading(false);
     }
-  }, [input, logout]);
+  }, [input, logout, router.pathname]);
 
   const clearHistory = async () => {
     if (!sessionId || loading) return;
