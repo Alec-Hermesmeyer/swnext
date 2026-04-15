@@ -543,110 +543,113 @@ function ContactTW() {
           </div>
         )}
 
-        {/* Data Table */}
-        <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+        {/* Submissions List */}
+        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+              <div className="flex items-center gap-3 text-neutral-400">
+                <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                Loading submissions...
+              </div>
             </div>
           ) : paginatedData.length === 0 ? (
-            <div className="text-center py-20 text-neutral-500">
-              <p className="text-lg font-medium">No submissions yet</p>
-              <p className="text-sm mt-1">
-                {activeTab === "contact" ? "Contact form" : "Job application"} submissions will appear here
+            <div className="py-20 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100">
+                <svg className="h-6 w-6 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" /></svg>
+              </div>
+              <p className="text-base font-semibold text-neutral-700">No submissions yet</p>
+              <p className="mt-1 text-sm text-neutral-500">
+                {activeTab === "contact" ? "Contact form" : "Job application"} submissions will appear here when they come in.
               </p>
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead className="bg-neutral-50 border-b border-neutral-200">
-                    {activeTab === "contact" ? (
-                      <tr className="text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
-                        <th className="px-4 py-3">Date</th>
-                        <th className="px-4 py-3">Name</th>
-                        <th className="px-4 py-3">Email</th>
-                        <th className="px-4 py-3">Phone</th>
-                        <th className="px-4 py-3">Message</th>
-                        <th className={`px-4 py-3 ${pipelineEnabled ? "min-w-[140px]" : "w-24"}`}>Actions</th>
-                      </tr>
-                    ) : (
-                      <tr className="text-left text-xs font-semibold text-neutral-600 uppercase tracking-wider">
-                        <th className="px-4 py-3">Date</th>
-                        <th className="px-4 py-3">Name</th>
-                        <th className="px-4 py-3">Email</th>
-                        <th className="px-4 py-3">Phone</th>
-                        <th className="px-4 py-3">Position</th>
-                        <th className={`px-4 py-3 ${hiringEnabled ? "min-w-[140px]" : "w-24"}`}>Actions</th>
-                      </tr>
-                    )}
-                  </thead>
-                  <tbody className="divide-y divide-neutral-100">
-                    {paginatedData.map((row) => (
-                      <tr
-                        key={row.id}
-                        className="hover:bg-blue-50 transition-colors cursor-pointer"
-                        onClick={() => setSelectedSubmission(row)}
-                      >
-                        <td className="px-4 py-3 text-sm text-neutral-500 whitespace-nowrap">
-                          {row.created_at ? new Date(row.created_at).toLocaleDateString() : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium text-neutral-900">
-                          {row.name || row.firstName || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-blue-600">
-                          {row.email || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-neutral-600">
-                          {row.number || row.phone || "—"}
-                        </td>
-                        {activeTab === "contact" ? (
-                          <td className="px-4 py-3 text-sm text-neutral-600 max-w-xs truncate" title={row.message}>
-                            {row.message ? (row.message.length > 50 ? row.message.substring(0, 50) + "..." : row.message) : "—"}
-                          </td>
-                        ) : (
-                          <td className="px-4 py-3">
-                            <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                              {row.position || "—"}
+              <ul className="divide-y divide-neutral-100">
+                {paginatedData.map((row) => {
+                  const name = row.name || row.firstName || "Unknown";
+                  const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+                  const isNew = row.created_at && (Date.now() - new Date(row.created_at).getTime()) < 86400000;
+                  return (
+                    <li
+                      key={row.id}
+                      onClick={() => setSelectedSubmission(row)}
+                      className="group flex cursor-pointer items-start gap-4 px-4 py-4 transition-colors hover:bg-neutral-50 sm:px-5"
+                    >
+                      {/* Avatar */}
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0b2a5a] to-[#143a75] text-sm font-bold text-white">
+                        {initials || "?"}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-neutral-900">{name}</span>
+                          {isNew && (
+                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                              New
                             </span>
-                          </td>
+                          )}
+                          {activeTab === "job" && row.position && (
+                            <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                              {row.position}
+                            </span>
+                          )}
+                          <span className="ml-auto shrink-0 text-xs text-neutral-400">{timeAgo(row.created_at)}</span>
+                        </div>
+
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-neutral-500">
+                          {row.email && (
+                            <span className="inline-flex items-center gap-1">
+                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
+                              {row.email}
+                            </span>
+                          )}
+                          {(row.number || row.phone) && (
+                            <span className="inline-flex items-center gap-1">
+                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" /></svg>
+                              {row.number || row.phone}
+                            </span>
+                          )}
+                        </div>
+
+                        {activeTab === "contact" && row.message && (
+                          <p className="mt-1.5 line-clamp-2 text-sm text-neutral-600">
+                            {row.message}
+                          </p>
                         )}
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex flex-wrap items-center gap-1.5">
+                      </div>
+
+                      {/* Actions */}
+                      <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-col items-end gap-1.5 sm:flex-row">
+                          {activeTab === "contact" && pipelineEnabled && (
                             <button
                               type="button"
-                              onClick={() => setSelectedSubmission(row)}
-                              className="rounded-md bg-neutral-100 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-200 transition-colors"
+                              onClick={() => handlePromoteToPipeline(row)}
+                              disabled={promoteLoading}
+                              className="inline-flex items-center gap-1 rounded-lg border border-[#0b2a5a]/20 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0b2a5a] transition-colors hover:bg-[#0b2a5a] hover:text-white disabled:opacity-50"
                             >
-                              View
+                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33" /></svg>
+                              Sales
                             </button>
-                            {activeTab === "contact" && pipelineEnabled ? (
-                              <button
-                                type="button"
-                                onClick={() => handlePromoteToPipeline(row)}
-                                disabled={promoteLoading}
-                                className="rounded-md bg-[#0b2a5a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#143a75] transition-colors disabled:opacity-50"
-                              >
-                                Sales
-                              </button>
-                            ) : null}
-                            {activeTab === "job" && hiringEnabled ? (
-                              <button
-                                type="button"
-                                onClick={() => handlePromoteToHiring(row)}
-                                disabled={promoteHiringLoading}
-                                className="rounded-md bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 transition-colors disabled:opacity-50"
-                              >
-                                Hiring
-                              </button>
-                            ) : null}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          )}
+                          {activeTab === "job" && hiringEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => handlePromoteToHiring(row)}
+                              disabled={promoteHiringLoading}
+                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-700 hover:text-white disabled:opacity-50"
+                            >
+                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Z" /></svg>
+                              Hiring
+                            </button>
+                          )}
+                          <svg className="h-4 w-4 text-neutral-300 transition-colors group-hover:text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
 
               {/* Pagination */}
               {totalPages > 1 && (
