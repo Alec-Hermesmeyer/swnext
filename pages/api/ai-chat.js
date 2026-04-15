@@ -710,11 +710,17 @@ const tools = [
     type: "function",
     function: {
       name: "search_knowledge_base",
-      description: "Search the company knowledge base for relevant context. Contains project history, client inquiries, team workflow profiles, company info, processes, and hiring data. Use this when the user asks about something that might have historical context, company background, past projects, client details, or process documentation that isn't in the live admin data above.",
+      description:
+        "Search the company knowledge base (vector RAG). Includes project history, client inquiries, workflow profiles, company info, hiring data, and — when synced from the Knowledge Base — uploaded bid proposals/RFQs (PDF and doc text, scopes, exclusions, pricing language). Use for questions about document wording, past project context, or anything not fully in the live lists above. For questions about what an uploaded bid says, use category_focus \"bidding\".",
       parameters: {
         type: "object",
         properties: {
           query: { type: "string", description: "The search query — describe what context you need" },
+          category_focus: {
+            type: "string",
+            description:
+              'Optional. Set exactly to the word bidding when the user asks about bid proposals, RFQs, uploaded bid PDFs, scope/exclusion language, alternates, or line-item text from the sales pipeline. Omit for general searches.',
+          },
         },
         required: ["query"],
       },
@@ -1705,7 +1711,7 @@ async function fetchSessionList(userContext) {
 
 // ── System prompt ──
 
-function buildSystemPrompt(data, userContext, assistantProfile) {
+function buildSystemPrompt(data, userContext, assistantProfile, pagePath = "") {
   const positionCounts = {};
   for (const app of data.jobApplications) {
     if (app.position) {
@@ -1718,6 +1724,17 @@ function buildSystemPrompt(data, userContext, assistantProfile) {
   const fullName =
     userContext?.fullName || userContext?.username || userContext?.email || "Current user";
   const writeAllowed = roleCanWrite(String(role || "").trim().toLowerCase(), userContext?.accessLevel ?? 3);
+  const onSalesPage =
+    typeof pagePath === "string" && pagePath.includes("/admin/sales");
+  const salesBidRagSection = onSalesPage
+    ? `
+SALES — BID DOCUMENTS (RAG):
+The user is on /admin/sales. Uploaded proposal PDFs/docs are embedded in the knowledge base (category **bidding**) after an admin syncs **Bid proposals (sales)** on the Knowledge Base page.
+When they ask what a bid says, about scope/exclusions/pricing language in an upload, or to recall text from a proposal, call **search_knowledge_base** with **category_focus: "bidding"** and a query that names the project, client, or filename if known.
+That complements **analyze_bid** / **add_bid_details**, which use structured pipeline fields — RAG holds the actual document text.
+`
+    : "";
+
   const workflowProfileSection = assistantProfile
     ? `USER WORKFLOW PROFILE:
 - Self-described role: ${assistantProfile.role_title || "Not provided"}
@@ -1742,7 +1759,7 @@ CURRENT USER:
 - Write access in chat: ${writeAllowed ? "enabled" : "disabled"}
 
 ${workflowProfileSection}
-
+${salesBidRagSection}
 OVERVIEW:
 - ${data.summary.totalActiveWorkers} active crew workers, ${data.summary.totalInactiveWorkers} inactive
 - ${data.summary.totalActiveCrewJobs} active crew jobs
@@ -1956,18 +1973,21 @@ You have access to a company knowledge base via the search_knowledge_base tool. 
 - Client inquiries and contact form messages
 - Team workflow profiles (what people need and their blockers)
 - Company contacts, career positions, processes
+- Uploaded bid proposals / RFQ documents from the sales pipeline (category **bidding**), after admins sync **Bid proposals (sales)** on the Knowledge Base page
 - Any manually added business context
 
 WHEN TO USE IT:
 - The user asks about past projects, a specific client, company processes, or historical context not fully covered by the live admin data above.
+- The user asks about **bid proposal language** — scope, exclusions, alternates, pricing tables, or "what did we bid on job X" — use **category_focus: "bidding"** (and ensure embeddings exist; if not, tell them to sync Bid proposals on the Knowledge Base page).
 - The user asks "do we have info on…", "what do we know about…", or references something you can't answer from the data above.
 - You are uncertain whether the live data covers the question — search first, then answer.
 
 HOW TO USE IT WELL:
-- Write a descriptive search query — "past pier drilling projects in Austin" is better than "Austin".
+- Write a descriptive search query — "past pier drilling projects in Austin" is better than "Austin". For bids, include project name, client, or document keywords.
+- For bid uploads, pass **category_focus: "bidding"** so retrieval prefers proposal chunks.
 - Results come back ranked by relevance percentage. Focus on results above 75% relevance; treat lower-scoring results as supplementary.
-- Synthesize the results into a clear answer — do not dump raw chunks to the user. Cite the category (e.g. "from project history" or "from a contact form submission") when it adds clarity.
-- If no results are found, say so and suggest the user add the information via the Knowledge Base page.
+- Synthesize the results into a clear answer — do not dump raw chunks to the user. Cite the category (e.g. "from project history", "from bidding", or "from a contact form submission") when it adds clarity.
+- If no results are found, say so and suggest the user add or sync the information via the Knowledge Base page (Bid proposals sync for uploaded bids).
 
 IMAGE MANAGEMENT GUIDE:
 The S&W website has two types of managed images:
@@ -2125,7 +2145,7 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const { message, history = [], sessionId = "" } = req.body || {};
+    const { message, history = [], sessionId = "", pagePath = "" } = req.body || {};
 
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Message is required" });
@@ -2183,7 +2203,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "AI service not configured" });
     }
 
-    const systemPrompt = buildSystemPrompt(data, userContext, assistantProfile);
+    const systemPrompt = buildSystemPrompt(data, userContext, assistantProfile, pagePath);
 
     const messages = [
       { role: "system", content: systemPrompt },
