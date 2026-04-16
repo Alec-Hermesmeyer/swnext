@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import withAuthTw from "@/components/withAuthTw";
@@ -8,10 +8,9 @@ import TWAdminLayout from "@/components/TWAdminLayout";
 import { Lato } from "next/font/google";
 import { getSalesData } from "@/actions/jobInfo";
 import SalesPipeline from "@/components/admin/SalesPipeline";
+import { BidAssistantPanel } from "@/components/admin/bid-assistant";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
-const METRICS_SOURCE_LABEL = "swnext-admin";
-const METRICS_PROFILE_KEY = "default";
 
 function getDefaultBidFitMetrics() {
   return {
