@@ -1359,38 +1359,49 @@ function BidAssistantPanel() {
 
                   {/* Worth-It Evaluation */}
                   <div
-                    className={`rounded-lg border p-3 ${
-                      worthIt ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+                    className={`rounded-2xl border-2 p-4 ${
+                      worthIt
+                        ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/30"
+                        : "border-red-200 bg-gradient-to-br from-red-50 to-red-100/30"
                     }`}
                   >
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-700">Worth-It Evaluation</p>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${worthIt ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-full ${worthIt ? "bg-emerald-100" : "bg-red-100"}`}>
+                          {worthIt ? (
+                            <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                          ) : (
+                            <svg className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                          )}
+                        </div>
+                        <p className="text-sm font-bold text-neutral-800">Worth-It Evaluation</p>
+                      </div>
+                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${worthIt ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
                         {worthIt ? "Worth pursuing" : "Below threshold"}
                       </span>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                      <div className="rounded-md bg-white/80 p-2">
-                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Recommended minimum bid</p>
-                        <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(recommendedMinimumBid)}</p>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="rounded-xl bg-white/80 p-3 shadow-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Min bid floor</p>
+                        <p className="mt-1 text-lg font-black tracking-tight text-neutral-900">{formatCurrencyAmount(recommendedMinimumBid)}</p>
                       </div>
-                      <div className="rounded-md bg-white/80 p-2">
-                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Selected scenario amount</p>
-                        <p className="mt-1 text-sm font-semibold text-neutral-900">{formatCurrencyAmount(selectedScenarioTotal)}</p>
+                      <div className="rounded-xl bg-white/80 p-3 shadow-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Scenario total</p>
+                        <p className="mt-1 text-lg font-black tracking-tight text-neutral-900">{formatCurrencyAmount(selectedScenarioTotal)}</p>
                       </div>
-                      <div className="rounded-md bg-white/80 p-2">
-                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Expected gross profit</p>
-                        <p className={`mt-1 text-sm font-semibold ${expectedProfit >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                      <div className="rounded-xl bg-white/80 p-3 shadow-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Gross profit</p>
+                        <p className={`mt-1 text-lg font-black tracking-tight ${expectedProfit >= 0 ? "text-emerald-700" : "text-red-700"}`}>
                           {formatCurrencyAmount(expectedProfit)}
                         </p>
                       </div>
-                      <div className="rounded-md bg-white/80 p-2">
-                        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Expected margin</p>
-                        <p className="mt-1 text-sm font-semibold text-neutral-900">{expectedMargin.toFixed(1)}%</p>
+                      <div className="rounded-xl bg-white/80 p-3 shadow-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Margin</p>
+                        <p className="mt-1 text-lg font-black tracking-tight text-neutral-900">{expectedMargin.toFixed(1)}%</p>
                       </div>
                     </div>
-                    <p className="mt-2 text-xs text-neutral-600">
-                      Floor formula: max(min contract, cost + min profit, margin target) with risk buffer applied.
+                    <p className="mt-3 text-[11px] text-neutral-500">
+                      Floor = max(min contract, cost + min profit, margin target) &times; (1 + risk buffer).
                     </p>
                   </div>
 
