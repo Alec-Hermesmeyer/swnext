@@ -307,3 +307,62 @@ Project: Node.js project: swnext · Next.js app · Git branch: tailwind-only
 File: pages/admin/crew-scheduler.jsx
 Task: Replace the plain select dropdown for job selection with a searchable, type-ahead combobox component, similar to the crew combobox. Ensure the component is accessible and follows the same design patterns as the crew combobox.
 When done, summarize what you changed (files, functions, lines).
+[2026-04-16T13:28:39.082Z] CLAUDE DONE (exit 0, 300s, 98 lines):
+Let me find how jobs are selected and assigned to rigs in the crew scheduler:
+Now let me read the full job selection area and the `assignJobToRig` function:
+Now let me read the full job selection dropdown area:
+Good. Now let me also check the job data shape:
+Now I know how `rigJob` is resolved — let me check that:
+Good, I now have the full picture. Let me also check how many jobs typically exist and whether they have `is_active`:
+Now let me check if jobs loaded into state are all jobs or just active ones:
+So `jobs` state contains only **active** jobs. Good. Now let me check whether jobs have a `customer_name` or `hiring_contractor` field for grouping:
+Now I have the full picture:
+
+- **Job data shape:** `job_name`, `job_number`, `customer_name`, `hiring_contractor`, `city`, `address`, `zip`, `pm_name`, `scope_description`, `is_active`, `default_rig`, etc.
+- **Current UI:** Plain `<select>` with `<option>` for each job showing `{job_name} (#{job_number}) {city} {zip}`
+- **Selection pattern:** `assignJobToRig(categoryId, jobId)` or `removeJobFromRig(categoryId)` when value cleared
+- **Grouping opportunity:** `customer_name` or `hiring_contractor` for logical grouping; `city` for location grouping
+
+Let me also read the existing `CrewCombobox.jsx` to match the design patterns:
+Good. Now I'll create the `JobCombobox` component following the same patterns:
+Now I need to integrate it. First, add the import:
+Now I need to build a `jobRigNameMap` that maps job IDs → rig names they're assigned to. Let me add it near the `workerRigNameMap`:
+Now replace the job `<select>` dropdown with `<JobCombobox>`. Let me re-read the exact current code:
+Now let me verify everything parses and builds:
+Stale `.next` cache. Let me clear it and retry:
+Compiled successfully with no errors. Let me also verify the output includes the full grep to make sure nothing was cut:
+Clean build — all pages rendered, no errors.
+Here's a summary of everything changed:
+
+---
+
+## Changes Summary
+
+### Files Create
+[2026-04-16T13:28:41.360Z] KNOXIS (review): Claude has successfully implemented the JobCombobox component, replacing the plain select dropdown with a searchable, customer/contractor-grouped, and assignment-status-aware combobox. The changes include creating a new JobCombobox component and integrating it into the crew-scheduler page. The code has been verified to compile successfully, and all changes are now ready for review and testing.
+[2026-04-16T13:37:22.268Z] USER: so we have the bid builder tab in sales and it works well. but the design is very poor.
+[2026-04-16T13:37:25.832Z] KNOXIS (dispatch): Redesigning the Bid Builder tab in the sales page to improve its design and user experience.
+[2026-04-16T13:37:25.832Z] DISPATCH #8:
+[AI CONTEXT ANALYSIS]
+Intent: feature
+Priority: medium
+Complexity: medium
+Confidence: 85%
+
+[RECOMMENDATIONS]
+- Break down into smaller, testable components
+
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext
+Project: Node.js project: swnext · Next.js app · Git branch: tailwind-only
+
+Redesign the Bid Builder tab in the sales page to improve its design and user experience. Focus on creating a clean, intuitive, and responsive layout that aligns with the existing design patterns in the application. Consider the following requirements:
+- Improve the overall visual hierarchy and typography
+- Enhance the form fields and inputs for better usability
+- Organize the content into clear sections or panels
+- Ensure the design is responsive and works well on different screen sizes and devices
+- Preserve the existing functionality and business logic
+When done, summarize what you changed (files, functions, lines).
+
+[ADDITIONAL CONTEXT]
+- Consider edge cases and error handling
+- Recent focus areas: feature
