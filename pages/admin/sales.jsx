@@ -1452,52 +1452,52 @@ function BidAssistantPanel() {
                     <p className="text-sm text-neutral-500">Loading draft...</p>
                   ) : (
                     <>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <label className="text-xs text-neutral-600">
-                          Draft title
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Draft title</span>
                           <input
                             type="text"
                             value={draft.title}
                             onChange={(e) => updateDraftField("title", e.target.value)}
-                            className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                            className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                           />
                         </label>
-                        <label className="text-xs text-neutral-600">
-                          Due date
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Due date</span>
                           <input
                             type="text"
                             value={draft.due_date}
                             onChange={(e) => updateDraftField("due_date", e.target.value)}
-                            className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                            className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                           />
                         </label>
-                        <label className="text-xs text-neutral-600">
-                          Project name
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Project name</span>
                           <input
                             type="text"
                             value={draft.project_name}
                             onChange={(e) => updateDraftField("project_name", e.target.value)}
-                            className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                            className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                           />
                         </label>
-                        <label className="text-xs text-neutral-600">
-                          Client name
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Client name</span>
                           <input
                             type="text"
                             value={draft.client_name}
                             onChange={(e) => updateDraftField("client_name", e.target.value)}
-                            className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                            className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                           />
                         </label>
                       </div>
 
-                      <label className="mt-2 block text-xs text-neutral-600">
-                        Intro
+                      <label className="mt-3 block">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Intro / cover letter</span>
                         <textarea
                           rows={3}
                           value={draft.intro}
                           onChange={(e) => updateDraftField("intro", e.target.value)}
-                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                         />
                       </label>
 
