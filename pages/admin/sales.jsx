@@ -227,57 +227,60 @@ function DraftPricingTableEditor({ items, onChange }) {
   };
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white">
-      <div className="flex items-center justify-between border-b border-neutral-200 px-3 py-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Pricing Table</p>
+    <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between border-b border-neutral-200 bg-neutral-50/50 px-4 py-2.5">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Pricing Table</p>
         <button
           type="button"
           onClick={addRow}
-          className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+          className="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
         >
           + Add row
         </button>
       </div>
       {!safeItems.length ? (
-        <div className="px-3 py-4 text-sm text-neutral-500">No pricing lines yet. Add a row to build the table.</div>
+        <div className="px-4 py-6 text-center text-sm text-neutral-400">No pricing lines yet. Add a row to build the table.</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+            <thead className="bg-neutral-50 text-[10px] uppercase tracking-widest text-neutral-400">
               <tr>
-                <th className="px-3 py-2 font-semibold">Line item</th>
-                <th className="px-3 py-2 font-semibold">Amount</th>
-                <th className="px-3 py-2 font-semibold text-right">Action</th>
+                <th className="px-4 py-2 font-bold">Line item</th>
+                <th className="px-4 py-2 font-bold w-40">Amount</th>
+                <th className="px-4 py-2 font-bold text-right w-20" />
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100">
               {safeItems.map((row, index) => (
-                <tr key={`draft-pricing-${index}`} className="border-t border-neutral-200">
-                  <td className="px-3 py-2 align-top">
+                <tr key={`draft-pricing-${index}`} className="transition-colors hover:bg-neutral-50/50">
+                  <td className="px-4 py-2 align-top">
                     <input
                       type="text"
                       value={row?.label || ""}
                       onChange={(e) => updateRow(index, "label", e.target.value)}
                       placeholder="Line description"
-                      className="h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                      className="h-9 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     />
                   </td>
-                  <td className="px-3 py-2 align-top">
+                  <td className="px-4 py-2 align-top">
                     <input
                       type="text"
                       value={row?.amount || ""}
                       onChange={(e) => updateRow(index, "amount", e.target.value)}
                       placeholder="$0.00"
-                      className="h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                      className="h-9 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     />
                   </td>
-                  <td className="px-3 py-2 text-right align-top">
+                  <td className="px-4 py-2 text-right align-top">
                     <button
                       type="button"
                       onClick={() => removeRow(index)}
-                      className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100"
+                      className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                      title="Remove row"
                     >
-                      Remove
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   </td>
                 </tr>
@@ -1725,8 +1728,10 @@ function BidAssistantPanel() {
               {/* Raw Data */}
               <CollapsibleSection
                 title="Raw Data"
+                subtitle="Extracted JSON and raw document text"
                 isOpen={expandedSections.debug}
                 onToggle={() => toggleSection("debug")}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>}
               >
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
