@@ -169,7 +169,7 @@ function bidAssistantReducer(state, action) {
       return { ...state, chatLoading: action.payload };
 
     case BID_ACTIONS.CLEAR_CHAT:
-      return { ...state, chatHistory: [], chatInput: "" };
+      return { ...state, chatHistory: [] };
 
     // ── Metrics ──
     case BID_ACTIONS.SET_METRICS:
