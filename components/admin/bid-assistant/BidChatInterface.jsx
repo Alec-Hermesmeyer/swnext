@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import BidChatMessage from "./BidChatMessage";
-import { CHAT_QUICK_ACTIONS, normalizeDraftPayload } from "./bid-assistant-utils";
+import { CHAT_QUICK_ACTIONS } from "./bid-assistant-utils";
 
 // ── Welcome message when a document is selected ─────────────────────
 
