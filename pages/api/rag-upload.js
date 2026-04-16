@@ -227,8 +227,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3. Chunk the text
-    const chunks = chunkText(text);
+    // 3. Chunk the text (pass filename for context-aware headers)
+    const chunks = chunkText(text, { filename: originalName });
 
     // 4. Embed and store each chunk
     let stored = 0;
