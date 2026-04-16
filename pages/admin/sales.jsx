@@ -481,40 +481,59 @@ function PriceRollupPanel({ pricedItems }) {
   );
 }
 
-function CollapsibleSection({ title, badge, badgeTone, isOpen, onToggle, children }) {
+function CollapsibleSection({ title, subtitle, badge, badgeTone, icon, isOpen, onToggle, children }) {
   return (
-    <div className="rounded-xl border border-neutral-200 overflow-hidden">
+    <div className={`rounded-2xl border overflow-hidden transition-shadow ${isOpen ? "border-neutral-200 shadow-card" : "border-neutral-200/80"}`}>
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-3 bg-neutral-50/50 px-4 py-3 text-left transition-colors hover:bg-neutral-50"
+        className="flex w-full items-center justify-between gap-3 bg-gradient-to-r from-neutral-50/80 to-white px-5 py-3.5 text-left transition-colors hover:from-neutral-50"
       >
         <div className="flex items-center gap-3">
+          <div className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${isOpen ? "bg-brand-50 text-brand" : "bg-neutral-100 text-neutral-400"}`}>
+            {icon || (
+              <svg
+                className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-neutral-800">{title}</h3>
+            {subtitle ? <p className="mt-0.5 text-[11px] text-neutral-400">{subtitle}</p> : null}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {badge ? (
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                badgeTone === "emerald"
+                  ? "bg-emerald-100 text-emerald-800"
+                  : badgeTone === "red"
+                    ? "bg-red-100 text-red-800"
+                    : badgeTone === "sky"
+                      ? "bg-sky-100 text-sky-800"
+                      : "bg-neutral-100 text-neutral-600"
+              }`}
+            >
+              {badge}
+            </span>
+          ) : null}
           <svg
-            className={`h-4 w-4 text-neutral-400 transition-transform ${isOpen ? "rotate-90" : ""}`}
+            className={`h-4 w-4 text-neutral-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
-          <h3 className="text-sm font-bold text-neutral-800">{title}</h3>
         </div>
-        {badge ? (
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-              badgeTone === "emerald"
-                ? "bg-emerald-100 text-emerald-800"
-                : badgeTone === "red"
-                  ? "bg-red-100 text-red-800"
-                  : "bg-neutral-100 text-neutral-600"
-            }`}
-          >
-            {badge}
-          </span>
-        ) : null}
       </button>
-      {isOpen ? <div className="border-t border-neutral-100 p-4">{children}</div> : null}
+      {isOpen ? <div className="border-t border-neutral-100 px-5 py-4">{children}</div> : null}
     </div>
   );
 }
