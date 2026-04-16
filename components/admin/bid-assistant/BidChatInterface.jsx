@@ -231,7 +231,7 @@ export default function BidChatInterface({ state, actions }) {
             {chatHistory.length > 1 ? (
               <button
                 type="button"
-                onClick={actions.clearChat}
+                onClick={() => { actions.clearChat(); setInput(""); }}
                 className="rounded-lg px-2 py-1 text-[11px] font-semibold text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
               >
                 Clear
