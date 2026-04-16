@@ -59,9 +59,8 @@ export function getInitialState() {
     savingDraft: false,
     exportingDraft: false,
 
-    // Chat
+    // Chat (chatInput is managed locally in BidChatInterface)
     chatHistory: [],
-    chatInput: "",
     chatLoading: false,
 
     // Metrics
