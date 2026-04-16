@@ -96,6 +96,11 @@ export default function BidChatInterface({ state, actions }) {
   const inputRef = useRef(null);
   const hasShownWelcome = useRef(null);
 
+  // Reset local input when document changes (reducer clears chatHistory)
+  useEffect(() => {
+    setInput("");
+  }, [selectedDoc?.id]);
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
