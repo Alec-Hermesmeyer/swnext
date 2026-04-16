@@ -12,7 +12,13 @@ import { BidAssistantPanel } from "@/components/admin/bid-assistant";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-function getDefaultBidFitMetrics() {
+// ── Old inline bid-assistant components have been extracted to:
+//    @/components/admin/bid-assistant/
+// ── See: BidAssistantPanel, BidChatInterface, BidDocumentEditor,
+//    BidChatMessage, useBidAssistantReducer, bid-assistant-utils
+// ────────────────────────────────────────────────────────────────
+
+function _removed_getDefaultBidFitMetrics() {
   return {
     source_label: METRICS_SOURCE_LABEL,
     profile_key: METRICS_PROFILE_KEY,
