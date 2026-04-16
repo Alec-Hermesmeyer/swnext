@@ -18,6 +18,7 @@ const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 //    BidChatMessage, useBidAssistantReducer, bid-assistant-utils
 // ────────────────────────────────────────────────────────────────
 
+/* eslint-disable-next-line no-unused-vars -- anchor for removed block */
 function _removed_getDefaultBidFitMetrics() {
   return {
     source_label: METRICS_SOURCE_LABEL,
