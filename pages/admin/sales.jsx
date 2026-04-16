@@ -1109,21 +1109,24 @@ function BidAssistantPanel() {
               >
                 <div className="space-y-4">
                   {/* Bid Fit Metrics */}
-                  <div className="rounded-lg border border-neutral-200 p-3">
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Bid Fit Metrics</p>
+                  <div className="rounded-xl border border-neutral-200 bg-gradient-to-br from-white to-neutral-50/30 p-4">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Bid Fit Metrics</p>
+                        <p className="mt-0.5 text-[11px] text-neutral-400">Saved per profile — used for worth-it scoring</p>
+                      </div>
                       <button
                         type="button"
                         onClick={saveMetrics}
                         disabled={savingMetrics || loadingMetrics}
-                        className="rounded-md bg-brand px-3 py-1 text-xs font-semibold text-white hover:bg-brand-light disabled:opacity-60"
+                        className="rounded-lg bg-brand px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-light disabled:opacity-60"
                       >
                         {savingMetrics ? "Saving..." : "Save Metrics"}
                       </button>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      <label className="text-xs text-neutral-600">
-                        Target margin %
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Target margin %</span>
                         <input
                           type="number"
                           step="0.1"
@@ -1131,33 +1134,33 @@ function BidAssistantPanel() {
                           max="95"
                           value={metrics.target_margin_percent}
                           onChange={(e) => updateMetricField("target_margin_percent", e.target.value)}
-                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                          className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                         />
                       </label>
-                      <label className="text-xs text-neutral-600">
-                        Minimum profit ($)
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Minimum profit ($)</span>
                         <input
                           type="number"
                           step="1000"
                           min="0"
                           value={metrics.minimum_profit_usd}
                           onChange={(e) => updateMetricField("minimum_profit_usd", e.target.value)}
-                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                          className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                         />
                       </label>
-                      <label className="text-xs text-neutral-600">
-                        Minimum contract value ($)
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Min contract value ($)</span>
                         <input
                           type="number"
                           step="10000"
                           min="0"
                           value={metrics.minimum_contract_value_usd}
                           onChange={(e) => updateMetricField("minimum_contract_value_usd", e.target.value)}
-                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                          className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                         />
                       </label>
-                      <label className="text-xs text-neutral-600">
-                        Risk buffer %
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Risk buffer %</span>
                         <input
                           type="number"
                           step="0.1"
@@ -1165,34 +1168,31 @@ function BidAssistantPanel() {
                           max="100"
                           value={metrics.risk_buffer_percent}
                           onChange={(e) => updateMetricField("risk_buffer_percent", e.target.value)}
-                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                          className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                         />
                       </label>
-                      <label className="text-xs text-neutral-600">
-                        Estimated job cost ($)
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Estimated job cost ($)</span>
                         <input
                           type="number"
                           step="1000"
                           min="0"
                           value={metrics.default_estimated_cost_usd}
                           onChange={(e) => updateMetricField("default_estimated_cost_usd", e.target.value)}
-                          className="mt-1 h-9 w-full rounded-md border border-neutral-300 px-2 text-sm"
+                          className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                         />
                       </label>
                     </div>
-                    <label className="mt-2 block text-xs text-neutral-600">
-                      Notes
+                    <label className="mt-3 block">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Notes</span>
                       <textarea
                         rows={2}
                         value={metrics.notes || ""}
                         onChange={(e) => updateMetricField("notes", e.target.value)}
-                        className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                        className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                         placeholder="Example: Prefer margins over volume this quarter."
                       />
                     </label>
-                    <p className="mt-2 text-xs text-neutral-500">
-                      These metrics are saved for this assistant profile and used to decide if a scenario is worth pursuing.
-                    </p>
                   </div>
 
                   {/* Currency Values and Percentages */}
