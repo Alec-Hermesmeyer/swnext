@@ -1058,36 +1058,40 @@ function BidAssistantPanel() {
               {/* Overview */}
               <CollapsibleSection
                 title="Overview"
+                subtitle={selectedDoc.filename}
                 isOpen={expandedSections.overview}
                 onToggle={() => toggleSection("overview")}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
               >
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-base font-bold text-neutral-900">{selectedDoc.filename}</h3>
-                    <p className="text-xs text-neutral-500">
-                      {selectedDoc.file_type?.toUpperCase() || "FILE"} &middot; Uploaded {new Date(selectedDoc.created_at).toLocaleString()}
-                    </p>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className={`${lato.className} text-lg font-bold text-neutral-900`}>{selectedDoc.filename}</h3>
+                      <p className="mt-1 text-xs text-neutral-400">
+                        {selectedDoc.file_type?.toUpperCase() || "FILE"} &middot; Uploaded {new Date(selectedDoc.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-brand-50 px-3 py-1 text-[11px] font-bold text-brand">
+                      {selectedDoc?.source_label || "Upload"}
+                    </span>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Project</p>
-                      <p className="mt-1 font-medium text-neutral-800">{projectName}</p>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="group rounded-xl border border-neutral-200 bg-gradient-to-br from-white to-neutral-50/50 p-3.5 transition-shadow hover:shadow-card">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Project</p>
+                      <p className="mt-1.5 text-sm font-semibold text-neutral-900 leading-snug">{projectName}</p>
                     </div>
-                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Client</p>
-                      <p className="mt-1 font-medium text-neutral-800">{clientName || "Not detected"}</p>
+                    <div className="group rounded-xl border border-neutral-200 bg-gradient-to-br from-white to-neutral-50/50 p-3.5 transition-shadow hover:shadow-card">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Client</p>
+                      <p className="mt-1.5 text-sm font-semibold text-neutral-900 leading-snug">{clientName || "Not detected"}</p>
                     </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Due Date</p>
-                      <p className="mt-1 font-medium text-neutral-800">{dueDate || "Not detected"}</p>
+                    <div className="group rounded-xl border border-neutral-200 bg-gradient-to-br from-white to-neutral-50/50 p-3.5 transition-shadow hover:shadow-card">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Due Date</p>
+                      <p className={`mt-1.5 text-sm font-semibold leading-snug ${dueDate ? "text-neutral-900" : "text-neutral-400"}`}>{dueDate || "Not detected"}</p>
                     </div>
-                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Source Label</p>
-                      <p className="mt-1 font-medium text-neutral-800">{selectedDoc?.source_label || "Unknown source"}</p>
+                    <div className="group rounded-xl border border-neutral-200 bg-gradient-to-br from-white to-neutral-50/50 p-3.5 transition-shadow hover:shadow-card">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Source</p>
+                      <p className="mt-1.5 text-sm font-semibold text-neutral-900 leading-snug">{selectedDoc?.source_label || "Unknown"}</p>
                     </div>
                   </div>
                 </div>
