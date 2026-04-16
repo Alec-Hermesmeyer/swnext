@@ -115,7 +115,7 @@ function PricingTableEditor({ items, onChange }) {
       ) : (
         <div className="space-y-2">
           {safeItems.map((row, index) => (
-            <div key={`pricing-${index}`} className="flex items-center gap-2">
+            <div key={row?._key || getItemKey(row, index)} className="flex items-center gap-2">
               {/* Drag handle / reorder */}
               <div className="flex flex-col gap-0.5">
                 <button
