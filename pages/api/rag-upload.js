@@ -47,6 +47,17 @@ function chunkText(text, maxChunkSize = 1500, overlap = 200) {
   return chunks.filter((c) => c.length > 50); // skip tiny fragments
 }
 
+/**
+ * Extract readable text from uploaded files.
+ *
+ * For DOCX files we pull text from the inner word/document.xml (the DOCX
+ * format is just a ZIP of XML files). This produces far cleaner text than
+ * the previous raw-binary-to-UTF-8 fallback.
+ *
+ * For PDFs the raw-binary approach is retained as a best-effort extractor
+ * (a proper library like pdf-parse would be an excellent next step) but we
+ * now apply smarter cleanup so the embedding model gets usable input.
+ */
 function extractTextFromFile(filePath, mimeType) {
   const raw = fs.readFileSync(filePath);
 
@@ -59,7 +70,7 @@ function extractTextFromFile(filePath, mimeType) {
     return raw.toString("utf-8");
   }
 
-  // JSON
+  // JSON — pretty-print so chunker gets readable structure
   if (mimeType?.includes("json")) {
     try {
       const parsed = JSON.parse(raw.toString("utf-8"));
@@ -69,12 +80,68 @@ function extractTextFromFile(filePath, mimeType) {
     }
   }
 
-  // For PDFs and other binary formats, extract what we can as UTF-8
-  // A proper PDF parser would be better but this handles basic cases
+  // DOCX — extract text from the embedded XML
+  if (
+    mimeType?.includes("wordprocessingml") ||
+    mimeType?.includes("docx") ||
+    filePath.endsWith(".docx")
+  ) {
+    try {
+      // DOCX is a ZIP; look for PK header
+      if (raw[0] === 0x50 && raw[1] === 0x4b) {
+        // Minimal ZIP scan: find word/document.xml entry and extract its text nodes.
+        // This avoids adding a ZIP dependency for the common case.
+        const str = raw.toString("binary");
+        const xmlStart = str.indexOf("word/document.xml");
+        if (xmlStart !== -1) {
+          // Find the XML content — it's between the local-file header and the next PK entry
+          const contentStart = str.indexOf("<?xml", xmlStart);
+          const contentEnd = str.indexOf("</w:document>", contentStart);
+          if (contentStart !== -1 && contentEnd !== -1) {
+            const xmlContent = str.substring(contentStart, contentEnd + 13);
+            // Pull text from <w:t> tags (Word paragraph text runs)
+            const textParts = [];
+            const tagRe = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+            let match;
+            while ((match = tagRe.exec(xmlContent)) !== null) {
+              textParts.push(match[1]);
+            }
+            // Detect paragraph boundaries from </w:p> tags
+            const fullText = xmlContent
+              .replace(/<\/w:p>/g, "\n")
+              .replace(/<[^>]+>/g, "")
+              .replace(/&amp;/g, "&")
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
+              .replace(/&quot;/g, '"')
+              .replace(/\s{3,}/g, "\n")
+              .trim();
+            if (fullText.length > 100) return fullText;
+            // Fall back to the simple tag-strip if the paragraph approach was sparse
+            if (textParts.length) {
+              const joined = textParts.join(" ").trim();
+              if (joined.length > 100) return joined;
+            }
+          }
+        }
+      }
+    } catch {
+      // Fall through to generic binary extraction
+    }
+  }
+
+  // PDF / other binary formats — best-effort extraction with improved cleanup
   const textContent = raw
     .toString("utf-8", 0, Math.min(raw.length, 500000))
     .replace(/[^\x20-\x7E\n\r\t]/g, " ")
-    .replace(/\s{3,}/g, "\n")
+    // Collapse runs of spaces (common in PDF binary artefacts)
+    .replace(/ {3,}/g, " ")
+    // Turn multiple blank lines into double-newline paragraph breaks
+    .replace(/\n{3,}/g, "\n\n")
+    // Remove lines that are entirely non-alpha (binary noise)
+    .split("\n")
+    .filter((line) => /[a-zA-Z]{2,}/.test(line))
+    .join("\n")
     .trim();
 
   if (textContent.length > 100) return textContent;
