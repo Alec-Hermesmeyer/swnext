@@ -4,12 +4,18 @@
  * real-time sync with the chat interface, and live preview.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   normalizeDraftPayload,
   formatCurrencyAmount,
   parseCurrencyAmount,
 } from "./bid-assistant-utils";
+
+// Stable key counter for reorderable list items
+let _keyCounter = 0;
+function nextKey() {
+  return `bid-item-${++_keyCounter}`;
+}
 
 // ── Section wrapper with AI assist button ───────────────────────────
 
