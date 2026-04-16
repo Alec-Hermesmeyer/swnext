@@ -7,18 +7,8 @@
 import { useCallback, useState } from "react";
 import {
   normalizeDraftPayload,
-  listToTextarea,
-  textareaToList,
-  pricingItemsToTextarea,
-  textareaToPricingItems,
   formatCurrencyAmount,
   parseCurrencyAmount,
-  formatCategoryLabel,
-  toNumberOrZero,
-  buildScenarioTotals,
-  extractPricedItemsFromRawText,
-  METRICS_SOURCE_LABEL,
-  METRICS_PROFILE_KEY,
 } from "./bid-assistant-utils";
 
 // ── Section wrapper with AI assist button ───────────────────────────
