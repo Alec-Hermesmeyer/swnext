@@ -1501,76 +1501,76 @@ function BidAssistantPanel() {
                         />
                       </label>
 
-                      <div className="mt-2 grid gap-2 lg:grid-cols-2">
-                        <div className="text-xs text-neutral-600">
-                          <p className="mb-1">Pricing lines (editable table)</p>
+                      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                        <div>
+                          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-neutral-400">Pricing lines</span>
                           <DraftPricingTableEditor
                             items={draft.pricing_items}
                             onChange={(items) => updateDraftField("pricing_items", normalizeDraftPayload({ pricing_items: items }).pricing_items)}
                           />
-                          <details className="mt-2 rounded-md border border-neutral-200 bg-white p-2">
-                            <summary className="cursor-pointer text-xs font-semibold text-neutral-700">
+                          <details className="mt-2 rounded-lg border border-neutral-200 bg-white p-2.5">
+                            <summary className="cursor-pointer text-xs font-semibold text-neutral-600 hover:text-neutral-800">
                               Paste/edit as text (label | amount)
                             </summary>
                             <textarea
                               rows={4}
                               value={pricingItemsToTextarea(draft.pricing_items)}
                               onChange={(e) => updateDraftField("pricing_items", textareaToPricingItems(e.target.value))}
-                              className="mt-2 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                              className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                             />
                           </details>
                         </div>
-                        <label className="text-xs text-neutral-600">
-                          Scope items (one per line)
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Scope items (one per line)</span>
                           <textarea
                             rows={5}
                             value={listToTextarea(draft.scope_items)}
                             onChange={(e) => updateDraftField("scope_items", textareaToList(e.target.value))}
-                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                           />
                         </label>
-                        <label className="text-xs text-neutral-600">
-                          Assumptions (one per line)
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Assumptions (one per line)</span>
                           <textarea
                             rows={5}
                             value={listToTextarea(draft.assumptions)}
                             onChange={(e) => updateDraftField("assumptions", textareaToList(e.target.value))}
-                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                           />
                         </label>
-                        <label className="text-xs text-neutral-600">
-                          Exclusions (one per line)
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Exclusions (one per line)</span>
                           <textarea
                             rows={5}
                             value={listToTextarea(draft.exclusions)}
                             onChange={(e) => updateDraftField("exclusions", textareaToList(e.target.value))}
-                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                           />
                         </label>
                       </div>
 
-                      <label className="mt-2 block text-xs text-neutral-600">
-                        Terms
-                        <textarea
-                          rows={3}
-                          value={draft.terms}
-                          onChange={(e) => updateDraftField("terms", e.target.value)}
-                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                        />
-                      </label>
-                      <label className="mt-2 block text-xs text-neutral-600">
-                        Internal notes
-                        <textarea
-                          rows={2}
-                          value={draft.notes}
-                          onChange={(e) => updateDraftField("notes", e.target.value)}
-                          className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-                        />
-                      </label>
+                      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Terms &amp; conditions</span>
+                          <textarea
+                            rows={3}
+                            value={draft.terms}
+                            onChange={(e) => updateDraftField("terms", e.target.value)}
+                            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Internal notes</span>
+                          <textarea
+                            rows={3}
+                            value={draft.notes}
+                            onChange={(e) => updateDraftField("notes", e.target.value)}
+                            className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
+                            placeholder="Not exported — for your team only."
+                          />
+                        </label>
+                      </div>
 
-                      <p className="text-xs text-neutral-500">
-                        This preview uses your current edits immediately; export uses the same in-memory draft payload, so Save is optional before Download.
-                      </p>
                       <DraftDocumentPreview draft={draft} />
                     </>
                   )}
