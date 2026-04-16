@@ -115,7 +115,6 @@ function bidAssistantReducer(state, action) {
         selectedDoc: null,
         draft: normalizeDraftPayload({}),
         chatHistory: [],
-        chatInput: "",
       };
 
     // ── Draft ──
