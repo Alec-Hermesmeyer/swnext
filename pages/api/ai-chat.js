@@ -2077,38 +2077,72 @@ RULES:
 // ── Call Groq with tool support ──
 
 /**
- * Estimate whether the conversation is primarily a factual/RAG lookup
- * or a creative/synthesis task so we can adjust decoding accordingly.
+ * Classify the user's intent so callGroq can pick the right decoding
+ * parameters.  Three modes:
+ *
+ *  "factual"  — RAG lookups, data queries, schedule building, tool calls.
+ *               Tight temperature + top_p to reduce hallucinated details.
+ *  "creative" — drafting emails, brainstorming, composing social posts.
+ *               Slightly higher temp for fluency and variation.
+ *  "tool_followup" — the model is replying *after* tool results already
+ *               came back.  Stay factual regardless of the original intent
+ *               so the answer sticks closely to the data it received.
  */
 function inferGenerationMode(messages) {
-  const lastUser = [...messages].reverse().find((m) => m.role === "user");
-  if (!lastUser?.content) return "factual";
-  const text = lastUser.content.toLowerCase();
+  // If the most recent message is a tool result, the model is synthesising
+  // data it already retrieved — keep it precise.
+  const last = messages[messages.length - 1];
+  if (last?.role === "tool") return "tool_followup";
+
+  // Walk backwards to find the last user message (skip tool / assistant msgs)
+  let userText = "";
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === "user") {
+      userText = (messages[i].content || "").toLowerCase();
+      break;
+    }
+  }
+  if (!userText) return "factual";
 
   // Creative / synthesis tasks benefit from slightly higher temperature
   const creativePatterns =
-    /\b(draft|write|compose|brainstorm|suggest|ideas?|propose|summarize in your own|rephrase)\b/;
-  if (creativePatterns.test(text)) return "creative";
+    /\b(draft|write|compose|brainstorm|suggest|ideas?|propose|summarize in your own|rephrase|rewrite|come up with)\b/;
+  if (creativePatterns.test(userText)) return "creative";
 
-  // Tool-heavy or data-lookup stays precise
   return "factual";
 }
 
 async function callGroq(messages, useTools = true, filteredTools = tools) {
   const mode = inferGenerationMode(messages);
 
+  // ── Decoding strategy ────────────────────────────────────────────────
+  //
+  //  temperature  — controls randomness of token selection.
+  //  top_p        — nucleus sampling; caps cumulative probability mass.
+  //  frequency_penalty — penalises tokens proportional to how often they
+  //                  have appeared, reducing repetitive phrasing when the
+  //                  model echoes multiple similar RAG chunks.
+  //  presence_penalty  — one-time penalty for any token that already
+  //                  appeared, encouraging the model to cover *new* info
+  //                  rather than restating the same fact.
+  //
+  //  Mode         temp   top_p  freq_pen  pres_pen
+  //  factual      0.2    0.85   0.15      0.0
+  //  tool_follow  0.15   0.80   0.20      0.05
+  //  creative     0.45   0.92   0.10      0.0
+
+  const DECODING = {
+    factual:        { temperature: 0.2,  top_p: 0.85, frequency_penalty: 0.15, presence_penalty: 0.0  },
+    tool_followup:  { temperature: 0.15, top_p: 0.80, frequency_penalty: 0.20, presence_penalty: 0.05 },
+    creative:       { temperature: 0.45, top_p: 0.92, frequency_penalty: 0.10, presence_penalty: 0.0  },
+  };
+  const params = DECODING[mode] || DECODING.factual;
+
   const body = {
     model: "llama-3.3-70b-versatile",
     messages,
-    // Factual/RAG queries stay tight; creative tasks get more variation
-    temperature: mode === "creative" ? 0.45 : 0.2,
     max_tokens: 2048,
-    // Nucleus sampling — cut the long tail of unlikely tokens to reduce
-    // hallucinated names/numbers while preserving fluent phrasing.
-    top_p: mode === "creative" ? 0.9 : 0.85,
-    // Mild repetition penalty keeps bullet-heavy RAG answers from echoing
-    // the same phrasing across chunks.  0 = off; small positive = gentle.
-    frequency_penalty: 0.15,
+    ...params,
   };
   if (useTools && filteredTools.length > 0) {
     body.tools = filteredTools;
