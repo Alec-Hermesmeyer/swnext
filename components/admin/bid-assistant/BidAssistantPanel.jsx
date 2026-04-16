@@ -260,7 +260,7 @@ export default function BidAssistantPanel() {
       actions.setStatus(error.message || "Could not analyze uploaded file");
     } finally {
       setUploading(false);
-      if (event.target) event.target.value = "";
+      if (inputEl) inputEl.value = "";
     }
   }, [uploading, actions, loadDocuments, fetchDocumentById]);
 
