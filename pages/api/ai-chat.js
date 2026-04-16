@@ -2072,12 +2072,39 @@ RULES:
 
 // ── Call Groq with tool support ──
 
+/**
+ * Estimate whether the conversation is primarily a factual/RAG lookup
+ * or a creative/synthesis task so we can adjust decoding accordingly.
+ */
+function inferGenerationMode(messages) {
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
+  if (!lastUser?.content) return "factual";
+  const text = lastUser.content.toLowerCase();
+
+  // Creative / synthesis tasks benefit from slightly higher temperature
+  const creativePatterns =
+    /\b(draft|write|compose|brainstorm|suggest|ideas?|propose|summarize in your own|rephrase)\b/;
+  if (creativePatterns.test(text)) return "creative";
+
+  // Tool-heavy or data-lookup stays precise
+  return "factual";
+}
+
 async function callGroq(messages, useTools = true, filteredTools = tools) {
+  const mode = inferGenerationMode(messages);
+
   const body = {
     model: "llama-3.3-70b-versatile",
     messages,
-    temperature: 0.2,
+    // Factual/RAG queries stay tight; creative tasks get more variation
+    temperature: mode === "creative" ? 0.45 : 0.2,
     max_tokens: 2048,
+    // Nucleus sampling — cut the long tail of unlikely tokens to reduce
+    // hallucinated names/numbers while preserving fluent phrasing.
+    top_p: mode === "creative" ? 0.9 : 0.85,
+    // Mild repetition penalty keeps bullet-heavy RAG answers from echoing
+    // the same phrasing across chunks.  0 = off; small positive = gentle.
+    frequency_penalty: 0.15,
   };
   if (useTools && filteredTools.length > 0) {
     body.tools = filteredTools;
