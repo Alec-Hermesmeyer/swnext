@@ -290,3 +290,20 @@ All done. Here's a summary:
 | `components/admin/crew-scheduler/CrewCombobox.jsx` | **Created** | 279 lines |
 | `pages/admin/crew-scheduler.jsx` | **Edited** | 3 edits (~30 net lines)
 [2026-04-15T15:57:03.866Z] KNOXIS (review): Claude has successfully implemented the crew combobox component, replacing the plain select dropdown with a searchable, role-grouped, and assignment-status-aware combobox. The changes include creating a new CrewCombobox component and integrating it into the crew-scheduler page. The code has been verified to compile successfully, and all changes are now ready for review and testing.
+[2026-04-16T13:23:36.215Z] USER: that looks really nice can we do the same for the job selector in that same area please?
+[2026-04-16T13:23:38.765Z] KNOXIS (dispatch): Improving the job selector on the admin crew scheduler.
+[2026-04-16T13:23:38.765Z] DISPATCH #7:
+[AI CONTEXT ANALYSIS]
+Intent: general
+Priority: medium
+Complexity: simple
+Confidence: 30%
+
+[RECOMMENDATIONS]
+- This looks straightforward - should be quick to implement
+
+Workspace: /Users/alechermesmeyer/Desktop/SWF/final/swnext
+Project: Node.js project: swnext · Next.js app · Git branch: tailwind-only
+File: pages/admin/crew-scheduler.jsx
+Task: Replace the plain select dropdown for job selection with a searchable, type-ahead combobox component, similar to the crew combobox. Ensure the component is accessible and follows the same design patterns as the crew combobox.
+When done, summarize what you changed (files, functions, lines).
