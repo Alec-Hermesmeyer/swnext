@@ -110,10 +110,12 @@ export default function BidChatInterface({ state, actions }) {
     if (hasShownWelcome.current === selectedDoc.id) return;
     hasShownWelcome.current = selectedDoc.id;
 
+    // Read length at call time — not as a reactive dependency
     if (chatHistory.length === 0) {
       actions.addChatMessage(buildWelcomeMessage(selectedDoc));
     }
-  }, [selectedDoc?.id, chatHistory.length, actions, selectedDoc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDoc?.id, actions]);
 
   // ── Send a message to the bid document chat API ────────────────
 
