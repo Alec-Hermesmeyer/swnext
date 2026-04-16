@@ -73,6 +73,15 @@ function EditorSection({ title, icon, children, onAiAssist, aiLoading, reverted,
 
 function PricingTableEditor({ items, onChange }) {
   const safeItems = Array.isArray(items) ? items : [];
+  // Assign stable keys to items that don't have one
+  const keysRef = useRef(new WeakMap());
+  const getItemKey = (item, index) => {
+    if (typeof item === "object" && item !== null) {
+      if (!keysRef.current.has(item)) keysRef.current.set(item, nextKey());
+      return keysRef.current.get(item);
+    }
+    return `pricing-fallback-${index}`;
+  };
 
   const updateRow = (index, field, value) => {
     const next = safeItems.map((row, idx) =>
@@ -81,7 +90,7 @@ function PricingTableEditor({ items, onChange }) {
     onChange(next);
   };
 
-  const addRow = () => onChange([...safeItems, { label: "", amount: "" }]);
+  const addRow = () => onChange([...safeItems, { label: "", amount: "", _key: nextKey() }]);
   const removeRow = (index) => onChange(safeItems.filter((_, idx) => idx !== index));
 
   const moveRow = (index, direction) => {
