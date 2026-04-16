@@ -1413,35 +1413,40 @@ function BidAssistantPanel() {
               {/* Bid Builder Draft */}
               <CollapsibleSection
                 title="Bid Builder Draft"
+                subtitle="Compose and export your bid proposal"
                 isOpen={expandedSections.draft}
                 onToggle={() => toggleSection("draft")}
+                icon={<svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
               >
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={saveDraft}
-                      disabled={savingDraft || loadingDraft || !selectedDoc?.id}
-                      className="rounded-md bg-brand px-3 py-1 text-xs font-semibold text-white hover:bg-brand-light disabled:opacity-60"
-                    >
-                      {savingDraft ? "Saving..." : "Save draft"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => exportDraft("docx")}
-                      disabled={exportingDraft || loadingDraft || !selectedDoc?.id}
-                      className="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
-                    >
-                      {exportingDraft ? "Exporting..." : "Download DOCX"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => exportDraft("txt")}
-                      disabled={exportingDraft || loadingDraft || !selectedDoc?.id}
-                      className="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
-                    >
-                      Download TXT
-                    </button>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-2.5">
+                    <p className="text-xs text-neutral-500">Export uses your in-memory edits — Save is optional before Download.</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={saveDraft}
+                        disabled={savingDraft || loadingDraft || !selectedDoc?.id}
+                        className="rounded-lg bg-brand px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-light disabled:opacity-60"
+                      >
+                        {savingDraft ? "Saving..." : "Save Draft"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => exportDraft("docx")}
+                        disabled={exportingDraft || loadingDraft || !selectedDoc?.id}
+                        className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+                      >
+                        {exportingDraft ? "Exporting..." : "DOCX"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => exportDraft("txt")}
+                        disabled={exportingDraft || loadingDraft || !selectedDoc?.id}
+                        className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+                      >
+                        TXT
+                      </button>
+                    </div>
                   </div>
                   {loadingDraft ? (
                     <p className="text-sm text-neutral-500">Loading draft...</p>
