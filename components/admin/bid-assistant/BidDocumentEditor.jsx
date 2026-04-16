@@ -240,7 +240,7 @@ function ListEditor({ items, onChange, placeholder }) {
       ) : (
         <div className="space-y-1.5">
           {safeItems.map((item, index) => (
-            <div key={`list-${index}`} className="flex items-center gap-2">
+            <div key={keysRef.current[index] || `list-${index}`} className="flex items-center gap-2">
               <div className="flex flex-col gap-0.5">
                 <button
                   type="button"
