@@ -2472,7 +2472,11 @@ export default async function handler(req, res) {
         });
       }
 
-      result = await callGroq(messages, false, []);
+      // Allow one more tool-call round (up to the rounds cap) so the model
+      // can chain a second search if the first result was thin. After round 3,
+      // force a plain text reply to avoid infinite loops.
+      const allowFollowUpTools = rounds < 3 && roleFilteredTools.length > 0;
+      result = await callGroq(messages, allowFollowUpTools, allowFollowUpTools ? roleFilteredTools : []);
       choice = result.choices?.[0];
     }
 
