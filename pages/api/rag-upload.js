@@ -15,22 +15,8 @@ export const config = {
   api: { bodyParser: false },
 };
 
-async function getEmbedding(text) {
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "text-embedding-3-small",
-      input: text.substring(0, 8000),
-    }),
-  });
-  if (!response.ok) throw new Error("Embedding failed");
-  const data = await response.json();
-  return data.data[0].embedding;
-}
+// Use the shared embedding utility (includes normalization + retry logic)
+import { getEmbedding } from "@/lib/embeddings";
 
 function chunkText(text, maxChunkSize = 1500, overlap = 200) {
   const chunks = [];
