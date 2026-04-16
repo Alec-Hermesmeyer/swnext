@@ -103,7 +103,6 @@ function bidAssistantReducer(state, action) {
         ...state,
         selectedDoc: action.payload,
         chatHistory: [],
-        chatInput: "",
         status: "",
       };
 
