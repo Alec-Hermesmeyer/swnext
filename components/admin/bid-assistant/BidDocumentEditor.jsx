@@ -213,13 +213,18 @@ function ListEditor({ items, onChange, placeholder }) {
     onChange([...safeItems, ""]);
   };
 
-  const removeItem = (index) => onChange(safeItems.filter((_, idx) => idx !== index));
+  const removeItem = (index) => {
+    keysRef.current.splice(index, 1);
+    onChange(safeItems.filter((_, idx) => idx !== index));
+  };
 
   const moveItem = (index, direction) => {
     const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= safeItems.length) return;
     const next = [...safeItems];
     [next[index], next[newIndex]] = [next[newIndex], next[index]];
+    const keys = keysRef.current;
+    [keys[index], keys[newIndex]] = [keys[newIndex], keys[index]];
     onChange(next);
   };
 
