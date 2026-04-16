@@ -231,6 +231,7 @@ export default function BidAssistantPanel() {
 
   const handleUpload = useCallback(async (event) => {
     const file = event.target.files?.[0];
+    const inputEl = event.target; // capture before any await
     if (!file || uploading) return;
     setUploading(true);
     actions.setStatus("");
