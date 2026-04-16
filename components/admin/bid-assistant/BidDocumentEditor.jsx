@@ -193,6 +193,14 @@ function PricingTableEditor({ items, onChange }) {
 
 function ListEditor({ items, onChange, placeholder }) {
   const safeItems = Array.isArray(items) ? items : [];
+  // Stable keys for reorderable string items
+  const keysRef = useRef([]);
+  while (keysRef.current.length < safeItems.length) {
+    keysRef.current.push(nextKey());
+  }
+  if (keysRef.current.length > safeItems.length) {
+    keysRef.current.length = safeItems.length;
+  }
 
   const updateItem = (index, value) => {
     const next = [...safeItems];
@@ -200,7 +208,10 @@ function ListEditor({ items, onChange, placeholder }) {
     onChange(next);
   };
 
-  const addItem = () => onChange([...safeItems, ""]);
+  const addItem = () => {
+    keysRef.current.push(nextKey());
+    onChange([...safeItems, ""]);
+  };
 
   const removeItem = (index) => onChange(safeItems.filter((_, idx) => idx !== index));
 
