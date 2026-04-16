@@ -2946,6 +2946,23 @@ function CrewScheduler() {
     return map;
   }, [assignments, categories]);
 
+  // Map job IDs → rig/category names they're assigned to (for job combobox display)
+  const jobRigNameMap = useMemo(() => {
+    const catById = {};
+    categories.forEach((c) => { catById[c.id] = c.name; });
+    const map = {};
+    assignments.forEach((a) => {
+      if (a.job_id) {
+        if (!map[a.job_id]) map[a.job_id] = [];
+        const rigName = catById[a.category_id] || "Unknown rig";
+        if (!map[a.job_id].includes(rigName)) {
+          map[a.job_id].push(rigName);
+        }
+      }
+    });
+    return map;
+  }, [assignments, categories]);
+
   const scheduleRigStatusByCategoryId = useMemo(() => {
     const statusMap = {};
     categories.forEach((category) => {
