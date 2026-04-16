@@ -4908,29 +4908,22 @@ function CrewScheduler() {
                             Working job fields are hidden while this rig is in a special-status day.
                           </div>
                         ) : (
-                          <label className="text-xs font-semibold text-neutral-500">
-                            Job
-                            <select
+                          <div>
+                            <span className="mb-1 block text-xs font-semibold text-neutral-500">Job</span>
+                            <JobCombobox
+                              jobs={jobs}
+                              assignedJobMap={jobRigNameMap}
                               value={rigJob?.job_id || ""}
-                              onChange={(e) => {
-                                if (e.target.value) {
-                                  assignJobToRig(category.id, e.target.value);
+                              onChange={(jobId) => {
+                                if (jobId) {
+                                  assignJobToRig(category.id, jobId);
                                 } else {
                                   removeJobFromRig(category.id);
                                 }
                               }}
-                              className="mt-1 h-9 w-full rounded border border-neutral-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            >
-                              <option value="">No job assigned</option>
-                              {jobs.map((job) => (
-                                <option key={job.id} value={job.id}>
-                                  {job.job_name}
-                                  {job.job_number ? ` (#${job.job_number})` : ""}{" "}
-                                  {[job.city, job.zip].filter(Boolean).join(" ")}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                              placeholder="Search jobs by name, number, customer..."
+                            />
+                          </div>
                         )}
                         <label className="text-xs font-semibold text-neutral-500">
                           Superintendent
