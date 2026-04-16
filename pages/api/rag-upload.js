@@ -2,10 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 import { IncomingForm } from "formidable";
 import fs from "fs";
 import path from "path";
+// Use the shared embedding utility (includes normalization + retry logic)
+import { getEmbedding } from "@/lib/embeddings";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -14,9 +15,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 export const config = {
   api: { bodyParser: false },
 };
-
-// Use the shared embedding utility (includes normalization + retry logic)
-import { getEmbedding } from "@/lib/embeddings";
 
 /**
  * Split text into overlapping chunks at natural boundaries.
