@@ -297,15 +297,15 @@ function DraftDocumentPreview({ draft }) {
   const pricingRows = Array.isArray(draft?.pricing_items) ? draft.pricing_items : [];
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Live Export Preview</p>
-        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-neutral-500">DOCX-style layout</span>
+    <div className="mt-4 rounded-2xl border border-neutral-200 bg-gradient-to-br from-neutral-50 to-white p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Live Export Preview</p>
+        <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-neutral-400 ring-1 ring-neutral-200">DOCX layout</span>
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-white p-4 text-sm text-neutral-800">
-        <h3 className="text-base font-bold text-neutral-900">{draft?.title || "Bid Proposal"}</h3>
-        <div className="mt-2 grid gap-2 text-xs text-neutral-600 sm:grid-cols-3">
+      <div className="rounded-xl border border-neutral-200 bg-white p-5 text-sm text-neutral-800 shadow-card">
+        <h3 className={`text-lg font-bold text-neutral-900`}>{draft?.title || "Bid Proposal"}</h3>
+        <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-neutral-500">
           <p><span className="font-semibold text-neutral-700">Project:</span> {draft?.project_name || "—"}</p>
           <p><span className="font-semibold text-neutral-700">Client:</span> {draft?.client_name || "—"}</p>
           <p><span className="font-semibold text-neutral-700">Due:</span> {draft?.due_date || "—"}</p>
