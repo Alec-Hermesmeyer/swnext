@@ -8,6 +8,7 @@ import { Lato } from "next/font/google";
 import { withRetry } from "@/lib/retry";
 import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 import CrewCombobox from "@/components/admin/crew-scheduler/CrewCombobox";
+import JobCombobox from "@/components/admin/crew-scheduler/JobCombobox";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 const CREW_CACHE_TTL_MS = 5 * 60 * 1000;
