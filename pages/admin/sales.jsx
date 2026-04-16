@@ -1708,13 +1708,13 @@ function BidAssistantPanel() {
                         }
                       }}
                       placeholder="Ask this bid document..."
-                      className="h-10 flex-1 rounded-md border border-neutral-300 px-3 text-sm"
+                      className="h-11 flex-1 rounded-xl border border-neutral-300 px-4 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={askBidDocument}
                       disabled={!chatInput.trim() || chatLoading || !selectedDoc?.id}
-                      className="rounded-md bg-brand px-3 py-2 text-xs font-semibold text-white hover:bg-brand-light disabled:opacity-60"
+                      className="h-11 rounded-xl bg-brand px-4 text-xs font-semibold text-white shadow-sm hover:bg-brand-light disabled:opacity-60"
                     >
                       {chatLoading ? "Asking..." : "Ask"}
                     </button>
