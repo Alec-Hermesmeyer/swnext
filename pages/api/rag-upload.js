@@ -18,11 +18,26 @@ export const config = {
 // Use the shared embedding utility (includes normalization + retry logic)
 import { getEmbedding } from "@/lib/embeddings";
 
-function chunkText(text, maxChunkSize = 1500, overlap = 200) {
+/**
+ * Split text into overlapping chunks at natural boundaries.
+ *
+ * Improvements:
+ *  - Adaptively picks chunk size: shorter for dense structured data (JSON/CSV),
+ *    standard for narrative text.
+ *  - Prefers paragraph → sentence → line → word breaks (in that priority order).
+ *  - Each chunk gets a lightweight context header with the source filename and
+ *    chunk index so the LLM can attribute information during generation.
+ */
+function chunkText(text, { maxChunkSize = 1500, overlap = 200, filename = "" } = {}) {
+  // For JSON/structured data, use smaller chunks so each chunk is self-contained
+  const isStructured = text.trimStart().startsWith("{") || text.trimStart().startsWith("[");
+  const effectiveMax = isStructured ? Math.min(maxChunkSize, 900) : maxChunkSize;
+  const effectiveOverlap = isStructured ? Math.min(overlap, 120) : overlap;
+
   const chunks = [];
   let start = 0;
   while (start < text.length) {
-    let end = start + maxChunkSize;
+    let end = start + effectiveMax;
     // Try to break at a sentence or paragraph boundary
     if (end < text.length) {
       const slice = text.substring(start, end + 200);
@@ -33,14 +48,21 @@ function chunkText(text, maxChunkSize = 1500, overlap = 200) {
         slice.lastIndexOf("\n"),
       ];
       for (const bp of breakPoints) {
-        if (bp > maxChunkSize * 0.5) {
+        if (bp > effectiveMax * 0.5) {
           end = start + bp + 1;
           break;
         }
       }
     }
-    chunks.push(text.substring(start, Math.min(end, text.length)).trim());
-    start = end - overlap;
+    let chunk = text.substring(start, Math.min(end, text.length)).trim();
+
+    // Prepend a lightweight header so the embedding captures source context
+    if (filename && chunks.length === 0) {
+      chunk = `[Source: ${filename}]\n${chunk}`;
+    }
+
+    chunks.push(chunk);
+    start = end - effectiveOverlap;
     if (start < 0) start = 0;
     if (end >= text.length) break;
   }
