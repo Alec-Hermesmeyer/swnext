@@ -1807,6 +1807,7 @@ CURRENT USER:
 
 ${workflowProfileSection}
 ${salesBidRagSection}
+${roleRagGuidance ? roleRagGuidance + "\n" : ""}
 OVERVIEW:
 - ${data.summary.totalActiveWorkers} active crew workers, ${data.summary.totalInactiveWorkers} inactive
 - ${data.summary.totalActiveCrewJobs} active crew jobs
