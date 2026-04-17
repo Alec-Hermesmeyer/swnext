@@ -426,7 +426,7 @@ function AdminBlogPage() {
                   type="text"
                   value={form.title}
                   onChange={(e) => updateField("title", e.target.value)}
-                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
                   placeholder="Building Better Foundations in DFW"
                   required
                 />
@@ -439,7 +439,7 @@ function AdminBlogPage() {
                     type="text"
                     value={form.slug}
                     onChange={(e) => updateField("slug", e.target.value)}
-                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
                     placeholder="building-better-foundations"
                   />
                 </label>
@@ -449,7 +449,7 @@ function AdminBlogPage() {
                     type="date"
                     value={form.date}
                     onChange={(e) => updateField("date", e.target.value)}
-                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                    className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
                     required
                   />
                 </label>
@@ -460,7 +460,7 @@ function AdminBlogPage() {
                 <select
                   value={form.status}
                   onChange={(e) => updateField("status", e.target.value)}
-                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
                 >
                   <option value="draft">Draft (not visible publicly)</option>
                   <option value="published">Published (visible on /blog)</option>
@@ -484,7 +484,7 @@ function AdminBlogPage() {
                   type="text"
                   value={form.imageId}
                   onChange={(e) => updateField("imageId", e.target.value)}
-                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
                   placeholder="IMG_8084"
                 />
               </label>
@@ -495,7 +495,7 @@ function AdminBlogPage() {
                   type="text"
                   value={form.imageAlt}
                   onChange={(e) => updateField("imageAlt", e.target.value)}
-                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm"
+                  className="mt-1 h-10 w-full rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
                   placeholder="Crew drilling pier foundations on an active Dallas commercial site"
                 />
               </label>
