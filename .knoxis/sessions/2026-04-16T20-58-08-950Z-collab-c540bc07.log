@@ -148,3 +148,32 @@ Implement a role-based interaction system for the RAG model. The system should a
 [ADDITIONAL CONTEXT]
 - Consider edge cases and error handling
 - Recent focus areas: refactoring, feature, documentation
+[2026-04-17T13:09:46.001Z] CLAUDE DONE (exit 0, 326s, 214 lines):
+
+
+Let me start by understanding the existing role system and how it currently interacts with the RAG pipeline.
+Good. Now let me check the current system prompt building to see how roles are used today:
+Now let me check the search_knowledge_base tool definition and the prefetch logic to understand the full call chain:
+Now let me look at the `search_knowledge_base` tool definition parameters — I need to see if there's a way to pass role context there, and also check the post-filter:
+Now I have the complete picture. Here's what I see:
+
+**Current state**: The role system controls *which tools* each role can access and *which data* is loaded into the system prompt. But the RAG retrieval itself is **role-blind** — a sales user and an HR user get the same search results ranked identically, even though their interests are completely different. The system prompt mentions the role, but the RAG search doesn't use it to boost relevant categories.
+
+**The 3 main role clusters** based on the existing code:
+1. **Sales/Estimating** (sales role) → cares about: bidding, project_history, client_inquiry
+2. **Operations/HR** (operations, safety, hr roles) → cares about: project_history, hiring, team_insights
+3. **Admin/Leadership** (admin, owner) → cares about: everything equally
+
+Here's my implementation plan:
+1. Add a `role_context` parameter to `search_knowledge_base` so the retrieval can boost relevant categories
+2. Build a role→category affinity map in `admin-assistant-mutations.js` 
+3. Apply affinity-weighted re-ranking after vector search
+4. Add role-aware query prefixing for better embedding alignment
+5. Update the system prompt to include role-specific RAG guidance
+
+Let me implement this:
+Good. Now I have the full picture. Let me implement the role-based interaction system. The key changes:
+
+1. **Role affinity map** — maps each role to its preferred document categories with boost weights
+2. **Affinity-weighted re-ranking** — after vector search, adjust similarity scores based on
+[2026-04-17T13:09:51.181Z] KNOXIS (review): Claude has implemented the role-based interaction system for the RAG model, allowing it to focus on specific documents and provide relevant information to users based on their role within the organization. The changes include adding a `role_context` parameter to `search_knowledge_base`, building a role→category affinity map, applying affinity-weighted re-ranking, adding role-aware query prefixing, and updating the system prompt to include role-specific RAG guidance. The updated code appears clean, and all edits have been applied and verified.
