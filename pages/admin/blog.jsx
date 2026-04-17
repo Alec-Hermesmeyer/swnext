@@ -649,7 +649,7 @@ function AdminBlogPage() {
                       type="text"
                       value={generator.keyword}
                       onChange={(e) => updateGeneratorField("keyword", e.target.value)}
-                      className="mt-1 h-9 w-full rounded-lg border border-indigo-200 bg-white px-3 text-sm"
+                      className="mt-1 h-9 w-full rounded-lg border border-indigo-200 bg-white px-3 text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                       placeholder="commercial pier drilling dallas"
                     />
                   </label>
@@ -659,7 +659,7 @@ function AdminBlogPage() {
                       type="text"
                       value={generator.city}
                       onChange={(e) => updateGeneratorField("city", e.target.value)}
-                      className="mt-1 h-9 w-full rounded-lg border border-indigo-200 bg-white px-3 text-sm"
+                      className="mt-1 h-9 w-full rounded-lg border border-indigo-200 bg-white px-3 text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                     />
                   </label>
                 </div>
@@ -670,7 +670,7 @@ function AdminBlogPage() {
                       type="text"
                       value={generator.tone}
                       onChange={(e) => updateGeneratorField("tone", e.target.value)}
-                      className="mt-1 h-9 w-full rounded-lg border border-indigo-200 bg-white px-3 text-sm"
+                      className="mt-1 h-9 w-full rounded-lg border border-indigo-200 bg-white px-3 text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                     />
                   </label>
                   <label className="block text-xs font-semibold text-indigo-900">
@@ -679,7 +679,7 @@ function AdminBlogPage() {
                       type="text"
                       value={generator.notes}
                       onChange={(e) => updateGeneratorField("notes", e.target.value)}
-                      className="mt-1 h-9 w-full rounded-lg border border-indigo-200 bg-white px-3 text-sm"
+                      className="mt-1 h-9 w-full rounded-lg border border-indigo-200 bg-white px-3 text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                       placeholder="Highlight project turnaround speed"
                     />
                   </label>
