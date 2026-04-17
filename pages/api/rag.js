@@ -21,11 +21,28 @@ export default async function handler(req, res) {
     // If q is provided, do similarity search
     if (q) {
       try {
-        const embedding = await getEmbedding(q);
+        // Use the same configurable thresholds as search_knowledge_base
+        const RAG_MATCH_THRESHOLD =
+          parseFloat(process.env.RAG_MATCH_THRESHOLD) || 0.68;
+
+        // Short queries get a domain prefix so the embedding captures
+        // intent better (mirrors the search_knowledge_base behaviour).
+        const embeddingInput =
+          q.length < 60
+            ? `S&W Foundation Contractors: ${q}`
+            : q;
+
+        const embedding = await getEmbedding(embeddingInput);
+
+        // Over-fetch from the RPC (lower threshold) so we can post-filter
+        // by category and apply the stricter display threshold.
+        const rpcThreshold = Math.max(RAG_MATCH_THRESHOLD - 0.10, 0.50);
+        const rpcLimit = category ? docLimit * 3 : docLimit;
+
         const { data, error } = await supabase.rpc("match_documents", {
           query_embedding: embedding,
-          match_threshold: 0.65,
-          match_count: docLimit,
+          match_threshold: rpcThreshold,
+          match_count: rpcLimit,
         });
 
         if (error) {
@@ -33,7 +50,16 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: "Search failed" });
         }
 
-        return res.status(200).json({ results: data || [], query: q });
+        // Post-filter: apply category if provided, then stricter threshold
+        let results = (data || []).filter(
+          (d) => d.similarity >= RAG_MATCH_THRESHOLD
+        );
+        if (category) {
+          results = results.filter((d) => d.category === category);
+        }
+        results = results.slice(0, docLimit);
+
+        return res.status(200).json({ results, query: q });
       } catch (err) {
         console.error("RAG search error:", err);
         return res.status(500).json({ error: err.message });

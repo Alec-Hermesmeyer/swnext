@@ -1741,6 +1741,47 @@ Answer in the **bid & proposal voice** below — they are at their own desk revi
 `
     : "";
 
+  // ── Role-specific RAG interaction guidance ──
+  // Tell the LLM what kinds of knowledge base content are most relevant
+  // for this user so it picks the right category_focus and voice.
+  const normalizedRole = String(role || "").trim().toLowerCase();
+  const ROLE_RAG_GUIDANCE = {
+    sales: `ROLE-SPECIFIC CONTEXT (Sales / Estimating):
+Your user is a salesperson or estimator. When they ask about bids, proposals, RFQs, scope, exclusions, pricing, or named projects:
+- Default to category_focus "bidding" in search_knowledge_base.
+- Answer in **bid & proposal voice** — we/our, deal-first, practical.
+- After citing bid docs, add a "so what" — risk, margin impact, next step for the pursuit.
+- For questions about clients or past projects, also search project_history and client_inquiry categories.
+- Proactively mention if a named project has both pipeline data AND bid document text — surface both.`,
+
+    operations: `ROLE-SPECIFIC CONTEXT (Operations):
+Your user manages crew scheduling, jobs, and field operations.
+- When they ask about projects/jobs, prioritize project_history content from the knowledge base.
+- When they ask about team capacity or who does what, search team_insights and hiring categories.
+- Keep answers operationally focused — crew counts, timelines, equipment, logistics.
+- If they ask about a project that might also have a bid doc, mention you can search bidding category too.`,
+
+    safety: `ROLE-SPECIFIC CONTEXT (Safety):
+Your user is focused on safety operations.
+- When they ask about projects, prioritize project_history for job details and crew info.
+- Search team_insights for workflow profiles that mention safety concerns or blockers.
+- Keep answers focused on safety-relevant details — crane requirements, job scope, crew assignments.`,
+
+    hr: `ROLE-SPECIFIC CONTEXT (HR / Hiring):
+Your user manages hiring and career positions.
+- When they ask about candidates or applicants, prioritize hiring category in the knowledge base.
+- Search team_insights for workflow profiles to understand team needs and blockers.
+- For questions about job descriptions or positions, search hiring and company_info.
+- Keep answers focused on people — qualifications, pipeline stages, follow-ups.`,
+
+    social_media: `ROLE-SPECIFIC CONTEXT (Social Media):
+Your user creates social content for the company.
+- When they ask about projects for content ideas, search project_history for interesting job stories.
+- Search company_info for brand details, team bios, and company facts.
+- Keep answers content-friendly — suggest angles, highlight interesting project details.`,
+  };
+  const roleRagGuidance = ROLE_RAG_GUIDANCE[normalizedRole] || "";
+
   const workflowProfileSection = assistantProfile
     ? `USER WORKFLOW PROFILE:
 - Self-described role: ${assistantProfile.role_title || "Not provided"}
@@ -1766,6 +1807,7 @@ CURRENT USER:
 
 ${workflowProfileSection}
 ${salesBidRagSection}
+${roleRagGuidance ? roleRagGuidance + "\n" : ""}
 OVERVIEW:
 - ${data.summary.totalActiveWorkers} active crew workers, ${data.summary.totalInactiveWorkers} inactive
 - ${data.summary.totalActiveCrewJobs} active crew jobs
@@ -1993,8 +2035,12 @@ HOW TO USE IT WELL:
 - Write a descriptive search query — "past pier drilling projects in Austin" is better than "Austin". For bids, include project name, client, or document keywords.
 - For bid uploads, pass **category_focus: "bidding"** so retrieval prefers proposal chunks.
 - When the user asks about a **specific section** of a bid (exclusions, scope, assumptions, pricing), also pass **section_filter** to narrow results: "scope_items", "exclusions", "assumptions", "priced_items", or "raw_text". Example: user asks "what are our exclusions on the Goodloe project?" → use category_focus "bidding", section_filter "exclusions", query "Goodloe exclusions".
-- Results come back ranked by relevance percentage. Focus on results above 75% relevance; treat lower-scoring results as supplementary.
-- Synthesize the results into a clear answer — do not dump raw chunks to the user. Cite the category (e.g. "from project history", "from bidding", or "from a contact form submission") when it adds clarity.
+- Results come back ranked by relevance percentage with a confidence band (HIGH ≥ 80%, MEDIUM ≥ 65%, LOW < 65%).
+  • **HIGH** — quote or paraphrase directly; this is strong evidence.
+  • **MEDIUM** — reference but note it may be partial context.
+  • **LOW** — treat as supplementary; do not rely on it as the sole source for claims.
+- **Synthesize, don't dump**: Combine multiple chunks into one coherent narrative. Lead with the answer, then cite sources inline (e.g. "from the Miller Sierra bid doc", "per project history"). Never copy-paste raw chunks.
+- **Handle mixed data types gracefully**: RAG results may come from PDFs, DOCX, database records (JSON-like), or manual text. Structured DB rows may look like raw field/value pairs — summarize them in plain English rather than echoing the JSON.
 - If no results are found, say so and suggest the user add or sync the information via the Knowledge Base page (Bid proposals sync for uploaded bids).
 - When the hit is **bidding** (our proposals), answer like **BID & PROPOSAL VOICE** — not like a generic chatbot or a vendor support script.
 
@@ -2072,12 +2118,73 @@ RULES:
 
 // ── Call Groq with tool support ──
 
+/**
+ * Classify the user's intent so callGroq can pick the right decoding
+ * parameters.  Three modes:
+ *
+ *  "factual"  — RAG lookups, data queries, schedule building, tool calls.
+ *               Tight temperature + top_p to reduce hallucinated details.
+ *  "creative" — drafting emails, brainstorming, composing social posts.
+ *               Slightly higher temp for fluency and variation.
+ *  "tool_followup" — the model is replying *after* tool results already
+ *               came back.  Stay factual regardless of the original intent
+ *               so the answer sticks closely to the data it received.
+ */
+function inferGenerationMode(messages) {
+  // If the most recent message is a tool result, the model is synthesising
+  // data it already retrieved — keep it precise.
+  const last = messages[messages.length - 1];
+  if (last?.role === "tool") return "tool_followup";
+
+  // Walk backwards to find the last user message (skip tool / assistant msgs)
+  let userText = "";
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === "user") {
+      userText = (messages[i].content || "").toLowerCase();
+      break;
+    }
+  }
+  if (!userText) return "factual";
+
+  // Creative / synthesis tasks benefit from slightly higher temperature
+  const creativePatterns =
+    /\b(draft|write|compose|brainstorm|suggest|ideas?|propose|summarize in your own|rephrase|rewrite|come up with)\b/;
+  if (creativePatterns.test(userText)) return "creative";
+
+  return "factual";
+}
+
 async function callGroq(messages, useTools = true, filteredTools = tools) {
+  const mode = inferGenerationMode(messages);
+
+  // ── Decoding strategy ────────────────────────────────────────────────
+  //
+  //  temperature  — controls randomness of token selection.
+  //  top_p        — nucleus sampling; caps cumulative probability mass.
+  //  frequency_penalty — penalises tokens proportional to how often they
+  //                  have appeared, reducing repetitive phrasing when the
+  //                  model echoes multiple similar RAG chunks.
+  //  presence_penalty  — one-time penalty for any token that already
+  //                  appeared, encouraging the model to cover *new* info
+  //                  rather than restating the same fact.
+  //
+  //  Mode         temp   top_p  freq_pen  pres_pen
+  //  factual      0.2    0.85   0.15      0.0
+  //  tool_follow  0.15   0.80   0.20      0.05
+  //  creative     0.45   0.92   0.10      0.0
+
+  const DECODING = {
+    factual:        { temperature: 0.2,  top_p: 0.85, frequency_penalty: 0.15, presence_penalty: 0.0  },
+    tool_followup:  { temperature: 0.15, top_p: 0.80, frequency_penalty: 0.20, presence_penalty: 0.05 },
+    creative:       { temperature: 0.45, top_p: 0.92, frequency_penalty: 0.10, presence_penalty: 0.0  },
+  };
+  const params = DECODING[mode] || DECODING.factual;
+
   const body = {
     model: "llama-3.3-70b-versatile",
     messages,
-    temperature: 0.2,
     max_tokens: 2048,
+    ...params,
   };
   if (useTools && filteredTools.length > 0) {
     body.tools = filteredTools;
@@ -2175,6 +2282,7 @@ async function prefetchBidResearchSnippets(supabase, message, context, userRole,
   const toolCtx = {
     cookieHeader: context.cookieHeader || "",
     userId: context.userId || null,
+    userRole: role,
   };
 
   try {
@@ -2432,7 +2540,7 @@ export default async function handler(req, res) {
           supabase,
           toolCall.function.name,
           mergedArgs,
-          { cookieHeader: req.headers?.cookie || "", userId: userContext?.id || null }
+          { cookieHeader: req.headers?.cookie || "", userId: userContext?.id || null, userRole }
         );
         messages.push({
           role: "tool",
@@ -2441,7 +2549,11 @@ export default async function handler(req, res) {
         });
       }
 
-      result = await callGroq(messages, false, []);
+      // Allow one more tool-call round (up to the rounds cap) so the model
+      // can chain a second search if the first result was thin. After round 3,
+      // force a plain text reply to avoid infinite loops.
+      const allowFollowUpTools = rounds < 3 && roleFilteredTools.length > 0;
+      result = await callGroq(messages, allowFollowUpTools, allowFollowUpTools ? roleFilteredTools : []);
       choice = result.choices?.[0];
     }
 

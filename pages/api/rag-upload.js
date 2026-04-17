@@ -2,10 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 import { IncomingForm } from "formidable";
 import fs from "fs";
 import path from "path";
+// Use the shared embedding utility (includes normalization + retry + batch)
+import { getEmbedding, getEmbeddingBatch } from "@/lib/embeddings";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -15,28 +16,26 @@ export const config = {
   api: { bodyParser: false },
 };
 
-async function getEmbedding(text) {
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "text-embedding-3-small",
-      input: text.substring(0, 8000),
-    }),
-  });
-  if (!response.ok) throw new Error("Embedding failed");
-  const data = await response.json();
-  return data.data[0].embedding;
-}
+/**
+ * Split text into overlapping chunks at natural boundaries.
+ *
+ * Improvements:
+ *  - Adaptively picks chunk size: shorter for dense structured data (JSON/CSV),
+ *    standard for narrative text.
+ *  - Prefers paragraph → sentence → line → word breaks (in that priority order).
+ *  - Each chunk gets a lightweight context header with the source filename and
+ *    chunk index so the LLM can attribute information during generation.
+ */
+function chunkText(text, { maxChunkSize = 1500, overlap = 200, filename = "" } = {}) {
+  // For JSON/structured data, use smaller chunks so each chunk is self-contained
+  const isStructured = text.trimStart().startsWith("{") || text.trimStart().startsWith("[");
+  const effectiveMax = isStructured ? Math.min(maxChunkSize, 900) : maxChunkSize;
+  const effectiveOverlap = isStructured ? Math.min(overlap, 120) : overlap;
 
-function chunkText(text, maxChunkSize = 1500, overlap = 200) {
   const chunks = [];
   let start = 0;
   while (start < text.length) {
-    let end = start + maxChunkSize;
+    let end = start + effectiveMax;
     // Try to break at a sentence or paragraph boundary
     if (end < text.length) {
       const slice = text.substring(start, end + 200);
@@ -47,20 +46,38 @@ function chunkText(text, maxChunkSize = 1500, overlap = 200) {
         slice.lastIndexOf("\n"),
       ];
       for (const bp of breakPoints) {
-        if (bp > maxChunkSize * 0.5) {
+        if (bp > effectiveMax * 0.5) {
           end = start + bp + 1;
           break;
         }
       }
     }
-    chunks.push(text.substring(start, Math.min(end, text.length)).trim());
-    start = end - overlap;
+    let chunk = text.substring(start, Math.min(end, text.length)).trim();
+
+    // Prepend a lightweight header so the embedding captures source context
+    if (filename && chunks.length === 0) {
+      chunk = `[Source: ${filename}]\n${chunk}`;
+    }
+
+    chunks.push(chunk);
+    start = end - effectiveOverlap;
     if (start < 0) start = 0;
     if (end >= text.length) break;
   }
   return chunks.filter((c) => c.length > 50); // skip tiny fragments
 }
 
+/**
+ * Extract readable text from uploaded files.
+ *
+ * For DOCX files we pull text from the inner word/document.xml (the DOCX
+ * format is just a ZIP of XML files). This produces far cleaner text than
+ * the previous raw-binary-to-UTF-8 fallback.
+ *
+ * For PDFs the raw-binary approach is retained as a best-effort extractor
+ * (a proper library like pdf-parse would be an excellent next step) but we
+ * now apply smarter cleanup so the embedding model gets usable input.
+ */
 function extractTextFromFile(filePath, mimeType) {
   const raw = fs.readFileSync(filePath);
 
@@ -73,7 +90,7 @@ function extractTextFromFile(filePath, mimeType) {
     return raw.toString("utf-8");
   }
 
-  // JSON
+  // JSON — pretty-print so chunker gets readable structure
   if (mimeType?.includes("json")) {
     try {
       const parsed = JSON.parse(raw.toString("utf-8"));
@@ -83,12 +100,68 @@ function extractTextFromFile(filePath, mimeType) {
     }
   }
 
-  // For PDFs and other binary formats, extract what we can as UTF-8
-  // A proper PDF parser would be better but this handles basic cases
+  // DOCX — extract text from the embedded XML
+  if (
+    mimeType?.includes("wordprocessingml") ||
+    mimeType?.includes("docx") ||
+    filePath.endsWith(".docx")
+  ) {
+    try {
+      // DOCX is a ZIP; look for PK header
+      if (raw[0] === 0x50 && raw[1] === 0x4b) {
+        // Minimal ZIP scan: find word/document.xml entry and extract its text nodes.
+        // This avoids adding a ZIP dependency for the common case.
+        const str = raw.toString("binary");
+        const xmlStart = str.indexOf("word/document.xml");
+        if (xmlStart !== -1) {
+          // Find the XML content — it's between the local-file header and the next PK entry
+          const contentStart = str.indexOf("<?xml", xmlStart);
+          const contentEnd = str.indexOf("</w:document>", contentStart);
+          if (contentStart !== -1 && contentEnd !== -1) {
+            const xmlContent = str.substring(contentStart, contentEnd + 13);
+            // Pull text from <w:t> tags (Word paragraph text runs)
+            const textParts = [];
+            const tagRe = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+            let match;
+            while ((match = tagRe.exec(xmlContent)) !== null) {
+              textParts.push(match[1]);
+            }
+            // Detect paragraph boundaries from </w:p> tags
+            const fullText = xmlContent
+              .replace(/<\/w:p>/g, "\n")
+              .replace(/<[^>]+>/g, "")
+              .replace(/&amp;/g, "&")
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
+              .replace(/&quot;/g, '"')
+              .replace(/\s{3,}/g, "\n")
+              .trim();
+            if (fullText.length > 100) return fullText;
+            // Fall back to the simple tag-strip if the paragraph approach was sparse
+            if (textParts.length) {
+              const joined = textParts.join(" ").trim();
+              if (joined.length > 100) return joined;
+            }
+          }
+        }
+      }
+    } catch {
+      // Fall through to generic binary extraction
+    }
+  }
+
+  // PDF / other binary formats — best-effort extraction with improved cleanup
   const textContent = raw
     .toString("utf-8", 0, Math.min(raw.length, 500000))
     .replace(/[^\x20-\x7E\n\r\t]/g, " ")
-    .replace(/\s{3,}/g, "\n")
+    // Collapse runs of spaces (common in PDF binary artefacts)
+    .replace(/ {3,}/g, " ")
+    // Turn multiple blank lines into double-newline paragraph breaks
+    .replace(/\n{3,}/g, "\n\n")
+    // Remove lines that are entirely non-alpha (binary noise)
+    .split("\n")
+    .filter((line) => /[a-zA-Z]{2,}/.test(line))
+    .join("\n")
     .trim();
 
   if (textContent.length > 100) return textContent;
@@ -100,7 +173,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
-  if (!OPENAI_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     return res.status(500).json({ error: "OPENAI_API_KEY not configured" });
   }
 
@@ -152,33 +225,48 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3. Chunk the text
-    const chunks = chunkText(text);
+    // 3. Chunk the text (pass filename for context-aware headers)
+    const chunks = chunkText(text, { filename: originalName });
 
-    // 4. Embed and store each chunk
+    // 4. Embed and store each chunk (batch API call for throughput)
     let stored = 0;
     let failed = 0;
+    const UPLOAD_BATCH = 20;
 
-    for (let i = 0; i < chunks.length; i += 5) {
-      const batch = chunks.slice(i, i + 5);
+    for (let i = 0; i < chunks.length; i += UPLOAD_BATCH) {
+      const batch = chunks.slice(i, i + UPLOAD_BATCH);
+
+      let embeddings;
+      try {
+        embeddings = await getEmbeddingBatch(batch);
+      } catch {
+        // Batch failed — fall back to one-at-a-time
+        embeddings = [];
+        for (const chunk of batch) {
+          try {
+            embeddings.push(await getEmbedding(chunk));
+          } catch {
+            embeddings.push(null);
+          }
+        }
+      }
+
       const rows = [];
-
-      for (const chunk of batch) {
-        try {
-          const embedding = await getEmbedding(chunk);
+      for (let j = 0; j < batch.length; j++) {
+        if (embeddings[j]) {
           rows.push({
-            content: chunk,
+            content: batch[j],
             category,
             source: "upload",
             file_path: storagePath,
             metadata: {
               filename: originalName,
-              chunk_index: stored + failed,
+              chunk_index: i + j,
               total_chunks: chunks.length,
             },
-            embedding,
+            embedding: embeddings[j],
           });
-        } catch {
+        } else {
           failed++;
         }
       }

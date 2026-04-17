@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260417-075242", "file": "/Users/alechermesmeyer/Desktop/SWF/final/swnext/pages/api/rag-upload.js", "timestamp": "2026-04-17T12:52:42Z", "type": "post-edit", "branch": "tailwind-only", "diff_summary": " .claude/checkpoints/task-1776430319.json | 1 +  pages/api/rag-upload.js                  | 2 +-  2 files changed, 2 insertions(+), 1 deletion(-) "}
