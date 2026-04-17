@@ -494,7 +494,7 @@ function AdminBlogPage() {
 
               <div
                 className={`rounded-lg border p-3 transition-colors ${
-                  dragActive ? "border-[#0b2a5a] bg-blue-50" : "border-neutral-200 bg-neutral-50"
+                  dragActive ? "border-brand bg-blue-50" : "border-neutral-200 bg-neutral-50"
                 }`}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -539,7 +539,7 @@ function AdminBlogPage() {
                           onClick={() => setSelectedBlogImage(img)}
                           className={`overflow-hidden rounded-lg border text-left transition-all ${
                             selectedBlogImage?.path === img.path || form.imageId === img.path
-                              ? "border-[#0b2a5a] ring-2 ring-[#0b2a5a]/20"
+                              ? "border-brand ring-2 ring-[#0b2a5a]/20"
                               : "border-neutral-200 hover:border-neutral-300"
                           }`}
                           title={img.path}
