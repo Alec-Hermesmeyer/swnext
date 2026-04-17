@@ -153,3 +153,28 @@ Please investigate and fix the infinite loop issue preventing the draft from loa
 [ADDITIONAL CONTEXT]
 - Include error logs and stack traces if available
 - Recent focus areas: bugfix
+[2026-04-17T12:22:11.106Z] CLAUDE DONE (exit 0, 821s, 81 lines):
+
+
+I'll investigate the infinite loop issue in the Bid Assistant. Let me trace through the component lifecycle and identify the problem.
+Now I can see the full picture. Let me trace the infinite loop step-by-step:
+I've found the root cause. Here's the infinite loop chain:
+
+**The `actions` object in `useBidAssistantReducer` is a plain object literal recreated on every render.** Even though each individual callback inside it is `useCallback(fn, [])` (stable), the *container object* `actions` is a new reference each time. This cascades:
+
+1. Render → new `actions` object reference
+2. `loadDraft = useCallback(fn, [actions])` → `actions` changed → new `loadDraft` reference
+3. `useEffect(loadDraft, [loadDraft, state.selectedDoc?.id])` → `loadDraft` changed → effect fires
+4. `loadDraft` calls `actions.setDraft({})` → reducer dispatches → new state
+5. New state → re-render → goto step 1 → **infinite loop**
+
+The fix is to **memoize the `actions` object** so its reference is stable. Since `dispatch` from `useReducer` is guaranteed stable by React, I can create all the action functions inside a single `useMemo`:
+Now let me verify there aren't secondary loop vectors in `BidAssistantPanel` — the `loadDocuments` callback also depends on `actions` and `state.selectedDoc?.id`. With `actions` now stable, `loadDocuments` only changes when `selectedDoc?.id` changes, which is correct. But let me also check `BidDocumentEditor` for any effect-based loops:
+Good — `BidDocumentEditor` has no `useEffect`s, only event-driven `useCallback`s. Let me check their deps:
+Those are all `useCallback` deps (event handlers), not effects. They only run when called by user interaction. No loop risk.
+
+Now let me also check `BidChatInterface` for any remaining loop vectors:
+All `[actions]` deps in `BidChatInterface` are in `useCallback` (event handlers), not `useEffect`. The only `useEffect`s in `BidChatInterface` are:
+- `[selectedDoc?.id]` — resets input, stable
+- `[chatHistory.length, chatLoading]` — auto-
+[2026-04-17T12:22:15.984Z] KNOXIS (review): Claude has fixed the infinite loop issue by memoizing the `actions` object in `useBidAssistantReducer.js`. The fix ensures that the `actions` object reference remains stable across renders, breaking the infinite loop chain. Claude has also verified that the fix does not introduce any new loop risks in other components. The code changes are limited to a single file, and the fix is implemented correctly.
