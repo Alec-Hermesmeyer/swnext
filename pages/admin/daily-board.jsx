@@ -127,9 +127,15 @@ function DailyBoardPage() {
         };
       });
 
+      const reportMap = {};
+      reports.forEach((r) => {
+        if (r.job_id) reportMap[r.job_id] = r;
+      });
+
       setSchedule(scheduleRow);
       setAssignments(assignmentResult.data || []);
       setRigDetails(detailsMap);
+      setReportsByJob(reportMap);
       setLastRefreshed(new Date());
     } catch (err) {
       if (requestId !== requestRef.current) return;
