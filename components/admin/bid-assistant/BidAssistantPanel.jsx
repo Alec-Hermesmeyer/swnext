@@ -332,19 +332,17 @@ export default function BidAssistantPanel() {
       {/* Main layout: sidebar + split pane */}
       <div className="flex flex-col lg:flex-row overflow-hidden" style={{ height: "calc(100vh - 16rem)" }}>
         {/* Document sidebar */}
-        <div className="lg:w-[220px] lg:shrink-0 lg:min-h-0 flex flex-col">
-          <DocumentSidebar
-            documents={state.documents}
-            selectedDoc={state.selectedDoc}
-            onSelect={handleSelectDocument}
-            onDelete={handleDeleteDocument}
-            deletingDocId={deletingDocId}
-            uploading={uploading}
-            onUpload={handleUpload}
-            onRefresh={loadDocuments}
-            loadingDocs={loadingDocs}
-          />
-        </div>
+        <DocumentSidebar
+          documents={state.documents}
+          selectedDoc={state.selectedDoc}
+          onSelect={handleSelectDocument}
+          onDelete={handleDeleteDocument}
+          deletingDocId={deletingDocId}
+          uploading={uploading}
+          onUpload={handleUpload}
+          onRefresh={loadDocuments}
+          loadingDocs={loadingDocs}
+        />
 
         {/* Chat pane — hidden on mobile when editor is active */}
         <div className={`flex-1 min-h-0 min-w-0 border-r border-neutral-100 ${
