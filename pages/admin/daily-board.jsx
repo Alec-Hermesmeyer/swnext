@@ -152,11 +152,12 @@ function DailyBoardPage() {
     loadBoard(selectedDate);
   }, [selectedDate, loadBoard]);
 
-  // Background auto-refresh
-  useEffect(() => {
-    const id = setInterval(() => loadBoard(selectedDate), REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [selectedDate, loadBoard]);
+  // Keep the board fresh: realtime changes + focus refresh + polling fallback
+  const refresh = useCallback(() => loadBoard(selectedDate), [loadBoard, selectedDate]);
+  useLiveData(refresh, {
+    pollIntervalMs: REFRESH_INTERVAL_MS,
+    realtimeTables: ["crew_assignments", "crew_daily_reports", "schedule_rig_details"],
+  });
 
   // Group assignments by job, preserving order, with crew + rig info
   const jobGroups = useMemo(() => {
