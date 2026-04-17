@@ -414,12 +414,22 @@ function AdminBlogPage() {
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
           <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-card">
-            <h2 className={`${lato.className} text-lg font-bold text-neutral-900`}>Create New Post</h2>
-            <p className="mt-1 text-sm text-neutral-600">
-              This creates a markdown file in <code>content/blog</code>.
-            </p>
+            <div className="flex items-start gap-3 border-b border-neutral-100 pb-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+                <svg className="h-4 w-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <h2 className={`${lato.className} text-lg font-bold text-neutral-900 leading-tight`}>Create New Post</h2>
+                <p className="mt-0.5 text-xs text-neutral-500">
+                  Generates a markdown file in <code className="rounded bg-neutral-100 px-1 py-0.5 text-[11px] text-neutral-700">content/blog</code>.
+                </p>
+              </div>
+            </div>
 
-            <form onSubmit={submit} className="mt-4 space-y-3">
+            <form onSubmit={submit} className="mt-5 space-y-3.5">
               <label className="block text-sm font-semibold text-neutral-700">
                 Title
                 <input
