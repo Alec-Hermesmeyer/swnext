@@ -92,6 +92,8 @@ function ChangeOrdersPage() {
     loadData();
   }, [loadData]);
 
+  useLiveData(loadData, { realtimeTables: ["change_orders"] });
+
   const filtered = useMemo(() => {
     const searchLc = search.trim().toLowerCase();
     return cos.filter((co) => {
