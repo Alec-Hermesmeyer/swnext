@@ -388,6 +388,60 @@ function DashboardTW() {
           </div>
         ) : data ? (
           <>
+            {/* ── Today's Field Ops Strip ── */}
+            <div className="mb-6 grid gap-4 sm:grid-cols-3">
+              <TodayCard
+                label="Field Reports Today"
+                value={`${data.todayReportsCount} / ${data.todayScheduledJobsCount}`}
+                hint={
+                  data.todayScheduledJobsCount === 0
+                    ? "No jobs scheduled"
+                    : data.todayReportsCount >= data.todayScheduledJobsCount
+                      ? "All jobs reported"
+                      : `${data.todayScheduledJobsCount - data.todayReportsCount} outstanding`
+                }
+                tone={
+                  data.todayScheduledJobsCount === 0
+                    ? "neutral"
+                    : data.todayReportsCount >= data.todayScheduledJobsCount
+                      ? "emerald"
+                      : data.todayReportsCount > 0
+                        ? "amber"
+                        : "rose"
+                }
+                href="/admin/field-reports"
+              />
+              <TodayCard
+                label="Certs Expiring ≤30d"
+                value={data.expiringCertsCount}
+                hint={
+                  data.expiredCertsCount > 0
+                    ? `${data.expiredCertsCount} already expired`
+                    : "Nothing expired"
+                }
+                tone={
+                  data.expiredCertsCount > 0
+                    ? "rose"
+                    : data.expiringCertsCount > 0
+                      ? "amber"
+                      : "emerald"
+                }
+                href="/admin/certifications"
+              />
+              <TodayCard
+                label="Active Backlog"
+                value={money(
+                  (data.recentJobs || []).reduce(
+                    (sum, j) => sum + (Number(j.contract_amount) || 0),
+                    0
+                  )
+                )}
+                hint={`${data.activeJobs} active jobs`}
+                tone="blue"
+                href="/admin/job-costs"
+              />
+            </div>
+
             {/* ── Metric Cards ── */}
             <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
               <StatCard
