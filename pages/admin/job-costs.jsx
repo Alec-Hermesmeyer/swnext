@@ -184,7 +184,7 @@ function JobCostsPage() {
             return (b.day_variance ?? 0) - (a.day_variance ?? 0);
         }
       });
-  }, [jobs, assignments, schedulesById, includeInactive, search, sortBy]);
+  }, [jobs, assignments, schedulesById, coTotalsByJob, includeInactive, search, sortBy]);
 
   // Topline stats
   const summary = useMemo(() => {
