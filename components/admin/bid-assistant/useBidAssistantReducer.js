@@ -4,7 +4,7 @@
  * so that chat suggestions can update the draft and vice-versa.
  */
 
-import { useReducer, useCallback } from "react";
+import { useReducer, useMemo } from "react";
 import { normalizeDraftPayload, getDefaultBidFitMetrics } from "./bid-assistant-utils";
 
 // ── Action types ────────────────────────────────────────────────────
