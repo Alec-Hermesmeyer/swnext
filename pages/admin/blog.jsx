@@ -837,11 +837,14 @@ function AdminBlogPage() {
                 <p className="text-sm text-neutral-500">No posts found in content/blog.</p>
               ) : (
                 posts.map((post) => (
-                  <div key={post.slug} className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-neutral-900">{post.title}</p>
+                  <div
+                    key={post.slug}
+                    className="group rounded-xl border border-neutral-200 bg-white p-3 transition-all hover:border-neutral-300 hover:shadow-card-hover"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="min-w-0 flex-1 text-sm font-semibold text-neutral-900 leading-tight">{post.title}</p>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                           post.status === "published"
                             ? "bg-emerald-100 text-emerald-700"
                             : "bg-amber-100 text-amber-700"
@@ -850,14 +853,17 @@ function AdminBlogPage() {
                         {post.status || "draft"}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-neutral-500">/{post.slug}</p>
+                    <p className="mt-1 font-mono text-[11px] text-neutral-400">/{post.slug}</p>
                     <div className="mt-2 flex items-center gap-3">
                       <Link
                         href={`/blog/${post.slug}`}
                         target="_blank"
-                        className="text-xs font-semibold text-brand hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand transition-colors hover:text-brand-light"
                       >
                         Open post
+                        <svg className="h-3 w-3 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
                       </Link>
                     </div>
                   </div>
