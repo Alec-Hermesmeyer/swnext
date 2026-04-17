@@ -875,13 +875,35 @@ function AdminBlogPage() {
 
         {status && (
           <div
-            className={`mt-4 rounded-lg px-4 py-3 text-sm font-medium ${
-              status.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            className={`fixed bottom-6 right-6 z-50 flex max-w-md items-start gap-3 rounded-xl border px-4 py-3 shadow-card-hover ${
+              status.type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-red-200 bg-red-50 text-red-800"
             }`}
+            role="status"
           >
-            {status.message}
-            <button onClick={() => setStatus(null)} className="ml-2 font-bold">
-              x
+            <svg
+              className={`mt-0.5 h-4 w-4 shrink-0 ${status.type === "success" ? "text-emerald-600" : "text-red-600"}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              {status.type === "success" ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M4.93 19h14.14c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.2 16c-.77 1.33.19 3 1.73 3z" />
+              )}
+            </svg>
+            <p className="flex-1 text-sm font-medium leading-snug">{status.message}</p>
+            <button
+              type="button"
+              onClick={() => setStatus(null)}
+              className="shrink-0 rounded-md p-0.5 text-current/60 transition-colors hover:bg-black/5 hover:text-current"
+              aria-label="Dismiss"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         )}
