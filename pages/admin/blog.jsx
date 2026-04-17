@@ -397,11 +397,19 @@ function AdminBlogPage() {
       </Head>
 
       <div>
-        <div className="mb-6">
-          <h1 className={`${lato.className} text-2xl font-extrabold text-brand`}>Blog Manager</h1>
-          <p className="mt-1 text-sm text-neutral-600">
-            Create markdown blog posts for the public blog and keep content publishing inside admin.
-          </p>
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-light shadow-sm">
+            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className={`${lato.className} text-2xl font-extrabold text-brand leading-tight`}>Blog Manager</h1>
+            <p className="mt-0.5 text-sm text-neutral-600">
+              Create markdown blog posts for the public blog and keep content publishing inside admin.
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
