@@ -330,7 +330,7 @@ export default function BidAssistantPanel() {
       <MobileTabBar activeTab={mobileTab} onChange={setMobileTab} />
 
       {/* Main layout: sidebar + split pane */}
-      <div className="grid lg:grid-cols-[220px_1fr_1fr]" style={{ minHeight: "calc(100vh - 16rem)" }}>
+      <div className="grid lg:grid-cols-[220px_1fr_1fr]" style={{ height: "calc(100vh - 16rem)" }}>
         {/* Document sidebar */}
         <DocumentSidebar
           documents={state.documents}
