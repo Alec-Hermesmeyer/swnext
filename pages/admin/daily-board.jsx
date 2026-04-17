@@ -87,12 +87,13 @@ function DailyBoardPage() {
         setSchedule(null);
         setAssignments([]);
         setRigDetails({});
+        setReportsByJob({});
         setLastRefreshed(new Date());
         setLoading(false);
         return;
       }
 
-      const [assignmentResult, rigResult] = await Promise.all([
+      const [assignmentResult, rigResult, reportResult] = await Promise.all([
         supabase
           .from("crew_assignments")
           .select("*, crew_workers(*), crew_categories(*), crew_jobs(*)")
@@ -102,10 +103,16 @@ function DailyBoardPage() {
           .from("schedule_rig_details")
           .select("*, crew_superintendents(*), crew_trucks(*)")
           .eq("schedule_id", scheduleRow.id),
+        supabase
+          .from("crew_daily_reports")
+          .select("id, job_id, crew_hours, crew_size, piers_drilled, weather_stop, submitted_at")
+          .eq("report_date", date),
       ]);
 
       if (assignmentResult.error) throw assignmentResult.error;
       if (rigResult.error) throw rigResult.error;
+      // crew_daily_reports may not exist yet if migration hasn't been run — treat as empty
+      const reports = reportResult.error ? [] : (reportResult.data || []);
 
       if (requestId !== requestRef.current) return;
 
