@@ -48,6 +48,7 @@ function DailyBoardPage() {
   const [schedule, setSchedule] = useState(null);
   const [assignments, setAssignments] = useState([]);
   const [rigDetails, setRigDetails] = useState({});
+  const [reportsByJob, setReportsByJob] = useState({});
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [lastRefreshed, setLastRefreshed] = useState(null);
