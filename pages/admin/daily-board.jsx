@@ -5,6 +5,7 @@ import Head from "next/head";
 import { Lato } from "next/font/google";
 import withAuthTw from "@/components/withAuthTw";
 import supabase from "@/components/Supabase";
+import { useLiveData } from "@/hooks/useLiveData";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
