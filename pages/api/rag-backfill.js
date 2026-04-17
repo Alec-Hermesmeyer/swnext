@@ -8,22 +8,50 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+/**
+ * Embed and store documents using batch embedding for throughput.
+ *
+ * Uses getEmbeddingBatch() to send up to 20 texts per API call (vs. the
+ * previous 1-at-a-time approach).  Falls back to single-embed when a batch
+ * call fails so one bad text doesn't sink the whole group.
+ */
 async function embedAndStore(docs) {
   let stored = 0;
   let failed = 0;
   const errors = [];
-  for (let i = 0; i < docs.length; i += 5) {
-    const batch = docs.slice(i, i + 5);
-    const rows = [];
-    for (const doc of batch) {
-      try {
-        const embedding = await getEmbedding(doc.content);
-        rows.push({ ...doc, embedding });
-      } catch (err) {
-        failed++;
-        errors.push(`Embed: ${err.message}`);
+  const BATCH_SIZE = 20;
+
+  for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+    const batch = docs.slice(i, i + BATCH_SIZE);
+    const texts = batch.map((d) => d.content);
+
+    let embeddings;
+    try {
+      embeddings = await getEmbeddingBatch(texts);
+    } catch (err) {
+      // Batch call failed — fall back to one-at-a-time so we still store
+      // any docs whose content is individually embeddable.
+      errors.push(`Batch embed: ${err.message}`);
+      embeddings = [];
+      for (const text of texts) {
+        try {
+          embeddings.push(await getEmbedding(text));
+        } catch (singleErr) {
+          embeddings.push(null);
+          errors.push(`Embed: ${singleErr.message}`);
+        }
       }
     }
+
+    const rows = [];
+    for (let j = 0; j < batch.length; j++) {
+      if (embeddings[j]) {
+        rows.push({ ...batch[j], embedding: embeddings[j] });
+      } else {
+        failed++;
+      }
+    }
+
     if (rows.length) {
       const { error } = await supabase.from("documents").insert(rows);
       if (error) {
