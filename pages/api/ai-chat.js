@@ -2240,6 +2240,7 @@ async function prefetchBidResearchSnippets(supabase, message, context, userRole,
   const toolCtx = {
     cookieHeader: context.cookieHeader || "",
     userId: context.userId || null,
+    userRole: role,
   };
 
   try {
