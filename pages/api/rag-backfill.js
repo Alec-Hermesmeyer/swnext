@@ -154,22 +154,41 @@ const BACKFILL_SOURCES = {
   crew_jobs: async () => {
     const { data } = await supabase
       .from("crew_jobs")
-      .select("id, job_name, job_number, customer_name, address, city, pm_name, crane_required, hiring_contractor, is_active");
-    return (data || []).map((j) => ({
-      content: [
-        `Job: ${j.job_name}`,
-        j.job_number ? `Job #${j.job_number}` : null,
-        j.customer_name ? `Customer: ${j.customer_name}` : null,
-        j.hiring_contractor ? `Hiring contractor: ${j.hiring_contractor}` : null,
-        j.address || j.city ? `Location: ${[j.address, j.city].filter(Boolean).join(", ")}` : null,
-        j.pm_name ? `PM: ${j.pm_name}` : null,
-        j.crane_required ? "Crane required" : null,
-        j.is_active === false ? "INACTIVE" : "Active",
-      ].filter(Boolean).join(". "),
-      category: "project_history",
-      source: "crew_jobs",
-      metadata: { job_id: j.id, job_name: j.job_name },
-    }));
+      .select("id, job_name, job_number, customer_name, address, city, pm_name, crane_required, hiring_contractor, is_active, scope_description, bid_amount, contract_amount, estimated_days, mob_days, pier_count, start_date, end_date, job_status");
+    return (data || []).map((j) => {
+      // Build prose-style content — embedding models retrieve better when
+      // input reads like natural text rather than flat key/value pairs.
+      const lines = [
+        `Crew job: ${j.job_name}${j.job_number ? ` (Job #${j.job_number})` : ""}.`,
+      ];
+      if (j.customer_name) lines.push(`Customer: ${j.customer_name}.`);
+      if (j.hiring_contractor) lines.push(`Hired by: ${j.hiring_contractor}.`);
+      if (j.address || j.city) {
+        lines.push(`Location: ${[j.address, j.city].filter(Boolean).join(", ")}.`);
+      }
+      if (j.pm_name) lines.push(`Project manager: ${j.pm_name}.`);
+      if (j.scope_description) lines.push(`Scope: ${j.scope_description}.`);
+      if (j.pier_count) lines.push(`Pier count: ${j.pier_count}.`);
+      if (j.crane_required) lines.push("Crane required.");
+      if (j.bid_amount) lines.push(`Bid amount: $${Number(j.bid_amount).toLocaleString()}.`);
+      if (j.contract_amount) lines.push(`Contract amount: $${Number(j.contract_amount).toLocaleString()}.`);
+      if (j.estimated_days) lines.push(`Estimated duration: ${j.estimated_days} working days${j.mob_days ? ` + ${j.mob_days} mob days` : ""}.`);
+      if (j.start_date) lines.push(`Start: ${j.start_date}${j.end_date ? `, End: ${j.end_date}` : ""}.`);
+      const status = j.job_status || (j.is_active === false ? "inactive" : "active");
+      lines.push(`Status: ${status}.`);
+
+      return {
+        content: lines.join(" "),
+        category: "project_history",
+        source: "crew_jobs",
+        metadata: {
+          job_id: j.id,
+          job_name: j.job_name,
+          customer: j.customer_name || null,
+          status,
+        },
+      };
+    });
   },
 
   contact_submissions: async () => {
