@@ -122,6 +122,9 @@ function JobCostsPage() {
         const estimatedDays = Number(job.estimated_days) || 0;
         const contractAmount = Number(job.contract_amount) || 0;
         const bidAmount = Number(job.bid_amount) || 0;
+        const coTotals = coTotalsByJob[job.id] || { approved: 0, pending: 0, invoiced: 0 };
+        const coAdjustment = coTotals.approved + coTotals.invoiced;
+        const adjustedContract = contractAmount + coAdjustment;
         const avgCrew = scheduledDays > 0 ? crewDays / scheduledDays : 0;
         const estimatedCrewHours = estimatedDays > 0 && avgCrew > 0
           ? estimatedDays * avgCrew * HOURS_PER_CREW_DAY
