@@ -376,6 +376,21 @@ function JobCard({ group }) {
                   Crane
                 </span>
               ) : null}
+              {group.report ? (
+                <span
+                  className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-extrabold uppercase tracking-wider ${
+                    group.report.weather_stop
+                      ? "bg-amber-300 text-amber-900"
+                      : "bg-emerald-300 text-emerald-900"
+                  }`}
+                  title={`Report filed${group.report.piers_drilled ? ` · ${group.report.piers_drilled} piers` : ""}${group.report.crew_hours ? ` · ${group.report.crew_hours}hr` : ""}`}
+                >
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {group.report.weather_stop ? "Weather" : "Reported"}
+                </span>
+              ) : null}
             </div>
             <h2 className="mt-2 text-2xl font-extrabold leading-tight lg:text-[26px]">
               {group.job_name || "Untitled Job"}
