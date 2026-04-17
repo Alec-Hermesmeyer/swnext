@@ -2497,7 +2497,7 @@ export default async function handler(req, res) {
           supabase,
           toolCall.function.name,
           mergedArgs,
-          { cookieHeader: req.headers?.cookie || "", userId: userContext?.id || null }
+          { cookieHeader: req.headers?.cookie || "", userId: userContext?.id || null, userRole }
         );
         messages.push({
           role: "tool",
