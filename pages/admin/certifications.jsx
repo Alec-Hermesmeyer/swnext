@@ -113,6 +113,8 @@ function CertificationsPage() {
     loadData();
   }, [loadData]);
 
+  useLiveData(loadData, { realtimeTables: ["crew_worker_certifications"] });
+
   const enrichedCerts = useMemo(() => {
     return certs.map((c) => {
       const days = daysUntil(c.expires_date);
