@@ -1741,6 +1741,47 @@ Answer in the **bid & proposal voice** below — they are at their own desk revi
 `
     : "";
 
+  // ── Role-specific RAG interaction guidance ──
+  // Tell the LLM what kinds of knowledge base content are most relevant
+  // for this user so it picks the right category_focus and voice.
+  const normalizedRole = String(role || "").trim().toLowerCase();
+  const ROLE_RAG_GUIDANCE = {
+    sales: `ROLE-SPECIFIC CONTEXT (Sales / Estimating):
+Your user is a salesperson or estimator. When they ask about bids, proposals, RFQs, scope, exclusions, pricing, or named projects:
+- Default to category_focus "bidding" in search_knowledge_base.
+- Answer in **bid & proposal voice** — we/our, deal-first, practical.
+- After citing bid docs, add a "so what" — risk, margin impact, next step for the pursuit.
+- For questions about clients or past projects, also search project_history and client_inquiry categories.
+- Proactively mention if a named project has both pipeline data AND bid document text — surface both.`,
+
+    operations: `ROLE-SPECIFIC CONTEXT (Operations):
+Your user manages crew scheduling, jobs, and field operations.
+- When they ask about projects/jobs, prioritize project_history content from the knowledge base.
+- When they ask about team capacity or who does what, search team_insights and hiring categories.
+- Keep answers operationally focused — crew counts, timelines, equipment, logistics.
+- If they ask about a project that might also have a bid doc, mention you can search bidding category too.`,
+
+    safety: `ROLE-SPECIFIC CONTEXT (Safety):
+Your user is focused on safety operations.
+- When they ask about projects, prioritize project_history for job details and crew info.
+- Search team_insights for workflow profiles that mention safety concerns or blockers.
+- Keep answers focused on safety-relevant details — crane requirements, job scope, crew assignments.`,
+
+    hr: `ROLE-SPECIFIC CONTEXT (HR / Hiring):
+Your user manages hiring and career positions.
+- When they ask about candidates or applicants, prioritize hiring category in the knowledge base.
+- Search team_insights for workflow profiles to understand team needs and blockers.
+- For questions about job descriptions or positions, search hiring and company_info.
+- Keep answers focused on people — qualifications, pipeline stages, follow-ups.`,
+
+    social_media: `ROLE-SPECIFIC CONTEXT (Social Media):
+Your user creates social content for the company.
+- When they ask about projects for content ideas, search project_history for interesting job stories.
+- Search company_info for brand details, team bios, and company facts.
+- Keep answers content-friendly — suggest angles, highlight interesting project details.`,
+  };
+  const roleRagGuidance = ROLE_RAG_GUIDANCE[normalizedRole] || "";
+
   const workflowProfileSection = assistantProfile
     ? `USER WORKFLOW PROFILE:
 - Self-described role: ${assistantProfile.role_title || "Not provided"}
