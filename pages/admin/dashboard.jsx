@@ -113,6 +113,7 @@ function ActivityItem({ label, detail, time, status }) {
 async function fetchDashboardSnapshot() {
   const today = new Date().toISOString().split("T")[0];
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+  const thirtyDaysOut = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
 
   const [
     { count: activeJobs },
