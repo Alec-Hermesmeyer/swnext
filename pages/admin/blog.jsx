@@ -613,7 +613,7 @@ function AdminBlogPage() {
                         type="text"
                         value={renameValue}
                         onChange={(e) => setRenameValue(e.target.value)}
-                        className="h-9 flex-1 rounded-lg border border-neutral-300 px-3 text-sm"
+                        className="h-9 flex-1 rounded-lg border border-neutral-300 px-3 text-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
                       />
                       <button
                         type="button"
