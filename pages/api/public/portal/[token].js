@@ -47,15 +47,27 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Portal misconfigured" });
     }
 
-    const { data: jobs, error: jobsErr } = await supabase
-      .from("crew_jobs")
-      .select("id, job_name, job_number, customer_name, hiring_contractor, address, city, zip, contract_amount, estimated_days, start_date, end_date, pier_count, scope_description, job_status, is_active")
-      .or(`customer_name.ilike.${matchName},hiring_contractor.ilike.${matchName}`)
-      .order("start_date", { ascending: false, nullsFirst: false });
+    const baseSelect = "id, job_name, job_number, customer_name, hiring_contractor, address, city, zip, contract_amount, estimated_days, start_date, end_date, pier_count, scope_description, job_status, is_active";
+    const [byCustomer, byGc] = await Promise.all([
+      supabase.from("crew_jobs").select(baseSelect).ilike("customer_name", matchName),
+      supabase.from("crew_jobs").select(baseSelect).ilike("hiring_contractor", matchName),
+    ]);
+    if (byCustomer.error) throw byCustomer.error;
+    if (byGc.error) throw byGc.error;
 
-    if (jobsErr) throw jobsErr;
-
-    const jobList = jobs || [];
+    const seen = new Set();
+    const jobList = [];
+    [...(byCustomer.data || []), ...(byGc.data || [])].forEach((j) => {
+      if (!seen.has(j.id)) {
+        seen.add(j.id);
+        jobList.push(j);
+      }
+    });
+    jobList.sort((a, b) => {
+      const aDate = a.start_date ? new Date(a.start_date).getTime() : 0;
+      const bDate = b.start_date ? new Date(b.start_date).getTime() : 0;
+      return bDate - aDate;
+    });
     const jobIds = jobList.map((j) => j.id);
 
     if (jobIds.length === 0) {
