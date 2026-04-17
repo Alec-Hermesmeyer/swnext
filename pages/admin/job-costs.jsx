@@ -99,6 +99,10 @@ function JobCostsPage() {
     loadData();
   }, [loadData]);
 
+  useLiveData(loadData, {
+    realtimeTables: ["crew_jobs", "crew_assignments", "change_orders"],
+  });
+
   // Aggregate scheduled-day stats per job
   const rows = useMemo(() => {
     const visibleJobs = includeInactive ? jobs : jobs.filter((j) => j.is_active !== false);
