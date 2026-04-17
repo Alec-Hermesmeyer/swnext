@@ -215,32 +215,36 @@ function bidAssistantReducer(state, action) {
 export function useBidAssistantReducer() {
   const [state, dispatch] = useReducer(bidAssistantReducer, undefined, getInitialState);
 
-  const actions = {
-    setDocuments: useCallback((docs) => dispatch({ type: BID_ACTIONS.SET_DOCUMENTS, payload: docs }), []),
-    selectDocument: useCallback((doc) => dispatch({ type: BID_ACTIONS.SELECT_DOCUMENT, payload: doc }), []),
-    setDocumentDetail: useCallback((doc) => dispatch({ type: BID_ACTIONS.SET_DOCUMENT_DETAIL, payload: doc }), []),
-    clearSelection: useCallback(() => dispatch({ type: BID_ACTIONS.CLEAR_SELECTION }), []),
+  // CRITICAL: `actions` must be referentially stable so that downstream
+  // useCallback / useEffect deps that include `actions` don't retrigger
+  // on every render.  `dispatch` from useReducer is guaranteed stable,
+  // so a single useMemo with [] deps keeps the whole object stable.
+  const actions = useMemo(() => ({
+    setDocuments: (docs) => dispatch({ type: BID_ACTIONS.SET_DOCUMENTS, payload: docs }),
+    selectDocument: (doc) => dispatch({ type: BID_ACTIONS.SELECT_DOCUMENT, payload: doc }),
+    setDocumentDetail: (doc) => dispatch({ type: BID_ACTIONS.SET_DOCUMENT_DETAIL, payload: doc }),
+    clearSelection: () => dispatch({ type: BID_ACTIONS.CLEAR_SELECTION }),
 
-    setDraft: useCallback((draft) => dispatch({ type: BID_ACTIONS.SET_DRAFT, payload: draft }), []),
-    updateDraftField: useCallback((field, value) => dispatch({ type: BID_ACTIONS.UPDATE_DRAFT_FIELD, field, value }), []),
-    applyChatSuggestion: useCallback((payload) => dispatch({ type: BID_ACTIONS.APPLY_CHAT_SUGGESTION, payload }), []),
-    revertSection: useCallback((field) => dispatch({ type: BID_ACTIONS.REVERT_SECTION, field }), []),
+    setDraft: (draft) => dispatch({ type: BID_ACTIONS.SET_DRAFT, payload: draft }),
+    updateDraftField: (field, value) => dispatch({ type: BID_ACTIONS.UPDATE_DRAFT_FIELD, field, value }),
+    applyChatSuggestion: (payload) => dispatch({ type: BID_ACTIONS.APPLY_CHAT_SUGGESTION, payload }),
+    revertSection: (field) => dispatch({ type: BID_ACTIONS.REVERT_SECTION, field }),
 
-    addChatMessage: useCallback((msg) => dispatch({ type: BID_ACTIONS.ADD_CHAT_MESSAGE, payload: msg }), []),
-    setChatLoading: useCallback((v) => dispatch({ type: BID_ACTIONS.SET_CHAT_LOADING, payload: v }), []),
-    clearChat: useCallback(() => dispatch({ type: BID_ACTIONS.CLEAR_CHAT }), []),
+    addChatMessage: (msg) => dispatch({ type: BID_ACTIONS.ADD_CHAT_MESSAGE, payload: msg }),
+    setChatLoading: (v) => dispatch({ type: BID_ACTIONS.SET_CHAT_LOADING, payload: v }),
+    clearChat: () => dispatch({ type: BID_ACTIONS.CLEAR_CHAT }),
 
-    setMetrics: useCallback((m) => dispatch({ type: BID_ACTIONS.SET_METRICS, payload: m }), []),
-    updateMetricField: useCallback((field, value) => dispatch({ type: BID_ACTIONS.UPDATE_METRIC_FIELD, field, value }), []),
+    setMetrics: (m) => dispatch({ type: BID_ACTIONS.SET_METRICS, payload: m }),
+    updateMetricField: (field, value) => dispatch({ type: BID_ACTIONS.UPDATE_METRIC_FIELD, field, value }),
 
-    setStatus: useCallback((s) => dispatch({ type: BID_ACTIONS.SET_STATUS, payload: s }), []),
-    setLoading: useCallback((key, value) => dispatch({ type: BID_ACTIONS.SET_LOADING, key, value }), []),
+    setStatus: (s) => dispatch({ type: BID_ACTIONS.SET_STATUS, payload: s }),
+    setLoading: (key, value) => dispatch({ type: BID_ACTIONS.SET_LOADING, key, value }),
 
-    setWizardStep: useCallback((step) => dispatch({ type: BID_ACTIONS.SET_WIZARD_STEP, payload: step }), []),
-    setWizardActive: useCallback((active) => dispatch({ type: BID_ACTIONS.SET_WIZARD_ACTIVE, payload: active }), []),
+    setWizardStep: (step) => dispatch({ type: BID_ACTIONS.SET_WIZARD_STEP, payload: step }),
+    setWizardActive: (active) => dispatch({ type: BID_ACTIONS.SET_WIZARD_ACTIVE, payload: active }),
 
-    toggleSection: useCallback((key) => dispatch({ type: BID_ACTIONS.TOGGLE_SECTION, key }), []),
-  };
+    toggleSection: (key) => dispatch({ type: BID_ACTIONS.TOGGLE_SECTION, key }),
+  }), []); // dispatch is stable — safe to omit from deps
 
   return { state, dispatch, actions };
 }
