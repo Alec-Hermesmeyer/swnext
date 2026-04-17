@@ -154,6 +154,53 @@ async function fetchDashboardSnapshot() {
   const hiring = hiringRows || [];
   const activeHiring = hiring.filter((h) => !["hired", "declined"].includes(h.stage)).length;
 
+  // Field-ops signals — wrapped so a missing table (pre-migration) doesn't break the dashboard
+  let todayReportsCount = 0;
+  let todayScheduledJobsCount = 0;
+  let expiringCertsCount = 0;
+  let expiredCertsCount = 0;
+
+  try {
+    const scheduleIds = (todaySchedule || []).map((s) => s.id).filter(Boolean);
+    if (scheduleIds.length > 0) {
+      const { data: todayAssignments } = await supabase
+        .from("crew_assignments")
+        .select("job_id")
+        .in("schedule_id", scheduleIds);
+      const distinctJobs = new Set((todayAssignments || []).map((a) => a.job_id).filter(Boolean));
+      todayScheduledJobsCount = distinctJobs.size;
+    }
+
+    const [reportResult, expiringResult, expiredResult] = await Promise.allSettled([
+      supabase
+        .from("crew_daily_reports")
+        .select("job_id", { count: "exact", head: false })
+        .eq("report_date", today),
+      supabase
+        .from("crew_worker_certifications")
+        .select("*", { count: "exact", head: true })
+        .gte("expires_date", today)
+        .lte("expires_date", thirtyDaysOut),
+      supabase
+        .from("crew_worker_certifications")
+        .select("*", { count: "exact", head: true })
+        .lt("expires_date", today),
+    ]);
+
+    if (reportResult.status === "fulfilled" && !reportResult.value.error) {
+      const reportRows = reportResult.value.data || [];
+      todayReportsCount = new Set(reportRows.map((r) => r.job_id).filter(Boolean)).size;
+    }
+    if (expiringResult.status === "fulfilled" && !expiringResult.value.error) {
+      expiringCertsCount = expiringResult.value.count || 0;
+    }
+    if (expiredResult.status === "fulfilled" && !expiredResult.value.error) {
+      expiredCertsCount = expiredResult.value.count || 0;
+    }
+  } catch {
+    // Silent — field-ops tables may not exist yet before migrations run
+  }
+
   return {
     activeJobs: activeJobs || 0,
     totalJobs: totalJobs || 0,
