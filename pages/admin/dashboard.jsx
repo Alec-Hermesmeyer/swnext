@@ -221,6 +221,10 @@ async function fetchDashboardSnapshot() {
     socialPosts: socialPosts || 0,
     recentSubmissions: recentSubmissions || [],
     hiring,
+    todayReportsCount,
+    todayScheduledJobsCount,
+    expiringCertsCount,
+    expiredCertsCount,
   };
 }
 
