@@ -472,7 +472,7 @@ function AdminBlogPage() {
                 <textarea
                   value={form.excerpt}
                   onChange={(e) => updateField("excerpt", e.target.value)}
-                  className="mt-1 min-h-[72px] w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+                  className="mt-1 min-h-[72px] w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
                   placeholder="1-2 sentence summary shown on the blog listing."
                   required
                 />
