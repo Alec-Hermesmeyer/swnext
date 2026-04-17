@@ -20,7 +20,7 @@ import {
 
 function DocumentSidebar({ documents, selectedDoc, onSelect, onDelete, deletingDocId, uploading, onUpload, onRefresh, loadingDocs }) {
   return (
-    <div className="border-b border-neutral-100 lg:border-b-0 lg:border-r lg:max-h-full lg:overflow-y-auto bg-white">
+    <div className="border-b border-neutral-100 lg:border-b-0 lg:border-r lg:h-full lg:w-[220px] lg:shrink-0 lg:overflow-y-auto bg-white">
       <div className="p-3">
         {/* Upload + Refresh */}
         <div className="mb-3 flex items-center gap-2">
