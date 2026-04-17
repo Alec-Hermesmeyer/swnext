@@ -405,7 +405,7 @@ function AdminBlogPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
-          <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-card">
             <h2 className={`${lato.className} text-lg font-bold text-neutral-900`}>Create New Post</h2>
             <p className="mt-1 text-sm text-neutral-600">
               This creates a markdown file in <code>content/blog</code>.
@@ -752,7 +752,7 @@ function AdminBlogPage() {
             </form>
           </div>
 
-          <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-card">
             <div className="flex items-center justify-between gap-2">
               <h2 className={`${lato.className} text-lg font-bold text-neutral-900`}>Recent Posts</h2>
               <button
