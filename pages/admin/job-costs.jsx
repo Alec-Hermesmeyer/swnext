@@ -189,7 +189,7 @@ function JobCostsPage() {
   // Topline stats
   const summary = useMemo(() => {
     const activeRows = rows.filter((r) => r.is_active);
-    const totalContract = activeRows.reduce((sum, r) => sum + r.contract_amount, 0);
+    const totalContract = activeRows.reduce((sum, r) => sum + (r.adjusted_contract || r.contract_amount), 0);
     const totalEstDays = activeRows.reduce((sum, r) => sum + r.estimated_days, 0);
     const totalScheduledDays = activeRows.reduce((sum, r) => sum + r.scheduled_days, 0);
     const jobsOverBudget = activeRows.filter((r) => r.estimated_days > 0 && r.day_variance > 0).length;
