@@ -398,7 +398,7 @@ function AdminBlogPage() {
 
       <div>
         <div className="mb-6">
-          <h1 className={`${lato.className} text-2xl font-extrabold text-[#0b2a5a]`}>Blog Manager</h1>
+          <h1 className={`${lato.className} text-2xl font-extrabold text-brand`}>Blog Manager</h1>
           <p className="mt-1 text-sm text-neutral-600">
             Create markdown blog posts for the public blog and keep content publishing inside admin.
           </p>
@@ -510,7 +510,7 @@ function AdminBlogPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
                     Blog Image Library (bucket: blog-images)
                   </p>
-                  <label className="cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#0b2a5a] ring-1 ring-neutral-300 hover:bg-neutral-100">
+                  <label className="cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-brand ring-1 ring-neutral-300 hover:bg-neutral-100">
                     {imageUploading ? "Uploading..." : "Upload image"}
                     <input
                       ref={fileInputRef}
@@ -792,7 +792,7 @@ function AdminBlogPage() {
                       <Link
                         href={`/blog/${post.slug}`}
                         target="_blank"
-                        className="text-xs font-semibold text-[#0b2a5a] hover:underline"
+                        className="text-xs font-semibold text-brand hover:underline"
                       >
                         Open post
                       </Link>
