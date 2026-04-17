@@ -416,10 +416,10 @@ export default function BidDocumentEditor({ state, actions }) {
     };
 
     try {
-      const response = await fetch(`/api/bidding/ai-bidding/documents/${selectedDoc.id}/chat`, {
+      const response = await fetch("/api/bid-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompts[section] || `Generate content for the ${section} section.`, top_k: 6 }),
+        body: JSON.stringify({ document_id: selectedDoc.id, message: prompts[section] || `Generate content for the ${section} section.` }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.detail || data?.error || "AI assist failed");
