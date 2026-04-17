@@ -564,7 +564,7 @@ function AdminBlogPage() {
                           updateField("imageId", selectedBlogImage.path);
                           if (!form.imageAlt) updateField("imageAlt", "");
                         }}
-                        className="rounded-md bg-brand px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#143a75]"
+                        className="rounded-md bg-brand px-2.5 py-1 text-xs font-semibold text-white hover:bg-brand-light"
                       >
                         Use image
                       </button>
@@ -610,7 +610,7 @@ function AdminBlogPage() {
                       <button
                         type="button"
                         onClick={renameImage}
-                        className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#143a75]"
+                        className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-light"
                       >
                         Save
                       </button>
@@ -707,7 +707,7 @@ function AdminBlogPage() {
                               type="button"
                               onClick={() => queueSuggestion(suggestion, index)}
                               disabled={queueingSuggestionIndex === index}
-                              className="rounded-md bg-brand px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#143a75] disabled:opacity-60"
+                              className="rounded-md bg-brand px-2.5 py-1 text-xs font-semibold text-white hover:bg-brand-light disabled:opacity-60"
                             >
                               {queueingSuggestionIndex === index ? "Queueing..." : "Add to Social Queue"}
                             </button>
@@ -744,7 +744,7 @@ function AdminBlogPage() {
                 <button
                   type="submit"
                   disabled={saving || !generatedSlug}
-                  className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-[#143a75] disabled:opacity-60"
+                  className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-light disabled:opacity-60"
                 >
                   {saving ? "Creating..." : "Create Blog Post"}
                 </button>
