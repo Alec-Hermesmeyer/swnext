@@ -330,29 +330,31 @@ export default function BidAssistantPanel() {
       <MobileTabBar activeTab={mobileTab} onChange={setMobileTab} />
 
       {/* Main layout: sidebar + split pane */}
-      <div className="grid lg:grid-cols-[220px_1fr_1fr]" style={{ height: "calc(100vh - 16rem)" }}>
+      <div className="flex flex-col lg:flex-row overflow-hidden" style={{ height: "calc(100vh - 16rem)" }}>
         {/* Document sidebar */}
-        <DocumentSidebar
-          documents={state.documents}
-          selectedDoc={state.selectedDoc}
-          onSelect={handleSelectDocument}
-          onDelete={handleDeleteDocument}
-          deletingDocId={deletingDocId}
-          uploading={uploading}
-          onUpload={handleUpload}
-          onRefresh={loadDocuments}
-          loadingDocs={loadingDocs}
-        />
+        <div className="lg:w-[220px] lg:shrink-0 lg:min-h-0 flex flex-col">
+          <DocumentSidebar
+            documents={state.documents}
+            selectedDoc={state.selectedDoc}
+            onSelect={handleSelectDocument}
+            onDelete={handleDeleteDocument}
+            deletingDocId={deletingDocId}
+            uploading={uploading}
+            onUpload={handleUpload}
+            onRefresh={loadDocuments}
+            loadingDocs={loadingDocs}
+          />
+        </div>
 
         {/* Chat pane — hidden on mobile when editor is active */}
-        <div className={`border-r border-neutral-100 ${
+        <div className={`flex-1 min-h-0 min-w-0 border-r border-neutral-100 ${
           mobileTab === "editor" ? "hidden lg:flex" : "flex"
         } flex-col`}>
           <BidChatInterface state={state} actions={actions} />
         </div>
 
         {/* Editor pane — hidden on mobile when chat is active */}
-        <div className={`${
+        <div className={`flex-1 min-h-0 min-w-0 ${
           mobileTab === "chat" ? "hidden lg:flex" : "flex"
         } flex-col`}>
           <BidDocumentEditor state={state} actions={actions} />
