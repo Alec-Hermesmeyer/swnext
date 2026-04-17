@@ -442,8 +442,18 @@ function JobRow({ row }) {
 
       {/* Contract */}
       <td className="px-4 py-3 text-right tabular-nums">
-        <p className="font-semibold text-neutral-900">{formatMoney(row.contract_amount)}</p>
-        {row.bid_amount > 0 && row.bid_amount !== row.contract_amount ? (
+        <p className="font-semibold text-neutral-900">{formatMoney(row.adjusted_contract || row.contract_amount)}</p>
+        {row.co_adjustment !== 0 ? (
+          <p className={`text-[11px] font-semibold ${row.co_adjustment > 0 ? "text-emerald-700" : "text-rose-700"}`}>
+            {row.co_adjustment > 0 ? "+" : ""}{formatMoney(row.co_adjustment)} COs
+          </p>
+        ) : null}
+        {row.co_pending > 0 ? (
+          <p className="text-[11px] font-semibold text-amber-700">
+            +{formatMoney(row.co_pending)} pending
+          </p>
+        ) : null}
+        {row.bid_amount > 0 && row.bid_amount !== row.contract_amount && row.co_adjustment === 0 ? (
           <p className="text-[11px] text-neutral-400">Bid {formatMoney(row.bid_amount)}</p>
         ) : null}
       </td>
