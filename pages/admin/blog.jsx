@@ -656,11 +656,21 @@ function AdminBlogPage() {
                 ) : null}
               </div>
 
-              <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
-                <h3 className="text-sm font-bold text-indigo-900">AI Draft Generator</h3>
-                <p className="mt-1 text-xs text-indigo-800">
-                  Generate a first draft, then edit before publishing.
-                </p>
+              <div className="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 to-purple-50/60 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 shadow-sm">
+                    <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-indigo-900 leading-tight">AI Draft Generator</h3>
+                    <p className="mt-0.5 text-xs text-indigo-800/80">
+                      Generate a first draft, then edit before publishing.
+                    </p>
+                  </div>
+                </div>
                 <div className="mt-3 grid gap-2 md:grid-cols-2">
                   <label className="block text-xs font-semibold text-indigo-900">
                     Focus Keyword
