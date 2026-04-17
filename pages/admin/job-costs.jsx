@@ -42,6 +42,7 @@ function JobCostsPage() {
   const [jobs, setJobs] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [schedulesById, setSchedulesById] = useState({});
+  const [coTotalsByJob, setCoTotalsByJob] = useState({});
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [lastRefreshed, setLastRefreshed] = useState(null);
