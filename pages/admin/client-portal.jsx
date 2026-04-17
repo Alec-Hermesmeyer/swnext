@@ -84,6 +84,8 @@ function ClientPortalAdminPage() {
     loadData();
   }, [loadData]);
 
+  useLiveData(loadData, { realtimeTables: ["client_portals"] });
+
   const openNewForm = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
