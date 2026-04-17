@@ -95,6 +95,8 @@ function FieldReportsPage() {
     loadData();
   }, [loadData]);
 
+  useLiveData(loadData, { realtimeTables: ["crew_daily_reports"] });
+
   const filteredReports = useMemo(() => {
     if (!filterJobId) return reports;
     return reports.filter((r) => r.job_id === filterJobId);
