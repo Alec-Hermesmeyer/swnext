@@ -54,15 +54,18 @@ function JobCostsPage() {
     setLoading(true);
     setErrorMessage("");
     try {
-      const [jobsResult, assignmentsResult, schedulesResult] = await Promise.all([
+      const [jobsResult, assignmentsResult, schedulesResult, coResult] = await Promise.all([
         supabase.from("crew_jobs").select("*").order("job_number", { ascending: false }),
         supabase.from("crew_assignments").select("id, job_id, schedule_id, worker_id"),
         supabase.from("crew_schedules").select("id, schedule_date"),
+        supabase.from("change_orders").select("job_id, amount, status"),
       ]);
 
       if (jobsResult.error) throw jobsResult.error;
       if (assignmentsResult.error) throw assignmentsResult.error;
       if (schedulesResult.error) throw schedulesResult.error;
+      // change_orders may not exist yet pre-migration — treat as empty silently
+      const coRows = coResult.error ? [] : (coResult.data || []);
 
       setJobs(jobsResult.data || []);
       setAssignments(assignmentsResult.data || []);
@@ -71,6 +74,18 @@ function JobCostsPage() {
         scheduleMap[row.id] = row.schedule_date;
       });
       setSchedulesById(scheduleMap);
+
+      const coTotals = {};
+      coRows.forEach((row) => {
+        if (!row.job_id) return;
+        if (!coTotals[row.job_id]) coTotals[row.job_id] = { approved: 0, pending: 0, invoiced: 0 };
+        const amt = Number(row.amount) || 0;
+        if (row.status === "approved") coTotals[row.job_id].approved += amt;
+        else if (row.status === "invoiced") coTotals[row.job_id].invoiced += amt;
+        else if (row.status === "pending" || row.status === "submitted") coTotals[row.job_id].pending += amt;
+      });
+      setCoTotalsByJob(coTotals);
+
       setLastRefreshed(new Date());
     } catch (err) {
       setErrorMessage(err?.message || "Could not load job cost data.");
