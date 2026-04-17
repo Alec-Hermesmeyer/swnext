@@ -789,16 +789,29 @@ function AdminBlogPage() {
                 />
               </label>
 
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 pt-4">
                 <p className="text-xs text-neutral-500">
-                  Final slug: <span className="font-semibold text-neutral-800">{generatedSlug || "—"}</span>
+                  Final slug:{" "}
+                  <span className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-neutral-700">
+                    {generatedSlug || "—"}
+                  </span>
                 </p>
                 <button
                   type="submit"
                   disabled={saving || !generatedSlug}
-                  className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-light disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-light hover:shadow-md disabled:opacity-60 disabled:shadow-none"
                 >
-                  {saving ? "Creating..." : "Create Blog Post"}
+                  {saving ? (
+                    <>
+                      <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Blog Post"
+                  )}
                 </button>
               </div>
             </form>
