@@ -82,11 +82,10 @@ export default function ClientPortalPage() {
     loadPortal(token);
   }, [token, loadPortal]);
 
-  useEffect(() => {
-    if (!token) return;
-    const id = setInterval(() => loadPortal(token), REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
+  const refresh = useCallback(() => {
+    if (token) loadPortal(token);
   }, [token, loadPortal]);
+  useLiveData(refresh, { pollIntervalMs: REFRESH_INTERVAL_MS });
 
   const selectedJob = useMemo(
     () => jobs.find((j) => j.id === selectedJobId) || jobs[0] || null,
