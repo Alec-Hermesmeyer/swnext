@@ -228,30 +228,45 @@ export default async function handler(req, res) {
     // 3. Chunk the text (pass filename for context-aware headers)
     const chunks = chunkText(text, { filename: originalName });
 
-    // 4. Embed and store each chunk
+    // 4. Embed and store each chunk (batch API call for throughput)
     let stored = 0;
     let failed = 0;
+    const UPLOAD_BATCH = 20;
 
-    for (let i = 0; i < chunks.length; i += 5) {
-      const batch = chunks.slice(i, i + 5);
+    for (let i = 0; i < chunks.length; i += UPLOAD_BATCH) {
+      const batch = chunks.slice(i, i + UPLOAD_BATCH);
+
+      let embeddings;
+      try {
+        embeddings = await getEmbeddingBatch(batch);
+      } catch {
+        // Batch failed — fall back to one-at-a-time
+        embeddings = [];
+        for (const chunk of batch) {
+          try {
+            embeddings.push(await getEmbedding(chunk));
+          } catch {
+            embeddings.push(null);
+          }
+        }
+      }
+
       const rows = [];
-
-      for (const chunk of batch) {
-        try {
-          const embedding = await getEmbedding(chunk);
+      for (let j = 0; j < batch.length; j++) {
+        if (embeddings[j]) {
           rows.push({
-            content: chunk,
+            content: batch[j],
             category,
             source: "upload",
             file_path: storagePath,
             metadata: {
               filename: originalName,
-              chunk_index: stored + failed,
+              chunk_index: i + j,
               total_chunks: chunks.length,
             },
-            embedding,
+            embedding: embeddings[j],
           });
-        } catch {
+        } else {
           failed++;
         }
       }
