@@ -187,12 +187,17 @@ function DailyBoardPage() {
       if (workerLabel) groups.get(jobId).workers.push(workerLabel);
     });
 
+    // Attach field-report summary per job
+    groups.forEach((group, jobId) => {
+      group.report = reportsByJob[jobId] || null;
+    });
+
     return Array.from(groups.values()).sort((a, b) => {
       const an = String(a.job_number || "");
       const bn = String(b.job_number || "");
       return an.localeCompare(bn, undefined, { numeric: true });
     });
-  }, [assignments, rigDetails]);
+  }, [assignments, rigDetails, reportsByJob]);
 
   const totalCrew = useMemo(
     () => jobGroups.reduce((sum, g) => sum + g.workers.length, 0),
