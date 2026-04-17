@@ -771,21 +771,32 @@ function AdminBlogPage() {
           </div>
 
           <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-card">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className={`${lato.className} text-lg font-bold text-neutral-900`}>Recent Posts</h2>
+            <div className="flex items-start justify-between gap-2 border-b border-neutral-100 pb-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+                  <svg className="h-4 w-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M19 11H5m14-7H5m14 14H5m14 0l-3-3m3 3l-3 3" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className={`${lato.className} text-lg font-bold text-neutral-900 leading-tight`}>Recent Posts</h2>
+                  <p className="mt-0.5 text-xs text-neutral-500">Latest drafts and published posts.</p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => {
                   fetchPosts({ force: true });
                   fetchBlogImages({ force: true });
                 }}
-                className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
+                className="shrink-0 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 transition-colors hover:bg-neutral-50 hover:border-neutral-400"
               >
                 Refresh
               </button>
             </div>
 
-            <div className="mt-3 space-y-2">
+            <div className="mt-4 space-y-2">
               {loading ? (
                 <p className="text-sm text-neutral-500">Loading...</p>
               ) : posts.length === 0 ? (
