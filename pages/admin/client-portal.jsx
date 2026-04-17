@@ -6,6 +6,7 @@ import { Lato } from "next/font/google";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
+import { useLiveData } from "@/hooks/useLiveData";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
