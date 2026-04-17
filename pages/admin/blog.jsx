@@ -539,7 +539,7 @@ function AdminBlogPage() {
                           onClick={() => setSelectedBlogImage(img)}
                           className={`overflow-hidden rounded-lg border text-left transition-all ${
                             selectedBlogImage?.path === img.path || form.imageId === img.path
-                              ? "border-brand ring-2 ring-[#0b2a5a]/20"
+                              ? "border-brand ring-2 ring-brand/20"
                               : "border-neutral-200 hover:border-neutral-300"
                           }`}
                           title={img.path}
