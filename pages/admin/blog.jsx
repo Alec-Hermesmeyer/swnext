@@ -511,8 +511,8 @@ function AdminBlogPage() {
               </label>
 
               <div
-                className={`rounded-lg border p-3 transition-colors ${
-                  dragActive ? "border-brand bg-blue-50" : "border-neutral-200 bg-neutral-50"
+                className={`rounded-xl border p-4 transition-colors ${
+                  dragActive ? "border-brand bg-brand-50/60" : "border-neutral-200 bg-neutral-50"
                 }`}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -524,11 +524,20 @@ function AdminBlogPage() {
                 }}
                 onDrop={onDropFiles}
               >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-600">
-                    Blog Image Library (bucket: blog-images)
-                  </p>
-                  <label className="cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-brand ring-1 ring-neutral-300 hover:bg-neutral-100">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white ring-1 ring-neutral-200">
+                      <svg className="h-3.5 w-3.5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.1em] text-neutral-700">Blog Image Library</p>
+                      <p className="text-[10px] text-neutral-500">Bucket: blog-images</p>
+                    </div>
+                  </div>
+                  <label className="cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-brand ring-1 ring-neutral-300 transition-colors hover:bg-neutral-100 hover:ring-neutral-400">
                     {imageUploading ? "Uploading..." : "Upload image"}
                     <input
                       ref={fileInputRef}
@@ -540,7 +549,7 @@ function AdminBlogPage() {
                     />
                   </label>
                 </div>
-                <p className="mt-1 text-xs text-neutral-500">
+                <p className="mt-2 text-xs text-neutral-500">
                   Drag-and-drop an image anywhere in this card or click upload. Click a tile to select.
                 </p>
                 <div className="mt-3 max-h-52 overflow-y-auto">
