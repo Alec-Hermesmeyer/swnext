@@ -5,6 +5,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { Lato } from "next/font/google";
+import { useLiveData } from "@/hooks/useLiveData";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
