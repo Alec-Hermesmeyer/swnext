@@ -120,28 +120,39 @@ export default function TWAdminLayout({ children }) {
           </div>
         </div>
 
-        {/* Nav links */}
+        {/* Nav links, grouped by business-lifecycle section */}
         <nav className="flex-1 overflow-y-auto px-3 py-3 scrollbar-hide">
-          <div className="space-y-0.5">
-            {navLinks.map((link) => {
-              const isActive = currentPath === link.href ||
-                (link.href !== "/admin" && currentPath.startsWith(link.href));
-              const Icon = NAV_ICONS[link.href] || DEFAULT_ICON;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-semibold transition-colors ${
-                    isActive
-                      ? "bg-white/15 text-white"
-                      : "text-white/65 hover:bg-white/8 hover:text-white/90"
-                  }`}
-                >
-                  <Icon className="h-[18px] w-[18px] shrink-0" />
-                  {link.label}
-                </Link>
-              );
-            })}
+          <div className="space-y-4">
+            {navSections.map((group, groupIdx) => (
+              <div key={group.section}>
+                {groupIdx > 0 ? (
+                  <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
+                    {group.section}
+                  </p>
+                ) : null}
+                <div className="space-y-0.5">
+                  {group.links.map((link) => {
+                    const isActive = currentPath === link.href ||
+                      (link.href !== "/admin" && currentPath.startsWith(link.href));
+                    const Icon = NAV_ICONS[link.href] || DEFAULT_ICON;
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-semibold transition-colors ${
+                          isActive
+                            ? "bg-white/15 text-white"
+                            : "text-white/65 hover:bg-white/8 hover:text-white/90"
+                        }`}
+                      >
+                        <Icon className="h-[18px] w-[18px] shrink-0" />
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Extra sidebar content injected by pages via SidebarContext */}
