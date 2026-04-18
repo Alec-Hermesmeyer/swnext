@@ -6,7 +6,7 @@ import { Lato } from "next/font/google";
 import AIChatBubble from "@/components/admin/AIChatBubble";
 import { useAuth } from "@/context/AuthContext";
 import { useSidebarExtra } from "@/context/SidebarContext";
-import { getVisibleNavLinks } from "@/lib/roles";
+import { getVisibleNavLinks, getVisibleNavSections } from "@/lib/roles";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
