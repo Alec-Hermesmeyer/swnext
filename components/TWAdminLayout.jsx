@@ -83,6 +83,7 @@ export default function TWAdminLayout({ children }) {
   }, [currentPath]);
 
   const navLinks = getVisibleNavLinks(role, accessLevel);
+  const navSections = getVisibleNavSections(role, accessLevel);
 
   if (isEmbedded) {
     return (
