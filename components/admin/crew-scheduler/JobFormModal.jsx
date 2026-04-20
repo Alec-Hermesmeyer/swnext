@@ -78,10 +78,23 @@ export default function JobFormModal({
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Email/text extract state (create mode only)
+  const [extractOpen, setExtractOpen] = useState(false);
+  const [extractText, setExtractText] = useState("");
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState("");
+  const [extractedKeys, setExtractedKeys] = useState(() => new Set());
+  const [extractNotes, setExtractNotes] = useState("");
+
   // Reset form when modal opens or target changes
   useEffect(() => {
     if (!isOpen) return;
     setErrorMessage("");
+    setExtractOpen(false);
+    setExtractText("");
+    setExtractError("");
+    setExtractedKeys(new Set());
+    setExtractNotes("");
     if (initialJob) {
       setForm({ ...EMPTY_JOB, ...initialJob });
     } else {
