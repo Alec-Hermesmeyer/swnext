@@ -9,6 +9,7 @@ import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { useLiveData } from "@/hooks/useLiveData";
 import JobFormModal from "@/components/admin/crew-scheduler/JobFormModal";
+import ImportJobsModal from "@/components/admin/ImportJobsModal";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
@@ -36,6 +37,28 @@ const formatMoney = (value) => {
   if (!Number.isFinite(n) || n === 0) return "—";
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 };
+
+// Assess data completeness for a job row.
+// Green = all "should-have" fields present.
+// Amber = 1–2 missing. Red = 3+ missing.
+const COMPLETENESS_FIELDS = [
+  { key: "customer_or_gc", label: "Customer or GC", test: (j) => (j.customer_name || j.hiring_contractor || "").trim() !== "" },
+  { key: "address", label: "Address", test: (j) => String(j.address || "").trim() !== "" },
+  { key: "city", label: "City", test: (j) => String(j.city || "").trim() !== "" },
+  { key: "contract_or_bid", label: "Contract or Bid $", test: (j) => Number(j.contract_amount) > 0 || Number(j.bid_amount) > 0 },
+  { key: "estimated_days", label: "Est. Days", test: (j) => Number(j.estimated_days) > 0 },
+  { key: "pier_count", label: "Pier Count", test: (j) => Number(j.pier_count) > 0 },
+  { key: "pm", label: "PM", test: (j) => String(j.pm_name || "").trim() !== "" },
+];
+
+function assessCompleteness(job) {
+  const missing = COMPLETENESS_FIELDS.filter((f) => !f.test(job)).map((f) => f.label);
+  let tone;
+  if (missing.length === 0) tone = "green";
+  else if (missing.length <= 2) tone = "amber";
+  else tone = "red";
+  return { missing, tone };
+}
 
 // normalizeJobInput: mirrors the scheduler's version so the admin jobs page
 // can insert / update without importing from the giant scheduler file.
@@ -91,10 +114,12 @@ function AdminJobsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeFilter, setActiveFilter] = useState("active"); // active | inactive | all
+  const [completenessFilter, setCompletenessFilter] = useState("all"); // all | incomplete
   const [sortBy, setSortBy] = useState("newest");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -126,18 +151,22 @@ function AdminJobsPage() {
   }, [jobs]);
 
   const summary = useMemo(() => {
-    let active = 0, inactive = 0, inProgress = 0, completed = 0;
+    let active = 0, inactive = 0, inProgress = 0, completed = 0, incomplete = 0;
     let contractTotal = 0;
     jobs.forEach((j) => {
-      if (j.is_active === false) inactive += 1;
-      else active += 1;
+      const isActiveJob = j.is_active !== false;
+      if (isActiveJob) active += 1;
+      else inactive += 1;
       if (j.job_status === "in_progress") inProgress += 1;
       if (j.job_status === "completed") completed += 1;
-      if (j.is_active !== false && j.contract_amount) {
+      if (isActiveJob && j.contract_amount) {
         contractTotal += Number(j.contract_amount) || 0;
       }
+      if (isActiveJob && assessCompleteness(j).missing.length > 0) {
+        incomplete += 1;
+      }
     });
-    return { active, inactive, inProgress, completed, contractTotal, total: jobs.length };
+    return { active, inactive, inProgress, completed, incomplete, contractTotal, total: jobs.length };
   }, [jobs]);
 
   const filtered = useMemo(() => {
@@ -146,6 +175,7 @@ function AdminJobsPage() {
       if (activeFilter === "active" && j.is_active === false) return false;
       if (activeFilter === "inactive" && j.is_active !== false) return false;
       if (statusFilter !== "all" && (j.job_status || "active") !== statusFilter) return false;
+      if (completenessFilter === "incomplete" && assessCompleteness(j).missing.length === 0) return false;
       if (!searchLc) return true;
       return (
         String(j.job_name || "").toLowerCase().includes(searchLc) ||
@@ -178,7 +208,7 @@ function AdminJobsPage() {
       }
     });
     return rows;
-  }, [jobs, search, statusFilter, activeFilter, sortBy]);
+  }, [jobs, search, statusFilter, activeFilter, completenessFilter, sortBy]);
 
   const openNew = () => {
     setEditingJob(null);
@@ -268,24 +298,36 @@ function AdminJobsPage() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={openNew}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-light hover:shadow-md"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            New Job
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 shadow-sm transition-all hover:bg-neutral-50 hover:border-neutral-400"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Import from Spreadsheet
+            </button>
+            <button
+              type="button"
+              onClick={openNew}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-light hover:shadow-md"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Job
+            </button>
+          </div>
         </div>
 
         {/* Summary */}
         <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <SummaryCard label="Active" value={summary.active} tone="blue" onClick={() => setActiveFilter("active")} />
+          <SummaryCard label="Active" value={summary.active} tone="blue" onClick={() => { setActiveFilter("active"); setCompletenessFilter("all"); setStatusFilter("all"); }} />
+          <SummaryCard label="Incomplete" value={summary.incomplete} tone={summary.incomplete > 0 ? "rose" : "emerald"} onClick={() => { setActiveFilter("active"); setCompletenessFilter("incomplete"); setStatusFilter("all"); }} />
           <SummaryCard label="In Progress" value={summary.inProgress} tone="amber" onClick={() => { setActiveFilter("active"); setStatusFilter("in_progress"); }} />
           <SummaryCard label="Completed" value={summary.completed} tone="emerald" onClick={() => setStatusFilter("completed")} />
-          <SummaryCard label="Inactive" value={summary.inactive} tone="neutral" onClick={() => setActiveFilter("inactive")} />
           <SummaryCard label="Active Backlog" value={formatMoney(summary.contractTotal)} tone="violet" />
         </div>
 
@@ -399,6 +441,19 @@ function AdminJobsPage() {
           onSave={handleSave}
         />
 
+        <ImportJobsModal
+          isOpen={importOpen}
+          onClose={() => setImportOpen(false)}
+          existingJobs={jobs}
+          onImported={async ({ inserted, skipped }) => {
+            const msg = skipped > 0
+              ? `Imported ${inserted} job${inserted === 1 ? "" : "s"} (skipped ${skipped} duplicate${skipped === 1 ? "" : "s"}).`
+              : `Imported ${inserted} job${inserted === 1 ? "" : "s"}.`;
+            setStatus({ type: "success", message: msg });
+            await loadData();
+          }}
+        />
+
         {status ? (
           <div
             className={`fixed bottom-6 right-6 z-50 flex max-w-md items-start gap-3 rounded-xl border px-4 py-3 shadow-card-hover ${
@@ -493,11 +548,25 @@ function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus }) {
   const isActive = job.is_active !== false;
   const statusMeta = STATUS_META[job.job_status || "active"] || STATUS_META.active;
   const addressLine = [job.address, job.city].filter(Boolean).join(", ");
+  const completeness = assessCompleteness(job);
+  const dotTone = {
+    green: "bg-emerald-500 ring-emerald-500/30",
+    amber: "bg-amber-500 ring-amber-500/30",
+    red: "bg-rose-500 ring-rose-500/30",
+  }[completeness.tone];
+  const dotTitle = completeness.missing.length
+    ? `Incomplete — missing: ${completeness.missing.join(", ")}. Click Edit to fill in.`
+    : "Complete — all key fields filled in.";
 
   return (
     <tr className={`transition-colors hover:bg-neutral-50 ${isActive ? "" : "opacity-60"}`}>
       <td className="px-4 py-3">
         <div className="flex items-start gap-2">
+          <span
+            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ring-2 ${dotTone}`}
+            title={dotTitle}
+            aria-label={dotTitle}
+          />
           {job.job_number ? (
             <span className="mt-0.5 shrink-0 rounded bg-brand-50 px-1.5 py-0.5 font-mono text-[11px] font-bold text-brand">
               #{job.job_number}
@@ -507,6 +576,11 @@ function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus }) {
             <p className="font-semibold text-neutral-900">{job.job_name || "Untitled"}</p>
             {job.scope_description ? (
               <p className="mt-0.5 truncate text-[11px] text-neutral-500">{job.scope_description}</p>
+            ) : null}
+            {completeness.missing.length > 0 ? (
+              <p className="mt-0.5 text-[11px] font-semibold text-amber-700 truncate max-w-[340px]">
+                {completeness.missing.length} missing: {completeness.missing.slice(0, 3).join(", ")}{completeness.missing.length > 3 ? "…" : ""}
+              </p>
             ) : null}
           </div>
         </div>

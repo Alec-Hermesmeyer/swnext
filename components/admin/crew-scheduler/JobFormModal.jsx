@@ -78,10 +78,23 @@ export default function JobFormModal({
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Email/text extract state (create mode only)
+  const [extractOpen, setExtractOpen] = useState(false);
+  const [extractText, setExtractText] = useState("");
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState("");
+  const [extractedKeys, setExtractedKeys] = useState(() => new Set());
+  const [extractNotes, setExtractNotes] = useState("");
+
   // Reset form when modal opens or target changes
   useEffect(() => {
     if (!isOpen) return;
     setErrorMessage("");
+    setExtractOpen(false);
+    setExtractText("");
+    setExtractError("");
+    setExtractedKeys(new Set());
+    setExtractNotes("");
     if (initialJob) {
       setForm({ ...EMPTY_JOB, ...initialJob });
     } else {
@@ -111,6 +124,46 @@ export default function JobFormModal({
   }, [mode, form.job_name]);
 
   const showActuals = form.job_status === "completed" || form.job_status === "in_progress" || form.actual_days || form.actual_mob_days;
+
+  const handleExtract = async () => {
+    const trimmed = extractText.trim();
+    if (!trimmed) {
+      setExtractError("Paste an email, message, or scope text to extract.");
+      return;
+    }
+    setExtracting(true);
+    setExtractError("");
+    try {
+      const response = await fetch("/api/jobs/extract-from-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: trimmed }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || "Could not extract.");
+      }
+      const fields = data?.fields || {};
+      const populated = Array.isArray(data?.populatedKeys) ? data.populatedKeys : [];
+      setForm((prev) => {
+        const next = { ...prev };
+        Object.entries(fields).forEach(([key, value]) => {
+          // Only fill if we got a real value; don't wipe user-typed content on empty extract
+          if (value === "" || value === null || value === undefined) return;
+          if (typeof value === "boolean" && value === false) return;
+          next[key] = value;
+        });
+        return next;
+      });
+      setExtractedKeys(new Set(populated));
+      setExtractNotes(String(data?.notes || ""));
+      setExtractOpen(false); // collapse the paste area; user now reviews
+    } catch (err) {
+      setExtractError(err?.message || "Extract failed.");
+    } finally {
+      setExtracting(false);
+    }
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -178,6 +231,21 @@ export default function JobFormModal({
         {/* Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
           <div className="space-y-6 px-6 py-5">
+            {/* ── Extract from Email (create mode only) ── */}
+            {mode === "create" ? (
+              <ExtractFromEmail
+                open={extractOpen}
+                setOpen={setExtractOpen}
+                text={extractText}
+                setText={setExtractText}
+                extracting={extracting}
+                extractError={extractError}
+                extractedCount={extractedKeys.size}
+                extractNotes={extractNotes}
+                onExtract={handleExtract}
+              />
+            ) : null}
+
             {/* ── Basics ── */}
             <Section title="Basics" hint="Core identifiers for this job.">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -554,5 +622,134 @@ function Field({ label, required, children, className = "" }) {
       </span>
       {children}
     </label>
+  );
+}
+
+function ExtractFromEmail({
+  open,
+  setOpen,
+  text,
+  setText,
+  extracting,
+  extractError,
+  extractedCount,
+  extractNotes,
+  onExtract,
+}) {
+  if (!open) {
+    return (
+      <div className="rounded-xl border border-dashed border-brand/40 bg-brand/5 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-start gap-2">
+            <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-sm">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-neutral-800">Save typing — paste a bid email</p>
+              <p className="text-[11px] text-neutral-500">
+                AI fills the form from any email, text message, or RFP excerpt. Review and save.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:shadow-md"
+          >
+            Parse Email
+          </button>
+        </div>
+        {extractedCount > 0 ? (
+          <div className="mt-3 flex flex-wrap items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+            <svg className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <div>
+              <p className="text-xs font-semibold text-emerald-800">
+                AI filled {extractedCount} field{extractedCount === 1 ? "" : "s"} — review below before saving.
+              </p>
+              {extractNotes ? (
+                <p className="mt-0.5 text-[11px] italic text-emerald-700">AI note: {extractNotes}</p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/80 to-purple-50/60 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold text-indigo-900">Paste the email or message</p>
+          <p className="text-[11px] text-indigo-700/80">
+            AI pulls out job name, customer, GC, address, contact, pier count, scope, and dollar amount.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="rounded-md p-1 text-indigo-400 transition-colors hover:bg-white/60 hover:text-indigo-700"
+          aria-label="Close extract panel"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Paste the email body, scope text, or message here..."
+        rows={8}
+        autoFocus
+        disabled={extracting}
+        className="mt-3 w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:opacity-60"
+      />
+      {extractError ? (
+        <p className="mt-2 text-xs font-semibold text-red-700">{extractError}</p>
+      ) : null}
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <p className="text-[11px] text-indigo-700/70">
+          Tip: include subject lines, signatures, and site details — the more context, the better the extraction.
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => { setText(""); }}
+            disabled={extracting || !text}
+            className="rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:opacity-60"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            onClick={onExtract}
+            disabled={extracting || !text.trim()}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:opacity-60"
+          >
+            {extracting ? (
+              <>
+                <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Extracting...
+              </>
+            ) : (
+              <>
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Extract
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
