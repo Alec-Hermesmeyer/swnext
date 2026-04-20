@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useRef, useEffect, useState } from "react";
 import { Lato } from "next/font/google";
 import AIChatBubble from "@/components/admin/AIChatBubble";
+import NotificationsBell from "@/components/admin/NotificationsBell";
 import { useAuth } from "@/context/AuthContext";
 import { useSidebarExtra } from "@/context/SidebarContext";
 import { getVisibleNavLinks, getVisibleNavSections } from "@/lib/roles";
