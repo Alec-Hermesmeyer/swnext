@@ -542,11 +542,25 @@ function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus }) {
   const isActive = job.is_active !== false;
   const statusMeta = STATUS_META[job.job_status || "active"] || STATUS_META.active;
   const addressLine = [job.address, job.city].filter(Boolean).join(", ");
+  const completeness = assessCompleteness(job);
+  const dotTone = {
+    green: "bg-emerald-500 ring-emerald-500/30",
+    amber: "bg-amber-500 ring-amber-500/30",
+    red: "bg-rose-500 ring-rose-500/30",
+  }[completeness.tone];
+  const dotTitle = completeness.missing.length
+    ? `Incomplete — missing: ${completeness.missing.join(", ")}. Click Edit to fill in.`
+    : "Complete — all key fields filled in.";
 
   return (
     <tr className={`transition-colors hover:bg-neutral-50 ${isActive ? "" : "opacity-60"}`}>
       <td className="px-4 py-3">
         <div className="flex items-start gap-2">
+          <span
+            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ring-2 ${dotTone}`}
+            title={dotTitle}
+            aria-label={dotTitle}
+          />
           {job.job_number ? (
             <span className="mt-0.5 shrink-0 rounded bg-brand-50 px-1.5 py-0.5 font-mono text-[11px] font-bold text-brand">
               #{job.job_number}
@@ -556,6 +570,11 @@ function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus }) {
             <p className="font-semibold text-neutral-900">{job.job_name || "Untitled"}</p>
             {job.scope_description ? (
               <p className="mt-0.5 truncate text-[11px] text-neutral-500">{job.scope_description}</p>
+            ) : null}
+            {completeness.missing.length > 0 ? (
+              <p className="mt-0.5 text-[11px] font-semibold text-amber-700 truncate max-w-[340px]">
+                {completeness.missing.length} missing: {completeness.missing.slice(0, 3).join(", ")}{completeness.missing.length > 3 ? "…" : ""}
+              </p>
             ) : null}
           </div>
         </div>
