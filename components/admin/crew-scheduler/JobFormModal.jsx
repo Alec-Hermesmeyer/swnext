@@ -1,395 +1,558 @@
-import { useState, useEffect, memo } from "react";
-import { X, Save, Loader2 } from "lucide-react";
+"use client";
 
-const JobFormModal = memo(({
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Lato } from "next/font/google";
+
+const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+
+const EMPTY_JOB = {
+  job_name: "",
+  job_number: "",
+  dig_tess_number: "",
+  customer_name: "",
+  hiring_contractor: "",
+  hiring_contact_name: "",
+  hiring_contact_phone: "",
+  hiring_contact_email: "",
+  address: "",
+  city: "",
+  zip: "",
+  pm_name: "",
+  pm_phone: "",
+  default_rig: "",
+  crane_required: false,
+  is_active: true,
+  job_status: "active",
+  estimated_days: "",
+  mob_days: "",
+  actual_days: "",
+  actual_mob_days: "",
+  pier_count: "",
+  scope_description: "",
+  bid_amount: "",
+  contract_amount: "",
+  start_date: "",
+  end_date: "",
+};
+
+const JOB_STATUSES = [
+  { value: "active", label: "Active" },
+  { value: "bid", label: "Bid" },
+  { value: "awarded", label: "Awarded" },
+  { value: "scheduled", label: "Scheduled" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+  { value: "on_hold", label: "On Hold" },
+];
+
+const STATUS_TONE = {
+  active: "bg-blue-100 text-blue-700 border-blue-200",
+  bid: "bg-neutral-100 text-neutral-700 border-neutral-200",
+  awarded: "bg-sky-100 text-sky-700 border-sky-200",
+  scheduled: "bg-indigo-100 text-indigo-700 border-indigo-200",
+  in_progress: "bg-amber-100 text-amber-700 border-amber-200",
+  completed: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  on_hold: "bg-neutral-200 text-neutral-700 border-neutral-300",
+};
+
+/**
+ * JobFormModal — add or edit a crew job.
+ *
+ * Props:
+ *  - isOpen: boolean
+ *  - mode: "create" | "edit"
+ *  - initialJob: optional job object to prefill (used for edit mode)
+ *  - customerNames: string[] for datalist suggestions
+ *  - onClose: () => void
+ *  - onSave: async (jobDraft) => void  — parent handles create/update + any error toast
+ */
+export default function JobFormModal({
   isOpen,
+  mode = "create",
+  initialJob = null,
+  customerNames = [],
   onClose,
   onSave,
-  job = null,
-  title = "Job Details"
-}) => {
-  const [formData, setFormData] = useState({
-    job_name: "",
-    job_number: "",
-    dig_tess_number: "",
-    customer_name: "",
-    hiring_contractor: "",
-    hiring_contact_name: "",
-    hiring_contact_phone: "",
-    hiring_contact_email: "",
-    address: "",
-    city: "",
-    zip: "",
-    pm_name: "",
-    pm_phone: "",
-    default_rig: "",
-    crane_required: false,
-    is_active: true,
-  });
+}) {
+  const [form, setForm] = useState(EMPTY_JOB);
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [errors, setErrors] = useState({});
-
+  // Reset form when modal opens or target changes
   useEffect(() => {
-    if (job) {
-      setFormData({
-        ...formData,
-        ...job
-      });
+    if (!isOpen) return;
+    setErrorMessage("");
+    if (initialJob) {
+      setForm({ ...EMPTY_JOB, ...initialJob });
     } else {
-      setFormData({
-        job_name: "",
-        job_number: "",
-        dig_tess_number: "",
-        customer_name: "",
-        hiring_contractor: "",
-        hiring_contact_name: "",
-        hiring_contact_phone: "",
-        hiring_contact_email: "",
-        address: "",
-        city: "",
-        zip: "",
-        pm_name: "",
-        pm_phone: "",
-        default_rig: "",
-        crane_required: false,
-        is_active: true,
-      });
+      setForm(EMPTY_JOB);
     }
-  }, [job, isOpen]);
+  }, [isOpen, initialJob]);
 
-  const validateForm = () => {
-    const newErrors = {};
+  // Escape to close
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
 
-    if (!formData.job_name?.trim()) {
-      newErrors.job_name = "Job name is required";
+  const updateField = useCallback((key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const titleLabel = useMemo(() => {
+    if (mode === "edit") {
+      return `Edit Job${form.job_name ? ` — ${form.job_name}` : ""}`;
     }
+    return "New Job";
+  }, [mode, form.job_name]);
 
-    if (!formData.customer_name?.trim()) {
-      newErrors.customer_name = "Customer name is required";
+  const showActuals = form.job_status === "completed" || form.job_status === "in_progress" || form.actual_days || form.actual_mob_days;
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!form.job_name?.trim()) {
+      setErrorMessage("Job name is required.");
+      return;
     }
-
-    if (formData.hiring_contact_email && !formData.hiring_contact_email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      newErrors.hiring_contact_email = "Invalid email format";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    setIsSaving(true);
+    setSaving(true);
+    setErrorMessage("");
     try {
-      await onSave(formData);
-      onClose();
-    } catch (error) {
-      console.error("Error saving job:", error);
+      await onSave?.(form);
+      // Parent should close the modal on success
+    } catch (err) {
+      setErrorMessage(err?.message || "Could not save. Please try again.");
     } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setSaving(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4">
-        {/* Backdrop */}
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-          onClick={onClose}
-        />
-
-        {/* Modal */}
-        <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
-            <h2 className="text-xl font-semibold text-neutral-900">{title}</h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-neutral-500" />
-            </button>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      role="presentation"
+      onClick={() => onClose?.()}
+    >
+      <div
+        className={`${lato.className} flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl`}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="job-modal-title"
+      >
+        {/* Header */}
+        <header className="flex items-start justify-between gap-4 border-b border-neutral-100 px-6 py-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-light shadow-sm">
+              <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+                  d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <h2 id="job-modal-title" className="text-lg font-extrabold text-brand leading-tight">{titleLabel}</h2>
+              <p className="mt-0.5 text-xs text-neutral-500">
+                {mode === "edit"
+                  ? "Update any field below. Changes save to crew_jobs and propagate live to the board."
+                  : "Capture everything now — the scheduler, costs, and client portal all read from these fields."}
+              </p>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => onClose?.()}
+            className="shrink-0 rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+            aria-label="Close"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </header>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit}>
-            <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: "calc(90vh - 140px)" }}>
-              <div className="grid grid-cols-2 gap-4">
-                {/* Job Information */}
-                <div className="col-span-2">
-                  <h3 className="text-sm font-semibold text-neutral-700 mb-3">Job Information</h3>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Job Name *
-                  </label>
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+          <div className="space-y-6 px-6 py-5">
+            {/* ── Basics ── */}
+            <Section title="Basics" hint="Core identifiers for this job.">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <Field label="Job Name" required>
                   <input
                     type="text"
-                    value={formData.job_name}
-                    onChange={(e) => handleChange('job_name', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.job_name ? 'border-red-500' : 'border-neutral-300'
-                    }`}
+                    value={form.job_name}
+                    onChange={(e) => updateField("job_name", e.target.value)}
+                    placeholder="Goodloe Stadium (Red Oak)"
+                    required
+                    autoFocus
+                    className={inputClass}
                   />
-                  {errors.job_name && (
-                    <p className="mt-1 text-xs text-red-600">{errors.job_name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Job Number
-                  </label>
+                </Field>
+                <Field label="Job Number">
                   <input
                     type="text"
-                    value={formData.job_number}
-                    onChange={(e) => handleChange('job_number', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.job_number}
+                    onChange={(e) => updateField("job_number", e.target.value)}
+                    placeholder="2026-042"
+                    className={inputClass}
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Customer Name *
-                  </label>
+                </Field>
+                <Field label="DigTess #">
                   <input
                     type="text"
-                    value={formData.customer_name}
-                    onChange={(e) => handleChange('customer_name', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.customer_name ? 'border-red-500' : 'border-neutral-300'
-                    }`}
+                    value={form.dig_tess_number}
+                    onChange={(e) => updateField("dig_tess_number", e.target.value)}
+                    placeholder="—"
+                    className={inputClass}
                   />
-                  {errors.customer_name && (
-                    <p className="mt-1 text-xs text-red-600">{errors.customer_name}</p>
-                  )}
-                </div>
+                </Field>
+                <Field label="Status">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={form.job_status || "active"}
+                      onChange={(e) => updateField("job_status", e.target.value)}
+                      className={`${inputClass} flex-1`}
+                    >
+                      {JOB_STATUSES.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                    <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${STATUS_TONE[form.job_status] || STATUS_TONE.active}`}>
+                      {JOB_STATUSES.find((s) => s.value === form.job_status)?.label || "Active"}
+                    </span>
+                  </div>
+                </Field>
+                <Field label="Flags" className="lg:col-span-2">
+                  <div className="flex flex-wrap items-center gap-4 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(form.crane_required)}
+                        onChange={(e) => updateField("crane_required", e.target.checked)}
+                        className="h-4 w-4 rounded border-neutral-300 text-brand focus:ring-brand/20"
+                      />
+                      Crane Required
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(form.is_active)}
+                        onChange={(e) => updateField("is_active", e.target.checked)}
+                        className="h-4 w-4 rounded border-neutral-300 text-brand focus:ring-brand/20"
+                      />
+                      Active
+                    </label>
+                  </div>
+                </Field>
+              </div>
+            </Section>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Dig/Tess Number
-                  </label>
+            {/* ── Customer & Site ── */}
+            <Section title="Customer & Site" hint="Who the work is for and where it's happening.">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <Field label="Customer Name">
                   <input
                     type="text"
-                    value={formData.dig_tess_number}
-                    onChange={(e) => handleChange('dig_tess_number', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.customer_name}
+                    onChange={(e) => updateField("customer_name", e.target.value)}
+                    list="job-customer-options"
+                    placeholder="Miller Sierra"
+                    className={inputClass}
                   />
-                </div>
-
-                {/* Location Information */}
-                <div className="col-span-2 mt-4">
-                  <h3 className="text-sm font-semibold text-neutral-700 mb-3">Location</h3>
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Address
-                  </label>
+                </Field>
+                <Field label="Hiring Contractor (GC)">
                   <input
                     type="text"
-                    value={formData.address}
-                    onChange={(e) => handleChange('address', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.hiring_contractor}
+                    onChange={(e) => updateField("hiring_contractor", e.target.value)}
+                    list="job-customer-options"
+                    placeholder="Acme General Contractors"
+                    className={inputClass}
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    City
-                  </label>
+                </Field>
+                <Field label="Contact Name">
                   <input
                     type="text"
-                    value={formData.city}
-                    onChange={(e) => handleChange('city', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.hiring_contact_name}
+                    onChange={(e) => updateField("hiring_contact_name", e.target.value)}
+                    placeholder="John Smith"
+                    className={inputClass}
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    ZIP Code
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.zip}
-                    onChange={(e) => handleChange('zip', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Contact Information */}
-                <div className="col-span-2 mt-4">
-                  <h3 className="text-sm font-semibold text-neutral-700 mb-3">Contacts</h3>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Hiring Contractor
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.hiring_contractor}
-                    onChange={(e) => handleChange('hiring_contractor', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Contact Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.hiring_contact_name}
-                    onChange={(e) => handleChange('hiring_contact_name', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Contact Phone
-                  </label>
+                </Field>
+                <Field label="Contact Phone">
                   <input
                     type="tel"
-                    value={formData.hiring_contact_phone}
-                    onChange={(e) => handleChange('hiring_contact_phone', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.hiring_contact_phone}
+                    onChange={(e) => updateField("hiring_contact_phone", e.target.value)}
+                    placeholder="(214) 555-0100"
+                    className={inputClass}
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Contact Email
-                  </label>
+                </Field>
+                <Field label="Contact Email">
                   <input
                     type="email"
-                    value={formData.hiring_contact_email}
-                    onChange={(e) => handleChange('hiring_contact_email', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.hiring_contact_email ? 'border-red-500' : 'border-neutral-300'
-                    }`}
+                    value={form.hiring_contact_email}
+                    onChange={(e) => updateField("hiring_contact_email", e.target.value)}
+                    placeholder="john@acme.com"
+                    className={inputClass}
                   />
-                  {errors.hiring_contact_email && (
-                    <p className="mt-1 text-xs text-red-600">{errors.hiring_contact_email}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Project Manager
-                  </label>
+                </Field>
+                <div />
+                <Field label="Address" className="lg:col-span-2">
                   <input
                     type="text"
-                    value={formData.pm_name}
-                    onChange={(e) => handleChange('pm_name', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.address}
+                    onChange={(e) => updateField("address", e.target.value)}
+                    placeholder="1234 Main St"
+                    className={inputClass}
                   />
-                </div>
+                </Field>
+                <Field label="City">
+                  <input
+                    type="text"
+                    value={form.city}
+                    onChange={(e) => updateField("city", e.target.value)}
+                    placeholder="Dallas"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="ZIP">
+                  <input
+                    type="text"
+                    value={form.zip}
+                    onChange={(e) => updateField("zip", e.target.value)}
+                    placeholder="75201"
+                    className={inputClass}
+                  />
+                </Field>
+              </div>
+              {customerNames.length > 0 ? (
+                <datalist id="job-customer-options">
+                  {customerNames.map((name) => <option key={name} value={name} />)}
+                </datalist>
+              ) : null}
+            </Section>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    PM Phone
-                  </label>
+            {/* ── S&W Team ── */}
+            <Section title="S&W Team" hint="Internal ownership for this job.">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <Field label="PM Name">
+                  <input
+                    type="text"
+                    value={form.pm_name}
+                    onChange={(e) => updateField("pm_name", e.target.value)}
+                    placeholder="e.g., James Miller"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="PM Phone">
                   <input
                     type="tel"
-                    value={formData.pm_phone}
-                    onChange={(e) => handleChange('pm_phone', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.pm_phone}
+                    onChange={(e) => updateField("pm_phone", e.target.value)}
+                    placeholder="(214) 555-0100"
+                    className={inputClass}
                   />
-                </div>
-
-                {/* Equipment */}
-                <div className="col-span-2 mt-4">
-                  <h3 className="text-sm font-semibold text-neutral-700 mb-3">Equipment</h3>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Default Rig
-                  </label>
+                </Field>
+                <Field label="Default Rig">
                   <input
                     type="text"
-                    value={formData.default_rig}
-                    onChange={(e) => handleChange('default_rig', e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.default_rig}
+                    onChange={(e) => updateField("default_rig", e.target.value)}
+                    placeholder="Rig 5"
+                    className={inputClass}
                   />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.crane_required}
-                      onChange={(e) => handleChange('crane_required', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-medium text-neutral-700">Crane Required</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_active}
-                      onChange={(e) => handleChange('is_active', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-medium text-neutral-700">Active</span>
-                  </label>
-                </div>
+                </Field>
               </div>
-            </div>
+            </Section>
 
-            {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-200 bg-neutral-50">
+            {/* ── Scope & Duration ── */}
+            <Section title="Scope & Duration" hint="Estimated crew-days drive the Job Costs burn view.">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Field label="Est. Work Days">
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.estimated_days ?? ""}
+                    onChange={(e) => updateField("estimated_days", e.target.value)}
+                    placeholder="10"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Mob Days">
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.mob_days ?? ""}
+                    onChange={(e) => updateField("mob_days", e.target.value)}
+                    placeholder="2"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Pier Count">
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.pier_count ?? ""}
+                    onChange={(e) => updateField("pier_count", e.target.value)}
+                    placeholder="120"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Scope Description">
+                  <input
+                    type="text"
+                    value={form.scope_description ?? ""}
+                    onChange={(e) => updateField("scope_description", e.target.value)}
+                    placeholder="e.g., 36&quot; piers, 25ft depth"
+                    className={inputClass}
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            {/* ── Financial & Dates ── */}
+            <Section title="Financial & Dates" hint="Contract amount + COs roll into Client Portal and Job Costs totals.">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Field label="Bid Amount ($)">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.bid_amount ?? ""}
+                    onChange={(e) => updateField("bid_amount", e.target.value)}
+                    placeholder="185000"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Contract Amount ($)">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.contract_amount ?? ""}
+                    onChange={(e) => updateField("contract_amount", e.target.value)}
+                    placeholder="185000"
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Start Date">
+                  <input
+                    type="date"
+                    value={form.start_date ?? ""}
+                    onChange={(e) => updateField("start_date", e.target.value)}
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="End Date">
+                  <input
+                    type="date"
+                    value={form.end_date ?? ""}
+                    onChange={(e) => updateField("end_date", e.target.value)}
+                    className={inputClass}
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            {/* ── Actuals (conditional) ── */}
+            {showActuals ? (
+              <Section title="Actuals" hint="Record real duration for completed work — feeds variance reports.">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Actual Work Days">
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.actual_days ?? ""}
+                      onChange={(e) => updateField("actual_days", e.target.value)}
+                      placeholder="11"
+                      className={inputClass}
+                    />
+                  </Field>
+                  <Field label="Actual Mob Days">
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.actual_mob_days ?? ""}
+                      onChange={(e) => updateField("actual_mob_days", e.target.value)}
+                      placeholder="2"
+                      className={inputClass}
+                    />
+                  </Field>
+                </div>
+              </Section>
+            ) : null}
+
+            {errorMessage ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+                {errorMessage}
+              </div>
+            ) : null}
+          </div>
+
+          {/* Footer */}
+          <footer className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-neutral-100 bg-white px-6 py-3">
+            <p className="text-xs text-neutral-500">
+              {form.job_name ? null : <span className="text-red-600">Job name required.</span>}
+            </p>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={onClose}
-                disabled={isSaving}
-                className="px-4 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors disabled:opacity-50"
+                onClick={() => onClose?.()}
+                className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                disabled={saving || !form.job_name?.trim()}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-light hover:shadow-md disabled:opacity-60 disabled:shadow-none"
               >
-                {isSaving ? (
+                {saving ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
                     Saving...
                   </>
                 ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save Job
-                  </>
+                  mode === "edit" ? "Save Changes" : "Create Job"
                 )}
               </button>
             </div>
-          </form>
-        </div>
+          </footer>
+        </form>
       </div>
     </div>
   );
-});
+}
 
-JobFormModal.displayName = "JobFormModal";
+const inputClass =
+  "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10";
 
-export default JobFormModal;
+function Section({ title, hint, children }) {
+  return (
+    <section>
+      <div className="mb-2.5">
+        <h3 className="text-sm font-bold text-neutral-900">{title}</h3>
+        {hint ? <p className="mt-0.5 text-[11px] text-neutral-500">{hint}</p> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Field({ label, required, children, className = "" }) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-500">
+        {label}
+        {required ? <span className="ml-0.5 text-red-500">*</span> : null}
+      </span>
+      {children}
+    </label>
+  );
+}
