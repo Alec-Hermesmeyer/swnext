@@ -654,6 +654,41 @@ export default function SalesPipeline() {
         />
       </div>
 
+      {/* Per-stage summary cards — click any card to filter to that stage */}
+      <div className="mb-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8">
+        <button
+          type="button"
+          onClick={() => setStageFilter("")}
+          className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+            stageFilter === ""
+              ? "border-brand bg-brand/5"
+              : "border-neutral-200 bg-white hover:border-neutral-300"
+          }`}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">All</p>
+          <p className="mt-1 text-xl font-black tabular-nums text-neutral-900">{rows.length}</p>
+        </button>
+        {SALES_PIPELINE_STAGES.map((s) => {
+          const count = stageCounts[s.id] || 0;
+          const active = stageFilter === s.id;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setStageFilter(active ? "" : s.id)}
+              className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+                active
+                  ? "border-brand bg-brand/5"
+                  : "border-neutral-200 bg-white hover:border-neutral-300"
+              }`}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">{s.label}</p>
+              <p className="mt-1 text-xl font-black tabular-nums text-neutral-900">{count}</p>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <PipelineViewToggle view={pipelineView} setView={setPipelineView} />
