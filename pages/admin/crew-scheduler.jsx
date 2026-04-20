@@ -384,6 +384,7 @@ function CrewScheduler() {
   // New job form
   const [newJob, setNewJob] = useState(createEmptyJobDraft);
   const [editingJob, setEditingJob] = useState(null);
+  const [showNewJobModal, setShowNewJobModal] = useState(false);
   const [jobIntakeText, setJobIntakeText] = useState("");
   const [jobIntakeStatus, setJobIntakeStatus] = useState(null);
   const [jobIntakePreviewRows, setJobIntakePreviewRows] = useState([]);
