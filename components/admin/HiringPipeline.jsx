@@ -204,6 +204,41 @@ export default function HiringPipeline() {
 
   return (
     <div>
+      {/* Per-stage summary cards — click any card to filter to that stage */}
+      <div className="mb-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <button
+          type="button"
+          onClick={() => setStageFilter("")}
+          className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+            stageFilter === ""
+              ? "border-[#0b2a5a] bg-[#0b2a5a]/5"
+              : "border-neutral-200 bg-white hover:border-neutral-300"
+          }`}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">All</p>
+          <p className="mt-1 text-xl font-black tabular-nums text-neutral-900">{rows.length}</p>
+        </button>
+        {HIRING_PIPELINE_STAGES.map((s) => {
+          const count = stageCounts[s.id] || 0;
+          const active = stageFilter === s.id;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setStageFilter(active ? "" : s.id)}
+              className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+                active
+                  ? "border-[#0b2a5a] bg-[#0b2a5a]/5"
+                  : "border-neutral-200 bg-white hover:border-neutral-300"
+              }`}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">{s.label}</p>
+              <p className="mt-1 text-xl font-black tabular-nums text-neutral-900">{count}</p>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-neutral-600">
           Track job applicants through review and interviews. This is separate from the{" "}
@@ -211,6 +246,11 @@ export default function HiringPipeline() {
             sales
           </Link>{" "}
           pipeline.
+          {stageFilter ? (
+            <span className="ml-2 text-xs font-semibold text-neutral-500">
+              Showing {filteredRows.length} of {rows.length}
+            </span>
+          ) : null}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <select
