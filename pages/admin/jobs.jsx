@@ -324,10 +324,10 @@ function AdminJobsPage() {
 
         {/* Summary */}
         <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <SummaryCard label="Active" value={summary.active} tone="blue" onClick={() => setActiveFilter("active")} />
+          <SummaryCard label="Active" value={summary.active} tone="blue" onClick={() => { setActiveFilter("active"); setCompletenessFilter("all"); setStatusFilter("all"); }} />
+          <SummaryCard label="Incomplete" value={summary.incomplete} tone={summary.incomplete > 0 ? "rose" : "emerald"} onClick={() => { setActiveFilter("active"); setCompletenessFilter("incomplete"); setStatusFilter("all"); }} />
           <SummaryCard label="In Progress" value={summary.inProgress} tone="amber" onClick={() => { setActiveFilter("active"); setStatusFilter("in_progress"); }} />
           <SummaryCard label="Completed" value={summary.completed} tone="emerald" onClick={() => setStatusFilter("completed")} />
-          <SummaryCard label="Inactive" value={summary.inactive} tone="neutral" onClick={() => setActiveFilter("inactive")} />
           <SummaryCard label="Active Backlog" value={formatMoney(summary.contractTotal)} tone="violet" />
         </div>
 
