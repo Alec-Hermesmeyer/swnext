@@ -247,7 +247,7 @@ function stageColorDot(stage) {
   return map[stage] || "bg-neutral-400";
 }
 
-function KanbanBoard({ rows, onEdit, today }) {
+function KanbanBoard({ rows, onEdit, today, isRecentlyAdded }) {
   return (
     <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
       {SALES_PIPELINE_STAGES.map((stage) => {
