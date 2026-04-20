@@ -125,6 +125,46 @@ export default function JobFormModal({
 
   const showActuals = form.job_status === "completed" || form.job_status === "in_progress" || form.actual_days || form.actual_mob_days;
 
+  const handleExtract = async () => {
+    const trimmed = extractText.trim();
+    if (!trimmed) {
+      setExtractError("Paste an email, message, or scope text to extract.");
+      return;
+    }
+    setExtracting(true);
+    setExtractError("");
+    try {
+      const response = await fetch("/api/jobs/extract-from-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: trimmed }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || "Could not extract.");
+      }
+      const fields = data?.fields || {};
+      const populated = Array.isArray(data?.populatedKeys) ? data.populatedKeys : [];
+      setForm((prev) => {
+        const next = { ...prev };
+        Object.entries(fields).forEach(([key, value]) => {
+          // Only fill if we got a real value; don't wipe user-typed content on empty extract
+          if (value === "" || value === null || value === undefined) return;
+          if (typeof value === "boolean" && value === false) return;
+          next[key] = value;
+        });
+        return next;
+      });
+      setExtractedKeys(new Set(populated));
+      setExtractNotes(String(data?.notes || ""));
+      setExtractOpen(false); // collapse the paste area; user now reviews
+    } catch (err) {
+      setExtractError(err?.message || "Extract failed.");
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!form.job_name?.trim()) {
