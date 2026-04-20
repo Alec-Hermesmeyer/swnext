@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260420-095154", "file": "/Users/alechermesmeyer/Desktop/SWF/frontend/swnext/pages/admin/crew.jsx", "timestamp": "2026-04-20T14:51:54Z", "type": "post-edit", "branch": "main", "diff_summary": " .claude/checkpoints/task-1776696548.json |   1 +  pages/admin/crew.jsx                     | 820 +++++++++++++++++++++++++++++++  2 files changed, 821 insertions(+) "}
