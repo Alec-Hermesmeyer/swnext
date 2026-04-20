@@ -114,6 +114,7 @@ function AdminJobsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeFilter, setActiveFilter] = useState("active"); // active | inactive | all
+  const [completenessFilter, setCompletenessFilter] = useState("all"); // all | incomplete
   const [sortBy, setSortBy] = useState("newest");
 
   const [modalOpen, setModalOpen] = useState(false);
