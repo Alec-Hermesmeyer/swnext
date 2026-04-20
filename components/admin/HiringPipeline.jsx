@@ -291,6 +291,13 @@ export default function HiringPipeline() {
             </Link>{" "}
             or add manually.
           </div>
+        ) : filteredRows.length === 0 ? (
+          <div className="p-8 text-center text-sm text-neutral-500">
+            No applicants in the <strong>{hiringStageLabel(stageFilter)}</strong> stage.{" "}
+            <button type="button" onClick={() => setStageFilter("")} className="font-semibold text-[#0b2a5a] underline">
+              Show all stages
+            </button>
+          </div>
         ) : (
           <table className="min-w-full table-auto text-left text-sm">
             <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
