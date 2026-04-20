@@ -396,6 +396,22 @@ export default function SalesPipeline() {
     });
   }, [rows, searchQuery, stageFilter]);
 
+  // Per-stage counts ignore filters so the summary bar always reflects totals
+  const stageCounts = useMemo(() => {
+    const counts = {};
+    SALES_PIPELINE_STAGES.forEach((s) => { counts[s.id] = 0; });
+    rows.forEach((r) => {
+      const key = r.stage || "qualify";
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [rows]);
+
+  const isRecentlyAdded = useCallback((row) => {
+    if (!row.created_at) return false;
+    return Date.now() - new Date(row.created_at).getTime() < 60 * 1000;
+  }, []);
+
   const openRows = useMemo(
     () => rows.filter((row) => isOpenStage(row.stage)),
     [rows]
