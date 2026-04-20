@@ -55,30 +55,60 @@ export default function HiringPipeline() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
+  // Fetch ALL rows once; filter client-side so per-stage counts stay accurate
+  // no matter which stage tab is active.
   const load = useCallback(async () => {
     setError("");
     setLoading(true);
     try {
-      const q = stageFilter ? `?stage=${encodeURIComponent(stageFilter)}` : "";
-      const res = await fetch(`/api/hiring-opportunities${q}`, { credentials: "same-origin" });
+      const res = await fetch(`/api/hiring-opportunities`, { credentials: "same-origin" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error || "Could not load hiring pipeline");
         setRows([]);
         return;
       }
-      setRows(data.opportunities || []);
+      // Sort newest-first so just-added entries land at the top.
+      const list = (data.opportunities || []).slice().sort((a, b) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+      setRows(list);
     } catch {
       setError("Network error");
       setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [stageFilter]);
+  }, []);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // Per-stage counts for the summary bar
+  const stageCounts = useMemo(() => {
+    const counts = {};
+    HIRING_PIPELINE_STAGES.forEach((s) => { counts[s.id] = 0; });
+    rows.forEach((r) => {
+      const key = r.stage || "new";
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [rows]);
+
+  const filteredRows = useMemo(() => {
+    if (!stageFilter) return rows;
+    return rows.filter((r) => (r.stage || "new") === stageFilter);
+  }, [rows, stageFilter]);
+
+  // "Just added" highlight: rows created in the last 60 seconds
+  const isRecentlyAdded = useCallback((row) => {
+    if (!row.created_at) return false;
+    const created = new Date(row.created_at).getTime();
+    return Date.now() - created < 60 * 1000;
+  }, []);
 
   const openNew = () => {
     setForm(emptyForm());
