@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { HIRING_PIPELINE_STAGES, hiringStageLabel } from "@/lib/hiring-pipeline";
 
