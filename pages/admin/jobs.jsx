@@ -175,6 +175,7 @@ function AdminJobsPage() {
       if (activeFilter === "active" && j.is_active === false) return false;
       if (activeFilter === "inactive" && j.is_active !== false) return false;
       if (statusFilter !== "all" && (j.job_status || "active") !== statusFilter) return false;
+      if (completenessFilter === "incomplete" && assessCompleteness(j).missing.length === 0) return false;
       if (!searchLc) return true;
       return (
         String(j.job_name || "").toLowerCase().includes(searchLc) ||
