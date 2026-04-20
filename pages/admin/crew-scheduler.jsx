@@ -6375,222 +6375,24 @@ function CrewScheduler() {
                       )}
                     </div>
 
-                    {/* Add Job Form */}
+                    {/* Add Job CTA — opens the full JobFormModal */}
                     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-                      <h3 className={`${lato.className} mb-3 font-bold text-neutral-900`}>
-                        Add New Job
-                      </h3>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <input
-                          type="text"
-                          placeholder="Job Name *"
-                          value={newJob.job_name}
-                          onChange={(e) => setNewJob({ ...newJob, job_name: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Job Number"
-                          value={newJob.job_number}
-                          onChange={(e) => setNewJob({ ...newJob, job_number: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Dig Tess #"
-                          value={newJob.dig_tess_number}
-                          onChange={(e) => setNewJob({ ...newJob, dig_tess_number: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Customer Name"
-                          value={newJob.customer_name}
-                          onChange={(e) => setNewJob({ ...newJob, customer_name: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Hiring Contractor"
-                          value={newJob.hiring_contractor}
-                          onChange={(e) => setNewJob({ ...newJob, hiring_contractor: e.target.value })}
-                          list="customer-options"
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Contact Name"
-                          value={newJob.hiring_contact_name}
-                          onChange={(e) => setNewJob({ ...newJob, hiring_contact_name: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Contact Phone"
-                          value={newJob.hiring_contact_phone}
-                          onChange={(e) => setNewJob({ ...newJob, hiring_contact_phone: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="email"
-                          placeholder="Contact Email"
-                          value={newJob.hiring_contact_email}
-                          onChange={(e) => setNewJob({ ...newJob, hiring_contact_email: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Address"
-                          value={newJob.address}
-                          onChange={(e) => setNewJob({ ...newJob, address: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="City"
-                          value={newJob.city}
-                          onChange={(e) => setNewJob({ ...newJob, city: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="ZIP"
-                          value={newJob.zip}
-                          onChange={(e) => setNewJob({ ...newJob, zip: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="S&W PM Name"
-                          value={newJob.pm_name}
-                          onChange={(e) => setNewJob({ ...newJob, pm_name: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="PM Phone"
-                          value={newJob.pm_phone}
-                          onChange={(e) => setNewJob({ ...newJob, pm_phone: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Default Rig"
-                          value={newJob.default_rig}
-                          onChange={(e) => setNewJob({ ...newJob, default_rig: e.target.value })}
-                          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                        />
-                        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-                          <span>Job Status</span>
-                          <select
-                            value={newJob.job_status}
-                            onChange={(e) => setNewJob({ ...newJob, job_status: e.target.value })}
-                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                          >
-                            <option value="active">Active</option>
-                            <option value="bid">Bid</option>
-                            <option value="awarded">Awarded</option>
-                            <option value="scheduled">Scheduled</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="on_hold">On Hold</option>
-                          </select>
-                        </label>
-                      </div>
-
-                      {/* Duration & Scope */}
-                      <div className="mt-3 border-t border-neutral-100 pt-3">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Duration & Scope</p>
-                        <div className="grid gap-3 sm:grid-cols-4">
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder="Est. Days"
-                            value={newJob.estimated_days}
-                            onChange={(e) => setNewJob({ ...newJob, estimated_days: e.target.value })}
-                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                          />
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder="Mob Days"
-                            value={newJob.mob_days}
-                            onChange={(e) => setNewJob({ ...newJob, mob_days: e.target.value })}
-                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                          />
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder="Pier Count"
-                            value={newJob.pier_count}
-                            onChange={(e) => setNewJob({ ...newJob, pier_count: e.target.value })}
-                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Scope (e.g. 24in piers to 30ft)"
-                            value={newJob.scope_description}
-                            onChange={(e) => setNewJob({ ...newJob, scope_description: e.target.value })}
-                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                          />
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <h3 className={`${lato.className} font-bold text-neutral-900`}>Add a new job</h3>
+                          <p className="mt-0.5 text-xs text-neutral-500">
+                            Capture basics, customer, scope, financials, and dates — all in one sheet.
+                          </p>
                         </div>
-                      </div>
-
-                      {/* Financial & Dates */}
-                      <div className="mt-3 border-t border-neutral-100 pt-3">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Financial & Dates</p>
-                        <div className="grid gap-3 sm:grid-cols-4">
-                          <input
-                            type="text"
-                            placeholder="Bid Amount ($)"
-                            value={newJob.bid_amount}
-                            onChange={(e) => setNewJob({ ...newJob, bid_amount: e.target.value })}
-                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Contract Amount ($)"
-                            value={newJob.contract_amount}
-                            onChange={(e) => setNewJob({ ...newJob, contract_amount: e.target.value })}
-                            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                          />
-                          <label className="flex flex-col gap-1 text-xs font-medium text-neutral-500">
-                            Start Date
-                            <input
-                              type="date"
-                              value={newJob.start_date}
-                              onChange={(e) => setNewJob({ ...newJob, start_date: e.target.value })}
-                              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal text-neutral-900 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 text-xs font-medium text-neutral-500">
-                            End Date
-                            <input
-                              type="date"
-                              value={newJob.end_date}
-                              onChange={(e) => setNewJob({ ...newJob, end_date: e.target.value })}
-                              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal text-neutral-900 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                            />
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex items-center justify-between">
-                        <label className="flex items-center gap-2 text-sm text-neutral-600">
-                          <input
-                            type="checkbox"
-                            checked={newJob.crane_required}
-                            onChange={(e) => setNewJob({ ...newJob, crane_required: e.target.checked })}
-                            className="rounded border-neutral-300 text-red-600 focus:ring-red-500"
-                          />
-                          Crane Required
-                        </label>
                         <button
-                          onClick={addJob}
-                          disabled={saving || !newJob.job_name.trim()}
-                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                          type="button"
+                          onClick={() => setShowNewJobModal(true)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-light hover:shadow-md"
                         >
-                          Add Job
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          New Job
                         </button>
                       </div>
                     </div>
