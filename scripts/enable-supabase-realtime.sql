@@ -14,7 +14,11 @@ DECLARE
     'change_orders',
     'client_portals',
     'crew_jobs',
-    'schedule_rig_details'
+    'schedule_rig_details',
+    'crew_workers',
+    'crew_cranes',
+    'schedule_requests',
+    'admin_notifications'
   ];
   t text;
 BEGIN
