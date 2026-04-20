@@ -208,6 +208,7 @@ export default function TWAdminLayout({ children }) {
                 {ROLE_LABELS[role]}
               </span>
             ) : null}
+            <NotificationsBell />
           </div>
         </header>
 
