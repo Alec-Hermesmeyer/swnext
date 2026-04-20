@@ -413,6 +413,19 @@ function AdminJobsPage() {
           onSave={handleSave}
         />
 
+        <ImportJobsModal
+          isOpen={importOpen}
+          onClose={() => setImportOpen(false)}
+          existingJobs={jobs}
+          onImported={async ({ inserted, skipped }) => {
+            const msg = skipped > 0
+              ? `Imported ${inserted} job${inserted === 1 ? "" : "s"} (skipped ${skipped} duplicate${skipped === 1 ? "" : "s"}).`
+              : `Imported ${inserted} job${inserted === 1 ? "" : "s"}.`;
+            setStatus({ type: "success", message: msg });
+            await loadData();
+          }}
+        />
+
         {status ? (
           <div
             className={`fixed bottom-6 right-6 z-50 flex max-w-md items-start gap-3 rounded-xl border px-4 py-3 shadow-card-hover ${
