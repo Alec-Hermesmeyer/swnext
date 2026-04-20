@@ -364,7 +364,13 @@ export default function SalesPipeline() {
       });
 
       if (requestId !== loadRequestRef.current) return;
-      setRows(data.opportunities || []);
+      // Sort newest-first so just-added entries surface at the top.
+      const list = (data.opportunities || []).slice().sort((a, b) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+      setRows(list);
     } catch (error) {
       if (requestId !== loadRequestRef.current) return;
       setError(error?.message || "Network error");
