@@ -38,6 +38,28 @@ const formatMoney = (value) => {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 };
 
+// Assess data completeness for a job row.
+// Green = all "should-have" fields present.
+// Amber = 1–2 missing. Red = 3+ missing.
+const COMPLETENESS_FIELDS = [
+  { key: "customer_or_gc", label: "Customer or GC", test: (j) => (j.customer_name || j.hiring_contractor || "").trim() !== "" },
+  { key: "address", label: "Address", test: (j) => String(j.address || "").trim() !== "" },
+  { key: "city", label: "City", test: (j) => String(j.city || "").trim() !== "" },
+  { key: "contract_or_bid", label: "Contract or Bid $", test: (j) => Number(j.contract_amount) > 0 || Number(j.bid_amount) > 0 },
+  { key: "estimated_days", label: "Est. Days", test: (j) => Number(j.estimated_days) > 0 },
+  { key: "pier_count", label: "Pier Count", test: (j) => Number(j.pier_count) > 0 },
+  { key: "pm", label: "PM", test: (j) => String(j.pm_name || "").trim() !== "" },
+];
+
+function assessCompleteness(job) {
+  const missing = COMPLETENESS_FIELDS.filter((f) => !f.test(job)).map((f) => f.label);
+  let tone;
+  if (missing.length === 0) tone = "green";
+  else if (missing.length <= 2) tone = "amber";
+  else tone = "red";
+  return { missing, tone };
+}
+
 // normalizeJobInput: mirrors the scheduler's version so the admin jobs page
 // can insert / update without importing from the giant scheduler file.
 function normalizeJobInput(job) {
