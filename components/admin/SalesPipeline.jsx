@@ -300,7 +300,8 @@ function KanbanBoard({ rows, onEdit, today, isRecentlyAdded }) {
                     ))}
                   </div>
                 </button>
-              ))}
+                );
+              })}
               {!stageRows.length && (
                 <p className="py-6 text-center text-xs text-neutral-400">No opportunities</p>
               )}
