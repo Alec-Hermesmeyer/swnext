@@ -6823,6 +6823,24 @@ function CrewScheduler() {
           </>
         )}
       </div>
+
+      {/* ── Job create/edit modal (replaces both inline panels) ── */}
+      <JobFormModal
+        isOpen={showNewJobModal}
+        mode="create"
+        initialJob={null}
+        customerNames={customerNames}
+        onClose={() => setShowNewJobModal(false)}
+        onSave={handleCreateJobFromModal}
+      />
+      <JobFormModal
+        isOpen={Boolean(editingJob)}
+        mode="edit"
+        initialJob={editingJob}
+        customerNames={customerNames}
+        onClose={() => setEditingJob(null)}
+        onSave={handleUpdateJobFromModal}
+      />
     </>
   );
 }
