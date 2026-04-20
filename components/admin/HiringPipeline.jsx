@@ -310,10 +310,20 @@ export default function HiringPipeline() {
               </tr>
             </thead>
             <tbody className="text-neutral-800">
-              {rows.map((row) => (
-                <tr key={row.id} className="border-t border-neutral-100">
+              {filteredRows.map((row) => (
+                <tr
+                  key={row.id}
+                  className={`border-t border-neutral-100 transition-colors ${isRecentlyAdded(row) ? "bg-emerald-50/60" : ""}`}
+                >
                   <td className="max-w-[280px] p-3">
-                    <div className="font-semibold text-neutral-900">{row.title}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-neutral-900">{row.title}</span>
+                      {isRecentlyAdded(row) ? (
+                        <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                          New
+                        </span>
+                      ) : null}
+                    </div>
                     {row.position_applied ? (
                       <div className="text-xs text-neutral-500">{row.position_applied}</div>
                     ) : null}
