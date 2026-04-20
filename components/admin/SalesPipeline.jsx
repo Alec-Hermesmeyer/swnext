@@ -264,14 +264,25 @@ function KanbanBoard({ rows, onEdit, today, isRecentlyAdded }) {
               </span>
             </div>
             <div className="flex-1 space-y-2.5 rounded-xl bg-neutral-50/80 p-2.5 min-h-[120px]">
-              {stageRows.map((row) => (
+              {stageRows.map((row) => {
+                const justAdded = isRecentlyAdded && isRecentlyAdded(row);
+                return (
                 <button
                   key={row.id}
                   type="button"
                   onClick={() => onEdit(row)}
-                  className="w-full rounded-xl border border-neutral-200 bg-white p-3 text-left shadow-card transition-shadow hover:shadow-card-hover focus:shadow-card-active focus:outline-none"
+                  className={`w-full rounded-xl border p-3 text-left shadow-card transition-shadow hover:shadow-card-hover focus:shadow-card-active focus:outline-none ${
+                    justAdded ? "border-emerald-400 bg-emerald-50/70" : "border-neutral-200 bg-white"
+                  }`}
                 >
-                  <p className="font-semibold text-neutral-900 truncate">{row.title}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-neutral-900 truncate">{row.title}</p>
+                    {justAdded ? (
+                      <span className="shrink-0 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+                        New
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="mt-1 text-xs text-neutral-500 truncate">
                     {[row.company, row.owner_name].filter(Boolean).join(" · ")}
                   </p>
