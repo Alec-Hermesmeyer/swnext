@@ -208,7 +208,7 @@ function AdminJobsPage() {
       }
     });
     return rows;
-  }, [jobs, search, statusFilter, activeFilter, sortBy]);
+  }, [jobs, search, statusFilter, activeFilter, completenessFilter, sortBy]);
 
   const openNew = () => {
     setEditingJob(null);
