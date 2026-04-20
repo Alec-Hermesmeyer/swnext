@@ -9,6 +9,7 @@ import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { useLiveData } from "@/hooks/useLiveData";
 import JobFormModal from "@/components/admin/crew-scheduler/JobFormModal";
+import ImportJobsModal from "@/components/admin/ImportJobsModal";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
