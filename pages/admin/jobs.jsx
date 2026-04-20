@@ -151,18 +151,22 @@ function AdminJobsPage() {
   }, [jobs]);
 
   const summary = useMemo(() => {
-    let active = 0, inactive = 0, inProgress = 0, completed = 0;
+    let active = 0, inactive = 0, inProgress = 0, completed = 0, incomplete = 0;
     let contractTotal = 0;
     jobs.forEach((j) => {
-      if (j.is_active === false) inactive += 1;
-      else active += 1;
+      const isActiveJob = j.is_active !== false;
+      if (isActiveJob) active += 1;
+      else inactive += 1;
       if (j.job_status === "in_progress") inProgress += 1;
       if (j.job_status === "completed") completed += 1;
-      if (j.is_active !== false && j.contract_amount) {
+      if (isActiveJob && j.contract_amount) {
         contractTotal += Number(j.contract_amount) || 0;
       }
+      if (isActiveJob && assessCompleteness(j).missing.length > 0) {
+        incomplete += 1;
+      }
     });
-    return { active, inactive, inProgress, completed, contractTotal, total: jobs.length };
+    return { active, inactive, inProgress, completed, incomplete, contractTotal, total: jobs.length };
   }, [jobs]);
 
   const filtered = useMemo(() => {
