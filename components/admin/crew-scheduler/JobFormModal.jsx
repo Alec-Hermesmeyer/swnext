@@ -231,6 +231,21 @@ export default function JobFormModal({
         {/* Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
           <div className="space-y-6 px-6 py-5">
+            {/* ── Extract from Email (create mode only) ── */}
+            {mode === "create" ? (
+              <ExtractFromEmail
+                open={extractOpen}
+                setOpen={setExtractOpen}
+                text={extractText}
+                setText={setExtractText}
+                extracting={extracting}
+                extractError={extractError}
+                extractedCount={extractedKeys.size}
+                extractNotes={extractNotes}
+                onExtract={handleExtract}
+              />
+            ) : null}
+
             {/* ── Basics ── */}
             <Section title="Basics" hint="Core identifiers for this job.">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
