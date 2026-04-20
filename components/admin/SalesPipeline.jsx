@@ -502,6 +502,11 @@ export default function SalesPipeline() {
         }
       }
       setModalOpen(false);
+      // Clear filters on save so the newly-added/edited entry is always visible.
+      if (!form.id || form.stage !== stageFilter) {
+        setStageFilter("");
+      }
+      setSearchQuery("");
       setForm(emptyForm());
       await load();
     } finally {
