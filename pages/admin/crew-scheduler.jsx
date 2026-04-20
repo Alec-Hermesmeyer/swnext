@@ -1094,6 +1094,39 @@ function CrewScheduler() {
     await ensureCustomerExists(updates.hiring_contractor);
   };
 
+  // ── Modal-driven create/edit handlers ─────────────────────────────────
+  // JobFormModal emits its own draft; these normalize + persist + close.
+  const handleCreateJobFromModal = async (draft) => {
+    const payload = normalizeJobInput(draft);
+    if (!payload.job_name) throw new Error("Job name is required.");
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("crew_jobs").insert(payload);
+      if (error) throw error;
+      await ensureCustomerExists(payload.hiring_contractor);
+      await fetchJobs();
+      setShowNewJobModal(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateJobFromModal = async (draft) => {
+    if (!draft?.id) throw new Error("Missing job id.");
+    const payload = normalizeJobInput(draft);
+    if (!payload.job_name) throw new Error("Job name is required.");
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("crew_jobs").update(payload).eq("id", draft.id);
+      if (error) throw error;
+      await ensureCustomerExists(payload.hiring_contractor);
+      await fetchJobs();
+      setEditingJob(null);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const startEditingJob = (job) => {
     setEditingJob({
       id: job.id,
