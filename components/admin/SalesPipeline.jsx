@@ -776,13 +776,23 @@ export default function SalesPipeline() {
                   followUpDate &&
                   followUpDate.getTime() <= today.getTime();
 
+                const justAdded = isRecentlyAdded(row);
                 return (
                   <tr
                     key={row.id}
-                    className={`transition-colors hover:bg-neutral-50/60 ${isDueNow ? "bg-amber-50/40" : ""}`}
+                    className={`transition-colors hover:bg-neutral-50/60 ${
+                      justAdded ? "bg-emerald-50/60" : isDueNow ? "bg-amber-50/40" : ""
+                    }`}
                   >
                     <td className="max-w-[280px] px-4 py-3">
-                      <div className="font-semibold text-neutral-900">{row.title}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-neutral-900">{row.title}</span>
+                        {justAdded ? (
+                          <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                            New
+                          </span>
+                        ) : null}
+                      </div>
                       {row.company ? <div className="text-xs text-neutral-500">{row.company}</div> : null}
                       {row.contact_name || row.contact_email || row.contact_phone ? (
                         <div className="mt-1 text-xs text-neutral-600">
