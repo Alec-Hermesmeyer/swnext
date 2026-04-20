@@ -175,6 +175,11 @@ export default function HiringPipeline() {
         }
       }
       setModalOpen(false);
+      // Clear the stage filter on save so the newly-added/edited entry is
+      // always visible — prevents the "where did it go?" confusion.
+      if (!form.id || form.stage !== stageFilter) {
+        setStageFilter("");
+      }
       setForm(emptyForm());
       await load();
     } finally {
