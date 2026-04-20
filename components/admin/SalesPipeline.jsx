@@ -752,7 +752,7 @@ export default function SalesPipeline() {
           the full pipeline.
         </div>
       ) : pipelineView === "board" ? (
-        <KanbanBoard rows={filteredRows} onEdit={openEdit} today={today} />
+        <KanbanBoard rows={filteredRows} onEdit={openEdit} today={today} isRecentlyAdded={isRecentlyAdded} />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow">
           <table className="min-w-full table-auto text-left text-sm">
