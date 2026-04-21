@@ -193,6 +193,19 @@ function bidAssistantReducer(state, action) {
         metrics: { ...state.metrics, [action.field]: action.value },
       };
 
+    case BID_ACTIONS.SET_JOB_OVERRIDE:
+      return { ...state, jobMetricsOverride: action.payload };
+
+    case BID_ACTIONS.TOGGLE_JOB_OVERRIDE:
+      return { ...state, jobMetricsOverride: !state.jobMetricsOverride };
+
+    // ── Recommendations ──
+    case BID_ACTIONS.SET_OPS_CONTEXT:
+      return { ...state, opsContext: action.payload };
+
+    case BID_ACTIONS.SET_BID_SCORE:
+      return { ...state, bidScore: action.payload };
+
     // ── Status / loading ──
     case BID_ACTIONS.SET_STATUS:
       return { ...state, status: action.payload };
