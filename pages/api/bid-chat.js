@@ -184,6 +184,34 @@ function buildCitations(answer, doc) {
   return citations;
 }
 
+// ── Build metrics + operational context block for system prompt ──────
+
+function buildMetricsBlock(metrics, opsContext) {
+  const parts = [];
+  if (metrics) {
+    parts.push("## User's Bid Metric Preferences");
+    parts.push(`- Target profit margin: ${metrics.target_margin_percent || 18}%`);
+    parts.push(`- Minimum acceptable profit: $${Number(metrics.minimum_profit_usd || 75000).toLocaleString()}`);
+    parts.push(`- Minimum contract value: $${Number(metrics.minimum_contract_value_usd || 300000).toLocaleString()}`);
+    parts.push(`- Risk buffer: ${metrics.risk_buffer_percent || 8}%`);
+    parts.push(`- Default estimated cost: $${Number(metrics.default_estimated_cost_usd || 550000).toLocaleString()}`);
+    parts.push(`- Max concurrent jobs capacity: ${metrics.max_concurrent_jobs || 20}`);
+    if (metrics.notes) parts.push(`- Additional notes: ${metrics.notes}`);
+  }
+  if (opsContext) {
+    parts.push("\n## Current Operational Status (live data)");
+    parts.push(`- Active crew members: ${opsContext.workforce?.active_workers || "unknown"}`);
+    parts.push(`- Active jobs in progress: ${opsContext.scheduling?.active_jobs || "unknown"}`);
+    parts.push(`- Jobs per crew member: ${opsContext.workforce?.jobs_per_worker || "unknown"}`);
+    parts.push(`- Capacity utilization: ${Math.round((opsContext.workforce?.capacity_utilization || 0) * 100)}%`);
+    parts.push(`- Bids due in the next 2 weeks: ${opsContext.pipeline?.upcoming_bids_2wk || 0}`);
+    parts.push(`- Total pipeline value: $${Number(opsContext.pipeline?.total_pipeline_value || 0).toLocaleString()}`);
+    parts.push(`- Current backlog value: $${Number(opsContext.backlog?.total_value || 0).toLocaleString()}`);
+    parts.push(`- Today's scheduled jobs: ${opsContext.scheduling?.today_scheduled_jobs || 0}`);
+  }
+  return parts.length > 0 ? parts.join("\n") : "";
+}
+
 // ── Call Groq LLM ───────────────────────────────────────────────────
 
 async function callGroq(messages) {
