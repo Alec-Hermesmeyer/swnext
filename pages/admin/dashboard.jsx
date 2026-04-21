@@ -2,12 +2,21 @@
 import { useEffect, useMemo, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { useAuth } from "@/context/AuthContext";
 import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 import { Lato } from "next/font/google";
+
+/* Chart components — loaded client-side only (Chart.js needs <canvas>) */
+const SalesPipelineChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.SalesPipelineChart), { ssr: false });
+const HiringPipelineChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.HiringPipelineChart), { ssr: false });
+const PipelineValueChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.PipelineValueChart), { ssr: false });
+const JobStatusChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.JobStatusChart), { ssr: false });
+const LeadsTrendChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.LeadsTrendChart), { ssr: false });
+const CrewOverviewChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.CrewOverviewChart), { ssr: false });
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 const DASHBOARD_CACHE_KEY = "admin-dashboard-data";
