@@ -173,6 +173,47 @@ export default function JobFormModal({
     }
   };
 
+  const handleAutoAssignNumber = async () => {
+    const name = (form.hiring_contractor || form.customer_name || "").trim();
+    if (!name) {
+      setAssignError("Fill in Customer or Hiring Contractor first so we know which block to use.");
+      setAssignInfo(null);
+      return;
+    }
+    setAssigningNumber(true);
+    setAssignError("");
+    try {
+      const response = await fetch("/api/jobs/next-number", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Lookup failed.");
+      if (data.next) {
+        updateField("job_number", data.next);
+        setAssignInfo({
+          block: data.block,
+          remaining: data.remaining,
+          match_type: data.match_type,
+        });
+      } else if (data.full) {
+        setAssignError(`Block ${data.block?.range} is full (${data.capacity} used). Expand the block or pick a different owner.`);
+        setAssignInfo(null);
+      } else {
+        setAssignError(data.message || "No block found for this customer. Create one in Job Numbers admin.");
+        setAssignInfo(null);
+      }
+    } catch (err) {
+      setAssignError(err?.message || "Could not assign.");
+      setAssignInfo(null);
+    } finally {
+      setAssigningNumber(false);
+    }
+  };
+
+  const canAutoAssign = Boolean((form.hiring_contractor || form.customer_name || "").trim());
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!form.job_name?.trim()) {
