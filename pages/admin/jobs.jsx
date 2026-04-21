@@ -438,6 +438,7 @@ function AdminJobsPage() {
                       onEdit={() => openEdit(job)}
                       onToggleActive={() => toggleActive(job)}
                       onQuickStatus={(next) => quickStatus(job, next)}
+                      onSchedule={() => { setSchedulerFocusJobId(job.id); setSchedulerOpen(true); }}
                     />
                   ))}
                 </tbody>
