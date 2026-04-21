@@ -136,7 +136,12 @@ export default function BidChatInterface({ state, actions }) {
       const response = await fetch("/api/bid-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ document_id: selectedDoc.id, message: question }),
+        body: JSON.stringify({
+          document_id: selectedDoc.id,
+          message: question,
+          metrics: metrics || undefined,
+          ops_context: opsContext || undefined,
+        }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.detail || data?.error || "Could not get response");
