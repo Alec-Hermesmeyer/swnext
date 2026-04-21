@@ -587,245 +587,138 @@ function DashboardTW() {
           </div>
         ) : data ? (
           <>
-            {/* ── Today's Field Ops Strip ── */}
-            <div className="mb-6 grid gap-4 sm:grid-cols-3">
-              <TodayCard
-                label="Field Reports Today"
-                value={`${data.todayReportsCount} / ${data.todayScheduledJobsCount}`}
-                hint={
-                  data.todayScheduledJobsCount === 0
-                    ? "No jobs scheduled"
-                    : data.todayReportsCount >= data.todayScheduledJobsCount
-                      ? "All jobs reported"
-                      : `${data.todayScheduledJobsCount - data.todayReportsCount} outstanding`
-                }
-                tone={
-                  data.todayScheduledJobsCount === 0
-                    ? "neutral"
-                    : data.todayReportsCount >= data.todayScheduledJobsCount
-                      ? "emerald"
-                      : data.todayReportsCount > 0
-                        ? "amber"
-                        : "rose"
-                }
-                href="/admin/field-reports"
-              />
-              <TodayCard
-                label="Certs Expiring ≤30d"
-                value={data.expiringCertsCount}
-                hint={
-                  data.expiredCertsCount > 0
-                    ? `${data.expiredCertsCount} already expired`
-                    : "Nothing expired"
-                }
-                tone={
-                  data.expiredCertsCount > 0
-                    ? "rose"
-                    : data.expiringCertsCount > 0
-                      ? "amber"
-                      : "emerald"
-                }
-                href="/admin/certifications"
-              />
-              <TodayCard
-                label="Active Backlog"
-                value={money(
-                  (data.recentJobs || []).reduce(
-                    (sum, j) => sum + (Number(j.contract_amount) || 0),
-                    0
-                  )
-                )}
-                hint={`${data.activeJobs} active jobs`}
-                tone="blue"
-                href="/admin/job-costs"
-              />
-            </div>
+            {/* ── Action Items (only renders when something needs attention) ── */}
+            {actionItems.length > 0 ? (
+              <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-amber-800">Needs attention</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {actionItems.map((item, i) => (
+                    <Link
+                      key={i}
+                      href={item.href}
+                      className={`group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                        item.tone === "rose"
+                          ? "border-rose-300 bg-white text-rose-800 hover:bg-rose-50 hover:border-rose-400"
+                          : "border-amber-300 bg-white text-amber-900 hover:bg-amber-50 hover:border-amber-400"
+                      }`}
+                    >
+                      <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white ${
+                        item.tone === "rose" ? "bg-rose-600" : "bg-amber-500"
+                      }`}>
+                        {item.count}
+                      </span>
+                      <span>{item.label}</span>
+                      <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
-            {/* ── Metric Cards ── */}
-            <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-              <StatCard
-                label="Active Jobs"
-                value={data.activeJobs}
-                change={null}
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>}
-                href="/admin/crew-scheduler"
-                color="blue"
-              />
-              <StatCard
-                label="Crew Members"
-                value={data.activeWorkers}
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>}
-                href="/admin/crew-scheduler"
-                color="green"
-              />
-              <StatCard
-                label="Pipeline Value"
-                value={money(data.pipelineValue)}
-                change={null}
-                changeLabel={`${data.activeOpps} active`}
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>}
-                href="/admin/sales"
-                color="amber"
-              />
-              <StatCard
-                label="Leads"
-                value={data.contactSubs}
-                change={data.recentContactSubs}
-                changeLabel="this week"
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" /></svg>}
-                href="/admin/contact"
-                color="violet"
-              />
-              <StatCard
-                label="Applications"
-                value={data.jobApps}
-                change={data.recentJobApps}
-                changeLabel="this week"
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>}
-                href="/admin/hiring"
-                color="rose"
-              />
-              <StatCard
-                label="Hiring Pipeline"
-                value={data.activeHiring}
-                change={null}
-                changeLabel={`${data.totalHiring} total`}
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" /></svg>}
-                href="/admin/hiring"
-                color="sky"
-              />
-            </div>
-
-            {/* ── Two-column layout: Recent Jobs + Activity ── */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-              {/* Active Jobs */}
+            {/* ── Main grid: Sales (wider) + Jobs ── */}
+            <div className="mb-6 grid gap-6 lg:grid-cols-5">
+              {/* Sales panel — charts + mini stats */}
               <section className="rounded-2xl border border-neutral-200 bg-white p-5 lg:col-span-3">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Active Jobs</h2>
-                  <Link href="/admin/crew-scheduler" className="text-xs font-semibold text-[#0b2a5a] hover:text-[#0b2a5a]/70">
-                    View all →
-                  </Link>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Sales Pipeline</h2>
+                  <Link href="/admin/sales" className="text-xs font-semibold text-brand hover:underline">View all →</Link>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-neutral-100 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-                        <td className="py-2 pr-4">Job</td>
-                        <td className="py-2 pr-4">Customer</td>
-                        <td className="py-2 pr-4">Status</td>
-                        <td className="py-2 text-right">Value</td>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-50">
-                      {(data.recentJobs || []).map((job) => (
-                        <tr key={job.job_name + job.created_at} className="hover:bg-neutral-50/50">
-                          <td className="py-3 pr-4">
-                            <div className="font-medium text-neutral-800">{job.job_name}</div>
-                            {job.job_number && <div className="text-xs text-neutral-400">#{job.job_number}</div>}
-                          </td>
-                          <td className="py-3 pr-4 text-neutral-600">{job.customer_name || "—"}</td>
-                          <td className="py-3 pr-4">
-                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                              job.job_status === "completed" ? "bg-emerald-50 text-emerald-700" :
-                              job.job_status === "in_progress" ? "bg-blue-50 text-blue-700" :
-                              job.job_status === "awarded" ? "bg-amber-50 text-amber-700" :
-                              "bg-neutral-100 text-neutral-600"
-                            }`}>
-                              {job.job_status || "active"}
-                            </span>
-                          </td>
-                          <td className="py-3 text-right font-medium text-neutral-700">
-                            {job.contract_amount || job.bid_amount ? money(job.contract_amount || job.bid_amount) : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                      {!data.recentJobs?.length && (
-                        <tr><td colSpan={4} className="py-6 text-center text-neutral-400">No active jobs</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <SalesPipelineChart salesOpps={data.salesOpps || []} />
+                  <PipelineValueChart salesOpps={data.salesOpps || []} />
                 </div>
+                {data.totalOpps > 0 ? (
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <MiniStat label="Active Deals" value={data.activeOpps} tone="blue" />
+                    <MiniStat label="Won" value={data.wonCount} tone="emerald" />
+                    <MiniStat label="Pipeline $" value={money(data.pipelineValue)} tone="amber" />
+                    <MiniStat label="Total Tracked" value={data.totalOpps} tone="neutral" />
+                  </div>
+                ) : null}
               </section>
 
-              {/* Recent Activity */}
+              {/* Jobs panel — status chart + recent list */}
               <section className="rounded-2xl border border-neutral-200 bg-white p-5 lg:col-span-2">
-                <h2 className={`${lato.className} mb-4 text-base font-bold text-neutral-900`}>Recent Activity</h2>
-                <div className="divide-y divide-neutral-100">
-                  {(data.recentSubmissions || []).map((sub, i) => (
-                    <ActivityItem
-                      key={`sub-${i}`}
-                      label={sub.name || "Unknown"}
-                      detail={sub.message ? (sub.message.length > 60 ? sub.message.slice(0, 60) + "..." : sub.message) : sub.email}
-                      time={timeAgo(sub.created_at)}
-                      status="new"
-                    />
-                  ))}
-                  {(data.hiring || []).slice(0, 3).map((h) => (
-                    <ActivityItem
-                      key={h.id}
-                      label={h.applicant_name || h.title}
-                      detail={`Hiring: ${h.position_applied || "General"} — ${h.stage}`}
-                      time={timeAgo(h.updated_at)}
-                      status={h.stage === "hired" ? "completed" : h.stage === "declined" ? "completed" : "active"}
-                    />
-                  ))}
-                  {!data.recentSubmissions?.length && !data.hiring?.length && (
-                    <div className="py-6 text-center text-sm text-neutral-400">No recent activity</div>
-                  )}
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Active Jobs</h2>
+                  <Link href="/admin/jobs" className="text-xs font-semibold text-brand hover:underline">View all →</Link>
+                </div>
+                <JobStatusChart jobStatusCounts={data.jobStatusCounts || {}} />
+                <div className="mt-4">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Recently added</p>
+                  <ul className="divide-y divide-neutral-100">
+                    {(data.recentJobs || []).slice(0, 5).map((job) => (
+                      <li key={job.id || (job.job_name + job.created_at)} className="flex items-center justify-between gap-2 py-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-neutral-800">{job.job_name}</p>
+                          <p className="text-[10px] text-neutral-400">
+                            {job.job_number ? <span className="font-mono">#{job.job_number}</span> : null}
+                            {job.job_number && job.customer_name ? " · " : ""}
+                            {job.customer_name || ""}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                          job.job_status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                          job.job_status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                          job.job_status === "awarded" ? "bg-amber-100 text-amber-700" :
+                          "bg-neutral-100 text-neutral-600"
+                        }`}>
+                          {job.job_status || "active"}
+                        </span>
+                      </li>
+                    ))}
+                    {!data.recentJobs?.length ? (
+                      <li className="py-4 text-center text-xs text-neutral-400">No active jobs</li>
+                    ) : null}
+                  </ul>
                 </div>
               </section>
             </div>
 
-            {/* ── Sales Pipeline Summary ── */}
-            {data.totalOpps > 0 && (
-              <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Sales Pipeline</h2>
-                  <Link href="/admin/sales" className="text-xs font-semibold text-[#0b2a5a] hover:text-[#0b2a5a]/70">
-                    View pipeline →
-                  </Link>
-                </div>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <div className="rounded-xl bg-neutral-50 p-4 text-center">
-                    <div className={`${lato.className} text-2xl font-black text-neutral-900`}>{data.activeOpps}</div>
-                    <div className="mt-1 text-xs font-medium text-neutral-500">Active Deals</div>
-                  </div>
-                  <div className="rounded-xl bg-emerald-50 p-4 text-center">
-                    <div className={`${lato.className} text-2xl font-black text-emerald-700`}>{data.wonCount}</div>
-                    <div className="mt-1 text-xs font-medium text-emerald-600">Won</div>
-                  </div>
-                  <div className="rounded-xl bg-amber-50 p-4 text-center">
-                    <div className={`${lato.className} text-2xl font-black text-amber-700`}>{money(data.pipelineValue)}</div>
-                    <div className="mt-1 text-xs font-medium text-amber-600">Pipeline Value</div>
-                  </div>
-                  <div className="rounded-xl bg-blue-50 p-4 text-center">
-                    <div className={`${lato.className} text-2xl font-black text-blue-700`}>{data.totalOpps}</div>
-                    <div className="mt-1 text-xs font-medium text-blue-600">Total Tracked</div>
-                  </div>
-                </div>
-              </section>
-            )}
+            {/* ── Trends: 3-col ── */}
+            <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <LeadsTrendChart weeklyLeads={data.weeklyLeads || []} weeklyApps={data.weeklyApps || []} />
+              <CrewOverviewChart
+                activeWorkers={data.activeWorkers}
+                activeJobs={data.activeJobs}
+                todayScheduledJobs={data.todayScheduledJobsCount}
+              />
+              <HiringPipelineChart hiring={data.hiring || []} />
+            </div>
 
-            {/* ── Analytics Charts ── */}
-            <section className="mt-6">
-              <h2 className={`${lato.className} mb-4 text-base font-bold text-neutral-900`}>Analytics</h2>
-
-              {/* Row 1: Pipeline doughnuts + Jobs bar */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <SalesPipelineChart salesOpps={data.salesOpps || []} />
-                <HiringPipelineChart hiring={data.hiring || []} />
-                <JobStatusChart jobStatusCounts={data.jobStatusCounts || {}} />
+            {/* ── Recent Activity (full-width feed) ── */}
+            <section className="rounded-2xl border border-neutral-200 bg-white p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Recent Activity</h2>
+                <Link href="/admin/contact" className="text-xs font-semibold text-brand hover:underline">View submissions →</Link>
               </div>
-
-              {/* Row 2: Pipeline value + Leads trend + Crew overview */}
-              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <PipelineValueChart salesOpps={data.salesOpps || []} />
-                <LeadsTrendChart weeklyLeads={data.weeklyLeads || []} weeklyApps={data.weeklyApps || []} />
-                <CrewOverviewChart
-                  activeWorkers={data.activeWorkers}
-                  activeJobs={data.activeJobs}
-                  todayScheduledJobs={data.todayScheduledJobsCount}
-                />
+              <div className="divide-y divide-neutral-100">
+                {(data.recentSubmissions || []).map((sub, i) => (
+                  <ActivityItem
+                    key={`sub-${i}`}
+                    label={sub.name || "Unknown"}
+                    detail={sub.message ? (sub.message.length > 60 ? sub.message.slice(0, 60) + "..." : sub.message) : sub.email}
+                    time={timeAgo(sub.created_at)}
+                    status="new"
+                  />
+                ))}
+                {(data.hiring || []).slice(0, 3).map((h) => (
+                  <ActivityItem
+                    key={h.id}
+                    label={h.applicant_name || h.title}
+                    detail={`Hiring: ${h.position_applied || "General"} — ${h.stage}`}
+                    time={timeAgo(h.updated_at)}
+                    status={h.stage === "hired" || h.stage === "declined" ? "completed" : "active"}
+                  />
+                ))}
+                {!data.recentSubmissions?.length && !data.hiring?.length ? (
+                  <div className="py-6 text-center text-sm text-neutral-400">No recent activity</div>
+                ) : null}
               </div>
             </section>
           </>
