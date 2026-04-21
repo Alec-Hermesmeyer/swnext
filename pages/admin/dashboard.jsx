@@ -237,6 +237,41 @@ async function fetchDashboardSnapshot() {
     // Silent — field-ops tables may not exist yet before migrations run
   }
 
+  // ── Chart-specific data ──────────────────────────────────────────
+  // Job status distribution (for bar chart)
+  let jobStatusCounts = {};
+  try {
+    const { data: allActiveJobs } = await supabase
+      .from("crew_jobs")
+      .select("job_status")
+      .eq("is_active", true);
+    for (const j of allActiveJobs || []) {
+      const status = j.job_status || "active";
+      jobStatusCounts[status] = (jobStatusCounts[status] || 0) + 1;
+    }
+  } catch { /* silent */ }
+
+  // Weekly lead & application counts (last 6 weeks, for line chart)
+  let weeklyLeads = [];
+  let weeklyApps = [];
+  try {
+    const weeks = 6;
+    const leadCounts = [];
+    const appCounts = [];
+    for (let i = weeks - 1; i >= 0; i--) {
+      const wStart = new Date(Date.now() - (i + 1) * 7 * 86400000).toISOString();
+      const wEnd = new Date(Date.now() - i * 7 * 86400000).toISOString();
+      const [leadRes, appRes] = await Promise.all([
+        supabase.from("contact_form").select("*", { count: "exact", head: true }).gte("created_at", wStart).lt("created_at", wEnd),
+        supabase.from("job_form").select("*", { count: "exact", head: true }).gte("created_at", wStart).lt("created_at", wEnd),
+      ]);
+      leadCounts.push(leadRes.count || 0);
+      appCounts.push(appRes.count || 0);
+    }
+    weeklyLeads = leadCounts;
+    weeklyApps = appCounts;
+  } catch { /* silent */ }
+
   return {
     activeJobs: activeJobs || 0,
     totalJobs: totalJobs || 0,
@@ -257,10 +292,14 @@ async function fetchDashboardSnapshot() {
     socialPosts: socialPosts || 0,
     recentSubmissions: recentSubmissions || [],
     hiring,
+    salesOpps: opps,
     todayReportsCount,
     todayScheduledJobsCount,
     expiringCertsCount,
     expiredCertsCount,
+    jobStatusCounts,
+    weeklyLeads,
+    weeklyApps,
   };
 }
 
