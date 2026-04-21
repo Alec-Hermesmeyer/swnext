@@ -86,6 +86,11 @@ export default function JobFormModal({
   const [extractedKeys, setExtractedKeys] = useState(() => new Set());
   const [extractNotes, setExtractNotes] = useState("");
 
+  // Auto-assign job number state
+  const [assigningNumber, setAssigningNumber] = useState(false);
+  const [assignInfo, setAssignInfo] = useState(null); // { block, remaining, match_type } | null
+  const [assignError, setAssignError] = useState("");
+
   // Reset form when modal opens or target changes
   useEffect(() => {
     if (!isOpen) return;
