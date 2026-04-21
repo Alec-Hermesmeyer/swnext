@@ -331,6 +331,7 @@ async function fetchDashboardSnapshot() {
     pendingScheduleRequestsCount,
     pendingChangeOrdersCount,
     pendingChangeOrdersValue,
+    totalActiveContract,
     jobStatusCounts,
     weeklyLeads,
     weeklyApps,
