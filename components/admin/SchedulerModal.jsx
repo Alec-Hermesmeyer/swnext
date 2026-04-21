@@ -388,21 +388,21 @@ export default function SchedulerModal({ isOpen, onClose, focusJobId }) {
 
             {/* Rig / Super / Truck */}
             <div className="grid gap-3 sm:grid-cols-3">
-              <Field label="Rig" required>
-                <select value={rigId} onChange={(e) => setRigId(e.target.value)} required className={inputClass}>
-                  <option value="">Select rig…</option>
+              <Field label={`Rig${rigs.length > 0 ? ` (${rigs.length})` : ""}`} required>
+                <select value={rigId} onChange={(e) => setRigId(e.target.value)} required className={inputClass} disabled={loadingRefs || rigs.length === 0}>
+                  <option value="">{loadingRefs ? "Loading…" : rigs.length === 0 ? "No rigs — add one in the scheduler" : "Select rig…"}</option>
                   {rigs.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </Field>
-              <Field label="Superintendent">
-                <select value={superId} onChange={(e) => setSuperId(e.target.value)} className={inputClass}>
-                  <option value="">—</option>
+              <Field label={`Superintendent${supers.length > 0 ? ` (${supers.length})` : ""}`}>
+                <select value={superId} onChange={(e) => setSuperId(e.target.value)} className={inputClass} disabled={loadingRefs}>
+                  <option value="">{loadingRefs ? "Loading…" : supers.length === 0 ? "No supers configured" : "—"}</option>
                   {supers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </Field>
-              <Field label="Truck">
-                <select value={truckId} onChange={(e) => setTruckId(e.target.value)} className={inputClass}>
-                  <option value="">—</option>
+              <Field label={`Truck${trucks.length > 0 ? ` (${trucks.length})` : ""}`}>
+                <select value={truckId} onChange={(e) => setTruckId(e.target.value)} className={inputClass} disabled={loadingRefs}>
+                  <option value="">{loadingRefs ? "Loading…" : trucks.length === 0 ? "No trucks configured" : "—"}</option>
                   {trucks.map((t) => <option key={t.id} value={t.id}>{t.truck_number}{t.make ? ` · ${t.make}` : ""}</option>)}
                 </select>
               </Field>
