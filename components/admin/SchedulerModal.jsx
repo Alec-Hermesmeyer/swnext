@@ -83,44 +83,69 @@ export default function SchedulerModal({ isOpen, onClose, focusJobId }) {
     setStatus(null);
   }, [isOpen, focusJobId]);
 
-  // Load reference data
+  // Load reference data. Uses allSettled so one bad query can't black out
+  // the whole form — each list loads independently, and any per-query error
+  // is surfaced in the banner so we can see exactly what failed.
   const loadReferences = useCallback(async () => {
     if (!isOpen || !focusJobId) return;
     setLoadingRefs(true);
     setErrorMessage("");
-    try {
-      const [jobRes, rigsRes, supersRes, trucksRes, cranesRes, workersRes] = await Promise.all([
-        supabase.from("crew_jobs").select("id, job_name, job_number, customer_name, hiring_contractor, address, city, crane_required, default_rig").eq("id", focusJobId).maybeSingle(),
-        supabase.from("crew_categories").select("id, name").order("sort_order", { ascending: true }).order("name"),
-        supabase.from("crew_superintendents").select("id, name, phone").eq("is_active", true).order("name"),
-        supabase.from("crew_trucks").select("id, truck_number, make, model").eq("is_active", true).order("truck_number"),
-        supabase.from("crew_cranes").select("id, name, unit_number, make, model, capacity").eq("is_active", true).order("name"),
-        supabase.from("crew_workers").select("id, name, role, phone").eq("is_active", true).order("name"),
-      ]);
-      if (jobRes.error) throw jobRes.error;
-      if (rigsRes.error) throw rigsRes.error;
-      if (supersRes.error) throw supersRes.error;
-      if (trucksRes.error) throw trucksRes.error;
-      // crew_cranes may not exist pre-migration
-      if (cranesRes.error && !String(cranesRes.error.message).toLowerCase().includes("does not exist")) throw cranesRes.error;
-      if (workersRes.error) throw workersRes.error;
-      setJob(jobRes.data || null);
-      setRigs(rigsRes.data || []);
-      setSupers(supersRes.data || []);
-      setTrucks(trucksRes.data || []);
-      setCranes(cranesRes.error ? [] : (cranesRes.data || []));
-      setWorkers(workersRes.data || []);
 
-      // Preselect defaults based on the job's hints
-      if (jobRes.data?.default_rig && rigsRes.data) {
-        const guessRig = rigsRes.data.find((r) => (r.name || "").toLowerCase() === String(jobRes.data.default_rig).toLowerCase());
-        if (guessRig) setRigId(guessRig.id);
+    const runQuery = async (label, queryBuilder) => {
+      try {
+        const res = await queryBuilder();
+        if (res.error) {
+          console.warn(`[SchedulerModal] ${label} failed:`, res.error);
+          return { label, error: res.error, data: null };
+        }
+        return { label, error: null, data: res.data };
+      } catch (err) {
+        console.warn(`[SchedulerModal] ${label} threw:`, err);
+        return { label, error: err, data: null };
       }
-    } catch (err) {
-      setErrorMessage(err?.message || "Could not load scheduling data.");
-    } finally {
-      setLoadingRefs(false);
+    };
+
+    const results = await Promise.allSettled([
+      runQuery("job", () => supabase.from("crew_jobs").select("*").eq("id", focusJobId).maybeSingle()),
+      runQuery("rigs (crew_categories)", () => supabase.from("crew_categories").select("*").order("sort_order", { ascending: true })),
+      runQuery("superintendents", () => supabase.from("crew_superintendents").select("*").eq("is_active", true).order("name")),
+      runQuery("trucks", () => supabase.from("crew_trucks").select("*").eq("is_active", true).order("truck_number")),
+      runQuery("cranes", () => supabase.from("crew_cranes").select("*").eq("is_active", true).order("name")),
+      runQuery("workers", () => supabase.from("crew_workers").select("*").eq("is_active", true).order("name")),
+    ]);
+
+    const [jobR, rigsR, supersR, trucksR, cranesR, workersR] = results.map((r) => r.status === "fulfilled" ? r.value : { error: r.reason });
+
+    setJob(jobR.data || null);
+    setRigs(Array.isArray(rigsR.data) ? rigsR.data : []);
+    setSupers(Array.isArray(supersR.data) ? supersR.data : []);
+    setTrucks(Array.isArray(trucksR.data) ? trucksR.data : []);
+    setCranes(Array.isArray(cranesR.data) ? cranesR.data : []);
+    setWorkers(Array.isArray(workersR.data) ? workersR.data : []);
+
+    // Preselect rig if job has a default_rig hint
+    if (jobR.data?.default_rig && Array.isArray(rigsR.data)) {
+      const guessRig = rigsR.data.find((r) => (r.name || "").toLowerCase() === String(jobR.data.default_rig).toLowerCase());
+      if (guessRig) setRigId(guessRig.id);
     }
+
+    // Surface any errors (but don't block — if workers loaded but rigs didn't,
+    // show both the list and the error).
+    const failures = [];
+    if (jobR.error) failures.push(`job (${jobR.error.message || "unknown"})`);
+    if (rigsR.error) failures.push(`rigs (${rigsR.error.message || "unknown"})`);
+    if (supersR.error) failures.push(`supers (${supersR.error.message || "unknown"})`);
+    if (trucksR.error) failures.push(`trucks (${trucksR.error.message || "unknown"})`);
+    // crew_cranes is expected to be missing pre-migration — only flag if it's a different error
+    if (cranesR.error && !String(cranesR.error.message || "").toLowerCase().includes("does not exist")) {
+      failures.push(`cranes (${cranesR.error.message})`);
+    }
+    if (workersR.error) failures.push(`workers (${workersR.error.message || "unknown"})`);
+    if (failures.length > 0) {
+      setErrorMessage(`Could not load: ${failures.join("; ")}. Check browser console for details.`);
+    }
+
+    setLoadingRefs(false);
   }, [isOpen, focusJobId]);
 
   useEffect(() => { loadReferences(); }, [loadReferences]);
