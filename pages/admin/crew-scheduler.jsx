@@ -424,6 +424,38 @@ function CrewScheduler() {
 
   // --- Visual Board State ---
   const [showManagePanel, setShowManagePanel] = useState(false);
+  const router = useRouter();
+  const focusJobIdConsumedRef = useRef(false);
+
+  // Deep-link: when the embedded scheduler opens with ?focus_job_id=X, jump to
+  // that job in the Manage Jobs panel once it's loaded. One-shot per mount.
+  useEffect(() => {
+    if (!router?.isReady) return;
+    if (focusJobIdConsumedRef.current) return;
+    const focusId = router.query?.focus_job_id;
+    if (!focusId || Array.isArray(focusId)) return;
+    if (!jobAdminRows || jobAdminRows.length === 0) return;
+    const target = jobAdminRows.find((j) => String(j.id) === String(focusId));
+    if (!target) return;
+
+    focusJobIdConsumedRef.current = true;
+    setShowManagePanel(true);
+    setManagePanelTab("jobs");
+    setJobListFilter("all");
+    setJobListSearch(target.job_number || target.job_name || "");
+
+    // After next paint, scroll the row into view and flash-highlight it.
+    setTimeout(() => {
+      if (typeof document === "undefined") return;
+      const el = document.getElementById(`job-row-${target.id}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-brand", "ring-offset-2", "rounded-lg");
+      setTimeout(() => {
+        el.classList.remove("ring-2", "ring-brand", "ring-offset-2", "rounded-lg");
+      }, 2500);
+    }, 400);
+  }, [router?.isReady, router?.query?.focus_job_id, jobAdminRows]);
   const [managePanelTab, setManagePanelTab] = useState("workers");
   const [rigWorkerDrafts, setRigWorkerDrafts] = useState({});
 
