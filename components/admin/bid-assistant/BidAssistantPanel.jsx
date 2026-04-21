@@ -97,30 +97,27 @@ function DocumentSidebar({ documents, selectedDoc, onSelect, onDelete, deletingD
 // ── Mobile tab bar for switching between chat and editor ─────────────
 
 function MobileTabBar({ activeTab, onChange }) {
+  const tabs = [
+    { id: "chat", label: "Chat" },
+    { id: "editor", label: "Editor" },
+    { id: "insights", label: "Insights" },
+  ];
   return (
     <div className="flex border-b border-neutral-200 lg:hidden">
-      <button
-        type="button"
-        onClick={() => onChange("chat")}
-        className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors ${
-          activeTab === "chat"
-            ? "text-brand border-b-2 border-brand"
-            : "text-neutral-500 hover:text-neutral-700"
-        }`}
-      >
-        Chat
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange("editor")}
-        className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors ${
-          activeTab === "editor"
-            ? "text-brand border-b-2 border-brand"
-            : "text-neutral-500 hover:text-neutral-700"
-        }`}
-      >
-        Editor
-      </button>
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          onClick={() => onChange(t.id)}
+          className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors ${
+            activeTab === t.id
+              ? "text-brand border-b-2 border-brand"
+              : "text-neutral-500 hover:text-neutral-700"
+          }`}
+        >
+          {t.label}
+        </button>
+      ))}
     </div>
   );
 }
