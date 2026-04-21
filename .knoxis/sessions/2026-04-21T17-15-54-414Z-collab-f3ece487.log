@@ -111,3 +111,40 @@ When done, summarize the changes made (files, functions, lines) and note any pot
 
 [ADDITIONAL CONTEXT]
 - Recent focus areas: refactoring
+[2026-04-21T17:59:06.967Z] CLAUDE DONE (exit 0, 174s, 121 lines):
+
+
+Let me start by understanding the current layout and identifying the issues.
+Now let me also read the BidDocumentEditor to understand its size/complexity so I know how the editor pane behaves:
+Now I have a clear picture of the problem. The current 3-pane layout (Chat + Editor + 340px Insights) squishes both the chat and editor into ~330px each on a typical screen. The fix:
+
+1. **Remove the 3rd column entirely** — restore the clean 2-pane layout
+2. **Add a floating score badge/toast** in the header that opens a **slide-out drawer overlay** from the right
+3. **The drawer overlays** instead of pushing — so Chat + Editor get full breathing room
+4. **Remove the "Insights" mobile tab** — replace with a score button that triggers the same drawer
+
+Let me implement this:
+Good. Now I'll rewrite the `BidAssistantPanel.jsx` with the new layout approach — replacing the squished 3-column with a clean 2-column + slide-out drawer:
+Now replace the main panel's return JSX — add drawer state, score toast in header, and the 2-pane layout:
+Now replace the entire return JSX — the header with score toast, 2-pane layout, and the drawer:
+Now let me also improve the `BidMetricsEditor` — since it now lives inside a spacious drawer instead of a narrow 340px column, let me adjust the weight grid to be more readable:
+Now verify the build:
+Clean build — no errors or warnings. Let me verify the final state of the refactored panel:
+Everything looks correct and clean. Let me do a final build verification:
+Build is clean. Here's the full summary:
+
+---
+
+## Summary of Changes
+
+### Files Modified
+
+#### 1. `/components/admin/bid-assistant/BidAssistantPanel.jsx` (lines 97–536)
+
+**What changed — the entire layout architecture:**
+
+| Before | After |
+|---|---|
+| 3 columns in-flow: Chat (`flex-1`) + Editor (`flex-1`) + Insights (`340px fixed`) | 2 columns in-flow: Chat (`flex-1`) + Editor (`flex-1`) |
+| Insights panel consumed 340px, leaving ~330px each for Chat and Editor on a 1440px screen | Chat and Edit
+[2026-04-21T17:59:08.057Z] KNOXIS (review): Claude Code has successfully refactored the bid assistant layout, replacing the squished 3-column layout with a clean 2-column layout and a slide-out drawer for insights. The changes are well-structured, and the build is error-free. This should significantly improve the user experience.
