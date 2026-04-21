@@ -18,7 +18,8 @@ DECLARE
     'crew_workers',
     'crew_cranes',
     'schedule_requests',
-    'admin_notifications'
+    'admin_notifications',
+    'job_number_blocks'
   ];
   t text;
 BEGIN
