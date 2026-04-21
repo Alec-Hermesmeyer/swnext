@@ -266,7 +266,7 @@ export default function BidMetricsEditor({ metrics, onUpdateField, onSetMetrics,
               {group.description && (
                 <p className="mb-2 text-[10px] text-neutral-400">{group.description}</p>
               )}
-              <div className={`grid gap-3 ${group.id === "weights" ? "grid-cols-5" : "grid-cols-2 sm:grid-cols-3"}`}>
+              <div className={`grid gap-3 ${group.id === "weights" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" : "grid-cols-2 sm:grid-cols-3"}`}>
                 {group.fields.map((field) => (
                   <MetricInput
                     key={field.key}
