@@ -484,71 +484,99 @@ function DashboardTW() {
       </Head>
 
       <div>
-        {/* ── Greeting + Health Score ── */}
-        <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-6">
-          <div className="flex flex-wrap items-center justify-between gap-6">
+        {/* ── Hero: compact greeting + 3 KPI tiles ── */}
+        <header className="mb-6 rounded-2xl border border-neutral-200 bg-white p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className={`${lato.className} text-2xl font-black text-neutral-900`}>
                 {getGreeting(firstName)}
               </h1>
-              <p className="mt-1 text-sm text-neutral-500">
+              <p className="mt-0.5 text-sm text-neutral-500">
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
               </p>
               {lastUpdatedAt ? (
-                <p className="mt-1 text-xs text-neutral-400">
-                  Last updated {new Date(lastUpdatedAt).toLocaleTimeString()}
+                <p className="mt-0.5 text-[11px] text-neutral-400">
+                  Updated {new Date(lastUpdatedAt).toLocaleTimeString()}
                 </p>
               ) : null}
-              {!loading && data && (
-                <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 font-medium text-neutral-600">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    {data.activeJobs} active jobs
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 font-medium text-neutral-600">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                    {data.activeWorkers} crew members
-                  </span>
-                  {data.hasTodaySchedule && (
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium ${data.todayFinalized ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${data.todayFinalized ? "bg-emerald-500" : "bg-amber-500"}`} />
-                      Today's schedule {data.todayFinalized ? "finalized" : "draft"}
-                    </span>
-                  )}
-                  {(data.recentContactSubs + data.recentJobApps) > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 font-medium text-violet-700">
-                      <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
-                      {data.recentContactSubs + data.recentJobApps} new leads this week
-                    </span>
-                  )}
-                </div>
-              )}
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={async () => {
-                  setRefreshing(true);
-                  try {
-                    const nextData = await fetchDashboardSnapshot();
-                    setData(nextData);
-                    writeCachedValue(DASHBOARD_CACHE_KEY, nextData);
-                    setLastUpdatedAt(Date.now());
-                  } catch (err) {
-                    console.error("Dashboard refresh error:", err);
-                  } finally {
-                    setRefreshing(false);
-                  }
-                }}
-                className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
-                disabled={refreshing}
-              >
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </button>
-              {!loading && <HealthRing score={healthScore} label={healthLabel} />}
-            </div>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+            >
+              {refreshing ? "Refreshing..." : "Refresh"}
+            </button>
           </div>
-        </div>
+
+          {!loading && data ? (
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {/* Backlog */}
+              <Link
+                href="/admin/job-costs"
+                className="group block rounded-xl border border-neutral-200 bg-gradient-to-br from-brand/5 to-white p-4 transition-all hover:shadow-card-hover hover:border-brand/30"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Active Backlog</p>
+                <p className={`${lato.className} mt-1 text-3xl font-black text-brand`}>{money(data.totalActiveContract)}</p>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">
+                  {data.activeJobs} active job{data.activeJobs === 1 ? "" : "s"} <span className="text-brand transition-transform group-hover:translate-x-0.5 inline-block">→</span>
+                </p>
+              </Link>
+              {/* Pipeline */}
+              <Link
+                href="/admin/sales"
+                className="group block rounded-xl border border-neutral-200 bg-gradient-to-br from-amber-50 to-white p-4 transition-all hover:shadow-card-hover hover:border-amber-300"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Sales Pipeline</p>
+                <p className={`${lato.className} mt-1 text-3xl font-black text-amber-700`}>{money(data.pipelineValue)}</p>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">
+                  {data.activeOpps} open{data.wonCount ? ` · ${data.wonCount} won` : ""} <span className="text-amber-700 transition-transform group-hover:translate-x-0.5 inline-block">→</span>
+                </p>
+              </Link>
+              {/* Today */}
+              {(() => {
+                const toneBg = {
+                  neutral: "from-neutral-50 to-white",
+                  emerald: "from-emerald-50 to-white",
+                  amber: "from-amber-50 to-white",
+                  rose: "from-rose-50 to-white",
+                }[todayTone];
+                const toneText = {
+                  neutral: "text-neutral-700",
+                  emerald: "text-emerald-700",
+                  amber: "text-amber-700",
+                  rose: "text-rose-700",
+                }[todayTone];
+                const toneBorder = {
+                  neutral: "hover:border-neutral-300",
+                  emerald: "hover:border-emerald-300",
+                  amber: "hover:border-amber-300",
+                  rose: "hover:border-rose-300",
+                }[todayTone];
+                const subLine = data.todayScheduledJobsCount === 0
+                  ? "No jobs scheduled today"
+                  : data.todayReportsCount >= data.todayScheduledJobsCount
+                    ? "All reports filed"
+                    : `${data.todayScheduledJobsCount - data.todayReportsCount} outstanding`;
+                return (
+                  <Link
+                    href="/admin/daily-board"
+                    className={`group block rounded-xl border border-neutral-200 bg-gradient-to-br p-4 transition-all hover:shadow-card-hover ${toneBg} ${toneBorder}`}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Today's Reports</p>
+                    <p className={`${lato.className} mt-1 text-3xl font-black ${toneText}`}>
+                      {data.todayReportsCount}<span className="text-neutral-400 font-bold"> / {data.todayScheduledJobsCount}</span>
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-neutral-500">
+                      {subLine} <span className={`${toneText} transition-transform group-hover:translate-x-0.5 inline-block`}>→</span>
+                    </p>
+                  </Link>
+                );
+              })()}
+            </div>
+          ) : null}
+        </header>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
