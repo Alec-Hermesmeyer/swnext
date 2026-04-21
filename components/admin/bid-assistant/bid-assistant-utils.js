@@ -180,13 +180,49 @@ export function getDefaultBidFitMetrics() {
   return {
     source_label: METRICS_SOURCE_LABEL,
     profile_key: METRICS_PROFILE_KEY,
+    // Financial thresholds
     target_margin_percent: 18,
     minimum_profit_usd: 75000,
     minimum_contract_value_usd: 300000,
     risk_buffer_percent: 8,
     default_estimated_cost_usd: 550000,
+    // Capacity & scheduling
+    max_concurrent_jobs: 20,
+    min_crew_available: 3,
+    // Signal weights (should total 100)
+    weight_profitability: 35,
+    weight_contract_size: 15,
+    weight_resources: 20,
+    weight_scheduling: 15,
+    weight_pipeline: 15,
+    // Meta
     notes: "",
   };
+}
+
+// ── Build context summary for the AI chat system prompt ────────────
+
+export function buildMetricsContextForAI(metrics, opsContext) {
+  const parts = [];
+  if (metrics) {
+    parts.push("## User's Bid Metrics Preferences");
+    parts.push(`Target margin: ${metrics.target_margin_percent || 18}%`);
+    parts.push(`Minimum profit: $${Number(metrics.minimum_profit_usd || 75000).toLocaleString()}`);
+    parts.push(`Minimum contract value: $${Number(metrics.minimum_contract_value_usd || 300000).toLocaleString()}`);
+    parts.push(`Risk buffer: ${metrics.risk_buffer_percent || 8}%`);
+    parts.push(`Max concurrent jobs: ${metrics.max_concurrent_jobs || 20}`);
+    if (metrics.notes) parts.push(`Notes: ${metrics.notes}`);
+  }
+  if (opsContext) {
+    parts.push("\n## Current Operational Context");
+    parts.push(`Active crew members: ${opsContext.workforce?.active_workers || 0}`);
+    parts.push(`Active jobs: ${opsContext.scheduling?.active_jobs || 0}`);
+    parts.push(`Capacity utilization: ${Math.round((opsContext.workforce?.capacity_utilization || 0) * 100)}%`);
+    parts.push(`Bids due in next 2 weeks: ${opsContext.pipeline?.upcoming_bids_2wk || 0}`);
+    parts.push(`Total pipeline value: $${Number(opsContext.pipeline?.total_pipeline_value || 0).toLocaleString()}`);
+    parts.push(`Backlog value: $${Number(opsContext.backlog?.total_value || 0).toLocaleString()}`);
+  }
+  return parts.join("\n");
 }
 
 // ── Quick-action chip definitions ───────────────────────────────────
@@ -195,9 +231,11 @@ export const CHAT_QUICK_ACTIONS = [
   { id: "summarize_risks", label: "Summarize risks", prompt: "Summarize the key risk flags in this bid document and what we should watch out for." },
   { id: "generate_intro", label: "Generate intro", prompt: "Draft a professional introduction paragraph for our bid proposal based on the project details in this document." },
   { id: "draft_exclusions", label: "Draft exclusions", prompt: "Suggest a list of exclusions we should include in our bid proposal based on the scope described in this document." },
-  { id: "calculate_margin", label: "Calculate margin", prompt: "Walk me through the margin calculation for this bid based on the detected pricing and our cost estimates." },
+  { id: "calculate_margin", label: "Calculate margin", prompt: "Walk me through the margin calculation for this bid based on the detected pricing, my target margin preferences, and our cost estimates. Factor in the risk buffer." },
   { id: "scope_review", label: "Review scope", prompt: "Review the extracted scope items from this bid document and flag anything that seems incomplete or risky." },
   { id: "compare_pricing", label: "Compare pricing", prompt: "Analyze the pricing structure in this bid and identify areas where our numbers might need adjustment." },
+  { id: "bid_recommendation", label: "Bid / No-Bid?", prompt: "Based on my metric preferences, current operational capacity, scheduling load, and this bid's projected profitability, should we bid on this project? Give a clear recommendation with specific reasons." },
+  { id: "resource_check", label: "Resource check", prompt: "Given our current crew size, active job count, and scheduling capacity, do we have the resources to take on this project? What scheduling constraints should we consider?" },
 ];
 
 // ── Wizard step definitions ─────────────────────────────────────────

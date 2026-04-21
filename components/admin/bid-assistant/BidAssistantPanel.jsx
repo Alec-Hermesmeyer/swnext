@@ -8,6 +8,8 @@
 import { useCallback, useEffect, useState } from "react";
 import BidChatInterface from "./BidChatInterface";
 import BidDocumentEditor from "./BidDocumentEditor";
+import BidMetricsEditor from "./BidMetricsEditor";
+import BidRecommendations from "./BidRecommendations";
 import { useBidAssistantReducer } from "./useBidAssistantReducer";
 import {
   normalizeDraftPayload,
@@ -92,34 +94,132 @@ function DocumentSidebar({ documents, selectedDoc, onSelect, onDelete, deletingD
   );
 }
 
-// ── Mobile tab bar for switching between chat and editor ─────────────
+// ── Mobile tab bar — Chat / Editor only (Insights lives in drawer) ──
 
 function MobileTabBar({ activeTab, onChange }) {
   return (
     <div className="flex border-b border-neutral-200 lg:hidden">
-      <button
-        type="button"
-        onClick={() => onChange("chat")}
-        className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors ${
-          activeTab === "chat"
-            ? "text-brand border-b-2 border-brand"
-            : "text-neutral-500 hover:text-neutral-700"
-        }`}
-      >
-        Chat
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange("editor")}
-        className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors ${
-          activeTab === "editor"
-            ? "text-brand border-b-2 border-brand"
-            : "text-neutral-500 hover:text-neutral-700"
-        }`}
-      >
-        Editor
-      </button>
+      {[
+        { id: "chat", label: "Chat" },
+        { id: "editor", label: "Editor" },
+      ].map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          onClick={() => onChange(t.id)}
+          className={`flex-1 px-4 py-2.5 text-xs font-semibold transition-colors ${
+            activeTab === t.id
+              ? "text-brand border-b-2 border-brand"
+              : "text-neutral-500 hover:text-neutral-700"
+          }`}
+        >
+          {t.label}
+        </button>
+      ))}
     </div>
+  );
+}
+
+// ── Score toast badge — clickable pill that opens the insights drawer ─
+
+function ScoreToast({ score, loading, onClick }) {
+  if (loading) {
+    return (
+      <button type="button" onClick={onClick} className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 transition-colors hover:bg-neutral-100">
+        <svg className="h-3 w-3 animate-spin text-neutral-400" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <span className="text-[11px] font-semibold text-neutral-400">Scoring...</span>
+      </button>
+    );
+  }
+
+  if (!score || typeof score.composite_score !== "number") {
+    return (
+      <button type="button" onClick={onClick} className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 transition-colors hover:bg-neutral-100">
+        <svg className="h-3.5 w-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span className="text-[11px] font-semibold text-neutral-500">Insights</span>
+      </button>
+    );
+  }
+
+  const s = score.composite_score;
+  const rec = score.recommendation;
+  const toneMap = {
+    emerald: { ring: "border-emerald-400 bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
+    amber: { ring: "border-amber-400 bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
+    rose: { ring: "border-rose-400 bg-rose-50", text: "text-rose-700", dot: "bg-rose-500" },
+  };
+  const tone = toneMap[rec?.tone] || toneMap.amber;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-2 rounded-full border-2 px-3 py-1.5 transition-all hover:shadow-md ${tone.ring}`}
+    >
+      <span className={`h-2 w-2 rounded-full ${tone.dot}`} />
+      <span className={`text-sm font-black ${tone.text}`}>{s}</span>
+      <span className={`text-[11px] font-semibold ${tone.text}`}>{rec?.label || "Score"}</span>
+      <svg className="h-3 w-3 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  );
+}
+
+// ── Insights drawer — slides in from the right as an overlay ────────
+
+function InsightsDrawer({ open, onClose, children }) {
+  return (
+    <>
+      {/* Backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px] transition-opacity"
+          onClick={onClose}
+        />
+      )}
+      {/* Drawer panel */}
+      <div
+        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {/* Drawer header */}
+        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-3.5 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50">
+              <svg className="h-3.5 w-3.5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900">Bid Insights</h3>
+              <p className="text-[11px] text-neutral-500">Score, recommendations & metrics</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        {/* Drawer body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {children}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -131,6 +231,7 @@ export default function BidAssistantPanel() {
   const [deletingDocId, setDeletingDocId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // ── Fetch document by ID ───────────────────────────────────────
 
@@ -227,6 +328,52 @@ export default function BidAssistantPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Fetch recommendations (operational context + score) ─────────
+
+  const fetchRecommendations = useCallback(async () => {
+    actions.setLoading("loadingRecommendations", true);
+    try {
+      // Build bid_data from the selected document's extracted pricing
+      const extracted = state.selectedDoc?.extracted_json || {};
+      const summary = extracted?.summary || {};
+      const headlineTotals = Array.isArray(summary.headline_totals) ? summary.headline_totals : [];
+      // Use the highest headline total as the value estimate
+      const bestValue = headlineTotals.reduce((max, t) => {
+        const amt = Number(String(t?.amount || "").replace(/[^0-9.-]/g, "")) || 0;
+        return amt > max ? amt : max;
+      }, 0);
+
+      const response = await fetch("/api/bid-recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          metrics: state.metrics,
+          bid_data: { value_estimate: bestValue },
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        actions.setOpsContext(data.context || null);
+        actions.setBidScore(data.score || null);
+      }
+    } catch {
+      // Silent — recommendations are non-critical
+    } finally {
+      actions.setLoading("loadingRecommendations", false);
+    }
+  }, [state.selectedDoc, state.metrics, actions]);
+
+  // Auto-fetch recommendations when a document is selected or metrics change
+  useEffect(() => {
+    if (state.selectedDoc?.id) {
+      fetchRecommendations();
+    } else {
+      actions.setOpsContext(null);
+      actions.setBidScore(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.selectedDoc?.id]);
+
   // ── Upload handler ─────────────────────────────────────────────
 
   const handleUpload = useCallback(async (event) => {
@@ -319,17 +466,26 @@ export default function BidAssistantPanel() {
             </p>
           </div>
         </div>
-        {state.status ? (
-          <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-[11px] text-blue-700 max-w-xs truncate">
-            {state.status}
-          </div>
-        ) : null}
+
+        <div className="flex items-center gap-3">
+          {state.status ? (
+            <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-[11px] text-blue-700 max-w-xs truncate">
+              {state.status}
+            </div>
+          ) : null}
+          {/* Score toast — opens the insights drawer */}
+          <ScoreToast
+            score={state.bidScore}
+            loading={state.loadingRecommendations}
+            onClick={() => setDrawerOpen(true)}
+          />
+        </div>
       </div>
 
       {/* Mobile tab bar */}
       <MobileTabBar activeTab={mobileTab} onChange={setMobileTab} />
 
-      {/* Main layout: sidebar + split pane */}
+      {/* Main layout: sidebar + two-pane (chat | editor) */}
       <div className="flex flex-col lg:flex-row overflow-hidden" style={{ height: "calc(100vh - 16rem)" }}>
         {/* Document sidebar */}
         <DocumentSidebar
@@ -344,20 +500,37 @@ export default function BidAssistantPanel() {
           loadingDocs={loadingDocs}
         />
 
-        {/* Chat pane — hidden on mobile when editor is active */}
+        {/* Chat pane */}
         <div className={`flex-1 min-h-0 min-w-0 border-r border-neutral-100 ${
-          mobileTab === "editor" ? "hidden lg:flex" : "flex"
+          mobileTab !== "chat" ? "hidden lg:flex" : "flex"
         } flex-col`}>
           <BidChatInterface state={state} actions={actions} />
         </div>
 
-        {/* Editor pane — hidden on mobile when chat is active */}
+        {/* Editor pane — no longer squeezed by a third column */}
         <div className={`flex-1 min-h-0 min-w-0 ${
-          mobileTab === "chat" ? "hidden lg:flex" : "flex"
+          mobileTab !== "editor" ? "hidden lg:flex" : "flex"
         } flex-col`}>
           <BidDocumentEditor state={state} actions={actions} />
         </div>
       </div>
+
+      {/* Insights drawer — overlays from the right */}
+      <InsightsDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        <BidRecommendations
+          score={state.bidScore}
+          context={state.opsContext}
+          loading={state.loadingRecommendations}
+          onRefresh={fetchRecommendations}
+        />
+        <BidMetricsEditor
+          metrics={state.metrics}
+          onUpdateField={actions.updateMetricField}
+          onSetMetrics={actions.setMetrics}
+          isJobOverride={state.jobMetricsOverride}
+          onToggleJobOverride={actions.toggleJobOverride}
+        />
+      </InsightsDrawer>
     </section>
   );
 }

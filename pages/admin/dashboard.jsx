@@ -2,12 +2,21 @@
 import { useEffect, useMemo, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import withAuthTw from "@/components/withAuthTw";
 import TWAdminLayout from "@/components/TWAdminLayout";
 import supabase from "@/components/Supabase";
 import { useAuth } from "@/context/AuthContext";
 import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 import { Lato } from "next/font/google";
+
+/* Chart components — loaded client-side only (Chart.js needs <canvas>) */
+const SalesPipelineChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.SalesPipelineChart), { ssr: false });
+const HiringPipelineChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.HiringPipelineChart), { ssr: false });
+const PipelineValueChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.PipelineValueChart), { ssr: false });
+const JobStatusChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.JobStatusChart), { ssr: false });
+const LeadsTrendChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.LeadsTrendChart), { ssr: false });
+const CrewOverviewChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.CrewOverviewChart), { ssr: false });
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 const DASHBOARD_CACHE_KEY = "admin-dashboard-data";
@@ -86,6 +95,24 @@ function StatCard({ label, value, change, changeLabel, icon, href, color = "blue
   );
 }
 
+function MiniStat({ label, value, tone = "neutral" }) {
+  const tones = {
+    blue: "bg-blue-50 text-blue-700",
+    emerald: "bg-emerald-50 text-emerald-700",
+    amber: "bg-amber-50 text-amber-700",
+    violet: "bg-violet-50 text-violet-700",
+    rose: "bg-rose-50 text-rose-700",
+    neutral: "bg-neutral-100 text-neutral-700",
+  };
+  const cls = tones[tone] || tones.neutral;
+  return (
+    <div className={`rounded-xl p-3 text-center ${cls}`}>
+      <div className={`${lato.className} text-xl font-black leading-tight`}>{value}</div>
+      <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider opacity-75">{label}</div>
+    </div>
+  );
+}
+
 function HealthRing({ score, label }) {
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
@@ -159,7 +186,7 @@ async function fetchDashboardSnapshot() {
   ] = await Promise.all([
     supabase.from("crew_jobs").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("crew_jobs").select("*", { count: "exact", head: true }),
-    supabase.from("crew_jobs").select("job_name, job_number, customer_name, job_status, bid_amount, contract_amount, created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(5),
+    supabase.from("crew_jobs").select("id, job_name, job_number, customer_name, job_status, bid_amount, contract_amount, created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(5),
     supabase.from("crew_workers").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("crew_schedules").select("id, is_finalized").eq("schedule_date", today).limit(1),
     supabase.from("contact_form").select("*", { count: "exact", head: true }),
@@ -186,6 +213,10 @@ async function fetchDashboardSnapshot() {
   let todayScheduledJobsCount = 0;
   let expiringCertsCount = 0;
   let expiredCertsCount = 0;
+  let pendingScheduleRequestsCount = 0;
+  let pendingChangeOrdersCount = 0;
+  let pendingChangeOrdersValue = 0;
+  let totalActiveContract = 0;
 
   try {
     const scheduleIds = (todaySchedule || []).map((s) => s.id).filter(Boolean);
@@ -224,9 +255,71 @@ async function fetchDashboardSnapshot() {
     if (expiredResult.status === "fulfilled" && !expiredResult.value.error) {
       expiredCertsCount = expiredResult.value.count || 0;
     }
+
+    // Action-item queue sizes (graceful fallback if tables missing)
+    const [schedReqResult, coResult] = await Promise.allSettled([
+      supabase
+        .from("schedule_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending"),
+      supabase
+        .from("change_orders")
+        .select("amount, status")
+        .in("status", ["pending", "submitted"]),
+    ]);
+    if (schedReqResult.status === "fulfilled" && !schedReqResult.value.error) {
+      pendingScheduleRequestsCount = schedReqResult.value.count || 0;
+    }
+    if (coResult.status === "fulfilled" && !coResult.value.error) {
+      const rows = coResult.value.data || [];
+      pendingChangeOrdersCount = rows.length;
+      pendingChangeOrdersValue = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    }
+
+    // Total active contract backlog — one aggregated select (not limited to 5)
+    const { data: backlogRows } = await supabase
+      .from("crew_jobs")
+      .select("contract_amount")
+      .eq("is_active", true);
+    totalActiveContract = (backlogRows || []).reduce((sum, j) => sum + (Number(j.contract_amount) || 0), 0);
   } catch {
     // Silent — field-ops tables may not exist yet before migrations run
   }
+
+  // ── Chart-specific data ──────────────────────────────────────────
+  // Job status distribution (for bar chart)
+  let jobStatusCounts = {};
+  try {
+    const { data: allActiveJobs } = await supabase
+      .from("crew_jobs")
+      .select("job_status")
+      .eq("is_active", true);
+    for (const j of allActiveJobs || []) {
+      const status = j.job_status || "active";
+      jobStatusCounts[status] = (jobStatusCounts[status] || 0) + 1;
+    }
+  } catch { /* silent */ }
+
+  // Weekly lead & application counts (last 6 weeks, for line chart)
+  let weeklyLeads = [];
+  let weeklyApps = [];
+  try {
+    const weeks = 6;
+    const leadCounts = [];
+    const appCounts = [];
+    for (let i = weeks - 1; i >= 0; i--) {
+      const wStart = new Date(Date.now() - (i + 1) * 7 * 86400000).toISOString();
+      const wEnd = new Date(Date.now() - i * 7 * 86400000).toISOString();
+      const [leadRes, appRes] = await Promise.all([
+        supabase.from("contact_form").select("*", { count: "exact", head: true }).gte("created_at", wStart).lt("created_at", wEnd),
+        supabase.from("job_form").select("*", { count: "exact", head: true }).gte("created_at", wStart).lt("created_at", wEnd),
+      ]);
+      leadCounts.push(leadRes.count || 0);
+      appCounts.push(appRes.count || 0);
+    }
+    weeklyLeads = leadCounts;
+    weeklyApps = appCounts;
+  } catch { /* silent */ }
 
   return {
     activeJobs: activeJobs || 0,
@@ -248,10 +341,18 @@ async function fetchDashboardSnapshot() {
     socialPosts: socialPosts || 0,
     recentSubmissions: recentSubmissions || [],
     hiring,
+    salesOpps: opps,
     todayReportsCount,
     todayScheduledJobsCount,
     expiringCertsCount,
     expiredCertsCount,
+    pendingScheduleRequestsCount,
+    pendingChangeOrdersCount,
+    pendingChangeOrdersValue,
+    totalActiveContract,
+    jobStatusCounts,
+    weeklyLeads,
+    weeklyApps,
   };
 }
 
@@ -332,6 +433,67 @@ function DashboardTW() {
     return `${days}d ago`;
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const nextData = await fetchDashboardSnapshot();
+      setData(nextData);
+      writeCachedValue(DASHBOARD_CACHE_KEY, nextData);
+      setLastUpdatedAt(Date.now());
+    } catch (err) {
+      console.error("Dashboard refresh error:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Derive action items — only shown when something actually needs attention
+  const actionItems = useMemo(() => {
+    if (!data) return [];
+    const missingReports = Math.max(0, (data.todayScheduledJobsCount || 0) - (data.todayReportsCount || 0));
+    const items = [
+      data.pendingScheduleRequestsCount > 0 && {
+        label: "Schedule requests pending",
+        count: data.pendingScheduleRequestsCount,
+        href: "/admin/schedule-requests",
+        tone: "amber",
+      },
+      data.expiredCertsCount > 0 && {
+        label: "Certs expired",
+        count: data.expiredCertsCount,
+        href: "/admin/certifications",
+        tone: "rose",
+      },
+      data.expiringCertsCount > 0 && {
+        label: "Certs expiring ≤30d",
+        count: data.expiringCertsCount,
+        href: "/admin/certifications",
+        tone: "amber",
+      },
+      missingReports > 0 && {
+        label: "Jobs missing today's report",
+        count: missingReports,
+        href: "/admin/field-reports",
+        tone: "amber",
+      },
+      data.pendingChangeOrdersCount > 0 && {
+        label: "Change orders awaiting approval",
+        count: data.pendingChangeOrdersCount,
+        href: "/admin/change-orders",
+        tone: "amber",
+      },
+    ].filter(Boolean);
+    return items;
+  }, [data]);
+
+  const todayTone = useMemo(() => {
+    if (!data) return "neutral";
+    if (data.todayScheduledJobsCount === 0) return "neutral";
+    if (data.todayReportsCount >= data.todayScheduledJobsCount) return "emerald";
+    if (data.todayReportsCount > 0) return "amber";
+    return "rose";
+  }, [data]);
+
   return (
     <>
       <Head>
@@ -340,71 +502,99 @@ function DashboardTW() {
       </Head>
 
       <div>
-        {/* ── Greeting + Health Score ── */}
-        <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-6">
-          <div className="flex flex-wrap items-center justify-between gap-6">
+        {/* ── Hero: compact greeting + 3 KPI tiles ── */}
+        <header className="mb-6 rounded-2xl border border-neutral-200 bg-white p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className={`${lato.className} text-2xl font-black text-neutral-900`}>
                 {getGreeting(firstName)}
               </h1>
-              <p className="mt-1 text-sm text-neutral-500">
+              <p className="mt-0.5 text-sm text-neutral-500">
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
               </p>
               {lastUpdatedAt ? (
-                <p className="mt-1 text-xs text-neutral-400">
-                  Last updated {new Date(lastUpdatedAt).toLocaleTimeString()}
+                <p className="mt-0.5 text-[11px] text-neutral-400">
+                  Updated {new Date(lastUpdatedAt).toLocaleTimeString()}
                 </p>
               ) : null}
-              {!loading && data && (
-                <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 font-medium text-neutral-600">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    {data.activeJobs} active jobs
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 font-medium text-neutral-600">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                    {data.activeWorkers} crew members
-                  </span>
-                  {data.hasTodaySchedule && (
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium ${data.todayFinalized ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${data.todayFinalized ? "bg-emerald-500" : "bg-amber-500"}`} />
-                      Today's schedule {data.todayFinalized ? "finalized" : "draft"}
-                    </span>
-                  )}
-                  {(data.recentContactSubs + data.recentJobApps) > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 font-medium text-violet-700">
-                      <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
-                      {data.recentContactSubs + data.recentJobApps} new leads this week
-                    </span>
-                  )}
-                </div>
-              )}
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={async () => {
-                  setRefreshing(true);
-                  try {
-                    const nextData = await fetchDashboardSnapshot();
-                    setData(nextData);
-                    writeCachedValue(DASHBOARD_CACHE_KEY, nextData);
-                    setLastUpdatedAt(Date.now());
-                  } catch (err) {
-                    console.error("Dashboard refresh error:", err);
-                  } finally {
-                    setRefreshing(false);
-                  }
-                }}
-                className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
-                disabled={refreshing}
-              >
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </button>
-              {!loading && <HealthRing score={healthScore} label={healthLabel} />}
-            </div>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+            >
+              {refreshing ? "Refreshing..." : "Refresh"}
+            </button>
           </div>
-        </div>
+
+          {!loading && data ? (
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {/* Backlog */}
+              <Link
+                href="/admin/job-costs"
+                className="group block rounded-xl border border-neutral-200 bg-gradient-to-br from-brand/5 to-white p-4 transition-all hover:shadow-card-hover hover:border-brand/30"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Active Backlog</p>
+                <p className={`${lato.className} mt-1 text-3xl font-black text-brand`}>{money(data.totalActiveContract)}</p>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">
+                  {data.activeJobs} active job{data.activeJobs === 1 ? "" : "s"} <span className="text-brand transition-transform group-hover:translate-x-0.5 inline-block">→</span>
+                </p>
+              </Link>
+              {/* Pipeline */}
+              <Link
+                href="/admin/sales"
+                className="group block rounded-xl border border-neutral-200 bg-gradient-to-br from-amber-50 to-white p-4 transition-all hover:shadow-card-hover hover:border-amber-300"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Sales Pipeline</p>
+                <p className={`${lato.className} mt-1 text-3xl font-black text-amber-700`}>{money(data.pipelineValue)}</p>
+                <p className="mt-1 text-xs font-semibold text-neutral-500">
+                  {data.activeOpps} open{data.wonCount ? ` · ${data.wonCount} won` : ""} <span className="text-amber-700 transition-transform group-hover:translate-x-0.5 inline-block">→</span>
+                </p>
+              </Link>
+              {/* Today */}
+              {(() => {
+                const toneBg = {
+                  neutral: "from-neutral-50 to-white",
+                  emerald: "from-emerald-50 to-white",
+                  amber: "from-amber-50 to-white",
+                  rose: "from-rose-50 to-white",
+                }[todayTone];
+                const toneText = {
+                  neutral: "text-neutral-700",
+                  emerald: "text-emerald-700",
+                  amber: "text-amber-700",
+                  rose: "text-rose-700",
+                }[todayTone];
+                const toneBorder = {
+                  neutral: "hover:border-neutral-300",
+                  emerald: "hover:border-emerald-300",
+                  amber: "hover:border-amber-300",
+                  rose: "hover:border-rose-300",
+                }[todayTone];
+                const subLine = data.todayScheduledJobsCount === 0
+                  ? "No jobs scheduled today"
+                  : data.todayReportsCount >= data.todayScheduledJobsCount
+                    ? "All reports filed"
+                    : `${data.todayScheduledJobsCount - data.todayReportsCount} outstanding`;
+                return (
+                  <Link
+                    href="/admin/daily-board"
+                    className={`group block rounded-xl border border-neutral-200 bg-gradient-to-br p-4 transition-all hover:shadow-card-hover ${toneBg} ${toneBorder}`}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Today's Reports</p>
+                    <p className={`${lato.className} mt-1 text-3xl font-black ${toneText}`}>
+                      {data.todayReportsCount}<span className="text-neutral-400 font-bold"> / {data.todayScheduledJobsCount}</span>
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-neutral-500">
+                      {subLine} <span className={`${toneText} transition-transform group-hover:translate-x-0.5 inline-block`}>→</span>
+                    </p>
+                  </Link>
+                );
+              })()}
+            </div>
+          ) : null}
+        </header>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -415,224 +605,140 @@ function DashboardTW() {
           </div>
         ) : data ? (
           <>
-            {/* ── Today's Field Ops Strip ── */}
-            <div className="mb-6 grid gap-4 sm:grid-cols-3">
-              <TodayCard
-                label="Field Reports Today"
-                value={`${data.todayReportsCount} / ${data.todayScheduledJobsCount}`}
-                hint={
-                  data.todayScheduledJobsCount === 0
-                    ? "No jobs scheduled"
-                    : data.todayReportsCount >= data.todayScheduledJobsCount
-                      ? "All jobs reported"
-                      : `${data.todayScheduledJobsCount - data.todayReportsCount} outstanding`
-                }
-                tone={
-                  data.todayScheduledJobsCount === 0
-                    ? "neutral"
-                    : data.todayReportsCount >= data.todayScheduledJobsCount
-                      ? "emerald"
-                      : data.todayReportsCount > 0
-                        ? "amber"
-                        : "rose"
-                }
-                href="/admin/field-reports"
-              />
-              <TodayCard
-                label="Certs Expiring ≤30d"
-                value={data.expiringCertsCount}
-                hint={
-                  data.expiredCertsCount > 0
-                    ? `${data.expiredCertsCount} already expired`
-                    : "Nothing expired"
-                }
-                tone={
-                  data.expiredCertsCount > 0
-                    ? "rose"
-                    : data.expiringCertsCount > 0
-                      ? "amber"
-                      : "emerald"
-                }
-                href="/admin/certifications"
-              />
-              <TodayCard
-                label="Active Backlog"
-                value={money(
-                  (data.recentJobs || []).reduce(
-                    (sum, j) => sum + (Number(j.contract_amount) || 0),
-                    0
-                  )
-                )}
-                hint={`${data.activeJobs} active jobs`}
-                tone="blue"
-                href="/admin/job-costs"
-              />
-            </div>
+            {/* ── Action Items (only renders when something needs attention) ── */}
+            {actionItems.length > 0 ? (
+              <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-amber-800">Needs attention</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {actionItems.map((item, i) => (
+                    <Link
+                      key={i}
+                      href={item.href}
+                      className={`group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                        item.tone === "rose"
+                          ? "border-rose-300 bg-white text-rose-800 hover:bg-rose-50 hover:border-rose-400"
+                          : "border-amber-300 bg-white text-amber-900 hover:bg-amber-50 hover:border-amber-400"
+                      }`}
+                    >
+                      <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white ${
+                        item.tone === "rose" ? "bg-rose-600" : "bg-amber-500"
+                      }`}>
+                        {item.count}
+                      </span>
+                      <span>{item.label}</span>
+                      <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
-            {/* ── Metric Cards ── */}
-            <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-              <StatCard
-                label="Active Jobs"
-                value={data.activeJobs}
-                change={null}
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>}
-                href="/admin/crew-scheduler"
-                color="blue"
-              />
-              <StatCard
-                label="Crew Members"
-                value={data.activeWorkers}
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>}
-                href="/admin/crew-scheduler"
-                color="green"
-              />
-              <StatCard
-                label="Pipeline Value"
-                value={money(data.pipelineValue)}
-                change={null}
-                changeLabel={`${data.activeOpps} active`}
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>}
-                href="/admin/sales"
-                color="amber"
-              />
-              <StatCard
-                label="Leads"
-                value={data.contactSubs}
-                change={data.recentContactSubs}
-                changeLabel="this week"
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" /></svg>}
-                href="/admin/contact"
-                color="violet"
-              />
-              <StatCard
-                label="Applications"
-                value={data.jobApps}
-                change={data.recentJobApps}
-                changeLabel="this week"
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>}
-                href="/admin/hiring"
-                color="rose"
-              />
-              <StatCard
-                label="Hiring Pipeline"
-                value={data.activeHiring}
-                change={null}
-                changeLabel={`${data.totalHiring} total`}
-                icon={<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" /></svg>}
-                href="/admin/hiring"
-                color="sky"
-              />
-            </div>
-
-            {/* ── Two-column layout: Recent Jobs + Activity ── */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-              {/* Active Jobs */}
+            {/* ── Main grid: Sales (wider) + Jobs ── */}
+            <div className="mb-6 grid gap-6 lg:grid-cols-5">
+              {/* Sales panel — charts + mini stats */}
               <section className="rounded-2xl border border-neutral-200 bg-white p-5 lg:col-span-3">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Active Jobs</h2>
-                  <Link href="/admin/crew-scheduler" className="text-xs font-semibold text-[#0b2a5a] hover:text-[#0b2a5a]/70">
-                    View all →
-                  </Link>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Sales Pipeline</h2>
+                  <Link href="/admin/sales" className="text-xs font-semibold text-brand hover:underline">View all →</Link>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-neutral-100 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-                        <td className="py-2 pr-4">Job</td>
-                        <td className="py-2 pr-4">Customer</td>
-                        <td className="py-2 pr-4">Status</td>
-                        <td className="py-2 text-right">Value</td>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-50">
-                      {(data.recentJobs || []).map((job) => (
-                        <tr key={job.job_name + job.created_at} className="hover:bg-neutral-50/50">
-                          <td className="py-3 pr-4">
-                            <div className="font-medium text-neutral-800">{job.job_name}</div>
-                            {job.job_number && <div className="text-xs text-neutral-400">#{job.job_number}</div>}
-                          </td>
-                          <td className="py-3 pr-4 text-neutral-600">{job.customer_name || "—"}</td>
-                          <td className="py-3 pr-4">
-                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                              job.job_status === "completed" ? "bg-emerald-50 text-emerald-700" :
-                              job.job_status === "in_progress" ? "bg-blue-50 text-blue-700" :
-                              job.job_status === "awarded" ? "bg-amber-50 text-amber-700" :
-                              "bg-neutral-100 text-neutral-600"
-                            }`}>
-                              {job.job_status || "active"}
-                            </span>
-                          </td>
-                          <td className="py-3 text-right font-medium text-neutral-700">
-                            {job.contract_amount || job.bid_amount ? money(job.contract_amount || job.bid_amount) : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                      {!data.recentJobs?.length && (
-                        <tr><td colSpan={4} className="py-6 text-center text-neutral-400">No active jobs</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <SalesPipelineChart salesOpps={data.salesOpps || []} />
+                  <PipelineValueChart salesOpps={data.salesOpps || []} />
                 </div>
+                {data.totalOpps > 0 ? (
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <MiniStat label="Active Deals" value={data.activeOpps} tone="blue" />
+                    <MiniStat label="Won" value={data.wonCount} tone="emerald" />
+                    <MiniStat label="Pipeline $" value={money(data.pipelineValue)} tone="amber" />
+                    <MiniStat label="Total Tracked" value={data.totalOpps} tone="neutral" />
+                  </div>
+                ) : null}
               </section>
 
-              {/* Recent Activity */}
+              {/* Jobs panel — status chart + recent list */}
               <section className="rounded-2xl border border-neutral-200 bg-white p-5 lg:col-span-2">
-                <h2 className={`${lato.className} mb-4 text-base font-bold text-neutral-900`}>Recent Activity</h2>
-                <div className="divide-y divide-neutral-100">
-                  {(data.recentSubmissions || []).map((sub, i) => (
-                    <ActivityItem
-                      key={`sub-${i}`}
-                      label={sub.name || "Unknown"}
-                      detail={sub.message ? (sub.message.length > 60 ? sub.message.slice(0, 60) + "..." : sub.message) : sub.email}
-                      time={timeAgo(sub.created_at)}
-                      status="new"
-                    />
-                  ))}
-                  {(data.hiring || []).slice(0, 3).map((h) => (
-                    <ActivityItem
-                      key={h.id}
-                      label={h.applicant_name || h.title}
-                      detail={`Hiring: ${h.position_applied || "General"} — ${h.stage}`}
-                      time={timeAgo(h.updated_at)}
-                      status={h.stage === "hired" ? "completed" : h.stage === "declined" ? "completed" : "active"}
-                    />
-                  ))}
-                  {!data.recentSubmissions?.length && !data.hiring?.length && (
-                    <div className="py-6 text-center text-sm text-neutral-400">No recent activity</div>
-                  )}
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Active Jobs</h2>
+                  <Link href="/admin/jobs" className="text-xs font-semibold text-brand hover:underline">View all →</Link>
+                </div>
+                <JobStatusChart jobStatusCounts={data.jobStatusCounts || {}} />
+                <div className="mt-4">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Recently added</p>
+                  <ul className="divide-y divide-neutral-100">
+                    {(data.recentJobs || []).slice(0, 5).map((job) => (
+                      <li key={job.id || (job.job_name + job.created_at)} className="flex items-center justify-between gap-2 py-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-neutral-800">{job.job_name}</p>
+                          <p className="text-[10px] text-neutral-400">
+                            {job.job_number ? <span className="font-mono">#{job.job_number}</span> : null}
+                            {job.job_number && job.customer_name ? " · " : ""}
+                            {job.customer_name || ""}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                          job.job_status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                          job.job_status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                          job.job_status === "awarded" ? "bg-amber-100 text-amber-700" :
+                          "bg-neutral-100 text-neutral-600"
+                        }`}>
+                          {job.job_status || "active"}
+                        </span>
+                      </li>
+                    ))}
+                    {!data.recentJobs?.length ? (
+                      <li className="py-4 text-center text-xs text-neutral-400">No active jobs</li>
+                    ) : null}
+                  </ul>
                 </div>
               </section>
             </div>
 
-            {/* ── Sales Pipeline Summary ── */}
-            {data.totalOpps > 0 && (
-              <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Sales Pipeline</h2>
-                  <Link href="/admin/sales" className="text-xs font-semibold text-[#0b2a5a] hover:text-[#0b2a5a]/70">
-                    View pipeline →
-                  </Link>
-                </div>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <div className="rounded-xl bg-neutral-50 p-4 text-center">
-                    <div className={`${lato.className} text-2xl font-black text-neutral-900`}>{data.activeOpps}</div>
-                    <div className="mt-1 text-xs font-medium text-neutral-500">Active Deals</div>
-                  </div>
-                  <div className="rounded-xl bg-emerald-50 p-4 text-center">
-                    <div className={`${lato.className} text-2xl font-black text-emerald-700`}>{data.wonCount}</div>
-                    <div className="mt-1 text-xs font-medium text-emerald-600">Won</div>
-                  </div>
-                  <div className="rounded-xl bg-amber-50 p-4 text-center">
-                    <div className={`${lato.className} text-2xl font-black text-amber-700`}>{money(data.pipelineValue)}</div>
-                    <div className="mt-1 text-xs font-medium text-amber-600">Pipeline Value</div>
-                  </div>
-                  <div className="rounded-xl bg-blue-50 p-4 text-center">
-                    <div className={`${lato.className} text-2xl font-black text-blue-700`}>{data.totalOpps}</div>
-                    <div className="mt-1 text-xs font-medium text-blue-600">Total Tracked</div>
-                  </div>
-                </div>
-              </section>
-            )}
+            {/* ── Trends: 3-col ── */}
+            <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <LeadsTrendChart weeklyLeads={data.weeklyLeads || []} weeklyApps={data.weeklyApps || []} />
+              <CrewOverviewChart
+                activeWorkers={data.activeWorkers}
+                activeJobs={data.activeJobs}
+                todayScheduledJobs={data.todayScheduledJobsCount}
+              />
+              <HiringPipelineChart hiring={data.hiring || []} />
+            </div>
+
+            {/* ── Recent Activity (full-width feed) ── */}
+            <section className="rounded-2xl border border-neutral-200 bg-white p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Recent Activity</h2>
+                <Link href="/admin/contact" className="text-xs font-semibold text-brand hover:underline">View submissions →</Link>
+              </div>
+              <div className="divide-y divide-neutral-100">
+                {(data.recentSubmissions || []).map((sub, i) => (
+                  <ActivityItem
+                    key={`sub-${i}`}
+                    label={sub.name || "Unknown"}
+                    detail={sub.message ? (sub.message.length > 60 ? sub.message.slice(0, 60) + "..." : sub.message) : sub.email}
+                    time={timeAgo(sub.created_at)}
+                    status="new"
+                  />
+                ))}
+                {(data.hiring || []).slice(0, 3).map((h) => (
+                  <ActivityItem
+                    key={h.id}
+                    label={h.applicant_name || h.title}
+                    detail={`Hiring: ${h.position_applied || "General"} — ${h.stage}`}
+                    time={timeAgo(h.updated_at)}
+                    status={h.stage === "hired" || h.stage === "declined" ? "completed" : "active"}
+                  />
+                ))}
+                {!data.recentSubmissions?.length && !data.hiring?.length ? (
+                  <div className="py-6 text-center text-sm text-neutral-400">No recent activity</div>
+                ) : null}
+              </div>
+            </section>
           </>
         ) : null}
       </div>

@@ -184,6 +184,34 @@ function buildCitations(answer, doc) {
   return citations;
 }
 
+// ── Build metrics + operational context block for system prompt ──────
+
+function buildMetricsBlock(metrics, opsContext) {
+  const parts = [];
+  if (metrics) {
+    parts.push("## User's Bid Metric Preferences");
+    parts.push(`- Target profit margin: ${metrics.target_margin_percent || 18}%`);
+    parts.push(`- Minimum acceptable profit: $${Number(metrics.minimum_profit_usd || 75000).toLocaleString()}`);
+    parts.push(`- Minimum contract value: $${Number(metrics.minimum_contract_value_usd || 300000).toLocaleString()}`);
+    parts.push(`- Risk buffer: ${metrics.risk_buffer_percent || 8}%`);
+    parts.push(`- Default estimated cost: $${Number(metrics.default_estimated_cost_usd || 550000).toLocaleString()}`);
+    parts.push(`- Max concurrent jobs capacity: ${metrics.max_concurrent_jobs || 20}`);
+    if (metrics.notes) parts.push(`- Additional notes: ${metrics.notes}`);
+  }
+  if (opsContext) {
+    parts.push("\n## Current Operational Status (live data)");
+    parts.push(`- Active crew members: ${opsContext.workforce?.active_workers || "unknown"}`);
+    parts.push(`- Active jobs in progress: ${opsContext.scheduling?.active_jobs || "unknown"}`);
+    parts.push(`- Jobs per crew member: ${opsContext.workforce?.jobs_per_worker || "unknown"}`);
+    parts.push(`- Capacity utilization: ${Math.round((opsContext.workforce?.capacity_utilization || 0) * 100)}%`);
+    parts.push(`- Bids due in the next 2 weeks: ${opsContext.pipeline?.upcoming_bids_2wk || 0}`);
+    parts.push(`- Total pipeline value: $${Number(opsContext.pipeline?.total_pipeline_value || 0).toLocaleString()}`);
+    parts.push(`- Current backlog value: $${Number(opsContext.backlog?.total_value || 0).toLocaleString()}`);
+    parts.push(`- Today's scheduled jobs: ${opsContext.scheduling?.today_scheduled_jobs || 0}`);
+  }
+  return parts.length > 0 ? parts.join("\n") : "";
+}
+
 // ── Call Groq LLM ───────────────────────────────────────────────────
 
 async function callGroq(messages) {
@@ -222,7 +250,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "AI service not configured (GROQ_API_KEY missing)" });
   }
 
-  const { document_id, message } = req.body || {};
+  const { document_id, message, metrics, ops_context } = req.body || {};
 
   if (!document_id) {
     return res.status(400).json({ error: "document_id is required" });
@@ -241,10 +269,13 @@ export default async function handler(req, res) {
     // 2. Build context from the extracted data
     const context = buildDocumentContext(doc);
 
-    // 3. Build the LLM messages
+    // 3. Build the LLM messages — include user's metrics + operational context
+    const metricsBlock = buildMetricsBlock(metrics, ops_context);
+
     const systemPrompt = [
       "You are a Bid Document Assistant for S&W Foundation Contractors, a deep foundation and drilling company.",
       "You help the sales team analyze bid documents, identify risks, draft proposals, and answer questions about bid content.",
+      "You also provide personalized bid/no-bid recommendations based on the user's configured metric preferences and the company's current operational capacity.",
       "",
       "When answering questions:",
       "- Reference specific details from the document data provided below",
@@ -252,6 +283,11 @@ export default async function handler(req, res) {
       "- Be specific and actionable — avoid vague or generic advice",
       "- When discussing pricing, always reference the actual amounts from the document",
       "- Flag any potential risks or missing information you notice",
+      "- When asked about bid/no-bid decisions, capacity, or profitability, reference the user's metric preferences and current operational data below",
+      "- When calculating margins, use the user's target margin percentage and risk buffer as benchmarks",
+      "- If the user asks about resource availability or scheduling, reference the current crew size, active job count, and utilization percentage",
+      "",
+      metricsBlock,
       "",
       "Here is the bid document data:",
       "",

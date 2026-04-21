@@ -30,6 +30,12 @@ export const BID_ACTIONS = {
   // Metrics
   SET_METRICS: "SET_METRICS",
   UPDATE_METRIC_FIELD: "UPDATE_METRIC_FIELD",
+  SET_JOB_OVERRIDE: "SET_JOB_OVERRIDE",
+  TOGGLE_JOB_OVERRIDE: "TOGGLE_JOB_OVERRIDE",
+
+  // Recommendations
+  SET_OPS_CONTEXT: "SET_OPS_CONTEXT",
+  SET_BID_SCORE: "SET_BID_SCORE",
 
   // Status / loading
   SET_STATUS: "SET_STATUS",
@@ -65,8 +71,14 @@ export function getInitialState() {
 
     // Metrics
     metrics: getDefaultBidFitMetrics(),
+    jobMetricsOverride: false,    // when true, metrics are per-job
     loadingMetrics: false,
     savingMetrics: false,
+
+    // Recommendations
+    opsContext: null,
+    bidScore: null,
+    loadingRecommendations: false,
 
     // Status
     status: "",
@@ -181,6 +193,19 @@ function bidAssistantReducer(state, action) {
         metrics: { ...state.metrics, [action.field]: action.value },
       };
 
+    case BID_ACTIONS.SET_JOB_OVERRIDE:
+      return { ...state, jobMetricsOverride: action.payload };
+
+    case BID_ACTIONS.TOGGLE_JOB_OVERRIDE:
+      return { ...state, jobMetricsOverride: !state.jobMetricsOverride };
+
+    // ── Recommendations ──
+    case BID_ACTIONS.SET_OPS_CONTEXT:
+      return { ...state, opsContext: action.payload };
+
+    case BID_ACTIONS.SET_BID_SCORE:
+      return { ...state, bidScore: action.payload };
+
     // ── Status / loading ──
     case BID_ACTIONS.SET_STATUS:
       return { ...state, status: action.payload };
@@ -236,6 +261,11 @@ export function useBidAssistantReducer() {
 
     setMetrics: (m) => dispatch({ type: BID_ACTIONS.SET_METRICS, payload: m }),
     updateMetricField: (field, value) => dispatch({ type: BID_ACTIONS.UPDATE_METRIC_FIELD, field, value }),
+    setJobOverride: (v) => dispatch({ type: BID_ACTIONS.SET_JOB_OVERRIDE, payload: v }),
+    toggleJobOverride: () => dispatch({ type: BID_ACTIONS.TOGGLE_JOB_OVERRIDE }),
+
+    setOpsContext: (ctx) => dispatch({ type: BID_ACTIONS.SET_OPS_CONTEXT, payload: ctx }),
+    setBidScore: (score) => dispatch({ type: BID_ACTIONS.SET_BID_SCORE, payload: score }),
 
     setStatus: (s) => dispatch({ type: BID_ACTIONS.SET_STATUS, payload: s }),
     setLoading: (key, value) => dispatch({ type: BID_ACTIONS.SET_LOADING, key, value }),
