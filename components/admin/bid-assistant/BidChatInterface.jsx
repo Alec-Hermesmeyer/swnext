@@ -90,7 +90,7 @@ function QuickActionChips({ onSelect, disabled }) {
 // ── Main chat interface ─────────────────────────────────────────────
 
 export default function BidChatInterface({ state, actions }) {
-  const { selectedDoc, chatHistory, chatLoading } = state;
+  const { selectedDoc, chatHistory, chatLoading, metrics, opsContext } = state;
   const [input, setInput] = useState("");
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
