@@ -231,9 +231,11 @@ export const CHAT_QUICK_ACTIONS = [
   { id: "summarize_risks", label: "Summarize risks", prompt: "Summarize the key risk flags in this bid document and what we should watch out for." },
   { id: "generate_intro", label: "Generate intro", prompt: "Draft a professional introduction paragraph for our bid proposal based on the project details in this document." },
   { id: "draft_exclusions", label: "Draft exclusions", prompt: "Suggest a list of exclusions we should include in our bid proposal based on the scope described in this document." },
-  { id: "calculate_margin", label: "Calculate margin", prompt: "Walk me through the margin calculation for this bid based on the detected pricing and our cost estimates." },
+  { id: "calculate_margin", label: "Calculate margin", prompt: "Walk me through the margin calculation for this bid based on the detected pricing, my target margin preferences, and our cost estimates. Factor in the risk buffer." },
   { id: "scope_review", label: "Review scope", prompt: "Review the extracted scope items from this bid document and flag anything that seems incomplete or risky." },
   { id: "compare_pricing", label: "Compare pricing", prompt: "Analyze the pricing structure in this bid and identify areas where our numbers might need adjustment." },
+  { id: "bid_recommendation", label: "Bid / No-Bid?", prompt: "Based on my metric preferences, current operational capacity, scheduling load, and this bid's projected profitability, should we bid on this project? Give a clear recommendation with specific reasons." },
+  { id: "resource_check", label: "Resource check", prompt: "Given our current crew size, active job count, and scheduling capacity, do we have the resources to take on this project? What scheduling constraints should we consider?" },
 ];
 
 // ── Wizard step definitions ─────────────────────────────────────────
