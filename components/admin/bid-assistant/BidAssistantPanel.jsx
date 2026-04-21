@@ -226,6 +226,52 @@ export default function BidAssistantPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Fetch recommendations (operational context + score) ─────────
+
+  const fetchRecommendations = useCallback(async () => {
+    actions.setLoading("loadingRecommendations", true);
+    try {
+      // Build bid_data from the selected document's extracted pricing
+      const extracted = state.selectedDoc?.extracted_json || {};
+      const summary = extracted?.summary || {};
+      const headlineTotals = Array.isArray(summary.headline_totals) ? summary.headline_totals : [];
+      // Use the highest headline total as the value estimate
+      const bestValue = headlineTotals.reduce((max, t) => {
+        const amt = Number(String(t?.amount || "").replace(/[^0-9.-]/g, "")) || 0;
+        return amt > max ? amt : max;
+      }, 0);
+
+      const response = await fetch("/api/bid-recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          metrics: state.metrics,
+          bid_data: { value_estimate: bestValue },
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        actions.setOpsContext(data.context || null);
+        actions.setBidScore(data.score || null);
+      }
+    } catch {
+      // Silent — recommendations are non-critical
+    } finally {
+      actions.setLoading("loadingRecommendations", false);
+    }
+  }, [state.selectedDoc, state.metrics, actions]);
+
+  // Auto-fetch recommendations when a document is selected or metrics change
+  useEffect(() => {
+    if (state.selectedDoc?.id) {
+      fetchRecommendations();
+    } else {
+      actions.setOpsContext(null);
+      actions.setBidScore(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.selectedDoc?.id]);
+
   // ── Upload handler ─────────────────────────────────────────────
 
   const handleUpload = useCallback(async (event) => {
