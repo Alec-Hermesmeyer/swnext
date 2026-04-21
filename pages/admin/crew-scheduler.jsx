@@ -6463,6 +6463,7 @@ function CrewScheduler() {
                             return (
                               <div
                                 key={job.id}
+                                id={`job-row-${job.id}`}
                                 className={`px-4 py-3 transition-colors ${
                                   isJobActive ? "hover:bg-neutral-50" : "bg-neutral-50/70 hover:bg-neutral-100"
                                 }`}
