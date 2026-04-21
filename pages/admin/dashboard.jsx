@@ -168,7 +168,7 @@ async function fetchDashboardSnapshot() {
   ] = await Promise.all([
     supabase.from("crew_jobs").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("crew_jobs").select("*", { count: "exact", head: true }),
-    supabase.from("crew_jobs").select("job_name, job_number, customer_name, job_status, bid_amount, contract_amount, created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(5),
+    supabase.from("crew_jobs").select("id, job_name, job_number, customer_name, job_status, bid_amount, contract_amount, created_at").eq("is_active", true).order("created_at", { ascending: false }).limit(5),
     supabase.from("crew_workers").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("crew_schedules").select("id, is_finalized").eq("schedule_date", today).limit(1),
     supabase.from("contact_form").select("*", { count: "exact", head: true }),
