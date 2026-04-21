@@ -565,7 +565,7 @@ function Th({ children, className = "" }) {
   );
 }
 
-function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus }) {
+function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus, onSchedule }) {
   const isActive = job.is_active !== false;
   const statusMeta = STATUS_META[job.job_status || "active"] || STATUS_META.active;
   const addressLine = [job.address, job.city].filter(Boolean).join(", ");
