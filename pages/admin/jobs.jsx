@@ -469,6 +469,12 @@ function AdminJobsPage() {
           }}
         />
 
+        <SchedulerModal
+          isOpen={schedulerOpen}
+          onClose={() => { setSchedulerOpen(false); setSchedulerFocusJobId(null); loadData(); }}
+          focusJobId={schedulerFocusJobId}
+        />
+
         {status ? (
           <div
             className={`fixed bottom-6 right-6 z-50 flex max-w-md items-start gap-3 rounded-xl border px-4 py-3 shadow-card-hover ${
