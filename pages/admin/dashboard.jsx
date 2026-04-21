@@ -198,6 +198,7 @@ async function fetchDashboardSnapshot() {
   let pendingScheduleRequestsCount = 0;
   let pendingChangeOrdersCount = 0;
   let pendingChangeOrdersValue = 0;
+  let totalActiveContract = 0;
 
   try {
     const scheduleIds = (todaySchedule || []).map((s) => s.id).filter(Boolean);
