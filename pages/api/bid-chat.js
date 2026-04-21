@@ -222,7 +222,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "AI service not configured (GROQ_API_KEY missing)" });
   }
 
-  const { document_id, message } = req.body || {};
+  const { document_id, message, metrics, ops_context } = req.body || {};
 
   if (!document_id) {
     return res.status(400).json({ error: "document_id is required" });
