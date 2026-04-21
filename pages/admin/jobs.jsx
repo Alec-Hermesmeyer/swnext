@@ -10,6 +10,7 @@ import supabase from "@/components/Supabase";
 import { useLiveData } from "@/hooks/useLiveData";
 import JobFormModal from "@/components/admin/crew-scheduler/JobFormModal";
 import ImportJobsModal from "@/components/admin/ImportJobsModal";
+import SchedulerModal from "@/components/admin/SchedulerModal";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
@@ -120,6 +121,8 @@ function AdminJobsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [schedulerOpen, setSchedulerOpen] = useState(false);
+  const [schedulerFocusJobId, setSchedulerFocusJobId] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -301,6 +304,17 @@ function AdminJobsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
+              onClick={() => { setSchedulerFocusJobId(null); setSchedulerOpen(true); }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 shadow-sm transition-all hover:bg-neutral-50 hover:border-neutral-400"
+              title="Open the Crew Scheduler in a modal"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+              </svg>
+              Open Scheduler
+            </button>
+            <button
+              type="button"
               onClick={() => setImportOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 shadow-sm transition-all hover:bg-neutral-50 hover:border-neutral-400"
             >
@@ -424,6 +438,7 @@ function AdminJobsPage() {
                       onEdit={() => openEdit(job)}
                       onToggleActive={() => toggleActive(job)}
                       onQuickStatus={(next) => quickStatus(job, next)}
+                      onSchedule={() => { setSchedulerFocusJobId(job.id); setSchedulerOpen(true); }}
                     />
                   ))}
                 </tbody>
@@ -452,6 +467,12 @@ function AdminJobsPage() {
             setStatus({ type: "success", message: msg });
             await loadData();
           }}
+        />
+
+        <SchedulerModal
+          isOpen={schedulerOpen}
+          onClose={() => { setSchedulerOpen(false); setSchedulerFocusJobId(null); loadData(); }}
+          focusJobId={schedulerFocusJobId}
         />
 
         {status ? (
@@ -544,7 +565,7 @@ function Th({ children, className = "" }) {
   );
 }
 
-function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus }) {
+function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus, onSchedule }) {
   const isActive = job.is_active !== false;
   const statusMeta = STATUS_META[job.job_status || "active"] || STATUS_META.active;
   const addressLine = [job.address, job.city].filter(Boolean).join(", ");
@@ -619,8 +640,19 @@ function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus }) {
         <div className="inline-flex items-center gap-1">
           <button
             type="button"
+            onClick={onSchedule}
+            className="inline-flex items-center gap-1 rounded-md bg-brand-50 px-2 py-1 text-xs font-semibold text-brand transition-colors hover:bg-brand/10"
+            title="Open the Crew Scheduler and assign crew to this job"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+            </svg>
+            Schedule
+          </button>
+          <button
+            type="button"
             onClick={onEdit}
-            className="rounded-md px-2 py-1 text-xs font-semibold text-brand transition-colors hover:bg-brand-50"
+            className="rounded-md px-2 py-1 text-xs font-semibold text-neutral-700 transition-colors hover:bg-neutral-100"
           >
             Edit
           </button>
