@@ -374,7 +374,7 @@ export default function BidAssistantPanel() {
       {/* Mobile tab bar */}
       <MobileTabBar activeTab={mobileTab} onChange={setMobileTab} />
 
-      {/* Main layout: sidebar + split pane */}
+      {/* Main layout: sidebar + three-pane (chat | editor | insights) */}
       <div className="flex flex-col lg:flex-row overflow-hidden" style={{ height: "calc(100vh - 16rem)" }}>
         {/* Document sidebar */}
         <DocumentSidebar
@@ -389,18 +389,39 @@ export default function BidAssistantPanel() {
           loadingDocs={loadingDocs}
         />
 
-        {/* Chat pane — hidden on mobile when editor is active */}
+        {/* Chat pane */}
         <div className={`flex-1 min-h-0 min-w-0 border-r border-neutral-100 ${
-          mobileTab === "editor" ? "hidden lg:flex" : "flex"
+          mobileTab !== "chat" ? "hidden lg:flex" : "flex"
         } flex-col`}>
           <BidChatInterface state={state} actions={actions} />
         </div>
 
-        {/* Editor pane — hidden on mobile when chat is active */}
-        <div className={`flex-1 min-h-0 min-w-0 ${
-          mobileTab === "chat" ? "hidden lg:flex" : "flex"
+        {/* Editor pane */}
+        <div className={`flex-1 min-h-0 min-w-0 border-r border-neutral-100 ${
+          mobileTab !== "editor" ? "hidden lg:flex" : "flex"
         } flex-col`}>
           <BidDocumentEditor state={state} actions={actions} />
+        </div>
+
+        {/* Insights pane — Recommendations + Metrics */}
+        <div className={`lg:w-[340px] lg:shrink-0 min-h-0 overflow-y-auto ${
+          mobileTab !== "insights" ? "hidden lg:block" : "block"
+        }`}>
+          <div className="p-3 space-y-3">
+            <BidRecommendations
+              score={state.bidScore}
+              context={state.opsContext}
+              loading={state.loadingRecommendations}
+              onRefresh={fetchRecommendations}
+            />
+            <BidMetricsEditor
+              metrics={state.metrics}
+              onUpdateField={actions.updateMetricField}
+              onSetMetrics={actions.setMetrics}
+              isJobOverride={state.jobMetricsOverride}
+              onToggleJobOverride={actions.toggleJobOverride}
+            />
+          </div>
         </div>
       </div>
     </section>
