@@ -231,6 +231,7 @@ export default function BidAssistantPanel() {
   const [deletingDocId, setDeletingDocId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // ── Fetch document by ID ───────────────────────────────────────
 
