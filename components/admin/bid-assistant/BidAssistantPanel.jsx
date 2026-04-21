@@ -8,6 +8,8 @@
 import { useCallback, useEffect, useState } from "react";
 import BidChatInterface from "./BidChatInterface";
 import BidDocumentEditor from "./BidDocumentEditor";
+import BidMetricsEditor from "./BidMetricsEditor";
+import BidRecommendations from "./BidRecommendations";
 import { useBidAssistantReducer } from "./useBidAssistantReducer";
 import {
   normalizeDraftPayload,
