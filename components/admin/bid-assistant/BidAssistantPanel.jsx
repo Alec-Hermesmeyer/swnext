@@ -466,17 +466,26 @@ export default function BidAssistantPanel() {
             </p>
           </div>
         </div>
-        {state.status ? (
-          <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-[11px] text-blue-700 max-w-xs truncate">
-            {state.status}
-          </div>
-        ) : null}
+
+        <div className="flex items-center gap-3">
+          {state.status ? (
+            <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-[11px] text-blue-700 max-w-xs truncate">
+              {state.status}
+            </div>
+          ) : null}
+          {/* Score toast — opens the insights drawer */}
+          <ScoreToast
+            score={state.bidScore}
+            loading={state.loadingRecommendations}
+            onClick={() => setDrawerOpen(true)}
+          />
+        </div>
       </div>
 
       {/* Mobile tab bar */}
       <MobileTabBar activeTab={mobileTab} onChange={setMobileTab} />
 
-      {/* Main layout: sidebar + three-pane (chat | editor | insights) */}
+      {/* Main layout: sidebar + two-pane (chat | editor) */}
       <div className="flex flex-col lg:flex-row overflow-hidden" style={{ height: "calc(100vh - 16rem)" }}>
         {/* Document sidebar */}
         <DocumentSidebar
@@ -498,34 +507,30 @@ export default function BidAssistantPanel() {
           <BidChatInterface state={state} actions={actions} />
         </div>
 
-        {/* Editor pane */}
-        <div className={`flex-1 min-h-0 min-w-0 border-r border-neutral-100 ${
+        {/* Editor pane — no longer squeezed by a third column */}
+        <div className={`flex-1 min-h-0 min-w-0 ${
           mobileTab !== "editor" ? "hidden lg:flex" : "flex"
         } flex-col`}>
           <BidDocumentEditor state={state} actions={actions} />
         </div>
-
-        {/* Insights pane — Recommendations + Metrics */}
-        <div className={`lg:w-[340px] lg:shrink-0 min-h-0 overflow-y-auto ${
-          mobileTab !== "insights" ? "hidden lg:block" : "block"
-        }`}>
-          <div className="p-3 space-y-3">
-            <BidRecommendations
-              score={state.bidScore}
-              context={state.opsContext}
-              loading={state.loadingRecommendations}
-              onRefresh={fetchRecommendations}
-            />
-            <BidMetricsEditor
-              metrics={state.metrics}
-              onUpdateField={actions.updateMetricField}
-              onSetMetrics={actions.setMetrics}
-              isJobOverride={state.jobMetricsOverride}
-              onToggleJobOverride={actions.toggleJobOverride}
-            />
-          </div>
-        </div>
       </div>
+
+      {/* Insights drawer — overlays from the right */}
+      <InsightsDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        <BidRecommendations
+          score={state.bidScore}
+          context={state.opsContext}
+          loading={state.loadingRecommendations}
+          onRefresh={fetchRecommendations}
+        />
+        <BidMetricsEditor
+          metrics={state.metrics}
+          onUpdateField={actions.updateMetricField}
+          onSetMetrics={actions.setMetrics}
+          isJobOverride={state.jobMetricsOverride}
+          onToggleJobOverride={actions.toggleJobOverride}
+        />
+      </InsightsDrawer>
     </section>
   );
 }
