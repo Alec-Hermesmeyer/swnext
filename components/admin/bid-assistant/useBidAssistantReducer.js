@@ -71,8 +71,14 @@ export function getInitialState() {
 
     // Metrics
     metrics: getDefaultBidFitMetrics(),
+    jobMetricsOverride: false,    // when true, metrics are per-job
     loadingMetrics: false,
     savingMetrics: false,
+
+    // Recommendations
+    opsContext: null,
+    bidScore: null,
+    loadingRecommendations: false,
 
     // Status
     status: "",
