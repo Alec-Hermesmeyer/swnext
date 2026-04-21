@@ -100,6 +100,9 @@ export default function JobFormModal({
     setExtractError("");
     setExtractedKeys(new Set());
     setExtractNotes("");
+    setAssigningNumber(false);
+    setAssignInfo(null);
+    setAssignError("");
     if (initialJob) {
       setForm({ ...EMPTY_JOB, ...initialJob });
     } else {
