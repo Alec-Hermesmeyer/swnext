@@ -310,13 +310,51 @@ export default function JobFormModal({
                   />
                 </Field>
                 <Field label="Job Number">
-                  <input
-                    type="text"
-                    value={form.job_number}
-                    onChange={(e) => updateField("job_number", e.target.value)}
-                    placeholder="2026-042"
-                    className={inputClass}
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={form.job_number}
+                      onChange={(e) => updateField("job_number", e.target.value)}
+                      placeholder="26/0120"
+                      className={inputClass}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAutoAssignNumber}
+                      disabled={!canAutoAssign || assigningNumber}
+                      title={canAutoAssign ? "Assign the next available number from this customer's block" : "Fill in Customer or Hiring Contractor first"}
+                      className="inline-flex items-center gap-1 rounded-lg border border-brand/30 bg-brand-50 px-2.5 py-2 text-xs font-semibold text-brand transition-colors hover:bg-brand/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {assigningNumber ? (
+                        <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                        </svg>
+                      )}
+                      Auto
+                    </button>
+                  </div>
+                  {assignInfo ? (
+                    <p className="mt-1 text-[11px] text-emerald-700">
+                      ✓ From block <span className="font-semibold">{assignInfo.block.owner}</span>{" "}
+                      <span className="text-neutral-500">({assignInfo.block.range})</span>
+                      {" · "}
+                      <span className="font-semibold">{assignInfo.remaining}</span> left
+                      {assignInfo.match_type === "misc" ? (
+                        <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-800">misc fallback</span>
+                      ) : null}
+                      {assignInfo.match_type === "partial" ? (
+                        <span className="ml-1 rounded bg-blue-100 px-1 py-0.5 text-[10px] font-bold text-blue-800">partial match</span>
+                      ) : null}
+                    </p>
+                  ) : null}
+                  {assignError ? (
+                    <p className="mt-1 text-[11px] font-semibold text-red-700">{assignError}</p>
+                  ) : null}
                 </Field>
                 <Field label="DigTess #">
                   <input
