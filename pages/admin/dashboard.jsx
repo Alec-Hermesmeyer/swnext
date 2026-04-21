@@ -681,6 +681,29 @@ function DashboardTW() {
                 </div>
               </section>
             )}
+
+            {/* ── Analytics Charts ── */}
+            <section className="mt-6">
+              <h2 className={`${lato.className} mb-4 text-base font-bold text-neutral-900`}>Analytics</h2>
+
+              {/* Row 1: Pipeline doughnuts + Jobs bar */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <SalesPipelineChart salesOpps={data.salesOpps || []} />
+                <HiringPipelineChart hiring={data.hiring || []} />
+                <JobStatusChart jobStatusCounts={data.jobStatusCounts || {}} />
+              </div>
+
+              {/* Row 2: Pipeline value + Leads trend + Crew overview */}
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <PipelineValueChart salesOpps={data.salesOpps || []} />
+                <LeadsTrendChart weeklyLeads={data.weeklyLeads || []} weeklyApps={data.weeklyApps || []} />
+                <CrewOverviewChart
+                  activeWorkers={data.activeWorkers}
+                  activeJobs={data.activeJobs}
+                  todayScheduledJobs={data.todayScheduledJobsCount}
+                />
+              </div>
+            </section>
           </>
         ) : null}
       </div>
