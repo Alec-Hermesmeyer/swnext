@@ -171,10 +171,18 @@ function main() {
   const argv = process.argv.slice(2);
   let inputPath = DEFAULT_INPUT;
   let outPath = null;
+  let isActiveDefault = true;
+  let jobStatusDefault = "active";
 
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === "--out" && argv[i + 1]) {
       outPath = argv[i + 1];
+      i += 1;
+    } else if (argv[i] === "--inactive") {
+      isActiveDefault = false;
+      jobStatusDefault = "completed";
+    } else if (argv[i] === "--status" && argv[i + 1]) {
+      jobStatusDefault = argv[i + 1];
       i += 1;
     } else if (!argv[i].startsWith("--")) {
       inputPath = argv[i];
@@ -187,12 +195,13 @@ function main() {
   }
 
   const { blocks, jobs, warnings } = parse(inputPath);
-  const sql = renderSql({ blocks, jobs });
+  const sql = renderSql({ blocks, jobs }, { inputPath, isActiveDefault, jobStatusDefault });
 
   if (outPath) {
     const abs = path.isAbsolute(outPath) ? outPath : path.resolve(process.cwd(), outPath);
     fs.writeFileSync(abs, sql, "utf8");
     console.error(`✔ Wrote ${blocks.length} blocks and ${jobs.length} jobs to ${abs}`);
+    console.error(`  is_active=${isActiveDefault}, job_status='${jobStatusDefault}'`);
   } else {
     process.stdout.write(sql);
   }
