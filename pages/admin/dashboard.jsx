@@ -236,6 +236,26 @@ async function fetchDashboardSnapshot() {
     if (expiredResult.status === "fulfilled" && !expiredResult.value.error) {
       expiredCertsCount = expiredResult.value.count || 0;
     }
+
+    // Action-item queue sizes (graceful fallback if tables missing)
+    const [schedReqResult, coResult] = await Promise.allSettled([
+      supabase
+        .from("schedule_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending"),
+      supabase
+        .from("change_orders")
+        .select("amount, status")
+        .in("status", ["pending", "submitted"]),
+    ]);
+    if (schedReqResult.status === "fulfilled" && !schedReqResult.value.error) {
+      pendingScheduleRequestsCount = schedReqResult.value.count || 0;
+    }
+    if (coResult.status === "fulfilled" && !coResult.value.error) {
+      const rows = coResult.value.data || [];
+      pendingChangeOrdersCount = rows.length;
+      pendingChangeOrdersValue = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    }
   } catch {
     // Silent — field-ops tables may not exist yet before migrations run
   }
