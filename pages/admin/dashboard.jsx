@@ -95,6 +95,24 @@ function StatCard({ label, value, change, changeLabel, icon, href, color = "blue
   );
 }
 
+function MiniStat({ label, value, tone = "neutral" }) {
+  const tones = {
+    blue: "bg-blue-50 text-blue-700",
+    emerald: "bg-emerald-50 text-emerald-700",
+    amber: "bg-amber-50 text-amber-700",
+    violet: "bg-violet-50 text-violet-700",
+    rose: "bg-rose-50 text-rose-700",
+    neutral: "bg-neutral-100 text-neutral-700",
+  };
+  const cls = tones[tone] || tones.neutral;
+  return (
+    <div className={`rounded-xl p-3 text-center ${cls}`}>
+      <div className={`${lato.className} text-xl font-black leading-tight`}>{value}</div>
+      <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider opacity-75">{label}</div>
+    </div>
+  );
+}
+
 function HealthRing({ score, label }) {
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
