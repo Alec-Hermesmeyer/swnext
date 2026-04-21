@@ -415,6 +415,67 @@ function DashboardTW() {
     return `${days}d ago`;
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const nextData = await fetchDashboardSnapshot();
+      setData(nextData);
+      writeCachedValue(DASHBOARD_CACHE_KEY, nextData);
+      setLastUpdatedAt(Date.now());
+    } catch (err) {
+      console.error("Dashboard refresh error:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Derive action items — only shown when something actually needs attention
+  const actionItems = useMemo(() => {
+    if (!data) return [];
+    const missingReports = Math.max(0, (data.todayScheduledJobsCount || 0) - (data.todayReportsCount || 0));
+    const items = [
+      data.pendingScheduleRequestsCount > 0 && {
+        label: "Schedule requests pending",
+        count: data.pendingScheduleRequestsCount,
+        href: "/admin/schedule-requests",
+        tone: "amber",
+      },
+      data.expiredCertsCount > 0 && {
+        label: "Certs expired",
+        count: data.expiredCertsCount,
+        href: "/admin/certifications",
+        tone: "rose",
+      },
+      data.expiringCertsCount > 0 && {
+        label: "Certs expiring ≤30d",
+        count: data.expiringCertsCount,
+        href: "/admin/certifications",
+        tone: "amber",
+      },
+      missingReports > 0 && {
+        label: "Jobs missing today's report",
+        count: missingReports,
+        href: "/admin/field-reports",
+        tone: "amber",
+      },
+      data.pendingChangeOrdersCount > 0 && {
+        label: "Change orders awaiting approval",
+        count: data.pendingChangeOrdersCount,
+        href: "/admin/change-orders",
+        tone: "amber",
+      },
+    ].filter(Boolean);
+    return items;
+  }, [data]);
+
+  const todayTone = useMemo(() => {
+    if (!data) return "neutral";
+    if (data.todayScheduledJobsCount === 0) return "neutral";
+    if (data.todayReportsCount >= data.todayScheduledJobsCount) return "emerald";
+    if (data.todayReportsCount > 0) return "amber";
+    return "rose";
+  }, [data]);
+
   return (
     <>
       <Head>
