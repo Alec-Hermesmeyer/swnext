@@ -94,17 +94,15 @@ function DocumentSidebar({ documents, selectedDoc, onSelect, onDelete, deletingD
   );
 }
 
-// ── Mobile tab bar for switching between chat and editor ─────────────
+// ── Mobile tab bar — Chat / Editor only (Insights lives in drawer) ──
 
 function MobileTabBar({ activeTab, onChange }) {
-  const tabs = [
-    { id: "chat", label: "Chat" },
-    { id: "editor", label: "Editor" },
-    { id: "insights", label: "Insights" },
-  ];
   return (
     <div className="flex border-b border-neutral-200 lg:hidden">
-      {tabs.map((t) => (
+      {[
+        { id: "chat", label: "Chat" },
+        { id: "editor", label: "Editor" },
+      ].map((t) => (
         <button
           key={t.id}
           type="button"
@@ -119,6 +117,109 @@ function MobileTabBar({ activeTab, onChange }) {
         </button>
       ))}
     </div>
+  );
+}
+
+// ── Score toast badge — clickable pill that opens the insights drawer ─
+
+function ScoreToast({ score, loading, onClick }) {
+  if (loading) {
+    return (
+      <button type="button" onClick={onClick} className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 transition-colors hover:bg-neutral-100">
+        <svg className="h-3 w-3 animate-spin text-neutral-400" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <span className="text-[11px] font-semibold text-neutral-400">Scoring...</span>
+      </button>
+    );
+  }
+
+  if (!score || typeof score.composite_score !== "number") {
+    return (
+      <button type="button" onClick={onClick} className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 transition-colors hover:bg-neutral-100">
+        <svg className="h-3.5 w-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span className="text-[11px] font-semibold text-neutral-500">Insights</span>
+      </button>
+    );
+  }
+
+  const s = score.composite_score;
+  const rec = score.recommendation;
+  const toneMap = {
+    emerald: { ring: "border-emerald-400 bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
+    amber: { ring: "border-amber-400 bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
+    rose: { ring: "border-rose-400 bg-rose-50", text: "text-rose-700", dot: "bg-rose-500" },
+  };
+  const tone = toneMap[rec?.tone] || toneMap.amber;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-2 rounded-full border-2 px-3 py-1.5 transition-all hover:shadow-md ${tone.ring}`}
+    >
+      <span className={`h-2 w-2 rounded-full ${tone.dot}`} />
+      <span className={`text-sm font-black ${tone.text}`}>{s}</span>
+      <span className={`text-[11px] font-semibold ${tone.text}`}>{rec?.label || "Score"}</span>
+      <svg className="h-3 w-3 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  );
+}
+
+// ── Insights drawer — slides in from the right as an overlay ────────
+
+function InsightsDrawer({ open, onClose, children }) {
+  return (
+    <>
+      {/* Backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px] transition-opacity"
+          onClick={onClose}
+        />
+      )}
+      {/* Drawer panel */}
+      <div
+        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {/* Drawer header */}
+        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-3.5 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50">
+              <svg className="h-3.5 w-3.5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900">Bid Insights</h3>
+              <p className="text-[11px] text-neutral-500">Score, recommendations & metrics</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        {/* Drawer body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {children}
+        </div>
+      </div>
+    </>
   );
 }
 
