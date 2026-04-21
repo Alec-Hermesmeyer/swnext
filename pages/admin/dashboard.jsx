@@ -257,6 +257,13 @@ async function fetchDashboardSnapshot() {
       pendingChangeOrdersCount = rows.length;
       pendingChangeOrdersValue = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
     }
+
+    // Total active contract backlog — one aggregated select (not limited to 5)
+    const { data: backlogRows } = await supabase
+      .from("crew_jobs")
+      .select("contract_amount")
+      .eq("is_active", true);
+    totalActiveContract = (backlogRows || []).reduce((sum, j) => sum + (Number(j.contract_amount) || 0), 0);
   } catch {
     // Silent — field-ops tables may not exist yet before migrations run
   }
