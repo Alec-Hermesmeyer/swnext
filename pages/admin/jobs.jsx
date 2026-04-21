@@ -10,6 +10,7 @@ import supabase from "@/components/Supabase";
 import { useLiveData } from "@/hooks/useLiveData";
 import JobFormModal from "@/components/admin/crew-scheduler/JobFormModal";
 import ImportJobsModal from "@/components/admin/ImportJobsModal";
+import SchedulerModal from "@/components/admin/SchedulerModal";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
