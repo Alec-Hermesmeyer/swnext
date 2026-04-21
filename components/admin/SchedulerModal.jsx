@@ -454,20 +454,27 @@ export default function SchedulerModal({ isOpen, onClose, focusJobId }) {
             ) : null}
 
             {/* Crew multi-select */}
-            <Field label={`Crew${selectedWorkerIds.size > 0 ? ` — ${selectedWorkerIds.size} selected` : ""}`} required>
+            <Field label={`Crew${selectedWorkerIds.size > 0 ? ` — ${selectedWorkerIds.size} selected` : workers.length > 0 ? ` (${workers.length} available)` : ""}`} required>
               <div className="rounded-xl border border-neutral-200 bg-white">
                 <div className="border-b border-neutral-100 p-2">
                   <input
                     type="text"
                     value={workerSearch}
                     onChange={(e) => setWorkerSearch(e.target.value)}
-                    placeholder="Search name or role…"
-                    className="h-8 w-full rounded-md border border-neutral-300 bg-white px-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
+                    placeholder={loadingRefs ? "Loading crew…" : workers.length === 0 ? "No crew available — add in /admin/crew" : "Search name or role…"}
+                    disabled={loadingRefs || workers.length === 0}
+                    className="h-8 w-full rounded-md border border-neutral-300 bg-white px-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10 disabled:bg-neutral-50"
                   />
                 </div>
                 <div className="max-h-64 overflow-y-auto">
-                  {filteredWorkers.length === 0 ? (
-                    <p className="p-4 text-center text-xs text-neutral-500">No crew match.</p>
+                  {loadingRefs ? (
+                    <p className="p-4 text-center text-xs text-neutral-500">Loading crew…</p>
+                  ) : workers.length === 0 ? (
+                    <p className="p-4 text-center text-xs text-neutral-500">
+                      No active crew found. Add crew in <Link href="/admin/crew" className="font-semibold text-brand underline">/admin/crew</Link>.
+                    </p>
+                  ) : filteredWorkers.length === 0 ? (
+                    <p className="p-4 text-center text-xs text-neutral-500">No crew match "{workerSearch}".</p>
                   ) : (
                     filteredWorkers.map((w) => {
                       const selected = selectedWorkerIds.has(w.id);
