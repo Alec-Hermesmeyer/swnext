@@ -195,6 +195,9 @@ async function fetchDashboardSnapshot() {
   let todayScheduledJobsCount = 0;
   let expiringCertsCount = 0;
   let expiredCertsCount = 0;
+  let pendingScheduleRequestsCount = 0;
+  let pendingChangeOrdersCount = 0;
+  let pendingChangeOrdersValue = 0;
 
   try {
     const scheduleIds = (todaySchedule || []).map((s) => s.id).filter(Boolean);
