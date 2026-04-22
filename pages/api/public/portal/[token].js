@@ -91,8 +91,8 @@ export default async function handler(req, res) {
     }
 
     // 3. Fetch related data in parallel
-    const [assignmentResult, scheduleResult, coResult, reportResult] = await Promise.all([
-      supabase.from("crew_assignments").select("id, job_id, schedule_id").in("job_id", jobIds),
+    const [assignmentResult, scheduleResult, coResult, reportResult, portalDocsResult] = await Promise.all([
+      supabase.from("crew_assignments").select("id, job_id, schedule_id, worker_id").in("job_id", jobIds),
       supabase.from("crew_schedules").select("id, schedule_date"),
       supabase
         .from("change_orders")
@@ -101,16 +101,25 @@ export default async function handler(req, res) {
         .in("status", ["approved", "submitted", "invoiced", "pending"]),
       supabase
         .from("crew_daily_reports")
-        .select("id, job_id, report_date, crew_hours, crew_size, piers_drilled, weather_stop, weather_notes, submitted_at, photo_urls")
+        .select("id, job_id, report_date, crew_hours, crew_size, piers_drilled, weather_stop, weather_notes, delays, submitted_at, photo_urls")
         .in("job_id", jobIds)
         .order("report_date", { ascending: false })
-        .limit(50),
+        .limit(100),
+      // Portal documents — graceful if table doesn't exist
+      supabase
+        .from("portal_documents")
+        .select("id, job_id, title, description, file_url, file_type, document_source, created_at")
+        .eq("portal_id", portal.id)
+        .order("created_at", { ascending: false })
+        .then((r) => r)
+        .catch(() => ({ data: [], error: null })),
     ]);
 
     const assignments = assignmentResult.error ? [] : (assignmentResult.data || []);
     const schedules = scheduleResult.error ? [] : (scheduleResult.data || []);
     const cos = coResult.error ? [] : (coResult.data || []);
     const reports = reportResult.error ? [] : (reportResult.data || []);
+    const portalDocs = portalDocsResult?.error ? [] : (portalDocsResult?.data || []);
 
     const scheduleDateById = {};
     schedules.forEach((s) => { scheduleDateById[s.id] = s.schedule_date; });
