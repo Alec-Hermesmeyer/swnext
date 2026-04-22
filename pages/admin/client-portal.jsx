@@ -414,7 +414,7 @@ function ClientPortalAdminPage() {
   );
 }
 
-function PortalRow({ portal, busy, justCopied, onEdit, onDelete, onToggle, onRotate, onCopy }) {
+function PortalRow({ portal, busy, justCopied, onEdit, onDelete, onToggle, onRotate, onCopy, onManageDocs }) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const url = `${origin}/project/${portal.access_token}`;
 
