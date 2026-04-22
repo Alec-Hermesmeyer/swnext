@@ -612,16 +612,18 @@ export default function BidDocumentEditor({ state, actions }) {
             onClick={() => exportDraft("docx")}
             disabled={exportingDraft || loadingDraft}
             className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
+            title="Save & download as Word document"
           >
-            {exportingDraft ? "Exporting..." : "DOCX"}
+            {exportingDraft ? "Saving..." : "Save & DOCX"}
           </button>
           <button
             type="button"
             onClick={() => exportDraft("txt")}
             disabled={exportingDraft || loadingDraft}
             className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
+            title="Save & download as plain text"
           >
-            TXT
+            Save & TXT
           </button>
         </div>
       </div>
