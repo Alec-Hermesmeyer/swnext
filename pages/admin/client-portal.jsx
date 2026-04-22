@@ -19,6 +19,15 @@ const EMPTY_FORM = {
   is_active: true,
 };
 
+const EMPTY_DOC_FORM = {
+  title: "",
+  description: "",
+  file_url: "",
+  file_type: "other",
+  document_source: "upload",
+  job_id: "",
+};
+
 const generateToken = () => {
   // 32-char URL-safe random token
   if (typeof crypto !== "undefined" && crypto.getRandomValues) {
