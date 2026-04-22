@@ -49,9 +49,11 @@ export default function ClientPortalPage() {
   const { token } = router.query;
   const [portal, setPortal] = useState(null);
   const [jobs, setJobs] = useState([]);
+  const [globalDocs, setGlobalDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [selectedJobId, setSelectedJobId] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const loadPortal = useCallback(async (tokenValue) => {
     if (!tokenValue) return;
@@ -63,6 +65,7 @@ export default function ClientPortalPage() {
       }
       setPortal(data.portal);
       setJobs(data.jobs || []);
+      setGlobalDocs(data.documents || []);
       setErrorMessage("");
       if (!selectedJobId && (data.jobs || []).length > 0) {
         const active = data.jobs.find((j) => j.is_active) || data.jobs[0];
