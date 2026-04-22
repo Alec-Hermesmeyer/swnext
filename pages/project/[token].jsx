@@ -177,7 +177,7 @@ export default function ClientPortalPage() {
                   <button
                     key={job.id}
                     type="button"
-                    onClick={() => setSelectedJobId(job.id)}
+                    onClick={() => { setSelectedJobId(job.id); setActiveTab("overview"); }}
                     className={`block w-full rounded-2xl border px-4 py-3 text-left transition-all ${
                       selectedJob?.id === job.id
                         ? "border-brand bg-white shadow-card-hover"
@@ -204,9 +204,42 @@ export default function ClientPortalPage() {
                 ))}
               </aside>
 
-              {/* Selected job detail */}
+              {/* Selected job detail with tabs */}
               <section>
-                {selectedJob ? <JobDetail job={selectedJob} /> : null}
+                {selectedJob ? (
+                  <>
+                    {/* Tab navigation */}
+                    <nav className="mb-5 flex gap-1 rounded-xl bg-neutral-100 p-1">
+                      {[
+                        { id: "overview", label: "Overview" },
+                        { id: "tracking", label: "Job Tracking" },
+                        { id: "documents", label: "Documents", count: (selectedJob.documents?.length || 0) + globalDocs.length },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`flex-1 rounded-lg px-4 py-2.5 text-xs font-bold transition-all ${
+                            activeTab === tab.id
+                              ? "bg-white text-brand shadow-sm"
+                              : "text-neutral-500 hover:text-neutral-700"
+                          }`}
+                        >
+                          {tab.label}
+                          {tab.count ? (
+                            <span className="ml-1.5 rounded-full bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold text-brand">
+                              {tab.count}
+                            </span>
+                          ) : null}
+                        </button>
+                      ))}
+                    </nav>
+
+                    {activeTab === "overview" && <JobDetail job={selectedJob} />}
+                    {activeTab === "tracking" && <JobTracking job={selectedJob} />}
+                    {activeTab === "documents" && <JobDocuments job={selectedJob} globalDocs={globalDocs} />}
+                  </>
+                ) : null}
               </section>
             </div>
           )}
