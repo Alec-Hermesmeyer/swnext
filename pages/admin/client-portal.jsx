@@ -63,6 +63,13 @@ function ClientPortalAdminPage() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [copiedToken, setCopiedToken] = useState("");
+  const [docsPortalId, setDocsPortalId] = useState(null);
+  const [portalDocs, setPortalDocs] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [showDocForm, setShowDocForm] = useState(false);
+  const [docForm, setDocForm] = useState(EMPTY_DOC_FORM);
+  const [savingDoc, setSavingDoc] = useState(false);
+  const [portalJobs, setPortalJobs] = useState([]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
