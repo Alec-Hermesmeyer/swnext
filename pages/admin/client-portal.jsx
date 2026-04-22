@@ -473,6 +473,13 @@ function PortalRow({ portal, busy, justCopied, onEdit, onDelete, onToggle, onRot
       <div className="flex items-center gap-1">
         <button
           type="button"
+          onClick={onManageDocs}
+          className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-50"
+        >
+          Docs
+        </button>
+        <button
+          type="button"
           onClick={onToggle}
           disabled={busy}
           className="rounded-md px-2 py-1 text-xs font-semibold text-neutral-600 transition-colors hover:bg-neutral-100 disabled:opacity-60"
