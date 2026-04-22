@@ -167,9 +167,10 @@ export default async function handler(req, res) {
     });
 
     const sanitizedJobs = jobList.map((job) => {
-      const agg = assignmentsByJob.get(job.id) || { dates: new Set() };
+      const agg = assignmentsByJob.get(job.id) || { dates: new Set(), workersByDate: {} };
       const jobCos = cosByJob.get(job.id) || [];
       const jobReports = reportsByJob.get(job.id) || [];
+      const jobDocs = docsByJob.get(job.id) || [];
 
       const scheduledDays = agg.dates.size;
       const estimatedDays = Number(job.estimated_days) || 0;
@@ -183,6 +184,27 @@ export default async function handler(req, res) {
         .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
 
       const progress = estimatedDays > 0 ? Math.min((scheduledDays / estimatedDays) * 100, 100) : null;
+
+      // Job tracking aggregates
+      const weatherDays = jobReports.filter((r) => r.weather_stop).length;
+      const totalPiersDrilled = jobReports.reduce((s, r) => s + (Number(r.piers_drilled) || 0), 0);
+      const totalCrewHours = jobReports.reduce((s, r) => s + ((Number(r.crew_hours) || 0) * (Number(r.crew_size) || 1)), 0);
+
+      // Build daily timeline from reports (most recent 20)
+      const timeline = jobReports.slice(0, 20).map((r) => {
+        const dateWorkers = agg.workersByDate[r.report_date];
+        return {
+          date: r.report_date,
+          crew_size: r.crew_size,
+          crew_hours: r.crew_hours,
+          piers_drilled: r.piers_drilled,
+          weather_stop: r.weather_stop,
+          weather_notes: r.weather_notes,
+          delays: r.delays || null,
+          scheduled_crew: dateWorkers ? dateWorkers.size : null,
+          photo_urls: Array.isArray(r.photo_urls) ? r.photo_urls : [],
+        };
+      });
 
       return {
         id: job.id,
@@ -204,6 +226,16 @@ export default async function handler(req, res) {
         estimated_days: estimatedDays,
         scheduled_days: scheduledDays,
         progress_pct: progress,
+        // New tracking fields
+        rig: job.default_rig || null,
+        pm_name: job.pm_name || null,
+        mob_days: Number(job.mob_days) || 0,
+        actual_days: Number(job.actual_days) || 0,
+        actual_mob_days: Number(job.actual_mob_days) || 0,
+        weather_days: weatherDays,
+        total_piers_drilled: totalPiersDrilled,
+        total_crew_hours: Math.round(totalCrewHours),
+        timeline,
         change_orders: jobCos.map((co) => ({
           co_number: co.co_number,
           description: co.description,
@@ -220,6 +252,15 @@ export default async function handler(req, res) {
           weather_stop: r.weather_stop,
           weather_notes: r.weather_notes,
           photo_urls: Array.isArray(r.photo_urls) ? r.photo_urls : [],
+        })),
+        documents: jobDocs.map((d) => ({
+          id: d.id,
+          title: d.title,
+          description: d.description,
+          file_url: d.file_url,
+          file_type: d.file_type,
+          source: d.document_source,
+          created_at: d.created_at,
         })),
       };
     });
