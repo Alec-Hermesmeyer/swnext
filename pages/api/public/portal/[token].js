@@ -128,9 +128,28 @@ export default async function handler(req, res) {
     const assignmentsByJob = new Map();
     assignments.forEach((a) => {
       if (!a.job_id) return;
-      if (!assignmentsByJob.has(a.job_id)) assignmentsByJob.set(a.job_id, { dates: new Set() });
+      if (!assignmentsByJob.has(a.job_id)) {
+        assignmentsByJob.set(a.job_id, { dates: new Set(), workersByDate: {} });
+      }
+      const bucket = assignmentsByJob.get(a.job_id);
       const dateStr = scheduleDateById[a.schedule_id];
-      if (dateStr) assignmentsByJob.get(a.job_id).dates.add(dateStr);
+      if (dateStr) {
+        bucket.dates.add(dateStr);
+        if (!bucket.workersByDate[dateStr]) bucket.workersByDate[dateStr] = new Set();
+        if (a.worker_id) bucket.workersByDate[dateStr].add(a.worker_id);
+      }
+    });
+
+    // Portal docs by job
+    const docsByJob = new Map();
+    const globalDocs = [];
+    portalDocs.forEach((doc) => {
+      if (doc.job_id) {
+        if (!docsByJob.has(doc.job_id)) docsByJob.set(doc.job_id, []);
+        docsByJob.get(doc.job_id).push(doc);
+      } else {
+        globalDocs.push(doc);
+      }
     });
 
     const cosByJob = new Map();
