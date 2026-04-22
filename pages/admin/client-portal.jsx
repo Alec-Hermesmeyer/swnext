@@ -226,6 +226,68 @@ function ClientPortalAdminPage() {
     }
   };
 
+  // ── Document management handlers ────────────────────────────────
+
+  const openDocPanel = useCallback(async (portal) => {
+    setDocsPortalId(portal.id);
+    setLoadingDocs(true);
+    try {
+      const [docsRes, jobsRes] = await Promise.all([
+        fetch(`/api/portal-documents?portal_id=${portal.id}`),
+        supabase.from("crew_jobs").select("id, job_name, job_number").ilike("customer_name", portal.match_name),
+      ]);
+      const docsData = await docsRes.json().catch(() => ({}));
+      setPortalDocs(docsData.documents || []);
+      setPortalJobs(jobsRes.data || []);
+    } catch {
+      setPortalDocs([]);
+      setPortalJobs([]);
+    } finally {
+      setLoadingDocs(false);
+    }
+  }, []);
+
+  const closeDocPanel = () => {
+    setDocsPortalId(null);
+    setPortalDocs([]);
+    setShowDocForm(false);
+  };
+
+  const submitDocument = async (e) => {
+    e.preventDefault();
+    if (!docForm.title.trim() || !docsPortalId) return;
+    setSavingDoc(true);
+    try {
+      const res = await fetch("/api/portal-documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...docForm, portal_id: docsPortalId, job_id: docForm.job_id || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not add document");
+      setPortalDocs((prev) => [data.document, ...prev]);
+      setShowDocForm(false);
+      setDocForm(EMPTY_DOC_FORM);
+      setStatus({ type: "success", message: "Document shared with portal." });
+    } catch (err) {
+      setStatus({ type: "error", message: err.message });
+    } finally {
+      setSavingDoc(false);
+    }
+  };
+
+  const deleteDocument = async (docId) => {
+    if (!confirm("Remove this document from the portal?")) return;
+    try {
+      const res = await fetch(`/api/portal-documents?id=${docId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Could not delete");
+      setPortalDocs((prev) => prev.filter((d) => d.id !== docId));
+      setStatus({ type: "success", message: "Document removed." });
+    } catch (err) {
+      setStatus({ type: "error", message: err.message });
+    }
+  };
+
   return (
     <>
       <Head>
