@@ -317,7 +317,7 @@ function JobDetail({ job }) {
           </a>
         ) : null}
 
-        <dl className="grid grid-cols-2 gap-px bg-neutral-100 sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-px bg-neutral-100 sm:grid-cols-3 lg:grid-cols-6">
           <MetricCell label="Contract" value={formatMoney(job.adjusted_contract || job.contract_amount)} />
           <MetricCell
             label="Piers"
@@ -330,6 +330,14 @@ function JobDetail({ job }) {
           <MetricCell
             label="Days on Site"
             value={job.scheduled_days ? String(job.scheduled_days) : "—"}
+          />
+          <MetricCell
+            label="Mob Days"
+            value={job.actual_mob_days || job.mob_days || "—"}
+          />
+          <MetricCell
+            label="Weather Days"
+            value={job.weather_days || "0"}
           />
         </dl>
 
