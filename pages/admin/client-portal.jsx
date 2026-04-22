@@ -357,6 +357,7 @@ function ClientPortalAdminPage() {
                   onToggle={() => toggleActive(portal)}
                   onRotate={() => rotateToken(portal)}
                   onCopy={() => copyPortalUrl(portal)}
+                  onManageDocs={() => openDocPanel(portal)}
                 />
               ))}
             </ul>
