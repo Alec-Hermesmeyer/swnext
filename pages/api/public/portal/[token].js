@@ -282,6 +282,15 @@ export default async function handler(req, res) {
         match_name: portal.match_name,
       },
       jobs: sanitizedJobs,
+      documents: globalDocs.map((d) => ({
+        id: d.id,
+        title: d.title,
+        description: d.description,
+        file_url: d.file_url,
+        file_type: d.file_type,
+        source: d.document_source,
+        created_at: d.created_at,
+      })),
     });
   } catch (err) {
     console.error("Portal error:", err);
