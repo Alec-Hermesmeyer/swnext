@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Portal misconfigured" });
     }
 
-    const baseSelect = "id, job_name, job_number, customer_name, hiring_contractor, address, city, zip, contract_amount, estimated_days, start_date, end_date, pier_count, scope_description, job_status, is_active";
+    const baseSelect = "id, job_name, job_number, customer_name, hiring_contractor, address, city, zip, contract_amount, estimated_days, mob_days, actual_days, actual_mob_days, start_date, end_date, pier_count, scope_description, job_status, is_active, default_rig, pm_name";
     const [byCustomer, byGc] = await Promise.all([
       supabase.from("crew_jobs").select(baseSelect).ilike("customer_name", matchName),
       supabase.from("crew_jobs").select(baseSelect).ilike("hiring_contractor", matchName),
