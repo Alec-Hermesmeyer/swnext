@@ -41,20 +41,39 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "Portal not found or inactive" });
     }
 
-    // 2. Fetch jobs matching this portal's customer (case-insensitive on either field)
+    // 2. Fetch jobs: ILIKE name-match + explicit portal_job_links (hybrid)
     const matchName = String(portal.match_name || "").trim();
-    if (!matchName) {
-      return res.status(500).json({ error: "Portal misconfigured" });
-    }
 
     const baseSelect = "id, job_name, job_number, customer_name, hiring_contractor, address, city, zip, contract_amount, estimated_days, mob_days, actual_days, actual_mob_days, start_date, end_date, pier_count, scope_description, job_status, is_active, default_rig, pm_name";
-    const [byCustomer, byGc] = await Promise.all([
-      supabase.from("crew_jobs").select(baseSelect).ilike("customer_name", matchName),
-      supabase.from("crew_jobs").select(baseSelect).ilike("hiring_contractor", matchName),
-    ]);
+
+    // Parallel: ILIKE matches + explicit links
+    const fetchPromises = [];
+    if (matchName) {
+      fetchPromises.push(
+        supabase.from("crew_jobs").select(baseSelect).ilike("customer_name", matchName),
+        supabase.from("crew_jobs").select(baseSelect).ilike("hiring_contractor", matchName),
+      );
+    } else {
+      fetchPromises.push(Promise.resolve({ data: [], error: null }), Promise.resolve({ data: [], error: null }));
+    }
+    // Explicit links — graceful if table doesn't exist yet
+    fetchPromises.push(
+      supabase
+        .from("portal_job_links")
+        .select("job_id")
+        .eq("portal_id", portal.id)
+        .then((r) => r)
+        .catch(() => ({ data: [], error: null })),
+    );
+
+    const [byCustomer, byGc, linksResult] = await Promise.all(fetchPromises);
     if (byCustomer.error) throw byCustomer.error;
     if (byGc.error) throw byGc.error;
 
+    // Collect explicitly-linked job IDs
+    const linkedJobIds = (linksResult?.data || []).map((l) => l.job_id).filter(Boolean);
+
+    // Deduplicate ILIKE results
     const seen = new Set();
     const jobList = [];
     [...(byCustomer.data || []), ...(byGc.data || [])].forEach((j) => {
@@ -63,6 +82,24 @@ export default async function handler(req, res) {
         jobList.push(j);
       }
     });
+
+    // Fetch any linked jobs not already in the ILIKE set
+    const missingLinkedIds = linkedJobIds.filter((id) => !seen.has(id));
+    if (missingLinkedIds.length > 0) {
+      const { data: extraJobs, error: extraErr } = await supabase
+        .from("crew_jobs")
+        .select(baseSelect)
+        .in("id", missingLinkedIds);
+      if (!extraErr && extraJobs) {
+        extraJobs.forEach((j) => {
+          if (!seen.has(j.id)) {
+            seen.add(j.id);
+            jobList.push(j);
+          }
+        });
+      }
+    }
+
     jobList.sort((a, b) => {
       const aDate = a.start_date ? new Date(a.start_date).getTime() : 0;
       const bDate = b.start_date ? new Date(b.start_date).getTime() : 0;

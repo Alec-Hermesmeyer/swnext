@@ -2,7 +2,7 @@
 
 ## Current Task
 I want to pair program on these tasks:
-- Github push hanging issue
+- Improve admin/client-portal
 
 ## Working Agreement
 - You are pair programming with Knoxis, a senior developer who reviews your work between phases.

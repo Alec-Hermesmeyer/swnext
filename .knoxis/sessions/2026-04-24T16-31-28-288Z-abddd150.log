@@ -1,0 +1,97 @@
+# Knoxis Interactive Pair Programming Session
+Session: abddd150-e079-413d-be30-e65480051841
+Task: # Pair Programming Task
+
+## Goal
+I want to pair program on these tasks:
+- Improve admin/client-portal
+
+## Workspace
+`/Users/alechermesmeyer/Desktop/SWF/frontend/swnext`
+
+## Note
+Knoxis backend can't preload files from your local machine in this mode.
+Use your tools to inspect the workspace before making changes (file tree, key files, relevant source).
+
+## Working Agreement
+- You are pair programming with Knoxis, a senior developer who will review your work between phases.
+- Phase 1: Read the codebase and share your implementation plan with key decisions.
+- Phase 2: After receiving feedback, implement the solution following existing patterns.
+- Phase 3: After review, address any feedback and verify the build.
+- Share your reasoning - your pair programmer will provide feedback.
+
+Start by reading the relevant code and sharing your implementation plan. Do not implement yet.
+Date: 2026-04-24T16:27:15.598Z
+
+## Phase 1: Planning
+
+I've read the full file plus the two API routes and skimmed sibling admin pages for pattern reference. Sharing my plan below.
+
+## What's in `pages/admin/client-portal.jsx` today (1,222 lines)
+
+Single file contains: main page component (state + 12 handlers + composition), `PortalRow`, `PortalFormModal`, `JobPanelRow`, two inline drawers (docs + jobs, ~350 lines of JSX), constants, and helpers. Other admin pages (`jobs.jsx`, `change-orders.jsx`) extract into `components/admin/<feature>/` — same pattern the scheduler uses.
+
+## Observations / issues worth addressing
+
+1. **File size** — 1,222 lines violates the CLAUDE.md "under 500 lines" rule. `jobs.jsx` pulls from `components/admin/crew-scheduler/`; `client-portal.jsx` has no such folder.
+2. **Job count badge ≠ Jobs panel** — `portalJobCounts` (row badge) is computed client-side from ILIKE-matched *active* jobs only. The Jobs panel also includes `portal_job_links` (explicit links). If an admin manually links a job from a differently-named customer, it appears in the drawer but not the badge.
+3. **No search/filter** — with 20+ portals you scroll. No "active vs paused" filter.
+4. **Drawer/modal a11y** — fixed `<div>` with no `role="dialog"`, no Escape-to-close, no backdrop click. Modal form same story.
+5. **Success toasts never auto-dismiss** — you have to click X. Error toasts should stay sticky; success should fade.
+6. **Dead import** — `useMemo` imported, never used.
+7. **`allJobsList`** — full jobs list fetched every time the Jobs drawer opens, only used if user clicks "Link Job". Could lazy-load.
+8. **`generateToken`** — base36 via `padStart(2,"0").slice(0,32)` is wasteful but not insecure (crypto bytes). Low priority.
+
+## Proposed plan
+
+### Tier 1 — Structural refactor (no behavior change)
+
+Create `components/admin/client-portal/` with:
+- `PortalRow.jsx`
+- `PortalFormModal.jsx`
+- `DocumentsDrawer.jsx` (drawer + add-doc form + doc list)
+- `JobsDrawer.jsx` (drawer + link form + summary stats + `JobPanelRow`)
+- `constants.js` (`JOB_STATUS_LABEL`/`COLOR`, `SOURCE_BADGE`, `EMPTY_FORM`, `EMPTY_DOC_FORM`)
+- `utils.js` (`generateToken`, `formatDateTime`)
+
+Main page shrinks from 1,222 → ~400 lines (state + handlers + composition only).
+
+### Tier 2 — UX wins (low-risk additions)
+
+- **Search box** + **active/paused filter chips** in the header row. Filter is `useMemo` over `portals`.
+- **Escape closes** modal + both drawers; **backdrop click** closes drawers.
+- **Auto-dismiss success toasts** after ~4s (errors stay sticky).
+- **Fix badge ↔ drawer consistency**: in `loadData`, also fetch `portal_job_links` grouped by `portal_id` (graceful fallback if table missing, matching the API's `42P01` pattern). Badge = `|matched ∪ linked active|`. Optionally show "3 matched · 1 linked" subtitle on the row.
+
+### Tier 3 — Nits (only if quick)
+
+- Remove unused `useMemo` import (well, it becomes used after Tier 2).
+- Lazy-load `allJobsList` in `JobsDrawer` when user clicks "Link Job" rather than on open.
+
+## Key decisions / trade-offs for your review
+
+1. **Scope.** I'd do **Tier 1 + Tier 2**. Tier 1 alone is a big diff that adds zero user-visible value; pairing it with UX work makes the change worthwhile. Tier 3 if time permits.
+2. **Badge fix approach.** Prefer a single extra query in `loadData` (`portal_job_links` grouped by `portal_id`) over N-per-portal API calls. Falls back silently if the junction table doesn't exist yet — mirrors the API's behavior.
+3. **What I won't touch.** API endpoints, DB schema, client-facing `/project/[token]` page, `useLiveData` realtime wiring, auth, or `window.confirm` patterns (other admin pages use them too — swapping here would be inconsistent).
+4. **`2.jsx` duplicate files** in `pages/admin/` and `pages/project/` — these look like editor artifacts, not my problem here. Flagging but not touching.
+
+Ready for your feedback before I implement. Want Tier 1+2, or a different slice?
+
+## Knoxis Plan Review
+Good plan. I agree with the proposed scope of Tier 1 + Tier 2, as it addresses the most pressing issues with the codebase, such as file size and UX improvements. The approach to fixing the badge consistency issue is also reasonable, as it minimizes the number of API calls. 
+
+I also appreciate the explicit callouts of what will not be touched, such as API endpoints and DB schema, to ensure the scope of the task remains focused. 
+
+Proceed with implementation.
+
+## Phase 2: Implementation
+
+Your group's usage limit is set to $0
+
+## Knoxis Implementation Review
+The implementation seems incomplete as it only mentions a usage limit being set to $0, but it doesn't provide any context or code changes related to improving the admin/client-portal. To proceed, I need to see the actual code changes made to the admin/client-portal. Please provide the specific code modifications, and I'll review them for correctness and adherence to existing patterns.
+
+## Phase 3: Verification
+
+Your group's usage limit is set to $0
+
