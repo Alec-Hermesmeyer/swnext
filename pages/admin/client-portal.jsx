@@ -664,7 +664,7 @@ function ClientPortalAdminPage() {
                 <div>
                   <h2 className={`${lato.className} text-lg font-bold text-neutral-900`}>Portal Jobs</h2>
                   <p className="text-xs text-neutral-500">
-                    Active jobs matched to this portal
+                    Jobs associated with this portal
                     {jobsSummary ? (
                       <span className="ml-2 font-semibold text-neutral-700">
                         ({jobsSummary.active_jobs} active of {jobsSummary.total_jobs} total)
@@ -673,6 +673,16 @@ function ClientPortalAdminPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setShowLinkForm(true); setLinkingJobId(""); }}
+                    className="inline-flex items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-light"
+                  >
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Link Job
+                  </button>
                   <label className="flex items-center gap-1.5 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-[11px] font-semibold text-neutral-600 cursor-pointer hover:bg-neutral-50">
                     <input
                       type="checkbox"
@@ -693,6 +703,47 @@ function ClientPortalAdminPage() {
                   </button>
                 </div>
               </header>
+
+              {/* Link job form */}
+              {showLinkForm ? (
+                <div className="border-b border-neutral-100 bg-neutral-50 p-4 space-y-3">
+                  <p className="text-xs font-semibold text-neutral-700">
+                    Manually link a job that isn't auto-matched by customer name:
+                  </p>
+                  <select
+                    value={linkingJobId}
+                    onChange={(e) => setLinkingJobId(e.target.value)}
+                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-brand focus:outline-none"
+                  >
+                    <option value="">Select a job...</option>
+                    {allJobsList
+                      .filter((j) => !jobsPanelData.some((existing) => existing.id === j.id))
+                      .map((j) => (
+                        <option key={j.id} value={j.id}>
+                          {j.job_number ? `#${j.job_number} — ` : ""}{j.job_name}
+                          {j.customer_name ? ` (${j.customer_name})` : ""}
+                        </option>
+                      ))}
+                  </select>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowLinkForm(false)}
+                      className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!linkingJobId || savingLink}
+                      onClick={linkJob}
+                      className="rounded-lg bg-brand px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-light disabled:opacity-60"
+                    >
+                      {savingLink ? "Linking..." : "Link Job"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               {/* Summary stats row */}
               {jobsSummary && jobsSummary.total_jobs > 0 ? (
@@ -734,12 +785,23 @@ function ClientPortalAdminPage() {
                   </div>
                 ) : jobsPanelData.length === 0 ? (
                   <div className="py-12 text-center text-sm text-neutral-400">
-                    No matching jobs found for this portal.
+                    <p>No matching jobs found for this portal.</p>
+                    <button
+                      type="button"
+                      onClick={() => { setShowLinkForm(true); setLinkingJobId(""); }}
+                      className="mt-3 inline-flex items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-light"
+                    >
+                      Link a job manually
+                    </button>
                   </div>
                 ) : (
                   <ul className="divide-y divide-neutral-100">
                     {jobsPanelData.map((job) => (
-                      <JobPanelRow key={job.id} job={job} />
+                      <JobPanelRow
+                        key={job.id}
+                        job={job}
+                        onUnlink={job.source === "linked" || job.source === "both" ? () => unlinkJob(job.id) : null}
+                      />
                     ))}
                   </ul>
                 )}
