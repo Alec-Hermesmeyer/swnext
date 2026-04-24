@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Lato } from "next/font/google";
 import supabase from "@/components/Supabase";
 import { JOB_STATUS_COLOR, JOB_STATUS_LABEL, SOURCE_BADGE } from "./constants";
+import JobSearchSelect from "./JobSearchSelect";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
