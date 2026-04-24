@@ -132,21 +132,13 @@ export default function PortalJobsDrawer({ portal, onClose, onStatus, onChanged 
             <p className="text-xs font-semibold text-neutral-700">
               Manually link a job that isn&apos;t auto-matched by customer name:
             </p>
-            <select
+            <JobSearchSelect
+              jobs={allJobsList}
               value={linkingJobId}
-              onChange={(e) => setLinkingJobId(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-brand focus:outline-none"
-            >
-              <option value="">Select a job...</option>
-              {allJobsList
-                .filter((j) => !jobs.some((existing) => existing.id === j.id))
-                .map((j) => (
-                  <option key={j.id} value={j.id}>
-                    {j.job_number ? `#${j.job_number} — ` : ""}{j.job_name}
-                    {j.customer_name ? ` (${j.customer_name})` : ""}
-                  </option>
-                ))}
-            </select>
+              onChange={setLinkingJobId}
+              placeholder="Search by #number, name, or customer..."
+              excludeIds={jobs.map((j) => j.id)}
+            />
             <div className="flex justify-end gap-2">
               <button
                 type="button"
