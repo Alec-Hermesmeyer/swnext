@@ -70,6 +70,14 @@ function ClientPortalAdminPage() {
   const [docForm, setDocForm] = useState(EMPTY_DOC_FORM);
   const [savingDoc, setSavingDoc] = useState(false);
   const [portalJobs, setPortalJobs] = useState([]);
+  // Jobs panel state
+  const [jobsPortalId, setJobsPortalId] = useState(null);
+  const [jobsPanelData, setJobsPanelData] = useState([]);
+  const [jobsSummary, setJobsSummary] = useState(null);
+  const [loadingJobs, setLoadingJobs] = useState(false);
+  const [showInactiveJobs, setShowInactiveJobs] = useState(false);
+  // Per-portal job counts for badges
+  const [portalJobCounts, setPortalJobCounts] = useState({});
 
   const loadData = useCallback(async () => {
     setLoading(true);
