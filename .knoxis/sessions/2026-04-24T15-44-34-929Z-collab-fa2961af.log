@@ -21,3 +21,58 @@ Workspace: /Users/alechermesmeyer/Desktop/SWF/frontend/swnext. Create a new endp
 
 [ADDITIONAL CONTEXT]
 - Recent focus areas: refactoring, feature, documentation
+[2026-04-24T16:11:34.820Z] CLAUDE DONE (exit 0, 1198s, 116 lines):
+I'll start by exploring the codebase to understand the existing patterns for client portals and jobs before making any changes.
+Excellent. Now let me read the key files to understand the exact implementation details before making changes.
+Now let me read the public portal page to understand how jobs are already displayed:
+Now I have a complete picture of the codebase. Let me share my **Phase 1 implementation plan**:
+
+---
+
+## Implementation Plan
+
+### Current State
+- Client portals match jobs **implicitly** via case-insensitive ILIKE on `customer_name` / `hiring_contractor`
+- The public portal page already displays matched jobs
+- The admin page shows portals but **doesn't show which jobs are matched** — you only see jobs when opening the doc panel
+- There's no dedicated API for fetching portal-job associations
+
+### What I'll Build
+
+**1. New API endpoint: `/api/portal-jobs.js`**
+- `GET ?portal_id=<id>` — Returns active jobs matched to a portal (via existing ILIKE pattern)
+- `GET ?portal_id=<id>&include_inactive=true` — Includes completed/inactive jobs
+- Follows the same pattern as `portal-documents.js`
+
+**2. Update admin portal page to display job info inline**
+- Add a "Jobs" button to each portal row (like the existing "Docs" button)
+- Show a slide-out panel listing matched jobs with: job number, name, status, contract amount, progress
+- Quick-glance job count badge on each portal row
+
+### Key Decisions
+- **Keep ILIKE matching** — it's the existing pattern and works well. No junction table needed yet.
+- **Server-side endpoint** — centralizes the matching logic so the admin page doesn't duplicate the ILIKE queries
+- **Reuse patterns** from `portal-documents.js` for consistent code style
+
+Let me implement now.
+Now let me update the admin client portal page to display job information. I'll add a "Jobs" panel (similar to the existing "Docs" panel) and a job count badge on each portal row:
+Now I need to update the `loadData` function to also fetch job counts for each porta
+[2026-04-24T16:11:35.856Z] KNOXIS (review): Claude has implemented the ability to tie an active job to the client portal. The changes include a new API endpoint `/api/portal-jobs.js` to fetch active jobs associated with a client portal, and updates to the admin portal page to display job information inline. The implementation follows existing patterns and includes features like job count badges, a 'Jobs' panel, and a 'Show completed' filter. The code looks well-structured and thorough. Next steps could include testing the new functionality and considering additional features like junction tables for more complex job-portal relationships.
+[2026-04-24T16:12:05.017Z] USER: additional features like junction tables for more complex job-portal relationships
+[2026-04-24T16:12:05.869Z] KNOXIS (dispatch): Let's explore implementing a junction table to support more complex job-portal relationships. This will allow for greater flexibility in managing multiple jobs per portal and multiple portals per job.
+[2026-04-24T16:12:05.869Z] DISPATCH #2:
+[AI CONTEXT ANALYSIS]
+Intent: feature
+Priority: medium
+Complexity: simple
+Confidence: 85%
+
+[RECOMMENDATIONS]
+- Break down into smaller, testable components
+- This looks straightforward - should be quick to implement
+
+Workspace: /Users/alechermesmeyer/Desktop/SWF/frontend/swnext. Implement a junction table in the database to manage many-to-many relationships between jobs and portals. Update the `/api/portal-jobs.js` endpoint to utilize this new table. Ensure the changes follow existing patterns and include proper error handling. When done, summarize the changes made (files, functions, lines) and note any potential areas for further improvement.
+
+[ADDITIONAL CONTEXT]
+- Consider edge cases and error handling
+- Recent focus areas: feature
