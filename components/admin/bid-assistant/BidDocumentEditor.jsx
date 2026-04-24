@@ -486,17 +486,43 @@ export default function BidDocumentEditor({ state, actions }) {
   }, [selectedDoc?.id, draft, actions]);
 
   // ── Export draft ──────────────────────────────────────────────
+  // Always saves the draft first so the backend has the latest edits,
+  // then requests the file export.  This prevents the common issue where
+  // a download contains stale content because the user forgot to save.
 
   const exportDraft = useCallback(async (format = "docx") => {
     if (!selectedDoc?.id) return;
     actions.setLoading("exportingDraft", true);
     actions.setStatus("");
+    const payload = normalizeDraftPayload(draft);
+
     try {
-      const response = await fetch(`/api/bidding/ai-bidding/documents/${selectedDoc.id}/draft/export`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ format, draft: normalizeDraftPayload(draft) }),
-      });
+      // 1. Save the current draft so the backend has the latest content
+      const saveResponse = await fetch(
+        `/api/bidding/ai-bidding/documents/${selectedDoc.id}/draft`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!saveResponse.ok) {
+        const saveErr = await saveResponse.json().catch(() => ({}));
+        throw new Error(saveErr?.detail || saveErr?.error || "Could not save draft before export");
+      }
+      const savedData = await saveResponse.json().catch(() => ({}));
+      // Update local state so it reflects what was saved
+      if (savedData?.draft) actions.setDraft(savedData.draft);
+
+      // 2. Now request the export — backend will use the just-saved draft
+      const response = await fetch(
+        `/api/bidding/ai-bidding/documents/${selectedDoc.id}/draft/export`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ format, draft: payload }),
+        }
+      );
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         throw new Error(err?.detail || err?.error || `Could not export ${format.toUpperCase()}`);
@@ -514,7 +540,7 @@ export default function BidDocumentEditor({ state, actions }) {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-      actions.setStatus(`Exported ${fileName}`);
+      actions.setStatus(`Saved & exported ${fileName}`);
     } catch (error) {
       actions.setStatus(error.message || "Could not export draft");
     } finally {
@@ -586,16 +612,18 @@ export default function BidDocumentEditor({ state, actions }) {
             onClick={() => exportDraft("docx")}
             disabled={exportingDraft || loadingDraft}
             className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
+            title="Save & download as Word document"
           >
-            {exportingDraft ? "Exporting..." : "DOCX"}
+            {exportingDraft ? "Saving..." : "Save & DOCX"}
           </button>
           <button
             type="button"
             onClick={() => exportDraft("txt")}
             disabled={exportingDraft || loadingDraft}
             className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
+            title="Save & download as plain text"
           >
-            TXT
+            Save & TXT
           </button>
         </div>
       </div>

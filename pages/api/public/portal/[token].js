@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Portal misconfigured" });
     }
 
-    const baseSelect = "id, job_name, job_number, customer_name, hiring_contractor, address, city, zip, contract_amount, estimated_days, start_date, end_date, pier_count, scope_description, job_status, is_active";
+    const baseSelect = "id, job_name, job_number, customer_name, hiring_contractor, address, city, zip, contract_amount, estimated_days, mob_days, actual_days, actual_mob_days, start_date, end_date, pier_count, scope_description, job_status, is_active, default_rig, pm_name";
     const [byCustomer, byGc] = await Promise.all([
       supabase.from("crew_jobs").select(baseSelect).ilike("customer_name", matchName),
       supabase.from("crew_jobs").select(baseSelect).ilike("hiring_contractor", matchName),
@@ -91,8 +91,8 @@ export default async function handler(req, res) {
     }
 
     // 3. Fetch related data in parallel
-    const [assignmentResult, scheduleResult, coResult, reportResult] = await Promise.all([
-      supabase.from("crew_assignments").select("id, job_id, schedule_id").in("job_id", jobIds),
+    const [assignmentResult, scheduleResult, coResult, reportResult, portalDocsResult] = await Promise.all([
+      supabase.from("crew_assignments").select("id, job_id, schedule_id, worker_id").in("job_id", jobIds),
       supabase.from("crew_schedules").select("id, schedule_date"),
       supabase
         .from("change_orders")
@@ -101,16 +101,25 @@ export default async function handler(req, res) {
         .in("status", ["approved", "submitted", "invoiced", "pending"]),
       supabase
         .from("crew_daily_reports")
-        .select("id, job_id, report_date, crew_hours, crew_size, piers_drilled, weather_stop, weather_notes, submitted_at, photo_urls")
+        .select("id, job_id, report_date, crew_hours, crew_size, piers_drilled, weather_stop, weather_notes, delays, submitted_at, photo_urls")
         .in("job_id", jobIds)
         .order("report_date", { ascending: false })
-        .limit(50),
+        .limit(100),
+      // Portal documents — graceful if table doesn't exist
+      supabase
+        .from("portal_documents")
+        .select("id, job_id, title, description, file_url, file_type, document_source, created_at")
+        .eq("portal_id", portal.id)
+        .order("created_at", { ascending: false })
+        .then((r) => r)
+        .catch(() => ({ data: [], error: null })),
     ]);
 
     const assignments = assignmentResult.error ? [] : (assignmentResult.data || []);
     const schedules = scheduleResult.error ? [] : (scheduleResult.data || []);
     const cos = coResult.error ? [] : (coResult.data || []);
     const reports = reportResult.error ? [] : (reportResult.data || []);
+    const portalDocs = portalDocsResult?.error ? [] : (portalDocsResult?.data || []);
 
     const scheduleDateById = {};
     schedules.forEach((s) => { scheduleDateById[s.id] = s.schedule_date; });
@@ -119,9 +128,28 @@ export default async function handler(req, res) {
     const assignmentsByJob = new Map();
     assignments.forEach((a) => {
       if (!a.job_id) return;
-      if (!assignmentsByJob.has(a.job_id)) assignmentsByJob.set(a.job_id, { dates: new Set() });
+      if (!assignmentsByJob.has(a.job_id)) {
+        assignmentsByJob.set(a.job_id, { dates: new Set(), workersByDate: {} });
+      }
+      const bucket = assignmentsByJob.get(a.job_id);
       const dateStr = scheduleDateById[a.schedule_id];
-      if (dateStr) assignmentsByJob.get(a.job_id).dates.add(dateStr);
+      if (dateStr) {
+        bucket.dates.add(dateStr);
+        if (!bucket.workersByDate[dateStr]) bucket.workersByDate[dateStr] = new Set();
+        if (a.worker_id) bucket.workersByDate[dateStr].add(a.worker_id);
+      }
+    });
+
+    // Portal docs by job
+    const docsByJob = new Map();
+    const globalDocs = [];
+    portalDocs.forEach((doc) => {
+      if (doc.job_id) {
+        if (!docsByJob.has(doc.job_id)) docsByJob.set(doc.job_id, []);
+        docsByJob.get(doc.job_id).push(doc);
+      } else {
+        globalDocs.push(doc);
+      }
     });
 
     const cosByJob = new Map();
@@ -139,9 +167,10 @@ export default async function handler(req, res) {
     });
 
     const sanitizedJobs = jobList.map((job) => {
-      const agg = assignmentsByJob.get(job.id) || { dates: new Set() };
+      const agg = assignmentsByJob.get(job.id) || { dates: new Set(), workersByDate: {} };
       const jobCos = cosByJob.get(job.id) || [];
       const jobReports = reportsByJob.get(job.id) || [];
+      const jobDocs = docsByJob.get(job.id) || [];
 
       const scheduledDays = agg.dates.size;
       const estimatedDays = Number(job.estimated_days) || 0;
@@ -155,6 +184,27 @@ export default async function handler(req, res) {
         .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
 
       const progress = estimatedDays > 0 ? Math.min((scheduledDays / estimatedDays) * 100, 100) : null;
+
+      // Job tracking aggregates
+      const weatherDays = jobReports.filter((r) => r.weather_stop).length;
+      const totalPiersDrilled = jobReports.reduce((s, r) => s + (Number(r.piers_drilled) || 0), 0);
+      const totalCrewHours = jobReports.reduce((s, r) => s + ((Number(r.crew_hours) || 0) * (Number(r.crew_size) || 1)), 0);
+
+      // Build daily timeline from reports (most recent 20)
+      const timeline = jobReports.slice(0, 20).map((r) => {
+        const dateWorkers = agg.workersByDate[r.report_date];
+        return {
+          date: r.report_date,
+          crew_size: r.crew_size,
+          crew_hours: r.crew_hours,
+          piers_drilled: r.piers_drilled,
+          weather_stop: r.weather_stop,
+          weather_notes: r.weather_notes,
+          delays: r.delays || null,
+          scheduled_crew: dateWorkers ? dateWorkers.size : null,
+          photo_urls: Array.isArray(r.photo_urls) ? r.photo_urls : [],
+        };
+      });
 
       return {
         id: job.id,
@@ -176,6 +226,16 @@ export default async function handler(req, res) {
         estimated_days: estimatedDays,
         scheduled_days: scheduledDays,
         progress_pct: progress,
+        // New tracking fields
+        rig: job.default_rig || null,
+        pm_name: job.pm_name || null,
+        mob_days: Number(job.mob_days) || 0,
+        actual_days: Number(job.actual_days) || 0,
+        actual_mob_days: Number(job.actual_mob_days) || 0,
+        weather_days: weatherDays,
+        total_piers_drilled: totalPiersDrilled,
+        total_crew_hours: Math.round(totalCrewHours),
+        timeline,
         change_orders: jobCos.map((co) => ({
           co_number: co.co_number,
           description: co.description,
@@ -192,6 +252,15 @@ export default async function handler(req, res) {
           weather_stop: r.weather_stop,
           weather_notes: r.weather_notes,
           photo_urls: Array.isArray(r.photo_urls) ? r.photo_urls : [],
+        })),
+        documents: jobDocs.map((d) => ({
+          id: d.id,
+          title: d.title,
+          description: d.description,
+          file_url: d.file_url,
+          file_type: d.file_type,
+          source: d.document_source,
+          created_at: d.created_at,
         })),
       };
     });
@@ -213,6 +282,15 @@ export default async function handler(req, res) {
         match_name: portal.match_name,
       },
       jobs: sanitizedJobs,
+      documents: globalDocs.map((d) => ({
+        id: d.id,
+        title: d.title,
+        description: d.description,
+        file_url: d.file_url,
+        file_type: d.file_type,
+        source: d.document_source,
+        created_at: d.created_at,
+      })),
     });
   } catch (err) {
     console.error("Portal error:", err);
