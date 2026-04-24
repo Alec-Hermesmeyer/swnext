@@ -401,6 +401,7 @@ export default function BidDocumentEditor({ state, actions }) {
   const { selectedDoc, draft, savingDraft, loadingDraft, exportingDraft, draftHistory, status } = state;
   const [showPreview, setShowPreview] = useState(false);
   const [aiAssistLoading, setAiAssistLoading] = useState({});
+  const [publishOpen, setPublishOpen] = useState(false);
 
   // ── AI assist for a specific section ───────────────────────────
 
