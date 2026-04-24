@@ -1,7 +1,6 @@
 // Special handler for file uploads to Flask backend
 import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import FormData from 'form-data';
+import { readFile, unlink } from 'fs/promises';
 
 export const config = {
   api: {
@@ -15,6 +14,8 @@ export default async function handler(req, res) {
   }
 
   const FLASK_BACKEND = process.env.FLASK_BACKEND || 'http://localhost:5000';
+  const SOCIAL_WORKSPACE_TOKEN = process.env.SOCIAL_WORKSPACE_TOKEN || '';
+  let file;
 
   try {
     // Parse the incoming form
@@ -34,13 +35,16 @@ export default async function handler(req, res) {
     const formData = new FormData();
 
     // Add file
-    const file = files.file?.[0] || files.file;
-    if (file) {
-      formData.append('file', fs.createReadStream(file.filepath), {
-        filename: file.originalFilename,
-        contentType: file.mimetype,
-      });
+    file = files.file?.[0] || files.file;
+    if (!file?.filepath) {
+      return res.status(400).json({ error: 'No file provided to upload proxy' });
     }
+
+    const fileBuffer = await readFile(file.filepath);
+    const fileBlob = new Blob([fileBuffer], {
+      type: file.mimetype || 'application/octet-stream',
+    });
+    formData.append('file', fileBlob, file.originalFilename || 'upload');
 
     // Add other fields
     if (fields.category) {
@@ -51,18 +55,21 @@ export default async function handler(req, res) {
     }
 
     // Send to Flask backend
+    const headers = {};
+    if (SOCIAL_WORKSPACE_TOKEN) {
+      headers.Authorization = `Bearer ${SOCIAL_WORKSPACE_TOKEN}`;
+    }
+    if (req.headers.authorization) {
+      headers.Authorization = req.headers.authorization;
+    }
+
     const response = await fetch(`${FLASK_BACKEND}/images/upload`, {
       method: 'POST',
       body: formData,
-      headers: formData.getHeaders(),
+      headers,
     });
 
     const data = await response.json();
-
-    // Cleanup temp file
-    if (file?.filepath) {
-      fs.unlink(file.filepath, () => {});
-    }
 
     res.status(response.status).json(data);
   } catch (error) {
@@ -71,5 +78,9 @@ export default async function handler(req, res) {
       error: 'Failed to upload file',
       message: error.message,
     });
+  } finally {
+    if (file?.filepath) {
+      unlink(file.filepath).catch(() => {});
+    }
   }
 }

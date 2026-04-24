@@ -7,12 +7,36 @@ const { spawn } = require("child_process");
 
 const projectRoot = process.cwd();
 const args = process.argv.slice(2);
-const nextBin = path.join(
+const localNextBin = path.join(
   projectRoot,
   "node_modules",
   ".bin",
   process.platform === "win32" ? "next.cmd" : "next"
 );
+
+function resolveNextCommand() {
+  if (fs.existsSync(localNextBin)) {
+    return {
+      command: localNextBin,
+      prefixArgs: [],
+    };
+  }
+
+  try {
+    const resolvedNextBin = require.resolve("next/dist/bin/next", {
+      paths: [projectRoot],
+    });
+
+    return {
+      command: process.execPath,
+      prefixArgs: [resolvedNextBin],
+    };
+  } catch (_error) {
+    return null;
+  }
+}
+
+const nextCommand = resolveNextCommand();
 
 function readRequestedPort(argv) {
   for (let index = 0; index < argv.length; index += 1) {
@@ -136,13 +160,13 @@ async function findAvailablePort(startPort) {
 }
 
 async function main() {
-  if (!fs.existsSync(nextBin)) {
+  if (!nextCommand) {
     console.error("[dev] Next.js CLI not found. Run `yarn install` first.");
     process.exit(1);
   }
 
   if (isHelpRequest(args)) {
-    const child = spawn(nextBin, ["dev", ...args], {
+    const child = spawn(nextCommand.command, [...nextCommand.prefixArgs, "dev", ...args], {
       cwd: projectRoot,
       env: process.env,
       stdio: "inherit",
@@ -194,8 +218,9 @@ async function main() {
   };
 
   const child = spawn(
-    nextBin,
+    nextCommand.command,
     [
+      ...nextCommand.prefixArgs,
       "dev",
       ...stripPortArgs(args),
       "--port",
