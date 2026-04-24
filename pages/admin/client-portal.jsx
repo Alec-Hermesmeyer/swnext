@@ -313,6 +313,38 @@ function ClientPortalAdminPage() {
     }
   };
 
+  // ── Jobs panel handlers ─────────────────────────────────────────
+
+  const openJobsPanel = useCallback(async (portal, includeInactive = false) => {
+    setJobsPortalId(portal.id);
+    setLoadingJobs(true);
+    setShowInactiveJobs(includeInactive);
+    try {
+      const qs = includeInactive ? "&include_inactive=true" : "";
+      const res = await fetch(`/api/portal-jobs?portal_id=${portal.id}${qs}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not load jobs");
+      setJobsPanelData(data.jobs || []);
+      setJobsSummary(data.summary || null);
+    } catch {
+      setJobsPanelData([]);
+      setJobsSummary(null);
+    } finally {
+      setLoadingJobs(false);
+    }
+  }, []);
+
+  const closeJobsPanel = () => {
+    setJobsPortalId(null);
+    setJobsPanelData([]);
+    setJobsSummary(null);
+  };
+
+  const toggleInactiveJobs = useCallback(() => {
+    const portal = portals.find((p) => p.id === jobsPortalId);
+    if (portal) openJobsPanel(portal, !showInactiveJobs);
+  }, [portals, jobsPortalId, showInactiveJobs, openJobsPanel]);
+
   return (
     <>
       <Head>
