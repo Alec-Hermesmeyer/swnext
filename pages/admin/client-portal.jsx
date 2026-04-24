@@ -984,6 +984,100 @@ function PortalFormModal({ form, editing, customerNames, saving, onChange, onSub
   );
 }
 
+const JOB_STATUS_LABEL = {
+  bid: "Bidding",
+  awarded: "Awarded",
+  scheduled: "Scheduled",
+  in_progress: "In Progress",
+  completed: "Completed",
+  on_hold: "On Hold",
+  active: "Active",
+};
+
+const JOB_STATUS_COLOR = {
+  bid: "bg-neutral-100 text-neutral-700",
+  awarded: "bg-blue-100 text-blue-700",
+  scheduled: "bg-sky-100 text-sky-700",
+  in_progress: "bg-amber-100 text-amber-700",
+  completed: "bg-emerald-100 text-emerald-700",
+  on_hold: "bg-neutral-200 text-neutral-700",
+  active: "bg-blue-100 text-blue-700",
+};
+
+function JobPanelRow({ job }) {
+  const statusLabel = JOB_STATUS_LABEL[job.job_status] || job.job_status || "Unknown";
+  const statusCls = JOB_STATUS_COLOR[job.job_status] || JOB_STATUS_COLOR.active;
+  const contractStr = job.contract_amount > 0
+    ? `$${(job.contract_amount / 1000).toFixed(0)}k`
+    : "—";
+  const progress = job.estimated_days > 0
+    ? Math.min(Math.round((job.actual_days / job.estimated_days) * 100), 100)
+    : null;
+
+  return (
+    <li className="px-5 py-4 hover:bg-neutral-50 transition-colors">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            {job.job_number ? (
+              <span className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[11px] font-bold text-brand">
+                #{job.job_number}
+              </span>
+            ) : null}
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${statusCls}`}>
+              {statusLabel}
+            </span>
+          </div>
+          <p className="mt-1 text-sm font-bold text-neutral-900 truncate">{job.job_name}</p>
+          {job.scope_description ? (
+            <p className="mt-0.5 text-xs text-neutral-500 line-clamp-2">{job.scope_description}</p>
+          ) : null}
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-neutral-500">
+            {job.city ? (
+              <span className="flex items-center gap-1">
+                <svg className="h-3 w-3 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {job.city}
+              </span>
+            ) : null}
+            {job.rig ? <span>Rig: {job.rig}</span> : null}
+            {job.pm_name ? <span>PM: {job.pm_name}</span> : null}
+            {job.pier_count ? <span>{job.pier_count} piers</span> : null}
+            {job.start_date ? (
+              <span>
+                Start: {new Date(job.start_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-sm font-bold tabular-nums text-neutral-900">{contractStr}</p>
+          <p className="text-[10px] font-semibold text-neutral-400">contract</p>
+          {job.estimated_days > 0 ? (
+            <p className="mt-1 text-[10px] font-semibold text-neutral-500">
+              {job.actual_days || 0}/{job.estimated_days} days
+            </p>
+          ) : null}
+        </div>
+      </div>
+      {progress !== null ? (
+        <div className="mt-2">
+          <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+            <div
+              className={`h-full transition-all ${
+                progress >= 90 ? "bg-emerald-500" : progress >= 50 ? "bg-blue-500" : "bg-sky-400"
+              }`}
+              style={{ width: `${Math.max(progress, 3)}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
 ClientPortalAdminPage.getLayout = function getLayout(page) {
   return <TWAdminLayout>{page}</TWAdminLayout>;
 };
