@@ -49,7 +49,7 @@ export default function PortalFormModal({
               required
             />
             <span className="mt-1 block text-[11px] font-normal text-neutral-400">
-              Shown at the top of the client's view.
+              Shown at the top of the client&apos;s view.
             </span>
           </label>
 
