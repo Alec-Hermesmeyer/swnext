@@ -129,7 +129,7 @@ export default function PortalJobsDrawer({ portal, onClose, onStatus, onChanged 
         {showLinkForm ? (
           <div className="border-b border-neutral-100 bg-neutral-50 p-4 space-y-3">
             <p className="text-xs font-semibold text-neutral-700">
-              Manually link a job that isn't auto-matched by customer name:
+              Manually link a job that isn&apos;t auto-matched by customer name:
             </p>
             <select
               value={linkingJobId}
