@@ -149,18 +149,14 @@ export default function PortalDocsDrawer({ portal, onClose, onStatus }) {
               </select>
             </div>
             {portalJobs.length > 0 ? (
-              <select
+              <JobSearchSelect
+                jobs={portalJobs}
                 value={form.job_id}
-                onChange={(e) => setForm((p) => ({ ...p, job_id: e.target.value }))}
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-brand focus:outline-none"
-              >
-                <option value="">All jobs (global document)</option>
-                {portalJobs.map((j) => (
-                  <option key={j.id} value={j.id}>
-                    {j.job_number ? `#${j.job_number} — ` : ""}{j.job_name}
-                  </option>
-                ))}
-              </select>
+                onChange={(id) => setForm((p) => ({ ...p, job_id: id }))}
+                placeholder="Leave blank to show on all jobs"
+                allowNone
+                noneLabel="All jobs (global document)"
+              />
             ) : null}
             <div className="flex justify-end gap-2">
               <button
