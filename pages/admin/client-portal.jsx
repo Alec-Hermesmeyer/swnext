@@ -730,7 +730,7 @@ function ClientPortalAdminPage() {
   );
 }
 
-function PortalRow({ portal, busy, justCopied, onEdit, onDelete, onToggle, onRotate, onCopy, onManageDocs }) {
+function PortalRow({ portal, busy, justCopied, jobCount, onEdit, onDelete, onToggle, onRotate, onCopy, onManageDocs, onViewJobs }) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const url = `${origin}/project/${portal.access_token}`;
 
@@ -748,6 +748,11 @@ function PortalRow({ portal, busy, justCopied, onEdit, onDelete, onToggle, onRot
               Paused
             </span>
           )}
+          {jobCount > 0 ? (
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold tabular-nums text-blue-700">
+              {jobCount} {jobCount === 1 ? "job" : "jobs"}
+            </span>
+          ) : null}
         </div>
         <p className="mt-0.5 text-[11px] text-neutral-500">
           Matches jobs for <span className="font-mono font-semibold text-neutral-700">{portal.match_name}</span>
@@ -777,6 +782,10 @@ function PortalRow({ portal, busy, justCopied, onEdit, onDelete, onToggle, onRot
 
       <div className="flex items-center gap-4 text-[11px] text-neutral-500">
         <div className="text-center">
+          <p className="font-bold text-neutral-400">Jobs</p>
+          <p className="font-mono font-bold text-blue-700">{jobCount || 0}</p>
+        </div>
+        <div className="text-center">
           <p className="font-bold text-neutral-400">Views</p>
           <p className="font-mono text-neutral-700">{portal.access_count || 0}</p>
         </div>
@@ -787,6 +796,13 @@ function PortalRow({ portal, busy, justCopied, onEdit, onDelete, onToggle, onRot
       </div>
 
       <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onViewJobs}
+          className="rounded-md px-2 py-1 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+        >
+          Jobs
+        </button>
         <button
           type="button"
           onClick={onManageDocs}
