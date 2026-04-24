@@ -76,3 +76,45 @@ Workspace: /Users/alechermesmeyer/Desktop/SWF/frontend/swnext. Implement a junct
 [ADDITIONAL CONTEXT]
 - Consider edge cases and error handling
 - Recent focus areas: feature
+[2026-04-24T16:25:56.479Z] CLAUDE DONE (exit 0, 831s, 137 lines):
+I'll start by reviewing the current state of the files I need to modify, plus the existing migration/schema patterns.
+
+
+Now let me read the client-portals SQL migration and the admin page to understand the full picture before implementing:
+Good, I have the full picture. Here's my **Phase 1 plan** before implementing:
+
+---
+
+## Plan
+
+**Junction table: `portal_job_links`**
+- Explicit many-to-many between `client_portals` and `crew_jobs`
+- UNIQUE constraint on (portal_id, job_id) to prevent duplicates
+- CASCADE deletes on both FKs
+- Follows the exact UUID/index/trigger patterns from `add-client-portals.sql` and `portal_documents.sql`
+
+**Hybrid query model (backward-compatible):**
+- GET returns jobs from **both** ILIKE name-matching AND the junction table, deduped
+- Each job tagged with `source: "linked" | "matched" | "both"` so the admin UI can distinguish
+- POST creates an explicit link; DELETE removes one
+- Public portal endpoint updated to also include linked jobs
+
+**Admin UI updates:**
+- Jobs panel shows source badges ("Auto-matched" vs "Linked")
+- "Link Job" dropdown to manually associate any job in the system
+- "Unlink" button on explicitly-linked jobs
+
+Let me implement now — migration SQL first, then API, then UI.
+Now rewrite the `/api/portal-jobs.js` endpoint to support GET (hybrid ILIKE + junction), POST (link), and DELETE (unlink):
+Now update the public portal endpoint to also pick up explicitly-linked jobs:
+Now update the admin portal page. I need to:
+1. Add a "Link Job" feature to the Jobs panel
+2. Show source badges on each job row
+3. Add unlink capability for explicitly linked jobs
+
+Let me update the Jobs panel state and handlers first:
+Now update the `openJobsPanel` handler and add `linkJob` / `unlinkJob` handlers:
+Now update the Jobs panel drawer in the JSX to include the Link Job form and pass new props to `JobPanelRow`:
+Now update the `JobPanelRow` component to display source badges and the unlink button:
+Now let me verify everything is structurally so
+[2026-04-24T16:25:57.570Z] KNOXIS (review): Claude has implemented the junction table and updated the admin portal page to support explicit job-portal links. The changes include a new SQL migration for the `portal_job_links` table, a rewritten `/api/portal-jobs.js` endpoint, and updates to the admin portal page to display source badges and unlink capabilities. The implementation looks thorough and well-structured. Next steps could include testing the new functionality, reviewing the code for edge cases, and considering additional features like RLS policies or an audit trail.
