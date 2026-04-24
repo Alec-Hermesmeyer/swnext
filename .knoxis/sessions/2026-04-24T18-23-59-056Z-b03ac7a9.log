@@ -1,0 +1,174 @@
+# Knoxis Interactive Pair Programming Session
+Session: b03ac7a9-f262-449a-90d1-81a1d83f3c5e
+Task: # Pair Programming Task
+
+## Goal
+I want to pair program on these tasks:
+- Improve admin/client-portal
+
+## Workspace
+`/Users/alechermesmeyer/Desktop/SWF/frontend/swnext`
+
+## Note
+Knoxis backend can't preload files from your local machine in this mode.
+Use your tools to inspect the workspace before making changes (file tree, key files, relevant source).
+
+## Working Agreement
+- You are pair programming with Knoxis, a senior developer who will review your work between phases.
+- Phase 1: Read the codebase and share your implementation plan with key decisions.
+- Phase 2: After receiving feedback, implement the solution following existing patterns.
+- Phase 3: After review, address any feedback and verify the build.
+- Share your reasoning - your pair programmer will provide feedback.
+
+Start by reading the relevant code and sharing your implementation plan. Do not implement yet.
+Date: 2026-04-24T18:12:19.095Z
+
+## Phase 1: Planning
+
+I've read the full admin page (`pages/admin/client-portal.jsx`, 1222 lines), both API routes (`portal-documents.js`, `portal-jobs.js`), and the public client view (`pages/project/[token].jsx` + `api/public/portal/[token].js`). Here's what I see and my proposal.
+
+## What the admin page does today
+
+A single-file admin view that manages tokenized portal URLs for GCs/owners. It supports:
+- Portal CRUD with auto-match (ILIKE on `customer_name`/`hiring_contractor`) + explicit `portal_job_links` overrides
+- A Jobs drawer (summary stats, link/unlink manually)
+- A Documents drawer (URL-based doc refs; no file upload)
+- Token rotate, copy URL, preview, pause/activate, access tracking
+
+## Observations
+
+- **`components/admin/client-portal/` already exists but is empty** — someone intended to extract components here (pattern matches `bid-assistant/`, `crew-scheduler/`) but didn't.
+- **No search/filter/sort** on the list — fine today, rough once there are 20+ portals.
+- **No activity signal at a glance** — you can see "Last Seen" but there's no "never accessed" or "stale" cue.
+- **Sharing requires copying the URL, switching to email, pasting, writing intro** — there's a `contact_email` field but it's not used for a share flow.
+- **Doc management takes a URL only** — no file upload (probably out of scope for this pass; needs storage policy).
+- **Minor code smells**: dead `portalJobs` state overlaps with `jobsPanelData`; `savingId` conflates create and edit; `confirm()` used directly (works, but inconsistent).
+- **Out of scope but flagged**: `pages/admin/client-portal 2.jsx` and `pages/api/public/portal 2/` are stray duplicate files; the public endpoint has a read-then-write `access_count` race. Mention-only unless you want them bundled.
+
+## Proposed plan — "focused polish" (recommended)
+
+Three user-visible wins + a light extraction, all keeping existing patterns.
+
+**1. List controls** (`pages/admin/client-portal.jsx`)
+- Search box (matches `label`, `match_name`, `contact_name`)
+- Status filter pills: All / Active / Paused
+- Sort: Recent (default) / Alphabetical / Last seen / Most viewed
+- Small header strip showing totals: e.g. "12 portals · 9 active · 3 never accessed"
+
+**2. Activity health on each row**
+- Badge logic from `last_accessed_at`: "Never accessed" (red), "Stale >30d" (amber), "Recent" (none)
+- Reuses existing `formatDateTime`; purely derived, no schema change.
+
+**3. Share helper**
+- Replace "Copy" with a small split button: "Copy URL" + "Email link" → opens a prefilled `mailto:` to `contact_email` (disabled if empty) with subject `S&W Project Portal — {label}` and a short body including the URL. Zero backend work.
+
+**4. Light extraction into `components/admin/client-portal/`**
+- `PortalRow.jsx`, `PortalFormModal.jsx`, `PortalDocsDrawer.jsx`, `PortalJobsDrawer.jsx`, plus a shared `constants.js` (status/source maps) and `helpers.js` (`generateToken`, `formatDateTime`). Page file drops from ~1220 to ~300 lines of orchestration. No behavior change.
+- Drop the unused `portalJobs` state while I'm in there.
+
+### Key decisions / trade-offs
+- **Client-side filter/sort** vs. server-side: portals count is tiny (dozens at most), so filter in-memory to keep it simple and realtime-friendly. No `useLiveData` changes needed.
+- **No new DB columns** — health badges are derived, share helper uses existing `contact_email`. Keeps scope tight.
+- **Extraction is optional**: I can bundle it with the polish or ship polish first. I'd bundle them (one PR, one diff to review), but if you'd rather review the UX changes without the file-move noise, I'll split.
+- **mailto vs. sending through `/api/send-email`**: mailto is one line and respects the admin's default client. Real send-from-server is a bigger scope (template, delivery logs, failure handling). I'd start with mailto unless you want the server flow.
+
+### What I'd explicitly **not** do in this pass
+- Doc file uploads (needs storage bucket + signed URL strategy)
+- Race fix on `access_count` (server-side, separate PR)
+- Removing duplicate `*2.jsx` files (needs confirmation that they're stale)
+
+### Alternatives if you want a different scope
+- **(A) Just the UX polish**, skip extraction — smallest diff, leaves the 1200-line file as-is.
+- **(B) Doc upload via Supabase storage** — bigger but highest "real user value" bet; needs confirmation of your storage bucket + RLS.
+- **(C) Server-side email send** via existing `/api/send-email` instead of mailto — needs me to read that endpoint first.
+
+Stopping here for your review. Which direction — recommended (polish + extraction), A, B, or C?
+
+## Knoxis Plan Review
+I've reviewed the plan, and it looks solid. The proposed "focused polish" approach addresses key user-visible issues and keeps existing patterns. I agree with the decisions to use client-side filter/sort, derive health badges, and use the existing `contact_email` for the share helper.
+
+I prefer the recommended approach, which includes both polish and light extraction into `components/admin/client-portal/`. This will improve the code organization and make it easier to maintain.
+
+I don't think it's necessary to split the extraction into a separate PR, so bundling it with the polish changes is fine. The `mailto` approach for the share helper is also a good choice, as it's simple and respects the admin's default client.
+
+I'm not concerned about the minor code smells, as they will be addressed during the extraction process. The out-of-scope items, such as doc file uploads and the race fix on `access_count`, can be addressed in separate PRs.
+
+Good plan. Proceed with implementation.
+
+## Phase 2: Implementation
+
+Done. Phase 2 complete.
+
+## Changes shipped
+
+**Extraction** — `components/admin/client-portal/`:
+- `constants.js` — `EMPTY_FORM`, `EMPTY_DOC_FORM`, status/source maps, `STALE_DAYS`
+- `helpers.js` — `generateToken`, `formatDateTime`, `getPortalUrl`, `getPortalHealth`, `buildPortalMailto`
+- `PortalRow.jsx` — row with the new health badge + Email button
+- `PortalFormModal.jsx` — create/edit modal (unchanged behavior)
+- `PortalDocsDrawer.jsx` — self-contained (owns its own docs + portalJobs state)
+- `PortalJobsDrawer.jsx` — self-contained (owns jobs + allJobsList + includeInactive)
+- `index.js` — barrel export
+
+**Polish** in `pages/admin/client-portal.jsx`:
+- Summary strip: total · active · paused · never accessed
+- Search (label, match_name, contact_name, contact_email)
+- Status pills: All / Active / Paused
+- Sort: Recent / Alphabetical / Last seen / Most viewed
+- Empty state for filtered-but-no-results case
+- Health badge derived from `last_accessed_at` (Never accessed = rose, Stale >30d = amber, otherwise nothing)
+- Mailto share button next to Copy — disabled-looking if `contact_email` is empty, prefilled subject + body with the portal URL
+
+**Page reduction**: 1222 → 467 lines. Components total ~1000 lines but each under 320. The drawers now own their own fetch state (removed the dead cross-drawer sharing of `portalJobs`/`jobsPanelData` from the page).
+
+## Verification
+- ESLint: clean (0 errors/0 warnings on touched files)
+- `next build --webpack`: succeeds, `/admin/client-portal` present in the route map, no errors or warnings
+
+## Behavior preserved
+- Realtime via `useLiveData` on `client_portals` still runs in the page
+- Realtime + refresh after link/unlink in Jobs drawer propagates to the page list via `onChanged={loadData}`
+- All existing handlers (rotate, toggle, delete, copy) identical
+- Status toast still orchestrated by the page; drawers report via `onStatus` callback
+
+Ready for Phase 3 review.
+
+## Knoxis Implementation Review
+Good plan, implementation looks solid. The extraction of components and helpers has improved code organization, and the polish in `pages/admin/client-portal.jsx` has enhanced the user experience. The reduction in page lines and component sizes is also a significant improvement. 
+
+Verify the build and tests to ensure everything is working as expected. Summarize, the key changes include: extracted components and helpers, improved summary strip, search, status pills, sort, and empty state in `pages/admin/client-portal.jsx`, and reduced page lines from 1222 to 467. Proceed with verification.
+
+## Phase 3: Verification
+
+Build and lint both clean, no portal-specific tests exist in the repo.
+
+## Verification
+- **Lint** (`eslint pages/admin/client-portal.jsx components/admin/client-portal/`): exit 0, no errors or warnings
+- **Build** (`next build --webpack`): exit 0, no errors or warnings; `/admin/client-portal` compiles as a static page
+- **Tests**: no portal-related tests in `tests/` — nothing to run against this area
+
+## Summary of the change
+
+**New `components/admin/client-portal/` module** (previously empty dir):
+- `constants.js` — `EMPTY_FORM`, `EMPTY_DOC_FORM`, job status/source maps, `STALE_DAYS`
+- `helpers.js` — `generateToken`, `formatDateTime`, `getPortalUrl`, `getPortalHealth`, `buildPortalMailto`
+- `PortalRow.jsx` — row with new health badge + Email share button
+- `PortalFormModal.jsx` — create/edit modal
+- `PortalDocsDrawer.jsx` — self-contained, owns its own docs + job-list state
+- `PortalJobsDrawer.jsx` — self-contained, owns jobs + allJobs + includeInactive state; also hosts `JobPanelRow`
+- `index.js` — barrel export
+
+**`pages/admin/client-portal.jsx` rewrite (1222 → 467 lines)**:
+- Summary strip: total · active · paused · never accessed
+- Search across label / match_name / contact name / contact email
+- Status pills: All / Active / Paused
+- Sort dropdown: Recent / Alphabetical / Last seen / Most viewed
+- Filtered empty state ("No portals match the current filters")
+- Health badge on rows: "Never accessed" (rose) or "Stale Nd" (amber) when active
+- Mailto share button next to Copy — disabled-looking when `contact_email` is empty, prefills subject and body with the portal URL
+- Drawer state simplified to `docsPortal` / `jobsPortal` objects; drawers fetch their own data and report back via `onStatus` / `onChanged`
+
+**Behavior preserved**: `useLiveData` realtime on `client_portals`, create/edit/toggle/rotate/delete flows, link/unlink updates refresh the page via `onChanged=loadData`, status toast still centralized on the page.
+
+Out-of-scope items flagged earlier (duplicate `*2.jsx` backups, `access_count` read-then-write race, Supabase-storage file upload) remain untouched — ready for separate PRs when you want.
+
