@@ -85,18 +85,35 @@ function ClientPortalAdminPage() {
     try {
       const [portalsResult, jobsResult] = await Promise.all([
         supabase.from("client_portals").select("*").order("created_at", { ascending: false }),
-        supabase.from("crew_jobs").select("customer_name, hiring_contractor"),
+        supabase.from("crew_jobs").select("id, customer_name, hiring_contractor, job_status, is_active"),
       ]);
       if (portalsResult.error) throw portalsResult.error;
       if (jobsResult.error) throw jobsResult.error;
       setPortals(portalsResult.data || []);
 
       const names = new Set();
-      (jobsResult.data || []).forEach((j) => {
+      const allJobs = jobsResult.data || [];
+      allJobs.forEach((j) => {
         if (j.customer_name) names.add(j.customer_name.trim());
         if (j.hiring_contractor) names.add(j.hiring_contractor.trim());
       });
       setCustomerNames(Array.from(names).filter(Boolean).sort((a, b) => a.localeCompare(b)));
+
+      // Compute per-portal job counts from the jobs list
+      const counts = {};
+      (portalsResult.data || []).forEach((portal) => {
+        const mn = (portal.match_name || "").trim().toLowerCase();
+        if (!mn) { counts[portal.id] = 0; return; }
+        const matched = allJobs.filter(
+          (j) =>
+            ((j.customer_name || "").trim().toLowerCase() === mn ||
+              (j.hiring_contractor || "").trim().toLowerCase() === mn) &&
+            j.is_active !== false &&
+            j.job_status !== "completed"
+        );
+        counts[portal.id] = matched.length;
+      });
+      setPortalJobCounts(counts);
     } catch (err) {
       setErrorMessage(err?.message || "Could not load portals.");
     } finally {
