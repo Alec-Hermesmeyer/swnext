@@ -1122,7 +1122,13 @@ const JOB_STATUS_COLOR = {
   active: "bg-blue-100 text-blue-700",
 };
 
-function JobPanelRow({ job }) {
+const SOURCE_BADGE = {
+  matched: { label: "Auto-matched", cls: "bg-neutral-100 text-neutral-600" },
+  linked: { label: "Linked", cls: "bg-violet-100 text-violet-700" },
+  both: { label: "Matched + Linked", cls: "bg-blue-100 text-blue-700" },
+};
+
+function JobPanelRow({ job, onUnlink }) {
   const statusLabel = JOB_STATUS_LABEL[job.job_status] || job.job_status || "Unknown";
   const statusCls = JOB_STATUS_COLOR[job.job_status] || JOB_STATUS_COLOR.active;
   const contractStr = job.contract_amount > 0
@@ -1131,12 +1137,13 @@ function JobPanelRow({ job }) {
   const progress = job.estimated_days > 0
     ? Math.min(Math.round((job.actual_days / job.estimated_days) * 100), 100)
     : null;
+  const srcBadge = SOURCE_BADGE[job.source] || SOURCE_BADGE.matched;
 
   return (
     <li className="px-5 py-4 hover:bg-neutral-50 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {job.job_number ? (
               <span className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[11px] font-bold text-brand">
                 #{job.job_number}
@@ -1144,6 +1151,9 @@ function JobPanelRow({ job }) {
             ) : null}
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${statusCls}`}>
               {statusLabel}
+            </span>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${srcBadge.cls}`}>
+              {srcBadge.label}
             </span>
           </div>
           <p className="mt-1 text-sm font-bold text-neutral-900 truncate">{job.job_name}</p>
@@ -1177,6 +1187,15 @@ function JobPanelRow({ job }) {
             <p className="mt-1 text-[10px] font-semibold text-neutral-500">
               {job.actual_days || 0}/{job.estimated_days} days
             </p>
+          ) : null}
+          {onUnlink ? (
+            <button
+              type="button"
+              onClick={onUnlink}
+              className="mt-2 rounded-md px-2 py-1 text-[11px] font-semibold text-red-600 transition-colors hover:bg-red-50"
+            >
+              Unlink
+            </button>
           ) : null}
         </div>
       </div>
