@@ -323,16 +323,22 @@ function ClientPortalAdminPage() {
     setJobsPortalId(portal.id);
     setLoadingJobs(true);
     setShowInactiveJobs(includeInactive);
+    setShowLinkForm(false);
     try {
       const qs = includeInactive ? "&include_inactive=true" : "";
-      const res = await fetch(`/api/portal-jobs?portal_id=${portal.id}${qs}`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Could not load jobs");
+      const [jobsRes, allJobsRes] = await Promise.all([
+        fetch(`/api/portal-jobs?portal_id=${portal.id}${qs}`),
+        supabase.from("crew_jobs").select("id, job_name, job_number, customer_name").order("job_name"),
+      ]);
+      const data = await jobsRes.json().catch(() => ({}));
+      if (!jobsRes.ok) throw new Error(data.error || "Could not load jobs");
       setJobsPanelData(data.jobs || []);
       setJobsSummary(data.summary || null);
+      setAllJobsList(allJobsRes.data || []);
     } catch {
       setJobsPanelData([]);
       setJobsSummary(null);
+      setAllJobsList([]);
     } finally {
       setLoadingJobs(false);
     }
@@ -342,12 +348,58 @@ function ClientPortalAdminPage() {
     setJobsPortalId(null);
     setJobsPanelData([]);
     setJobsSummary(null);
+    setShowLinkForm(false);
   };
 
   const toggleInactiveJobs = useCallback(() => {
     const portal = portals.find((p) => p.id === jobsPortalId);
     if (portal) openJobsPanel(portal, !showInactiveJobs);
   }, [portals, jobsPortalId, showInactiveJobs, openJobsPanel]);
+
+  const linkJob = async () => {
+    if (!linkingJobId || !jobsPortalId) return;
+    setSavingLink(true);
+    try {
+      const res = await fetch("/api/portal-jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ portal_id: jobsPortalId, job_id: linkingJobId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not link job");
+      setStatus({ type: "success", message: "Job linked to portal." });
+      setShowLinkForm(false);
+      setLinkingJobId("");
+      // Refresh the panel
+      const portal = portals.find((p) => p.id === jobsPortalId);
+      if (portal) openJobsPanel(portal, showInactiveJobs);
+      await loadData();
+    } catch (err) {
+      setStatus({ type: "error", message: err.message });
+    } finally {
+      setSavingLink(false);
+    }
+  };
+
+  const unlinkJob = async (jobId) => {
+    if (!jobsPortalId) return;
+    try {
+      const res = await fetch(`/api/portal-jobs?portal_id=${jobsPortalId}&job_id=${jobId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Could not unlink");
+      }
+      setStatus({ type: "success", message: "Job unlinked from portal." });
+      // Refresh the panel
+      const portal = portals.find((p) => p.id === jobsPortalId);
+      if (portal) openJobsPanel(portal, showInactiveJobs);
+      await loadData();
+    } catch (err) {
+      setStatus({ type: "error", message: err.message });
+    }
+  };
 
   return (
     <>
