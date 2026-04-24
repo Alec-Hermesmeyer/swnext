@@ -600,6 +600,98 @@ function ClientPortalAdminPage() {
           </div>
         ) : null}
 
+        {/* Jobs panel drawer */}
+        {jobsPortalId ? (
+          <div className="fixed inset-0 z-40 flex items-start justify-end bg-black/30">
+            <div className="flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl">
+              <header className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
+                <div>
+                  <h2 className={`${lato.className} text-lg font-bold text-neutral-900`}>Portal Jobs</h2>
+                  <p className="text-xs text-neutral-500">
+                    Active jobs matched to this portal
+                    {jobsSummary ? (
+                      <span className="ml-2 font-semibold text-neutral-700">
+                        ({jobsSummary.active_jobs} active of {jobsSummary.total_jobs} total)
+                      </span>
+                    ) : null}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-[11px] font-semibold text-neutral-600 cursor-pointer hover:bg-neutral-50">
+                    <input
+                      type="checkbox"
+                      checked={showInactiveJobs}
+                      onChange={toggleInactiveJobs}
+                      className="h-3 w-3 rounded border-neutral-300 text-brand focus:ring-brand/20"
+                    />
+                    Show completed
+                  </label>
+                  <button
+                    type="button"
+                    onClick={closeJobsPanel}
+                    className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </header>
+
+              {/* Summary stats row */}
+              {jobsSummary && jobsSummary.total_jobs > 0 ? (
+                <div className="grid grid-cols-4 gap-px border-b border-neutral-100 bg-neutral-100">
+                  <div className="bg-white px-4 py-3 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Active</p>
+                    <p className="mt-0.5 text-lg font-black tabular-nums text-brand">{jobsSummary.active_jobs}</p>
+                  </div>
+                  <div className="bg-white px-4 py-3 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Total Value</p>
+                    <p className="mt-0.5 text-lg font-black tabular-nums text-neutral-900">
+                      {jobsSummary.total_contract_value > 0
+                        ? `$${(jobsSummary.total_contract_value / 1000).toFixed(0)}k`
+                        : "—"}
+                    </p>
+                  </div>
+                  <div className="bg-white px-4 py-3 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Piers</p>
+                    <p className="mt-0.5 text-lg font-black tabular-nums text-neutral-900">
+                      {jobsSummary.total_piers || "—"}
+                    </p>
+                  </div>
+                  <div className="bg-white px-4 py-3 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Total Jobs</p>
+                    <p className="mt-0.5 text-lg font-black tabular-nums text-neutral-900">{jobsSummary.total_jobs}</p>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Job list */}
+              <div className="flex-1 overflow-y-auto">
+                {loadingJobs ? (
+                  <div className="flex items-center justify-center py-12 text-neutral-400">
+                    <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Loading jobs...
+                  </div>
+                ) : jobsPanelData.length === 0 ? (
+                  <div className="py-12 text-center text-sm text-neutral-400">
+                    No matching jobs found for this portal.
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-neutral-100">
+                    {jobsPanelData.map((job) => (
+                      <JobPanelRow key={job.id} job={job} />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {status ? (
           <div
             className={`fixed bottom-6 right-6 z-50 flex max-w-md items-start gap-3 rounded-xl border px-4 py-3 shadow-card-hover ${
