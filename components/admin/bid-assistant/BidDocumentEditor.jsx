@@ -10,6 +10,7 @@ import {
   formatCurrencyAmount,
   parseCurrencyAmount,
 } from "./bid-assistant-utils";
+import PublishToPortalModal from "./PublishToPortalModal";
 
 // Stable key counter for reorderable list items
 let _keyCounter = 0;
