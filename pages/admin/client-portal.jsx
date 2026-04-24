@@ -409,12 +409,14 @@ function ClientPortalAdminPage() {
                   portal={portal}
                   busy={savingId === portal.id}
                   justCopied={copiedToken === portal.access_token}
+                  jobCount={portalJobCounts[portal.id] || 0}
                   onEdit={() => openEditForm(portal)}
                   onDelete={() => deletePortal(portal)}
                   onToggle={() => toggleActive(portal)}
                   onRotate={() => rotateToken(portal)}
                   onCopy={() => copyPortalUrl(portal)}
                   onManageDocs={() => openDocPanel(portal)}
+                  onViewJobs={() => openJobsPanel(portal)}
                 />
               ))}
             </ul>
