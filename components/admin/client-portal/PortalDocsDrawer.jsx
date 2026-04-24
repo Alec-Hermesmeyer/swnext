@@ -3,6 +3,7 @@ import { Lato } from "next/font/google";
 import supabase from "@/components/Supabase";
 import { EMPTY_DOC_FORM } from "./constants";
 import { formatDateTime } from "./helpers";
+import JobSearchSelect from "./JobSearchSelect";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
