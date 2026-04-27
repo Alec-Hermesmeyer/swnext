@@ -6,8 +6,59 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import { Lato } from "next/font/google";
 import { useLiveData } from "@/hooks/useLiveData";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+  Filler,
+} from "chart.js";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
+
+const CHART_BRAND = "#0b2a5a";
+const CHART_BRAND_LIGHT = "#1e4eaa";
+const CHART_AMBER = "#f59e0b";
+const CHART_EMERALD = "#10b981";
+const CHART_NEUTRAL = "#cbd5e1";
+const CHART_FONT = { family: "'Lato', sans-serif", size: 11, weight: "600" };
+
+const chartBaseOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      labels: { font: CHART_FONT, padding: 12, usePointStyle: true, pointStyleWidth: 8 },
+    },
+    tooltip: {
+      backgroundColor: "#1e293b",
+      titleFont: { ...CHART_FONT, size: 12 },
+      bodyFont: { ...CHART_FONT, weight: "400" },
+      padding: 10,
+      cornerRadius: 8,
+      displayColors: true,
+      boxPadding: 4,
+    },
+  },
+};
 
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -359,6 +410,9 @@ function JobDetail({ job }) {
         ) : null}
       </div>
 
+      {/* Contract composition chart — only when CO activity exists */}
+      <ContractCompositionChart job={job} />
+
       {/* Change orders */}
       {job.change_orders && job.change_orders.length > 0 ? (
         <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-card lg:p-8">
@@ -467,6 +521,14 @@ function JobTracking({ job }) {
           </div>
         </div>
       </div>
+
+      {/* Production charts — hide when no timeline data */}
+      {hasTimeline ? (
+        <div className="grid gap-5 lg:grid-cols-2">
+          <DailyProductionChart timeline={timeline} />
+          <CumulativeProgressChart timeline={timeline} pierTarget={job.pier_count} />
+        </div>
+      ) : null}
 
       {/* Daily timeline */}
       {hasTimeline ? (
@@ -705,6 +767,257 @@ function ReportRow({ report }) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+// ── Charts ─────────────────────────────────────────────────────────
+
+function ChartCard({ title, subtitle, children }) {
+  return (
+    <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-card">
+      <div className="mb-3">
+        <h3 className="text-base font-bold text-neutral-900">{title}</h3>
+        {subtitle ? <p className="text-xs text-neutral-500">{subtitle}</p> : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+const formatChartDate = (iso) => {
+  if (!iso) return "";
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T12:00:00`) : new Date(iso);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
+
+function DailyProductionChart({ timeline = [] }) {
+  // Timeline is most-recent-first; reverse so the chart reads left→right.
+  const ordered = useMemo(() => [...timeline].reverse(), [timeline]);
+
+  const data = useMemo(() => ({
+    labels: ordered.map((d) => formatChartDate(d.date)),
+    datasets: [{
+      label: "Piers drilled",
+      data: ordered.map((d) => Number(d.piers_drilled) || 0),
+      backgroundColor: ordered.map((d) => (d.weather_stop ? CHART_AMBER : CHART_BRAND_LIGHT)),
+      borderRadius: 4,
+      borderSkipped: false,
+    }],
+  }), [ordered]);
+
+  const options = useMemo(() => ({
+    ...chartBaseOptions,
+    layout: { padding: { top: 8, right: 8, bottom: 0, left: 0 } },
+    plugins: {
+      ...chartBaseOptions.plugins,
+      legend: { display: false },
+      tooltip: {
+        ...chartBaseOptions.plugins.tooltip,
+        callbacks: {
+          label: (ctx) => {
+            const day = ordered[ctx.dataIndex];
+            const piers = `${ctx.parsed.y} piers`;
+            return day?.weather_stop ? `${piers} (weather stop)` : piers;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          font: { ...CHART_FONT, size: 10 },
+          color: "#64748b",
+          maxRotation: 0,
+          autoSkip: true,
+          autoSkipPadding: 12,
+        },
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { font: CHART_FONT, color: "#64748b", precision: 0, padding: 6 },
+        grid: { color: "#f1f5f9" },
+        border: { display: false },
+      },
+    },
+  }), [ordered]);
+
+  return (
+    <ChartCard title="Daily Production" subtitle="Piers drilled per day · amber = weather stop">
+      <div className="h-64">
+        <Bar data={data} options={options} />
+      </div>
+    </ChartCard>
+  );
+}
+
+function CumulativeProgressChart({ timeline = [], pierTarget }) {
+  const ordered = useMemo(() => [...timeline].reverse(), [timeline]);
+  const target = Number(pierTarget) || 0;
+
+  const { labels, cumulative } = useMemo(() => {
+    let running = 0;
+    const cum = [];
+    for (const d of ordered) {
+      running += Number(d.piers_drilled) || 0;
+      cum.push(running);
+    }
+    return { labels: ordered.map((d) => formatChartDate(d.date)), cumulative: cum };
+  }, [ordered]);
+
+  const data = useMemo(() => {
+    const datasets = [{
+      label: "Cumulative piers",
+      data: cumulative,
+      borderColor: CHART_BRAND,
+      backgroundColor: "rgba(11,42,90,0.15)",
+      pointBackgroundColor: CHART_BRAND,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      tension: 0.25,
+      fill: true,
+    }];
+    if (target > 0) {
+      datasets.push({
+        label: `Target (${target.toLocaleString()})`,
+        data: labels.map(() => target),
+        borderColor: CHART_EMERALD,
+        borderDash: [6, 6],
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+      });
+    }
+    return { labels, datasets };
+  }, [labels, cumulative, target]);
+
+  const options = useMemo(() => ({
+    ...chartBaseOptions,
+    layout: { padding: { top: 8, right: 12, bottom: 0, left: 0 } },
+    plugins: {
+      ...chartBaseOptions.plugins,
+      legend: {
+        ...chartBaseOptions.plugins.legend,
+        position: "bottom",
+        labels: {
+          ...chartBaseOptions.plugins.legend.labels,
+          boxWidth: 8,
+          boxHeight: 8,
+          padding: 10,
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          font: { ...CHART_FONT, size: 10 },
+          color: "#64748b",
+          maxRotation: 0,
+          autoSkip: true,
+          autoSkipPadding: 12,
+        },
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        suggestedMax: target > 0 ? Math.ceil(Math.max(target, ...cumulative) * 1.05) : undefined,
+        ticks: { font: CHART_FONT, color: "#64748b", precision: 0, padding: 6 },
+        grid: { color: "#f1f5f9" },
+        border: { display: false },
+      },
+    },
+  }), [cumulative, target]);
+
+  return (
+    <ChartCard title="Cumulative Progress" subtitle={target > 0 ? `Running pier total vs ${target.toLocaleString()} target` : "Running pier total"}>
+      <div className="h-64">
+        <Line data={data} options={options} />
+      </div>
+    </ChartCard>
+  );
+}
+
+function ContractCompositionChart({ job }) {
+  const base = Number(job.contract_amount) || 0;
+  const approved = Number(job.approved_co_total) || 0;
+  const pending = Number(job.pending_co_total) || 0;
+
+  // Hide unless there's CO activity — base contract alone is already in the metrics row.
+  if (approved === 0 && pending === 0) return null;
+  if (base === 0 && approved === 0 && pending === 0) return null;
+
+  const total = base + approved + pending;
+  const totalLabel = total.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+  const segments = [
+    { label: "Base Contract", value: base, color: CHART_BRAND, border: CHART_BRAND },
+    { label: "Approved COs", value: approved, color: CHART_EMERALD, border: CHART_EMERALD },
+    { label: "Pending COs", value: pending, color: CHART_AMBER, border: CHART_AMBER },
+  ].filter((s) => s.value > 0);
+
+  const data = {
+    labels: segments.map((s) => s.label),
+    datasets: [{
+      data: segments.map((s) => s.value),
+      backgroundColor: segments.map((s) => s.color),
+      borderColor: segments.map((s) => s.border),
+      borderWidth: 2,
+      hoverOffset: 6,
+    }],
+  };
+
+  const options = {
+    ...chartBaseOptions,
+    cutout: "70%",
+    layout: { padding: 4 },
+    plugins: {
+      ...chartBaseOptions.plugins,
+      legend: { display: false },
+      tooltip: {
+        ...chartBaseOptions.plugins.tooltip,
+        callbacks: {
+          label: (ctx) => {
+            const v = ctx.parsed;
+            const formatted = v.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+            const pct = total > 0 ? ` · ${Math.round((v / total) * 100)}%` : "";
+            return `${ctx.label}: ${formatted}${pct}`;
+          },
+        },
+      },
+    },
+  };
+
+  return (
+    <ChartCard title="Contract Composition" subtitle="Base contract + change orders">
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+        <div className="relative h-44 w-44 shrink-0">
+          <Doughnut data={data} options={options} />
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400">Total</p>
+            <p className="text-base font-black tabular-nums text-neutral-900">{totalLabel}</p>
+          </div>
+        </div>
+        <ul className="w-full space-y-2 text-xs sm:flex-1">
+          {segments.map((s) => {
+            const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
+            return (
+              <li key={s.label} className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: s.color }} />
+                  <span className="truncate font-semibold text-neutral-700">{s.label}</span>
+                </div>
+                <div className="flex items-baseline gap-2 shrink-0">
+                  <span className="font-mono text-[11px] font-bold tabular-nums text-neutral-900">
+                    {s.value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
+                  </span>
+                  <span className="w-9 text-right font-mono text-[10px] tabular-nums text-neutral-400">{pct}%</span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </ChartCard>
   );
 }
 
