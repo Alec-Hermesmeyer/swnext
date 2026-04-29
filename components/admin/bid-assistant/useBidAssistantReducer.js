@@ -133,12 +133,26 @@ function bidAssistantReducer(state, action) {
         ...state,
         selectedDoc: null,
         draft: normalizeDraftPayload({}),
+        savedDraft: normalizeDraftPayload({}),
+        draftHistory: [],
         chatHistory: [],
       };
 
     // ── Draft ──
-    case BID_ACTIONS.SET_DRAFT:
-      return { ...state, draft: normalizeDraftPayload(action.payload) };
+    case BID_ACTIONS.SET_DRAFT: {
+      // SET_DRAFT is dispatched after server load and after a successful save —
+      // both cases reset the "saved" baseline so dirty highlighting clears.
+      const normalized = normalizeDraftPayload(action.payload);
+      return {
+        ...state,
+        draft: normalized,
+        savedDraft: normalized,
+        // Clearing draftHistory on SET_DRAFT keeps Undo semantics scoped to the
+        // current editing session — once changes are persisted, there is no
+        // "previous" to undo to.
+        draftHistory: [],
+      };
+    }
 
     case BID_ACTIONS.UPDATE_DRAFT_FIELD:
       return {
