@@ -142,6 +142,12 @@ export function normalizeDraftPayload(draft) {
 // Compares one field of two normalized drafts. Returns true when the current
 // draft differs from the saved baseline. Uses JSON-stringify for arrays/objects
 // so we capture changes to list ordering, pricing rows, etc.
+//
+// Why JSON.stringify and not a deep-equal library: drafts always pass through
+// normalizeDraftPayload which produces a deterministic key order with only
+// strings and plain arrays/objects of strings — no Dates, undefined, functions,
+// or Maps. Under that contract stringify equality is correct, dependency-free,
+// and faster than walking arbitrary structures.
 export function isFieldDirty(currentDraft, savedDraft, field) {
   const a = currentDraft?.[field];
   const b = savedDraft?.[field];
