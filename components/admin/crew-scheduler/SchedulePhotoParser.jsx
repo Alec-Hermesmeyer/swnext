@@ -304,16 +304,22 @@ export default function SchedulePhotoParser({
   const [targetDate, setTargetDate] = useState(selectedDate);
   const fileInputRef = useRef(null);
 
-  // When the vision model detects a date, update targetDate (user can still override)
+  // When the vision model detects a date, update targetDate — but only if it's
+  // within ±60 days of today. The model frequently hallucinates the year on
+  // handwritten dates that only show MM/DD (it once saved a whole schedule to
+  // April 29, **2024** because the photo just said "4/29"). For anything
+  // outside that window, keep the user's currently-selected date.
   useEffect(() => {
-    if (result?.schedule_date) {
-      // Normalize the detected date to YYYY-MM-DD
-      const p = new Date(result.schedule_date + "T12:00:00");
-      if (!Number.isNaN(p.getTime())) {
-        const norm = `${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, "0")}-${String(p.getDate()).padStart(2, "0")}`;
-        setTargetDate(norm);
-      }
+    if (!result?.schedule_date) return;
+    const p = new Date(result.schedule_date + "T12:00:00");
+    if (Number.isNaN(p.getTime())) return;
+    const norm = `${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, "0")}-${String(p.getDate()).padStart(2, "0")}`;
+    const diffDays = Math.abs((p.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    if (diffDays > 60) {
+      console.warn("[parse-apply] ignoring photo date — too far from today", { detected: norm, diffDays: Math.round(diffDays) });
+      return;
     }
+    setTargetDate(norm);
   }, [result?.schedule_date]);
 
   // Handle file selection
@@ -385,7 +391,16 @@ export default function SchedulePhotoParser({
 
   // Apply parsed results to the schedule (with retry support)
   const handleApply = async () => {
-    if (!result?.matched_rows || !onApply) return;
+    console.log("[parse-apply] handleApply clicked", {
+      has_result: !!result,
+      matched_rows: result?.matched_rows?.length,
+      has_onApply: typeof onApply === "function",
+      targetDate,
+    });
+    if (!result?.matched_rows || !onApply) {
+      console.warn("[parse-apply] handleApply bailed: missing result or onApply");
+      return;
+    }
     if (!targetDate) {
       setError("Please select a date for this schedule.");
       return;
@@ -402,6 +417,7 @@ export default function SchedulePhotoParser({
       });
       onClose?.();
     } catch (err) {
+      console.error("[parse-apply] onApply threw", err);
       setApplyFailed(true);
       setError(err.message || "Failed to apply schedule data");
     } finally {
@@ -620,6 +636,13 @@ export default function SchedulePhotoParser({
                     </span>
                   )}
                 </div>
+                {result.schedule_date && targetDate !== result.schedule_date && (
+                  <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    <strong>Heads up:</strong> the vision model read the date as{" "}
+                    <span className="font-mono">{result.schedule_date}</span>, but you&apos;re applying to{" "}
+                    <span className="font-mono">{targetDate}</span>. Handwritten dates without a year often get the year wrong — double-check this is what you want before clicking Apply.
+                  </div>
+                )}
               </div>
 
               {/* Parsed rows */}
