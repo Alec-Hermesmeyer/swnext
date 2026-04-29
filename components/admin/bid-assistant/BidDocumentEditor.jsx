@@ -852,6 +852,8 @@ export default function BidDocumentEditor({ state, actions }) {
               aiLoading={aiAssistLoading.scope_items}
               hasHistory={hasScopeHistory}
               onRevert={() => actions.revertSection("scope_items")}
+              isDirty={dirtyMap.scope_items}
+              changeSource={aiTouchedFields.has("scope_items") ? "ai" : "manual"}
             >
               <ListEditor
                 items={draft.scope_items}
