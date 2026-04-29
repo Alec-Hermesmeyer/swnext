@@ -2135,6 +2135,8 @@ function CrewScheduler() {
 
   // --- Schedule Photo Parser: apply parsed data to schedule ---
   const handleApplyParsedSchedule = async ({ schedule_date, rows, overrides, entities }) => {
+    console.log("[parse-apply] starting", { schedule_date, row_count: rows?.length, override_count: Object.keys(overrides || {}).length });
+
     // --- 1. Normalize the date ---
     let targetDate = selectedDate;
     if (schedule_date) {
@@ -2143,11 +2145,17 @@ function CrewScheduler() {
         targetDate = `${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, "0")}-${String(p.getDate()).padStart(2, "0")}`;
       }
     }
+    console.log("[parse-apply] targetDate", targetDate);
 
     // --- 2. Get or create the schedule row ---
     const schedule = await getOrCreateSchedule(targetDate);
     if (!schedule) throw new Error("Could not create schedule for " + targetDate);
-    if (schedule.is_finalized && !confirm("This schedule is already finalized. Apply photo data anyway?")) return;
+    console.log("[parse-apply] schedule loaded", { id: schedule.id, is_finalized: schedule.is_finalized });
+    if (schedule.is_finalized && !confirm("This schedule is already finalized. Apply photo data anyway?")) {
+      console.warn("[parse-apply] bailed out: schedule is finalized and user cancelled");
+      alert("Apply cancelled — this schedule is already finalized. No data was saved.");
+      return;
+    }
     // NOTE: setSelectedDate is deferred to AFTER the DB writes + fetchSchedule.
     // Moving it here would trigger a useEffect → fetchSchedule race that can
     // discard the force-refreshed data via the scheduleRequestRef guard.
@@ -2237,10 +2245,21 @@ function CrewScheduler() {
         }
       }
 
+      console.log("[parse-apply] built rows", {
+        input_rows: rows?.length || 0,
+        assignment_rows: assignmentRows.length,
+        rig_detail_rows: rigDetailRows.length,
+        skipped_rows: skippedRows,
+      });
+
       // --- 4. Batch insert — two DB calls total ---
+      let insertedAssignments = 0;
+      let insertedRigDetails = 0;
       if (assignmentRows.length > 0) {
-        const { error } = await supabase.from("crew_assignments").insert(assignmentRows);
+        console.log("[parse-apply] inserting crew_assignments", assignmentRows.length);
+        const { error, data } = await supabase.from("crew_assignments").insert(assignmentRows).select("id");
         if (error) throw new Error("Failed to insert assignments: " + error.message);
+        insertedAssignments = data?.length ?? assignmentRows.length;
       }
       if (rigDetailRows.length > 0) {
         // Deduplicate rig details by category_id — multiple parsed rows can
@@ -2252,9 +2271,10 @@ function CrewScheduler() {
           mergedByCategory[key] = { ...(mergedByCategory[key] || {}), ...detail };
         }
         const deduped = Object.values(mergedByCategory);
-
-        const { error } = await supabase.from("schedule_rig_details").upsert(deduped, { onConflict: "schedule_id,category_id" });
+        console.log("[parse-apply] upserting schedule_rig_details", deduped.length);
+        const { error, data } = await supabase.from("schedule_rig_details").upsert(deduped, { onConflict: "schedule_id,category_id" }).select("id");
         if (error) throw new Error("Failed to upsert rig details: " + error.message);
+        insertedRigDetails = data?.length ?? deduped.length;
       }
 
       // --- 5. Refresh the UI ---
@@ -2264,14 +2284,25 @@ function CrewScheduler() {
       // the freshly-written cache instead of racing with the force fetch.
       if (targetDate !== selectedDate) setSelectedDate(targetDate);
 
-      // Warn about skipped rows
+      // Always-on summary so the user sees exactly what happened.
+      console.log("[parse-apply] done", {
+        targetDate,
+        insertedAssignments,
+        insertedRigDetails,
+        skippedRows,
+      });
+      const lines = [
+        `Schedule for ${targetDate}:`,
+        `• ${insertedAssignments} assignment row(s) saved`,
+        `• ${insertedRigDetails} rig detail row(s) saved`,
+      ];
       if (skippedRows > 0) {
-        alert(
-          `${assignmentRows.length} assignments saved successfully.\n\n` +
-          `${skippedRows} row(s) were skipped because they couldn't be matched to a rig category. ` +
-          `Use the "Details" dropdown on each row to assign a category before applying.`
-        );
+        lines.push(`• ${skippedRows} row(s) skipped (no rig category — use the "Details" dropdown to assign one).`);
       }
+      if (insertedAssignments === 0 && insertedRigDetails === 0) {
+        lines.push("⚠ Nothing was saved. Check that the parsed rows have a matched rig category.");
+      }
+      alert(lines.join("\n"));
     } finally {
       setSaving(false);
     }
