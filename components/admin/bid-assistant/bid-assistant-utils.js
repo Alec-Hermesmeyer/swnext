@@ -139,6 +139,25 @@ export function normalizeDraftPayload(draft) {
   };
 }
 
+// Compares one field of two normalized drafts. Returns true when the current
+// draft differs from the saved baseline. Uses JSON-stringify for arrays/objects
+// so we capture changes to list ordering, pricing rows, etc.
+export function isFieldDirty(currentDraft, savedDraft, field) {
+  const a = currentDraft?.[field];
+  const b = savedDraft?.[field];
+  if (a === b) return false;
+  const aIsObj = a !== null && typeof a === "object";
+  const bIsObj = b !== null && typeof b === "object";
+  if (aIsObj || bIsObj) {
+    try {
+      return JSON.stringify(a) !== JSON.stringify(b);
+    } catch {
+      return true;
+    }
+  }
+  return String(a ?? "") !== String(b ?? "");
+}
+
 export function listToTextarea(values) {
   return (Array.isArray(values) ? values : []).join("\n");
 }
