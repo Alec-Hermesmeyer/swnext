@@ -678,6 +678,15 @@ export default function BidDocumentEditor({ state, actions }) {
             <h3 className="text-sm font-bold text-neutral-800">Proposal Editor</h3>
             <p className="text-[11px] text-neutral-400 truncate max-w-[200px]">{selectedDoc.filename}</p>
           </div>
+          {isDirty ? (
+            <span
+              className="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200"
+              title="Sections marked Modified or AI edit will be included on save & download."
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              {dirtyCount} unsaved {dirtyCount === 1 ? "change" : "changes"}
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -702,7 +711,7 @@ export default function BidDocumentEditor({ state, actions }) {
           <button
             type="button"
             onClick={() => exportDraft("docx")}
-            disabled={exportingDraft || loadingDraft}
+            disabled={exportingDraft || savingDraft || loadingDraft}
             className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
             title="Save & download as Word document"
           >
@@ -711,7 +720,7 @@ export default function BidDocumentEditor({ state, actions }) {
           <button
             type="button"
             onClick={() => exportDraft("txt")}
-            disabled={exportingDraft || loadingDraft}
+            disabled={exportingDraft || savingDraft || loadingDraft}
             className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
             title="Save & download as plain text"
           >
