@@ -4,13 +4,34 @@
  * real-time sync with the chat interface, and live preview.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   normalizeDraftPayload,
   formatCurrencyAmount,
   parseCurrencyAmount,
+  isFieldDirty,
 } from "./bid-assistant-utils";
 import PublishToPortalModal from "./PublishToPortalModal";
+
+// Fields rendered as their own editor sections — the basis for dirty-state
+// tracking and "N unsaved changes" toolbar count.
+const TRACKED_FIELDS = [
+  "title",
+  "due_date",
+  "project_name",
+  "client_name",
+  "intro",
+  "pricing_items",
+  "scope_items",
+  "assumptions",
+  "exclusions",
+  "terms",
+  "notes",
+];
+
+// Project Details section bundles four header fields; treat them as one block
+// for the Modified badge.
+const PROJECT_DETAIL_FIELDS = ["title", "due_date", "project_name", "client_name"];
 
 // Stable key counter for reorderable list items
 let _keyCounter = 0;
