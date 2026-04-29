@@ -27,6 +27,7 @@ const FIELD_GROUPS = [
     fields: [
       { key: "max_concurrent_jobs", label: "Max Concurrent Jobs", type: "number", hint: "Scheduling ceiling for your operation" },
       { key: "min_crew_available", label: "Min Crew Available", type: "number", hint: "Minimum idle crew before taking new work" },
+      { key: "projected_start_date", label: "Projected Start Date", type: "date", hint: "When this job would begin (blank = immediate)" },
     ],
   },
   {
@@ -52,6 +53,11 @@ function MetricInput({ field, value, onChange }) {
 
   const handleChange = (e) => {
     let v = e.target.value;
+    if (field.type === "date") {
+      // Pass date string as-is (YYYY-MM-DD or "")
+      onChange(field.key, v);
+      return;
+    }
     if (field.type === "currency") {
       v = Number(v.replace(/[^0-9]/g, "")) || 0;
     } else if (field.type === "number" || field.type === "weight") {
@@ -59,6 +65,24 @@ function MetricInput({ field, value, onChange }) {
     }
     onChange(field.key, v);
   };
+
+  // Date fields get a native date picker
+  if (field.type === "date") {
+    return (
+      <div>
+        <label className="mb-1 block text-[11px] font-semibold text-neutral-500">
+          {field.label}
+        </label>
+        <input
+          type="date"
+          value={value || ""}
+          onChange={handleChange}
+          className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none"
+        />
+        {field.hint && <p className="mt-0.5 text-[10px] text-neutral-400">{field.hint}</p>}
+      </div>
+    );
+  }
 
   return (
     <div>

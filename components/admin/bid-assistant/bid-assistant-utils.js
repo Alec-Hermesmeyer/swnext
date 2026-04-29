@@ -214,6 +214,7 @@ export function getDefaultBidFitMetrics() {
     // Capacity & scheduling
     max_concurrent_jobs: 20,
     min_crew_available: 3,
+    projected_start_date: "",  // YYYY-MM-DD or "" for immediate
     // Signal weights (should total 100)
     weight_profitability: 35,
     weight_contract_size: 15,
@@ -236,6 +237,7 @@ export function buildMetricsContextForAI(metrics, opsContext) {
     parts.push(`Minimum contract value: $${Number(metrics.minimum_contract_value_usd || 300000).toLocaleString()}`);
     parts.push(`Risk buffer: ${metrics.risk_buffer_percent || 8}%`);
     parts.push(`Max concurrent jobs: ${metrics.max_concurrent_jobs || 20}`);
+    if (metrics.projected_start_date) parts.push(`Projected start date: ${metrics.projected_start_date}`);
     if (metrics.notes) parts.push(`Notes: ${metrics.notes}`);
   }
   if (opsContext) {

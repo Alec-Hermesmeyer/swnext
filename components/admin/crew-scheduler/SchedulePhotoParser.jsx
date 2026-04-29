@@ -5,8 +5,67 @@
  * displays parsed results with confidence indicators, and lets the user
  * review/fix matches before applying them to the digital schedule.
  */
-import { useState, useRef, useCallback } from "react";
-import { Camera, Upload, CheckCircle, AlertTriangle, XCircle, Loader2, X, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Camera, Upload, CheckCircle, AlertTriangle, XCircle, Loader2, X, ChevronDown, ChevronUp, CalendarDays } from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Client-side image compression — converts any image to ≤1MB JPEG before upload.
+// Eliminates HEIC entirely, shrinks upload 4-6x, removes server HEIC conversion.
+// ---------------------------------------------------------------------------
+const MAX_DIM = 1600;
+const JPEG_QUALITY = 0.82;
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    // If the file is already small JPEG/PNG (< 800KB), skip compression
+    if (file.size < 800 * 1024 && /^image\/(jpeg|png)$/.test(file.type)) {
+      return resolve(file);
+    }
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+
+      // Scale down to MAX_DIM on the longest side
+      if (width > MAX_DIM || height > MAX_DIM) {
+        const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return reject(new Error("Canvas compression failed"));
+          const name = file.name.replace(/\.\w+$/, ".jpg");
+          resolve(new File([blob], name, { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        JPEG_QUALITY
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      // Browser can't decode (e.g. HEIC on Chrome) — send raw, let server handle it
+      resolve(file);
+    };
+
+    img.src = url;
+  });
+}
+
+async function compressAll(files) {
+  return Promise.all(files.map(compressImage));
+}
 
 // ---------------------------------------------------------------------------
 // Confidence badge component
@@ -226,11 +285,24 @@ export default function SchedulePhotoParser({
   const [error, setError] = useState(null);
   const [overrides, setOverrides] = useState({});
   const [applying, setApplying] = useState(false);
+  const [targetDate, setTargetDate] = useState(selectedDate);
   const fileInputRef = useRef(null);
+
+  // When the vision model detects a date, update targetDate (user can still override)
+  useEffect(() => {
+    if (result?.schedule_date) {
+      // Normalize the detected date to YYYY-MM-DD
+      const p = new Date(result.schedule_date + "T12:00:00");
+      if (!Number.isNaN(p.getTime())) {
+        const norm = `${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, "0")}-${String(p.getDate()).padStart(2, "0")}`;
+        setTargetDate(norm);
+      }
+    }
+  }, [result?.schedule_date]);
 
   // Handle file selection
   const handleFiles = useCallback((newFiles) => {
-    const fileArr = Array.from(newFiles).slice(0, 4);
+    const fileArr = Array.from(newFiles).slice(0, 5);
     setFiles(fileArr);
     setResult(null);
     setError(null);
@@ -260,8 +332,11 @@ export default function SchedulePhotoParser({
     setResult(null);
 
     try {
+      // Compress images client-side before upload (HEIC→JPEG, resize to 1600px)
+      const compressed = await compressAll(files);
+
       const formData = new FormData();
-      files.forEach((f) => formData.append("photos", f));
+      compressed.forEach((f) => formData.append("photos", f));
 
       const res = await fetch("/api/parse-schedule-photo", {
         method: "POST",
@@ -295,10 +370,14 @@ export default function SchedulePhotoParser({
   // Apply parsed results to the schedule
   const handleApply = async () => {
     if (!result?.matched_rows || !onApply) return;
+    if (!targetDate) {
+      setError("Please select a date for this schedule.");
+      return;
+    }
     setApplying(true);
     try {
       await onApply({
-        schedule_date: result.schedule_date || selectedDate,
+        schedule_date: targetDate,
         rows: result.matched_rows,
         overrides,
         entities: result.entities,
@@ -318,6 +397,7 @@ export default function SchedulePhotoParser({
     setResult(null);
     setError(null);
     setOverrides({});
+    setTargetDate(selectedDate);
   };
 
   return (
@@ -369,7 +449,7 @@ export default function SchedulePhotoParser({
                       Drop schedule photos here or click to browse
                     </p>
                     <p className="text-xs text-neutral-400">
-                      Accepts HEIC, PNG, JPEG — up to 4 photos
+                      Accepts HEIC, PNG, JPEG — up to 5 photos
                     </p>
                   </>
                 ) : (
@@ -400,22 +480,34 @@ export default function SchedulePhotoParser({
             </div>
           )}
 
-          {/* Parse button */}
+          {/* Date picker + Parse button */}
           {files.length > 0 && !result && (
-            <button
-              onClick={handleParse}
-              disabled={parsing}
-              className="w-full rounded-lg bg-[#0b2a5a] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0a2350] disabled:opacity-60"
-            >
-              {parsing ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Analyzing {files.length} photo{files.length > 1 ? "s" : ""}...
-                </span>
-              ) : (
-                `Parse Schedule Photo${files.length > 1 ? "s" : ""}`
-              )}
-            </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-1.5">
+                <CalendarDays className="h-4 w-4 text-neutral-400" />
+                <label className="text-xs font-medium text-neutral-500 whitespace-nowrap">Apply to:</label>
+                <input
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                  className="border-0 bg-transparent text-sm font-semibold text-neutral-800 outline-none"
+                />
+              </div>
+              <button
+                onClick={handleParse}
+                disabled={parsing}
+                className="flex-1 rounded-lg bg-[#0b2a5a] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0a2350] disabled:opacity-60"
+              >
+                {parsing ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Analyzing {files.length} photo{files.length > 1 ? "s" : ""}...
+                  </span>
+                ) : (
+                  `Parse Schedule Photo${files.length > 1 ? "s" : ""}`
+                )}
+              </button>
+            </div>
           )}
 
           {/* Error */}
@@ -429,46 +521,62 @@ export default function SchedulePhotoParser({
           {result && (
             <>
               {/* Summary bar */}
-              <div className="flex items-center justify-between rounded-lg bg-neutral-50 border border-neutral-200 px-4 py-2">
-                <div className="flex items-center gap-4 text-xs">
-                  <span className="font-semibold text-neutral-700">
-                    {result.matched_rows?.length || 0} rows extracted
-                  </span>
-                  {result.schedule_date && (
-                    <span className="text-neutral-500">
-                      Date: {result.schedule_date}
+              <div className="rounded-lg bg-neutral-50 border border-neutral-200 px-4 py-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className="font-semibold text-neutral-700">
+                      {result.matched_rows?.length || 0} rows extracted
                     </span>
-                  )}
-                  {result.provider && (
-                    <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-mono text-neutral-600">
-                      {result.provider === "groq" ? "Groq" : "Anthropic"}
-                      {result.duration_ms ? ` ${(result.duration_ms / 1000).toFixed(1)}s` : ""}
-                    </span>
-                  )}
-                  {result.summary && (
-                    <>
-                      <span className="text-green-600">
-                        {result.summary.high_confidence} auto-matched
+                    {result.provider && (
+                      <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-mono text-neutral-600">
+                        {result.provider === "groq" ? "Groq" : "Anthropic"}
+                        {result.duration_ms ? ` ${(result.duration_ms / 1000).toFixed(1)}s` : ""}
                       </span>
-                      {result.summary.medium_confidence > 0 && (
-                        <span className="text-yellow-600">
-                          {result.summary.medium_confidence} to confirm
+                    )}
+                    {result.summary && (
+                      <>
+                        <span className="text-green-600">
+                          {result.summary.high_confidence} auto-matched
                         </span>
-                      )}
-                      {result.summary.low_confidence > 0 && (
-                        <span className="text-red-600">
-                          {result.summary.low_confidence} to review
-                        </span>
-                      )}
-                    </>
+                        {result.summary.medium_confidence > 0 && (
+                          <span className="text-yellow-600">
+                            {result.summary.medium_confidence} to confirm
+                          </span>
+                        )}
+                        {result.summary.low_confidence > 0 && (
+                          <span className="text-red-600">
+                            {result.summary.low_confidence} to review
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleReset}
+                    className="text-xs text-neutral-500 hover:text-neutral-700 underline"
+                  >
+                    Re-upload
+                  </button>
+                </div>
+                {/* Date selector row */}
+                <div className="flex items-center gap-3 text-xs">
+                  <div className="flex items-center gap-2 rounded border border-neutral-300 bg-white px-2 py-1">
+                    <CalendarDays className="h-3.5 w-3.5 text-neutral-400" />
+                    <span className="font-medium text-neutral-500">Apply to:</span>
+                    <input
+                      type="date"
+                      value={targetDate}
+                      onChange={(e) => setTargetDate(e.target.value)}
+                      className="border-0 bg-transparent text-xs font-semibold text-neutral-800 outline-none"
+                    />
+                  </div>
+                  {result.schedule_date && targetDate !== result.schedule_date && (
+                    <span className="inline-flex items-center gap-1 text-amber-600">
+                      <AlertTriangle className="h-3 w-3" />
+                      Photo shows {result.schedule_date}
+                    </span>
                   )}
                 </div>
-                <button
-                  onClick={handleReset}
-                  className="text-xs text-neutral-500 hover:text-neutral-700 underline"
-                >
-                  Re-upload
-                </button>
               </div>
 
               {/* Parsed rows */}
@@ -494,10 +602,10 @@ export default function SchedulePhotoParser({
                   {applying ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Applying to schedule...
+                      Applying to {targetDate}...
                     </span>
                   ) : (
-                    `Apply ${result.matched_rows?.length || 0} Rows to Schedule`
+                    `Apply ${result.matched_rows?.length || 0} Rows to ${targetDate}`
                   )}
                 </button>
                 <button

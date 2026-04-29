@@ -161,20 +161,44 @@ function computeBidScore(metrics, opsContext, bidData) {
   totalWeight += signals[signals.length - 1].weight;
   weightedScore += resourceScore * signals[signals.length - 1].weight;
 
-  // 4. Scheduling constraints signal
+  // 4. Scheduling constraints signal (accounts for projected start date lead time)
   const activeJobs = opsContext?.scheduling?.active_jobs || 0;
   const schedCapacity = Number(metrics?.max_concurrent_jobs || 20);
   const schedRatio = schedCapacity > 0 ? activeJobs / schedCapacity : 1;
-  const schedScore = schedRatio < 0.6 ? 100
+  let schedScore = schedRatio < 0.6 ? 100
     : schedRatio < 0.8 ? 70
     : schedRatio < 1.0 ? 40
     : 15;
+
+  // If a projected start date is set and it's in the future, give a scheduling
+  // bonus — more lead time means more room to free up resources.
+  let startDateDetail = "";
+  const startDate = metrics?.projected_start_date;
+  if (startDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(startDate + "T00:00:00");
+    const daysUntilStart = Math.round((start - today) / 86400000);
+    if (daysUntilStart > 30) {
+      schedScore = Math.min(100, schedScore + 15);
+      startDateDetail = ` Start in ${daysUntilStart} days — added lead-time bonus.`;
+    } else if (daysUntilStart > 14) {
+      schedScore = Math.min(100, schedScore + 8);
+      startDateDetail = ` Start in ${daysUntilStart} days — moderate lead time.`;
+    } else if (daysUntilStart > 0) {
+      startDateDetail = ` Start in ${daysUntilStart} days.`;
+    } else if (daysUntilStart < 0) {
+      schedScore = Math.max(0, schedScore - 10);
+      startDateDetail = ` Start date is ${Math.abs(daysUntilStart)} days past — timeline risk.`;
+    }
+  }
+
   signals.push({
     id: "scheduling",
     label: "Scheduling Capacity",
     score: schedScore,
     weight: Number(metrics?.weight_scheduling || 15),
-    detail: `${activeJobs} of ${schedCapacity} max concurrent jobs (${Math.round(schedRatio * 100)}% used)`,
+    detail: `${activeJobs} of ${schedCapacity} max concurrent jobs (${Math.round(schedRatio * 100)}% used).${startDateDetail}`,
     status: schedScore >= 70 ? "good" : schedScore >= 40 ? "caution" : "warning",
   });
   totalWeight += signals[signals.length - 1].weight;
