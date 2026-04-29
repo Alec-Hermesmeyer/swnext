@@ -906,6 +906,8 @@ export default function BidDocumentEditor({ state, actions }) {
               aiLoading={aiAssistLoading.terms}
               hasHistory={hasTermsHistory}
               onRevert={() => actions.revertSection("terms")}
+              isDirty={dirtyMap.terms}
+              changeSource={aiTouchedFields.has("terms") ? "ai" : "manual"}
             >
               <textarea
                 rows={3}
