@@ -632,7 +632,7 @@ export default function BidDocumentEditor({ state, actions }) {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-      actions.setStatus(`Saved & exported ${fileName}`);
+      actions.setStatus(`Downloaded ${fileName} with all current edits.`);
     } catch (error) {
       actions.setStatus(error.message || "Could not export draft");
     } finally {
