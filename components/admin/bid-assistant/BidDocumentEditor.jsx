@@ -41,9 +41,36 @@ function nextKey() {
 
 // ── Section wrapper with AI assist button ───────────────────────────
 
-function EditorSection({ title, icon, children, onAiAssist, aiLoading, reverted, onRevert, hasHistory }) {
+function EditorSection({
+  title,
+  icon,
+  children,
+  onAiAssist,
+  aiLoading,
+  reverted,
+  onRevert,
+  hasHistory,
+  isDirty,
+  changeSource,
+}) {
+  // changeSource: "ai" when last touched by AI/chat, "manual" when the diff
+  // includes plain typing. Decides which badge to show.
+  const badge = isDirty
+    ? changeSource === "ai"
+      ? { label: "AI edit", className: "bg-violet-50 text-violet-700 ring-violet-200" }
+      : { label: "Modified", className: "bg-amber-50 text-amber-700 ring-amber-200" }
+    : null;
+
+  const containerClass = `group rounded-xl border bg-white transition-shadow hover:shadow-card ${
+    isDirty
+      ? changeSource === "ai"
+        ? "border-violet-200 ring-1 ring-violet-100"
+        : "border-amber-200 ring-1 ring-amber-100"
+      : "border-neutral-200"
+  }`;
+
   return (
-    <div className="group rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-card">
+    <div className={containerClass}>
       <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
         <div className="flex items-center gap-2">
           {icon ? (
@@ -52,6 +79,13 @@ function EditorSection({ title, icon, children, onAiAssist, aiLoading, reverted,
             </div>
           ) : null}
           <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-500">{title}</h4>
+          {badge ? (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ring-1 ${badge.className}`}
+            >
+              {badge.label}
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
           {hasHistory ? (
