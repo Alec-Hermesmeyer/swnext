@@ -60,6 +60,13 @@ export function getInitialState() {
 
     // Draft
     draft: normalizeDraftPayload({}),
+    // savedDraft mirrors the last server-confirmed draft (post-load or post-save).
+    // It is the baseline for "modified since last save" highlighting in the editor.
+    // We track this separately from draftHistory because draftHistory only records
+    // AI-applied changes (used for the per-section Undo); plain typing via
+    // updateDraftField is not in history, so we need a snapshot to detect manual
+    // edits as well.
+    savedDraft: normalizeDraftPayload({}),
     draftHistory: [],
     loadingDraft: false,
     savingDraft: false,
