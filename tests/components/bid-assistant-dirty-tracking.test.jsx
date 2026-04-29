@@ -8,8 +8,8 @@
  */
 
 import { renderHook, act } from '@testing-library/react'
-import { useBidAssistantReducer } from '@/components/admin/bid-assistant/useBidAssistantReducer'
-import { isFieldDirty, normalizeDraftPayload } from '@/components/admin/bid-assistant/bid-assistant-utils'
+import { useBidAssistantReducer } from '../../components/admin/bid-assistant/useBidAssistantReducer'
+import { isFieldDirty, normalizeDraftPayload } from '../../components/admin/bid-assistant/bid-assistant-utils'
 
 describe('isFieldDirty', () => {
   it('returns false when string fields match', () => {
