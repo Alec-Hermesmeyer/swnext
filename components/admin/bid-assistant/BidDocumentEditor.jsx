@@ -888,6 +888,8 @@ export default function BidDocumentEditor({ state, actions }) {
               aiLoading={aiAssistLoading.exclusions}
               hasHistory={hasExclusionsHistory}
               onRevert={() => actions.revertSection("exclusions")}
+              isDirty={dirtyMap.exclusions}
+              changeSource={aiTouchedFields.has("exclusions") ? "ai" : "manual"}
             >
               <ListEditor
                 items={draft.exclusions}
