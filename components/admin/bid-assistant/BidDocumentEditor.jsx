@@ -357,9 +357,25 @@ function ListEditor({ items, onChange, placeholder }) {
 
 // ── Live preview pane ───────────────────────────────────────────────
 
-function LivePreview({ draft }) {
+// Visual ring/background applied to a preview block when its underlying field
+// has unsaved edits. The same accent palette as EditorSection (amber for manual
+// edits, violet for AI-applied) so the editor and preview stay in sync.
+function previewAccent(dirty, fromAi) {
+  if (!dirty) return "";
+  return fromAi
+    ? "bg-violet-50/60 ring-1 ring-violet-200 rounded-md -mx-1 px-1 py-0.5"
+    : "bg-amber-50/60 ring-1 ring-amber-200 rounded-md -mx-1 px-1 py-0.5";
+}
+
+function LivePreview({ draft, dirtyMap = {}, aiTouchedFields }) {
   const pricingRows = Array.isArray(draft?.pricing_items) ? draft.pricing_items : [];
   const total = pricingRows.reduce((sum, r) => sum + parseCurrencyAmount(r?.amount), 0);
+
+  const aiSet = aiTouchedFields || new Set();
+  const isAi = (field) => aiSet.has?.(field);
+
+  const headerDirty = ["title", "project_name", "client_name", "due_date"].some((f) => dirtyMap[f]);
+  const headerFromAi = ["title", "project_name", "client_name", "due_date"].some((f) => isAi(f));
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-gradient-to-br from-neutral-50 to-white p-4">
@@ -371,19 +387,28 @@ function LivePreview({ draft }) {
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4 text-sm shadow-sm">
-        <h3 className="text-base font-bold text-neutral-900">{draft?.title || "Bid Proposal"}</h3>
-        <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-0.5 text-xs text-neutral-500">
-          <p><span className="font-semibold text-neutral-700">Project:</span> {draft?.project_name || "—"}</p>
-          <p><span className="font-semibold text-neutral-700">Client:</span> {draft?.client_name || "—"}</p>
-          <p><span className="font-semibold text-neutral-700">Due:</span> {draft?.due_date || "—"}</p>
+        <div className={previewAccent(headerDirty, headerFromAi)}>
+          <h3 className="text-base font-bold text-neutral-900">{draft?.title || "Bid Proposal"}</h3>
+          <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-0.5 text-xs text-neutral-500">
+            <p><span className="font-semibold text-neutral-700">Project:</span> {draft?.project_name || "—"}</p>
+            <p><span className="font-semibold text-neutral-700">Client:</span> {draft?.client_name || "—"}</p>
+            <p><span className="font-semibold text-neutral-700">Due:</span> {draft?.due_date || "—"}</p>
+          </div>
         </div>
 
         {draft?.intro ? (
-          <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700 leading-relaxed">{draft.intro}</p>
+          <p
+            className={`mt-3 whitespace-pre-wrap text-sm text-neutral-700 leading-relaxed ${previewAccent(
+              dirtyMap.intro,
+              isAi("intro"),
+            )}`}
+          >
+            {draft.intro}
+          </p>
         ) : null}
 
         {pricingRows.length ? (
-          <div className="mt-3">
+          <div className={`mt-3 ${previewAccent(dirtyMap.pricing_items, isAi("pricing_items"))}`}>
             <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">Pricing</p>
             <div className="overflow-hidden rounded-md border border-neutral-200">
               <table className="w-full text-left text-xs">
@@ -414,7 +439,7 @@ function LivePreview({ draft }) {
 
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           {(draft?.scope_items || []).length ? (
-            <div>
+            <div className={previewAccent(dirtyMap.scope_items, isAi("scope_items"))}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Scope</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-3.5 text-xs text-neutral-600">
                 {draft.scope_items.map((item, idx) => <li key={idx}>{item}</li>)}
@@ -422,7 +447,7 @@ function LivePreview({ draft }) {
             </div>
           ) : null}
           {(draft?.assumptions || []).length ? (
-            <div>
+            <div className={previewAccent(dirtyMap.assumptions, isAi("assumptions"))}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Assumptions</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-3.5 text-xs text-neutral-600">
                 {draft.assumptions.map((item, idx) => <li key={idx}>{item}</li>)}
@@ -430,7 +455,7 @@ function LivePreview({ draft }) {
             </div>
           ) : null}
           {(draft?.exclusions || []).length ? (
-            <div>
+            <div className={previewAccent(dirtyMap.exclusions, isAi("exclusions"))}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Exclusions</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-3.5 text-xs text-neutral-600">
                 {draft.exclusions.map((item, idx) => <li key={idx}>{item}</li>)}
@@ -440,7 +465,7 @@ function LivePreview({ draft }) {
         </div>
 
         {draft?.terms ? (
-          <div className="mt-3">
+          <div className={`mt-3 ${previewAccent(dirtyMap.terms, isAi("terms"))}`}>
             <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Terms</p>
             <p className="mt-1 whitespace-pre-wrap text-xs text-neutral-600">{draft.terms}</p>
           </div>
