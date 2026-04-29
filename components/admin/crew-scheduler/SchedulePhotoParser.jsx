@@ -9,16 +9,22 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Camera, Upload, CheckCircle, AlertTriangle, XCircle, Loader2, X, ChevronDown, ChevronUp, CalendarDays, RotateCcw } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Client-side image compression — converts any image to ≤1MB JPEG before upload.
-// Eliminates HEIC entirely, shrinks upload 4-6x, removes server HEIC conversion.
+// Client-side image compression — converts any image to a small JPEG before
+// upload. Vercel serverless functions reject request bodies > ~4.5MB with a
+// plain-text "Request Entity Too Large", which the JSON parser then chokes on.
+// We compress aggressively to stay well under that cap on mobile (iPhone HEIC
+// originals are 3-5MB each).
 // ---------------------------------------------------------------------------
-const MAX_DIM = 1600;
-const JPEG_QUALITY = 0.82;
+const MAX_DIM = 1280;
+const JPEG_QUALITY = 0.75;
+// Hard ceiling per upload payload. Vercel's serverless body limit is 4.5MB;
+// leave headroom for FormData boundaries and any non-image fields.
+const MAX_TOTAL_UPLOAD_BYTES = 3.8 * 1024 * 1024;
 
 function compressImage(file) {
   return new Promise((resolve, reject) => {
-    // If the file is already small JPEG/PNG (< 800KB), skip compression
-    if (file.size < 800 * 1024 && /^image\/(jpeg|png)$/.test(file.type)) {
+    // If the file is already small JPEG/PNG (< 500KB), skip compression
+    if (file.size < 500 * 1024 && /^image\/(jpeg|png)$/.test(file.type)) {
       return resolve(file);
     }
 
@@ -55,8 +61,12 @@ function compressImage(file) {
 
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      // Browser can't decode (e.g. HEIC on Chrome) — send raw, let server handle it
-      resolve(file);
+      // Browser can't decode (HEIC on Android, or older iOS Safari edge cases).
+      // Reject so the caller can surface a clear error instead of letting a
+      // raw 5MB HEIC sail upstream and get bounced by the platform body limit.
+      reject(new Error(
+        `Couldn't read "${file.name}". On iPhone: Settings → Camera → Formats → Most Compatible, then re-take the photo. (HEIC photos can fail to decode in some browsers.)`
+      ));
     };
 
     img.src = url;
@@ -354,8 +364,19 @@ export default function SchedulePhotoParser({
     setResult(null);
 
     try {
-      // Compress images client-side before upload (HEIC→JPEG, resize to 1600px)
+      // Compress images client-side before upload (HEIC→JPEG, resize to MAX_DIM)
       const compressed = await compressAll(files);
+
+      // Pre-flight payload size check — Vercel rejects request bodies > 4.5MB
+      // with a plain-text "Request Entity Too Large" that crashes res.json().
+      // Bail early with a clear error instead.
+      const totalBytes = compressed.reduce((sum, f) => sum + f.size, 0);
+      if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
+        const mb = (totalBytes / 1024 / 1024).toFixed(1);
+        throw new Error(
+          `Photos are too large after compression (${mb} MB total, max ${(MAX_TOTAL_UPLOAD_BYTES / 1024 / 1024).toFixed(1)} MB). Try uploading fewer photos at a time, or re-take the photos from a closer distance.`
+        );
+      }
 
       const formData = new FormData();
       compressed.forEach((f) => formData.append("photos", f));
@@ -365,9 +386,30 @@ export default function SchedulePhotoParser({
         body: formData,
       });
 
-      const data = await res.json();
+      // Robust response parsing: platform-level errors (413 Request Entity Too
+      // Large, 504 timeout, 502 bad gateway) come back as HTML or plain text,
+      // not JSON. Trying res.json() first throws "Unexpected token" and hides
+      // the real cause from the user.
+      const text = await res.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = null;
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || "Failed to parse schedule photos");
+        if (res.status === 413 || /request entity too large/i.test(text)) {
+          throw new Error(
+            "Upload too large for the server. Try fewer photos, or re-take them from a closer distance."
+          );
+        }
+        const serverMsg = data?.error || (text ? text.slice(0, 200) : `HTTP ${res.status}`);
+        throw new Error(`Parse failed: ${serverMsg}`);
+      }
+
+      if (!data) {
+        throw new Error("Server returned a non-JSON response. Please try again.");
       }
 
       setResult(data);
