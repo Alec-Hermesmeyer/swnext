@@ -2152,11 +2152,20 @@ function CrewScheduler() {
 
     setSaving(true);
     try {
+      // --- 2b. Clear existing data so parsed results fully overwrite ---
+      await Promise.all([
+        supabase.from("crew_assignments").delete().eq("schedule_id", schedule.id),
+        supabase.from("schedule_rig_details").delete().eq("schedule_id", schedule.id),
+      ]);
+
       // --- 3. Build all DB records in plain JS (no DB calls yet) ---
       const assignmentRows = [];
       const rigDetailRows = [];
-      const usedWorkers = new Set(assignments.filter((a) => a.worker_id).map((a) => String(a.worker_id)));
-      const usedCategories = new Set(assignments.filter((a) => a.job_id && !a.notes?.startsWith("__rig_day_type__:")).map((a) => String(a.category_id)));
+      // Start with empty sets — we deleted existing data above, so nothing
+      // is "already used". The sets still prevent duplicates within the
+      // parsed rows themselves (e.g. same worker appearing on two rigs).
+      const usedWorkers = new Set();
+      const usedCategories = new Set();
       const allJobs = entities?.jobs || jobs;
       let skippedRows = 0;
 
