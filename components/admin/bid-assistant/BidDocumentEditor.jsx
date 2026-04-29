@@ -453,10 +453,45 @@ function LivePreview({ draft }) {
 // ── Main document editor ────────────────────────────────────────────
 
 export default function BidDocumentEditor({ state, actions }) {
-  const { selectedDoc, draft, savingDraft, loadingDraft, exportingDraft, draftHistory, status } = state;
+  const { selectedDoc, draft, savedDraft, savingDraft, loadingDraft, exportingDraft, draftHistory, status } = state;
   const [showPreview, setShowPreview] = useState(false);
   const [aiAssistLoading, setAiAssistLoading] = useState({});
   const [publishOpen, setPublishOpen] = useState(false);
+
+  // Per-field dirty map. A field is dirty when its current value differs from
+  // the last server-confirmed draft (savedDraft). draftHistory only records
+  // AI-applied changes — manual typing isn't in there — so we use the saved
+  // baseline to catch both kinds of edits.
+  const dirtyMap = useMemo(() => {
+    const map = {};
+    for (const field of TRACKED_FIELDS) {
+      map[field] = isFieldDirty(draft, savedDraft, field);
+    }
+    return map;
+  }, [draft, savedDraft]);
+
+  // For a given field, check whether its most recent draftHistory entry comes
+  // from an AI source. If so the section badge reads "AI edit" rather than
+  // "Modified". Once the user types over an AI-applied value, the diff still
+  // matches the AI-applied content (history only updates on apply), so we
+  // also confirm the current value still equals what AI applied.
+  const aiTouchedFields = useMemo(() => {
+    const set = new Set();
+    for (const field of TRACKED_FIELDS) {
+      if (!dirtyMap[field]) continue;
+      const lastEntry = [...draftHistory].reverse().find((h) => h.field === field);
+      if (!lastEntry) continue;
+      const stillAi = lastEntry.source === "ai_assist" || lastEntry.source === "chat_suggestion";
+      if (stillAi) set.add(field);
+    }
+    return set;
+  }, [draftHistory, dirtyMap]);
+
+  const projectDetailsDirty = PROJECT_DETAIL_FIELDS.some((f) => dirtyMap[f]);
+  const projectDetailsFromAi = PROJECT_DETAIL_FIELDS.some((f) => aiTouchedFields.has(f));
+
+  const dirtyCount = Object.values(dirtyMap).filter(Boolean).length;
+  const isDirty = dirtyCount > 0;
 
   // ── AI assist for a specific section ───────────────────────────
 
