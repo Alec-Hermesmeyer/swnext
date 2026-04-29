@@ -969,7 +969,9 @@ export default function BidDocumentEditor({ state, actions }) {
             </EditorSection>
 
             {/* Live preview toggle */}
-            {showPreview ? <LivePreview draft={draft} /> : null}
+            {showPreview ? (
+              <LivePreview draft={draft} dirtyMap={dirtyMap} aiTouchedFields={aiTouchedFields} />
+            ) : null}
           </>
         )}
       </div>
