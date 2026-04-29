@@ -2230,7 +2230,17 @@ function CrewScheduler() {
         if (error) throw new Error("Failed to insert assignments: " + error.message);
       }
       if (rigDetailRows.length > 0) {
-        const { error } = await supabase.from("schedule_rig_details").upsert(rigDetailRows, { onConflict: "schedule_id,category_id" });
+        // Deduplicate rig details by category_id — multiple parsed rows can
+        // share the same rig, and Postgres rejects an upsert batch where the
+        // same conflict key (schedule_id, category_id) appears more than once.
+        const mergedByCategory = {};
+        for (const detail of rigDetailRows) {
+          const key = detail.category_id;
+          mergedByCategory[key] = { ...(mergedByCategory[key] || {}), ...detail };
+        }
+        const deduped = Object.values(mergedByCategory);
+
+        const { error } = await supabase.from("schedule_rig_details").upsert(deduped, { onConflict: "schedule_id,category_id" });
         if (error) throw new Error("Failed to upsert rig details: " + error.message);
       }
 
