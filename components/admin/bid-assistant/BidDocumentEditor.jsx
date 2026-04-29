@@ -4,7 +4,7 @@
  * real-time sync with the chat interface, and live preview.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   normalizeDraftPayload,
   formatCurrencyAmount,
@@ -482,6 +482,24 @@ export default function BidDocumentEditor({ state, actions }) {
   const [showPreview, setShowPreview] = useState(false);
   const [aiAssistLoading, setAiAssistLoading] = useState({});
   const [publishOpen, setPublishOpen] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef(null);
+
+  // Close the export dropdown on outside click or Escape
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    function handleClose(e) {
+      if (e.type === "keydown" && e.key !== "Escape") return;
+      if (e.type === "mousedown" && exportMenuRef.current?.contains(e.target)) return;
+      setExportMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handleClose);
+    document.addEventListener("keydown", handleClose);
+    return () => {
+      document.removeEventListener("mousedown", handleClose);
+      document.removeEventListener("keydown", handleClose);
+    };
+  }, [exportMenuOpen]);
 
   // Per-field dirty map. A field is dirty when its current value differs from
   // the last server-confirmed draft (savedDraft). draftHistory only records
@@ -733,36 +751,57 @@ export default function BidDocumentEditor({ state, actions }) {
           >
             {savingDraft ? "Saving..." : "Save"}
           </button>
-          <button
-            type="button"
-            onClick={() => exportDraft("docx")}
-            disabled={exportingDraft || savingDraft || loadingDraft}
-            className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
-            title="Save & download as Word document"
-          >
-            {exportingDraft ? "Saving..." : "Save & DOCX"}
-          </button>
-          <button
-            type="button"
-            onClick={() => exportDraft("txt")}
-            disabled={exportingDraft || savingDraft || loadingDraft}
-            className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
-            title="Save & download as plain text"
-          >
-            Save & TXT
-          </button>
-          <button
-            type="button"
-            onClick={() => setPublishOpen(true)}
-            disabled={savingDraft || exportingDraft || loadingDraft}
-            className="inline-flex items-center gap-1 rounded-lg border border-violet-300 bg-violet-50 px-3 py-1.5 text-[11px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-60 transition-colors"
-            title="Publish this draft to a client portal"
-          >
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
-            </svg>
-            Publish to Portal
-          </button>
+          {/* Export / Publish dropdown */}
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              type="button"
+              onClick={() => setExportMenuOpen((prev) => !prev)}
+              disabled={exportingDraft || savingDraft || loadingDraft}
+              className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-60 transition-colors"
+            >
+              {exportingDraft ? "Exporting..." : "Export"}
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 8l4 4 4-4" />
+              </svg>
+            </button>
+            {exportMenuOpen ? (
+              <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => { exportDraft("docx"); setExportMenuOpen(false); }}
+                  disabled={exportingDraft}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                >
+                  <svg className="h-3.5 w-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Save &amp; Download DOCX
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { exportDraft("txt"); setExportMenuOpen(false); }}
+                  disabled={exportingDraft}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                >
+                  <svg className="h-3.5 w-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Save &amp; Download TXT
+                </button>
+                <div className="my-1 border-t border-neutral-100" />
+                <button
+                  type="button"
+                  onClick={() => { setPublishOpen(true); setExportMenuOpen(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-neutral-700 hover:bg-neutral-50"
+                >
+                  <svg className="h-3.5 w-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                  </svg>
+                  Publish to Portal
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 

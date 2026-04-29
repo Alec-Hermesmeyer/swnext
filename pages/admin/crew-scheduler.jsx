@@ -11,6 +11,7 @@ import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 import CrewCombobox from "@/components/admin/crew-scheduler/CrewCombobox";
 import JobCombobox from "@/components/admin/crew-scheduler/JobCombobox";
 import JobFormModal from "@/components/admin/crew-scheduler/JobFormModal";
+import SchedulePhotoParser from "@/components/admin/crew-scheduler/SchedulePhotoParser";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 const CREW_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -421,6 +422,9 @@ function CrewScheduler() {
   const [copyStatus, setCopyStatus] = useState(null);
   const [scheduleRigSearch, setScheduleRigSearch] = useState("");
   const [scheduleNeedsAttentionOnly, setScheduleNeedsAttentionOnly] = useState(false);
+
+  // --- Schedule Photo Parser state ---
+  const [showPhotoParser, setShowPhotoParser] = useState(false);
 
   // --- Visual Board State ---
   const [showManagePanel, setShowManagePanel] = useState(false);
@@ -2127,6 +2131,110 @@ function CrewScheduler() {
     }
 
     setCopyingDaySchedule(false);
+  };
+
+  // --- Schedule Photo Parser: apply parsed data to schedule ---
+  const handleApplyParsedSchedule = async ({ schedule_date, rows, overrides, entities }) => {
+    // --- 1. Normalize the date ---
+    let targetDate = selectedDate;
+    if (schedule_date) {
+      const p = new Date(schedule_date + "T12:00:00");
+      if (!Number.isNaN(p.getTime())) {
+        targetDate = `${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, "0")}-${String(p.getDate()).padStart(2, "0")}`;
+      }
+    }
+
+    // --- 2. Get or create the schedule row ---
+    const schedule = await getOrCreateSchedule(targetDate);
+    if (!schedule) throw new Error("Could not create schedule for " + targetDate);
+    if (schedule.is_finalized && !confirm("This schedule is already finalized. Apply photo data anyway?")) return;
+    if (targetDate !== selectedDate) setSelectedDate(targetDate);
+
+    setSaving(true);
+    try {
+      // --- 3. Build all DB records in plain JS (no DB calls yet) ---
+      const assignmentRows = [];
+      const rigDetailRows = [];
+      const usedWorkers = new Set(assignments.filter((a) => a.worker_id).map((a) => String(a.worker_id)));
+      const usedCategories = new Set(assignments.filter((a) => a.job_id && !a.notes?.startsWith("__rig_day_type__:")).map((a) => String(a.category_id)));
+      const allJobs = entities?.jobs || jobs;
+
+      for (const row of rows) {
+        const ov = overrides?.[row.row_number] || {};
+        const catId = ov.category_id || row.category?.match?.id;
+        if (!catId) continue;
+
+        const status = row.dayStatus || { type: "working", label: "" };
+        const nonWorking = status.type !== "working";
+        const jobId = ov.job_id || row.job?.match?.id;
+        const jobObj = jobId ? allJobs.find((j) => String(j.id) === String(jobId)) : null;
+
+        // Status marker row (mob, down day, repairs, etc.)
+        if (nonWorking) {
+          assignmentRows.push({
+            schedule_id: schedule.id,
+            category_id: catId,
+            worker_id: null,
+            job_id: null,
+            job_name: status.label,
+            notes: `__rig_day_type__:${status.type}`,
+          });
+        }
+
+        // Job assignment (one per category)
+        if (jobId && !nonWorking && !usedCategories.has(String(catId))) {
+          assignmentRows.push({
+            schedule_id: schedule.id,
+            category_id: catId,
+            worker_id: null,
+            job_id: jobId,
+            job_name: jobObj?.job_name || "",
+          });
+          usedCategories.add(String(catId));
+        }
+
+        // Crew members (one per worker, skip duplicates)
+        for (const c of (row.crew || [])) {
+          const wId = c.match?.id;
+          if (!wId || usedWorkers.has(String(wId))) continue;
+          assignmentRows.push({
+            schedule_id: schedule.id,
+            category_id: catId,
+            worker_id: wId,
+            job_id: nonWorking ? null : (jobId || null),
+            job_name: nonWorking ? status.label : (jobObj?.job_name || ""),
+          });
+          usedWorkers.add(String(wId));
+        }
+
+        // Rig details (superintendent, truck, crane)
+        const supId = ov.superintendent_id || row.superintendent?.match?.id;
+        const trkId = ov.truck_id || row.truck?.match?.id;
+        const crane = row.crane_info;
+        if (supId || trkId || crane) {
+          const detail = { schedule_id: schedule.id, category_id: catId };
+          if (supId) detail.superintendent_id = supId;
+          if (trkId) detail.truck_id = trkId;
+          if (crane) detail.crane_info = crane;
+          rigDetailRows.push(detail);
+        }
+      }
+
+      // --- 4. Batch insert — two DB calls total ---
+      if (assignmentRows.length > 0) {
+        const { error } = await supabase.from("crew_assignments").insert(assignmentRows);
+        if (error) throw new Error("Failed to insert assignments: " + error.message);
+      }
+      if (rigDetailRows.length > 0) {
+        const { error } = await supabase.from("schedule_rig_details").upsert(rigDetailRows, { onConflict: "schedule_id,category_id" });
+        if (error) throw new Error("Failed to upsert rig details: " + error.message);
+      }
+
+      // --- 5. Refresh the UI ---
+      await fetchSchedule(targetDate, { force: true });
+    } finally {
+      setSaving(false);
+    }
   };
 
   // --- Phase 5: Save & Email Schedule ---
@@ -4440,6 +4548,13 @@ function CrewScheduler() {
               className="h-9 rounded-lg border border-blue-200 bg-blue-50 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50"
             >
               {copyingDaySchedule ? "Copying..." : copyForwardLabel}
+            </button>
+            <button
+              onClick={() => setShowPhotoParser(true)}
+              className="h-9 rounded-lg border border-purple-200 bg-purple-50 px-4 text-sm font-semibold text-purple-700 hover:bg-purple-100 transition-colors"
+              title="Parse handwritten schedule photo"
+            >
+              Parse Photo
             </button>
             <button
               onClick={handlePrint}
@@ -6875,6 +6990,13 @@ function CrewScheduler() {
         onClose={() => setEditingJob(null)}
         onSave={handleUpdateJobFromModal}
       />
+      {showPhotoParser && (
+        <SchedulePhotoParser
+          selectedDate={selectedDate}
+          onApply={handleApplyParsedSchedule}
+          onClose={() => setShowPhotoParser(false)}
+        />
+      )}
     </>
   );
 }
