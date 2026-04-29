@@ -196,6 +196,7 @@ function buildMetricsBlock(metrics, opsContext) {
     parts.push(`- Risk buffer: ${metrics.risk_buffer_percent || 8}%`);
     parts.push(`- Default estimated cost: $${Number(metrics.default_estimated_cost_usd || 550000).toLocaleString()}`);
     parts.push(`- Max concurrent jobs capacity: ${metrics.max_concurrent_jobs || 20}`);
+    if (metrics.projected_start_date) parts.push(`- Projected start date for this bid: ${metrics.projected_start_date}`);
     if (metrics.notes) parts.push(`- Additional notes: ${metrics.notes}`);
   }
   if (opsContext) {

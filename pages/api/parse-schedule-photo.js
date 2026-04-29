@@ -21,16 +21,21 @@ import {
   computeSummary,
 } from "@/lib/schedule-parser";
 
-// Disable Next.js body parser so formidable can handle multipart
+// Disable Next.js body parser so formidable can handle multipart.
+// Set explicit response size limit (default is 4MB which is too small for
+// returning the full entity lists + matched rows).
 export const config = {
-  api: { bodyParser: false },
+  api: {
+    bodyParser: false,
+    responseLimit: "8mb",
+  },
 };
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const MAX_FILES = 4;
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB per file
+const MAX_FILES = 5;
+const MAX_FILE_SIZE = 12 * 1024 * 1024; // 12 MB per file (raw HEIC fallback)
 const ALLOWED_TYPES = new Set([
   "image/png",
   "image/jpeg",
@@ -464,19 +469,19 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. Convert all files to base64 (with preprocessing)
-    const images = await Promise.all(
-      files.map((file) =>
-        fileToBase64(
-          file.filepath || file.path,
-          file.mimetype || file.type,
-          maxDim
+    // 2. Convert images AND fetch entities in parallel (saves ~300ms)
+    const [images, entities] = await Promise.all([
+      Promise.all(
+        files.map((file) =>
+          fileToBase64(
+            file.filepath || file.path,
+            file.mimetype || file.type,
+            maxDim
+          )
         )
-      )
-    );
-
-    // 3. Fetch known entities from Supabase
-    const entities = await fetchEntities();
+      ),
+      fetchEntities(),
+    ]);
 
     // 4. Build prompt and call vision API
     const prompt = buildPrompt(entities);
