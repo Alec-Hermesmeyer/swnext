@@ -142,15 +142,13 @@ function bidAssistantReducer(state, action) {
     case BID_ACTIONS.SET_DRAFT: {
       // SET_DRAFT is dispatched after server load and after a successful save —
       // both cases reset the "saved" baseline so dirty highlighting clears.
+      // draftHistory is preserved so the per-section "Undo last AI change"
+      // affordance keeps working across saves.
       const normalized = normalizeDraftPayload(action.payload);
       return {
         ...state,
         draft: normalized,
         savedDraft: normalized,
-        // Clearing draftHistory on SET_DRAFT keeps Undo semantics scoped to the
-        // current editing session — once changes are persisted, there is no
-        // "previous" to undo to.
-        draftHistory: [],
       };
     }
 
