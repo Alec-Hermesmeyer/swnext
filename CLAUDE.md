@@ -2,7 +2,7 @@
 
 ## Current Task
 I want to pair program on these tasks:
-- Improve admin/client-portal
+- In the bid assistant highlight the changes made in proposal editor and ensure changes are reflected when user downloads document
 
 ## Working Agreement
 - You are pair programming with Knoxis, a senior developer who reviews your work between phases.

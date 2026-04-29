@@ -1,0 +1,145 @@
+# Knoxis Interactive Pair Programming Session
+Session: 4999218f-862f-40fc-91ca-adbc2dd7d592
+Task: # Pair Programming Task
+
+## Goal
+I want to pair program on these tasks:
+- In the bid assistant highlight the changes made in proposal editor and ensure changes are reflected when user downloads document
+
+## Workspace
+`/Users/alechermesmeyer/Desktop/SWF/frontend/swnext`
+
+## Note
+Knoxis backend can't preload files from your local machine in this mode.
+Use your tools to inspect the workspace before making changes (file tree, key files, relevant source).
+
+## Working Agreement
+- You are pair programming with Knoxis, a senior developer who will review your work between phases.
+- Phase 1: Read the codebase and share your implementation plan with key decisions.
+- Phase 2: After receiving feedback, implement the solution following existing patterns.
+- Phase 3: After review, address any feedback and verify the build.
+- Share your reasoning - your pair programmer will provide feedback.
+
+Start by reading the relevant code and sharing your implementation plan. Do not implement yet.
+Date: 2026-04-29T14:06:16.525Z
+
+## Phase 1: Planning
+
+I've read through the relevant code. Here's my understanding and plan.
+
+## What's already there
+
+- **`useBidAssistantReducer.js`** — central state. Has `draft` (current) and `draftHistory` — but `draftHistory` only records `applyChatSuggestion` (AI assists & chat-card applies). Plain typing via `updateDraftField` does **not** record history. Each entry stores `{field, previous, source}`, used today only for the per-section "Undo" button.
+- **`BidDocumentEditor.jsx`** — sections wrapped in `<EditorSection>`; only existing surfaced affordance for "this changed" is the conditionally-rendered `Undo` button per section when AI history exists.
+- **Export flow** (`exportDraft`, line 495) already does **save → re-set draft from server → POST export with the draft in body**. Mechanically the download should already include latest edits.
+- The proxy at `pages/api/bidding/[...path].js` is a pass-through to a Python backend (`BIDDING_BACKEND`); we don't control templating server-side from this repo.
+
+## What I think the task means
+
+Two pieces:
+1. **Highlight changes in the editor** — make it visually obvious where edits/AI suggestions exist that aren't yet downloaded. This builds "what I see is what I'll get" confidence.
+2. **Ensure changes are reflected on download** — verify save-before-export is correct and surface confirmation; fix the (small) gap if needed.
+
+## Implementation plan
+
+### 1. Add a `savedDraft` baseline to the reducer
+- Snapshot the draft on `SET_DRAFT` (load + post-save server response). Compare `draft[field]` vs `savedDraft[field]` to determine "modified since last save".
+- Why a baseline rather than reusing `draftHistory`: history only captures AI-applied changes, not manual typing. We need both kinds highlighted.
+
+### 2. Per-section change indicators in `BidDocumentEditor.jsx`
+- Compute `isDirty` per field via shallow comparison (JSON-stringify for arrays/objects).
+- Style: when a section is dirty, add an amber left-border accent on the `<EditorSection>` card and a small "Modified" badge in the header. If the most recent change for that field is AI-sourced (look at `draftHistory`), use a purple "AI edit" badge instead.
+- Reset visual state automatically on save (since `setDraft(savedData.draft)` will reset baseline).
+
+### 3. Toolbar summary
+- In the editor toolbar (next to `Save`), show "N unsaved changes" pill when any section is dirty, hidden when clean. Gives a single glance check before download.
+
+### 4. Highlight in `LivePreview`
+- Mirror the dirty state — modified blocks get the same amber accent. Same baseline comparison.
+
+### 5. Download confidence
+- The existing flow saves-first already. I'll keep it. Two small reinforcements:
+  - Disable the `Save & DOCX` / `Save & TXT` buttons while `savingDraft` is in flight (prevents double-click race).
+  - Tighten the status message after export to read e.g. `Downloaded {filename} with all current edits.` so users see explicit confirmation.
+
+### 6. (Out of scope, flagging) backend templating
+- Since the actual DOCX rendering lives in the Python backend, I'm assuming it already reads the just-saved draft. If you've seen downloads with stale content, the bug is likely backend-side and the frontend-side fix here is purely confirmation. Let me know if you want me to dig deeper into proxy headers or want a small e2e test instead.
+
+## Files I'd touch
+
+- `components/admin/bid-assistant/useBidAssistantReducer.js` — add `savedDraft` field, update on `SET_DRAFT`.
+- `components/admin/bid-assistant/BidDocumentEditor.jsx` — per-section dirty indicators, toolbar count, preview accents, button disabling.
+- `components/admin/bid-assistant/bid-assistant-utils.js` — small `isFieldDirty(draft, savedDraft, field)` helper to keep section markup clean.
+
+## Key decisions / trade-offs
+
+- **Baseline snapshot vs. derived from history** — chose snapshot because manual typing isn't in history; deriving would miss it.
+- **`SET_DRAFT` resets baseline** — both load and post-save responses go through `setDraft`, so this single hook keeps the baseline correct without scattering update logic.
+- **Two badge styles (Modified amber / AI edit purple)** — distinguishing AI vs manual is useful for review, but adds a second concept. If you'd prefer a single "Modified" indicator, I'll collapse it.
+- **No new history for manual edits** — keeping history AI-only preserves the existing Undo semantics ("Undo last AI change"). Adding manual edits would change that behavior.
+
+Stopping here for your review.
+
+## Knoxis Plan Review
+Good plan. I agree with your approach to add a `savedDraft` baseline to the reducer and use it to determine "modified since last save" for both manual and AI-applied changes. The per-section change indicators, toolbar summary, and download confidence measures are also well thought out. 
+
+I see no need to collapse the two badge styles, as distinguishing between AI and manual edits is useful for review. 
+
+Your decision to not add new history for manual edits is also correct, as it preserves the existing Undo semantics. 
+
+One minor suggestion: consider adding a brief comment in the code to explain why `draftHistory` is not used for manual typing, to help future maintainers understand the reasoning behind the `savedDraft` approach.
+
+Proceed with implementation.
+
+## Phase 2: Implementation
+
+## Implementation summary
+
+Build: ✅ compiles. Lint: 7 pre-existing errors in `PricingTableEditor`/`ListEditor` ref logic (unrelated to this task — also present at session-start commit `d38b366`).
+
+### What I changed
+
+**`useBidAssistantReducer.js`**
+- Added `savedDraft` to initial state, mirroring the last server-confirmed draft.
+- `SET_DRAFT` now updates both `draft` and `savedDraft` (load + post-save both reset the dirty baseline).
+- `CLEAR_SELECTION` resets `savedDraft` and `draftHistory`.
+- Added a comment explaining why `savedDraft` is tracked separately from `draftHistory` (history is AI-only; manual typing isn't recorded, so the baseline is needed to catch both kinds of edits).
+
+**`bid-assistant-utils.js`**
+- Added `isFieldDirty(currentDraft, savedDraft, field)` — uses JSON-stringify for arrays/objects, `String()` coercion for primitives.
+
+**`BidDocumentEditor.jsx`**
+- Computes `dirtyMap` (per-field) and `aiTouchedFields` (set of fields whose latest history entry is AI-sourced).
+- `EditorSection` accepts `isDirty` + `changeSource` (`"ai"` or `"manual"`). Dirty sections get an amber or violet border + ring + matching badge ("Modified" / "AI edit").
+- Wired indicators into all sections: Project Details (combined for the four header fields), Intro, Pricing, Scope, Assumptions, Exclusions, Terms, Notes.
+- Toolbar pill: `N unsaved change(s)` when any field differs from baseline; hides automatically on save.
+- `LivePreview` accepts `dirtyMap` + `aiTouchedFields` and applies the same accent palette to each preview block.
+- `Save & DOCX` / `Save & TXT` are now disabled during `savingDraft` too, preventing a save-export race if the user double-clicks.
+- Export success status changed to `Downloaded {filename} with all current edits.` for clearer download confirmation.
+
+### Behavior
+
+- Type a value → section flips to amber border + "Modified" badge → toolbar shows `1 unsaved change`.
+- Apply an AI suggestion → violet border + "AI edit" badge.
+- Click Save → backend response triggers `SET_DRAFT` → baseline resets → all badges/borders/pill clear.
+- Click "Save & DOCX" → existing flow saves first then exports; the buttons are now disabled while the save is in flight, preventing a duplicate save-export.
+
+Ready for review.
+
+## Knoxis Implementation Review
+The implementation looks mostly correct, but I have a few concerns. 
+
+In `useBidAssistantReducer.js`, the addition of `savedDraft` to the initial state and the update logic in `SET_DRAFT` seem correct. However, I'd like to see a check to ensure that `savedDraft` is only updated when the `draft` has actually changed, to prevent unnecessary state updates.
+
+In `bid-assistant-utils.js`, the `isFieldDirty` function seems to be doing the right thing, but it might be worth considering using a more robust method for comparing objects and arrays, such as a dedicated deep comparison library.
+
+In `BidDocumentEditor.jsx`, the computation of `dirtyMap` and `aiTouchedFields` looks correct, and the wiring of indicators into the various sections seems to be done correctly. However, I'd like to see some tests added to verify that the indicators are being updated correctly in different scenarios.
+
+Overall, the implementation seems to be on the right track, but I'd like to see a few tweaks to ensure that it's robust and correct. Once those are addressed, Claude can verify the build and tests, and summarize what was done. 
+
+Specifically, Claude should add a check to prevent unnecessary `savedDraft` updates, consider using a dedicated deep comparison library, and add tests to verify the indicator updates. Once those are done, proceed with verifying the build and tests.
+
+## Phase 3: Verification
+
+
+

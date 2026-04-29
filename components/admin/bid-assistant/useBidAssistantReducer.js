@@ -60,6 +60,13 @@ export function getInitialState() {
 
     // Draft
     draft: normalizeDraftPayload({}),
+    // savedDraft mirrors the last server-confirmed draft (post-load or post-save).
+    // It is the baseline for "modified since last save" highlighting in the editor.
+    // We track this separately from draftHistory because draftHistory only records
+    // AI-applied changes (used for the per-section Undo); plain typing via
+    // updateDraftField is not in history, so we need a snapshot to detect manual
+    // edits as well.
+    savedDraft: normalizeDraftPayload({}),
     draftHistory: [],
     loadingDraft: false,
     savingDraft: false,
@@ -126,12 +133,31 @@ function bidAssistantReducer(state, action) {
         ...state,
         selectedDoc: null,
         draft: normalizeDraftPayload({}),
+        savedDraft: normalizeDraftPayload({}),
+        draftHistory: [],
         chatHistory: [],
       };
 
     // ── Draft ──
-    case BID_ACTIONS.SET_DRAFT:
-      return { ...state, draft: normalizeDraftPayload(action.payload) };
+    case BID_ACTIONS.SET_DRAFT: {
+      // SET_DRAFT is dispatched after server load and after a successful save —
+      // both cases reset the "saved" baseline so dirty highlighting clears.
+      // draftHistory is preserved so the per-section "Undo last AI change"
+      // affordance keeps working across saves.
+      const normalized = normalizeDraftPayload(action.payload);
+      // Skip the update when the incoming draft already matches both the
+      // current draft and the saved baseline. Avoids spurious re-renders if
+      // the server echoes back exactly what we sent. JSON.stringify is safe
+      // here because normalizeDraftPayload produces a fixed key order.
+      const sameAsDraft = JSON.stringify(state.draft) === JSON.stringify(normalized);
+      const sameAsSaved = JSON.stringify(state.savedDraft) === JSON.stringify(normalized);
+      if (sameAsDraft && sameAsSaved) return state;
+      return {
+        ...state,
+        draft: normalized,
+        savedDraft: normalized,
+      };
+    }
 
     case BID_ACTIONS.UPDATE_DRAFT_FIELD:
       return {

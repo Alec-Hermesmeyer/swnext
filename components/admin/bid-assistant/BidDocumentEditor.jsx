@@ -4,13 +4,34 @@
  * real-time sync with the chat interface, and live preview.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   normalizeDraftPayload,
   formatCurrencyAmount,
   parseCurrencyAmount,
+  isFieldDirty,
 } from "./bid-assistant-utils";
 import PublishToPortalModal from "./PublishToPortalModal";
+
+// Fields rendered as their own editor sections — the basis for dirty-state
+// tracking and "N unsaved changes" toolbar count.
+const TRACKED_FIELDS = [
+  "title",
+  "due_date",
+  "project_name",
+  "client_name",
+  "intro",
+  "pricing_items",
+  "scope_items",
+  "assumptions",
+  "exclusions",
+  "terms",
+  "notes",
+];
+
+// Project Details section bundles four header fields; treat them as one block
+// for the Modified badge.
+const PROJECT_DETAIL_FIELDS = ["title", "due_date", "project_name", "client_name"];
 
 // Stable key counter for reorderable list items
 let _keyCounter = 0;
@@ -20,9 +41,36 @@ function nextKey() {
 
 // ── Section wrapper with AI assist button ───────────────────────────
 
-function EditorSection({ title, icon, children, onAiAssist, aiLoading, reverted, onRevert, hasHistory }) {
+function EditorSection({
+  title,
+  icon,
+  children,
+  onAiAssist,
+  aiLoading,
+  reverted,
+  onRevert,
+  hasHistory,
+  isDirty,
+  changeSource,
+}) {
+  // changeSource: "ai" when last touched by AI/chat, "manual" when the diff
+  // includes plain typing. Decides which badge to show.
+  const badge = isDirty
+    ? changeSource === "ai"
+      ? { label: "AI edit", className: "bg-violet-50 text-violet-700 ring-violet-200" }
+      : { label: "Modified", className: "bg-amber-50 text-amber-700 ring-amber-200" }
+    : null;
+
+  const containerClass = `group rounded-xl border bg-white transition-shadow hover:shadow-card ${
+    isDirty
+      ? changeSource === "ai"
+        ? "border-violet-200 ring-1 ring-violet-100"
+        : "border-amber-200 ring-1 ring-amber-100"
+      : "border-neutral-200"
+  }`;
+
   return (
-    <div className="group rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-card">
+    <div className={containerClass}>
       <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5">
         <div className="flex items-center gap-2">
           {icon ? (
@@ -31,6 +79,13 @@ function EditorSection({ title, icon, children, onAiAssist, aiLoading, reverted,
             </div>
           ) : null}
           <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-500">{title}</h4>
+          {badge ? (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ring-1 ${badge.className}`}
+            >
+              {badge.label}
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
           {hasHistory ? (
@@ -302,9 +357,25 @@ function ListEditor({ items, onChange, placeholder }) {
 
 // ── Live preview pane ───────────────────────────────────────────────
 
-function LivePreview({ draft }) {
+// Visual ring/background applied to a preview block when its underlying field
+// has unsaved edits. The same accent palette as EditorSection (amber for manual
+// edits, violet for AI-applied) so the editor and preview stay in sync.
+function previewAccent(dirty, fromAi) {
+  if (!dirty) return "";
+  return fromAi
+    ? "bg-violet-50/60 ring-1 ring-violet-200 rounded-md -mx-1 px-1 py-0.5"
+    : "bg-amber-50/60 ring-1 ring-amber-200 rounded-md -mx-1 px-1 py-0.5";
+}
+
+function LivePreview({ draft, dirtyMap = {}, aiTouchedFields }) {
   const pricingRows = Array.isArray(draft?.pricing_items) ? draft.pricing_items : [];
   const total = pricingRows.reduce((sum, r) => sum + parseCurrencyAmount(r?.amount), 0);
+
+  const aiSet = aiTouchedFields || new Set();
+  const isAi = (field) => aiSet.has?.(field);
+
+  const headerDirty = ["title", "project_name", "client_name", "due_date"].some((f) => dirtyMap[f]);
+  const headerFromAi = ["title", "project_name", "client_name", "due_date"].some((f) => isAi(f));
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-gradient-to-br from-neutral-50 to-white p-4">
@@ -316,19 +387,28 @@ function LivePreview({ draft }) {
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4 text-sm shadow-sm">
-        <h3 className="text-base font-bold text-neutral-900">{draft?.title || "Bid Proposal"}</h3>
-        <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-0.5 text-xs text-neutral-500">
-          <p><span className="font-semibold text-neutral-700">Project:</span> {draft?.project_name || "—"}</p>
-          <p><span className="font-semibold text-neutral-700">Client:</span> {draft?.client_name || "—"}</p>
-          <p><span className="font-semibold text-neutral-700">Due:</span> {draft?.due_date || "—"}</p>
+        <div className={previewAccent(headerDirty, headerFromAi)}>
+          <h3 className="text-base font-bold text-neutral-900">{draft?.title || "Bid Proposal"}</h3>
+          <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-0.5 text-xs text-neutral-500">
+            <p><span className="font-semibold text-neutral-700">Project:</span> {draft?.project_name || "—"}</p>
+            <p><span className="font-semibold text-neutral-700">Client:</span> {draft?.client_name || "—"}</p>
+            <p><span className="font-semibold text-neutral-700">Due:</span> {draft?.due_date || "—"}</p>
+          </div>
         </div>
 
         {draft?.intro ? (
-          <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700 leading-relaxed">{draft.intro}</p>
+          <p
+            className={`mt-3 whitespace-pre-wrap text-sm text-neutral-700 leading-relaxed ${previewAccent(
+              dirtyMap.intro,
+              isAi("intro"),
+            )}`}
+          >
+            {draft.intro}
+          </p>
         ) : null}
 
         {pricingRows.length ? (
-          <div className="mt-3">
+          <div className={`mt-3 ${previewAccent(dirtyMap.pricing_items, isAi("pricing_items"))}`}>
             <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">Pricing</p>
             <div className="overflow-hidden rounded-md border border-neutral-200">
               <table className="w-full text-left text-xs">
@@ -359,7 +439,7 @@ function LivePreview({ draft }) {
 
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           {(draft?.scope_items || []).length ? (
-            <div>
+            <div className={previewAccent(dirtyMap.scope_items, isAi("scope_items"))}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Scope</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-3.5 text-xs text-neutral-600">
                 {draft.scope_items.map((item, idx) => <li key={idx}>{item}</li>)}
@@ -367,7 +447,7 @@ function LivePreview({ draft }) {
             </div>
           ) : null}
           {(draft?.assumptions || []).length ? (
-            <div>
+            <div className={previewAccent(dirtyMap.assumptions, isAi("assumptions"))}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Assumptions</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-3.5 text-xs text-neutral-600">
                 {draft.assumptions.map((item, idx) => <li key={idx}>{item}</li>)}
@@ -375,7 +455,7 @@ function LivePreview({ draft }) {
             </div>
           ) : null}
           {(draft?.exclusions || []).length ? (
-            <div>
+            <div className={previewAccent(dirtyMap.exclusions, isAi("exclusions"))}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Exclusions</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-3.5 text-xs text-neutral-600">
                 {draft.exclusions.map((item, idx) => <li key={idx}>{item}</li>)}
@@ -385,7 +465,7 @@ function LivePreview({ draft }) {
         </div>
 
         {draft?.terms ? (
-          <div className="mt-3">
+          <div className={`mt-3 ${previewAccent(dirtyMap.terms, isAi("terms"))}`}>
             <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Terms</p>
             <p className="mt-1 whitespace-pre-wrap text-xs text-neutral-600">{draft.terms}</p>
           </div>
@@ -398,10 +478,63 @@ function LivePreview({ draft }) {
 // ── Main document editor ────────────────────────────────────────────
 
 export default function BidDocumentEditor({ state, actions }) {
-  const { selectedDoc, draft, savingDraft, loadingDraft, exportingDraft, draftHistory, status } = state;
+  const { selectedDoc, draft, savedDraft, savingDraft, loadingDraft, exportingDraft, draftHistory, status } = state;
   const [showPreview, setShowPreview] = useState(false);
   const [aiAssistLoading, setAiAssistLoading] = useState({});
   const [publishOpen, setPublishOpen] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef(null);
+
+  // Close the export dropdown on outside click or Escape
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    function handleClose(e) {
+      if (e.type === "keydown" && e.key !== "Escape") return;
+      if (e.type === "mousedown" && exportMenuRef.current?.contains(e.target)) return;
+      setExportMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handleClose);
+    document.addEventListener("keydown", handleClose);
+    return () => {
+      document.removeEventListener("mousedown", handleClose);
+      document.removeEventListener("keydown", handleClose);
+    };
+  }, [exportMenuOpen]);
+
+  // Per-field dirty map. A field is dirty when its current value differs from
+  // the last server-confirmed draft (savedDraft). draftHistory only records
+  // AI-applied changes — manual typing isn't in there — so we use the saved
+  // baseline to catch both kinds of edits.
+  const dirtyMap = useMemo(() => {
+    const map = {};
+    for (const field of TRACKED_FIELDS) {
+      map[field] = isFieldDirty(draft, savedDraft, field);
+    }
+    return map;
+  }, [draft, savedDraft]);
+
+  // For a given field, check whether its most recent draftHistory entry comes
+  // from an AI source. If so the section badge reads "AI edit" rather than
+  // "Modified". Once the user types over an AI-applied value, the diff still
+  // matches the AI-applied content (history only updates on apply), so we
+  // also confirm the current value still equals what AI applied.
+  const aiTouchedFields = useMemo(() => {
+    const set = new Set();
+    for (const field of TRACKED_FIELDS) {
+      if (!dirtyMap[field]) continue;
+      const lastEntry = [...draftHistory].reverse().find((h) => h.field === field);
+      if (!lastEntry) continue;
+      const stillAi = lastEntry.source === "ai_assist" || lastEntry.source === "chat_suggestion";
+      if (stillAi) set.add(field);
+    }
+    return set;
+  }, [draftHistory, dirtyMap]);
+
+  const projectDetailsDirty = PROJECT_DETAIL_FIELDS.some((f) => dirtyMap[f]);
+  const projectDetailsFromAi = PROJECT_DETAIL_FIELDS.some((f) => aiTouchedFields.has(f));
+
+  const dirtyCount = Object.values(dirtyMap).filter(Boolean).length;
+  const isDirty = dirtyCount > 0;
 
   // ── AI assist for a specific section ───────────────────────────
 
@@ -542,7 +675,7 @@ export default function BidDocumentEditor({ state, actions }) {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-      actions.setStatus(`Saved & exported ${fileName}`);
+      actions.setStatus(`Downloaded ${fileName} with all current edits.`);
     } catch (error) {
       actions.setStatus(error.message || "Could not export draft");
     } finally {
@@ -588,6 +721,15 @@ export default function BidDocumentEditor({ state, actions }) {
             <h3 className="text-sm font-bold text-neutral-800">Proposal Editor</h3>
             <p className="text-[11px] text-neutral-400 truncate max-w-[200px]">{selectedDoc.filename}</p>
           </div>
+          {isDirty ? (
+            <span
+              className="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200"
+              title="Sections marked Modified or AI edit will be included on save & download."
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              {dirtyCount} unsaved {dirtyCount === 1 ? "change" : "changes"}
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -609,36 +751,57 @@ export default function BidDocumentEditor({ state, actions }) {
           >
             {savingDraft ? "Saving..." : "Save"}
           </button>
-          <button
-            type="button"
-            onClick={() => exportDraft("docx")}
-            disabled={exportingDraft || loadingDraft}
-            className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
-            title="Save & download as Word document"
-          >
-            {exportingDraft ? "Saving..." : "Save & DOCX"}
-          </button>
-          <button
-            type="button"
-            onClick={() => exportDraft("txt")}
-            disabled={exportingDraft || loadingDraft}
-            className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60 transition-colors"
-            title="Save & download as plain text"
-          >
-            Save & TXT
-          </button>
-          <button
-            type="button"
-            onClick={() => setPublishOpen(true)}
-            disabled={savingDraft || exportingDraft || loadingDraft}
-            className="inline-flex items-center gap-1 rounded-lg border border-violet-300 bg-violet-50 px-3 py-1.5 text-[11px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-60 transition-colors"
-            title="Publish this draft to a client portal"
-          >
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
-            </svg>
-            Publish to Portal
-          </button>
+          {/* Export / Publish dropdown */}
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              type="button"
+              onClick={() => setExportMenuOpen((prev) => !prev)}
+              disabled={exportingDraft || savingDraft || loadingDraft}
+              className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-60 transition-colors"
+            >
+              {exportingDraft ? "Exporting..." : "Export"}
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 8l4 4 4-4" />
+              </svg>
+            </button>
+            {exportMenuOpen ? (
+              <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => { exportDraft("docx"); setExportMenuOpen(false); }}
+                  disabled={exportingDraft}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                >
+                  <svg className="h-3.5 w-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Save &amp; Download DOCX
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { exportDraft("txt"); setExportMenuOpen(false); }}
+                  disabled={exportingDraft}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                >
+                  <svg className="h-3.5 w-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Save &amp; Download TXT
+                </button>
+                <div className="my-1 border-t border-neutral-100" />
+                <button
+                  type="button"
+                  onClick={() => { setPublishOpen(true); setExportMenuOpen(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-neutral-700 hover:bg-neutral-50"
+                >
+                  <svg className="h-3.5 w-3.5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                  </svg>
+                  Publish to Portal
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -676,6 +839,8 @@ export default function BidDocumentEditor({ state, actions }) {
             <EditorSection
               title="Project Details"
               icon={<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+              isDirty={projectDetailsDirty}
+              changeSource={projectDetailsFromAi ? "ai" : "manual"}
             >
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
@@ -727,6 +892,8 @@ export default function BidDocumentEditor({ state, actions }) {
               aiLoading={aiAssistLoading.intro}
               hasHistory={hasIntroHistory}
               onRevert={() => actions.revertSection("intro")}
+              isDirty={dirtyMap.intro}
+              changeSource={aiTouchedFields.has("intro") ? "ai" : "manual"}
             >
               <textarea
                 rows={4}
@@ -741,6 +908,8 @@ export default function BidDocumentEditor({ state, actions }) {
             <EditorSection
               title="Pricing Table"
               icon={<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+              isDirty={dirtyMap.pricing_items}
+              changeSource={aiTouchedFields.has("pricing_items") ? "ai" : "manual"}
             >
               <PricingTableEditor
                 items={draft.pricing_items}
@@ -756,6 +925,8 @@ export default function BidDocumentEditor({ state, actions }) {
               aiLoading={aiAssistLoading.scope_items}
               hasHistory={hasScopeHistory}
               onRevert={() => actions.revertSection("scope_items")}
+              isDirty={dirtyMap.scope_items}
+              changeSource={aiTouchedFields.has("scope_items") ? "ai" : "manual"}
             >
               <ListEditor
                 items={draft.scope_items}
@@ -772,6 +943,8 @@ export default function BidDocumentEditor({ state, actions }) {
               aiLoading={aiAssistLoading.assumptions}
               hasHistory={hasAssumptionsHistory}
               onRevert={() => actions.revertSection("assumptions")}
+              isDirty={dirtyMap.assumptions}
+              changeSource={aiTouchedFields.has("assumptions") ? "ai" : "manual"}
             >
               <ListEditor
                 items={draft.assumptions}
@@ -788,6 +961,8 @@ export default function BidDocumentEditor({ state, actions }) {
               aiLoading={aiAssistLoading.exclusions}
               hasHistory={hasExclusionsHistory}
               onRevert={() => actions.revertSection("exclusions")}
+              isDirty={dirtyMap.exclusions}
+              changeSource={aiTouchedFields.has("exclusions") ? "ai" : "manual"}
             >
               <ListEditor
                 items={draft.exclusions}
@@ -804,6 +979,8 @@ export default function BidDocumentEditor({ state, actions }) {
               aiLoading={aiAssistLoading.terms}
               hasHistory={hasTermsHistory}
               onRevert={() => actions.revertSection("terms")}
+              isDirty={dirtyMap.terms}
+              changeSource={aiTouchedFields.has("terms") ? "ai" : "manual"}
             >
               <textarea
                 rows={3}
@@ -818,6 +995,8 @@ export default function BidDocumentEditor({ state, actions }) {
             <EditorSection
               title="Internal Notes"
               icon={<svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>}
+              isDirty={dirtyMap.notes}
+              changeSource={aiTouchedFields.has("notes") ? "ai" : "manual"}
             >
               <textarea
                 rows={2}
@@ -829,7 +1008,9 @@ export default function BidDocumentEditor({ state, actions }) {
             </EditorSection>
 
             {/* Live preview toggle */}
-            {showPreview ? <LivePreview draft={draft} /> : null}
+            {showPreview ? (
+              <LivePreview draft={draft} dirtyMap={dirtyMap} aiTouchedFields={aiTouchedFields} />
+            ) : null}
           </>
         )}
       </div>
