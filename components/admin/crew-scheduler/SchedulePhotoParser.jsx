@@ -6,7 +6,7 @@
  * review/fix matches before applying them to the digital schedule.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Camera, Upload, CheckCircle, AlertTriangle, XCircle, Loader2, X, ChevronDown, ChevronUp, CalendarDays } from "lucide-react";
+import { Camera, Upload, CheckCircle, AlertTriangle, XCircle, Loader2, X, ChevronDown, ChevronUp, CalendarDays, RotateCcw } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Client-side image compression — converts any image to ≤1MB JPEG before upload.
@@ -136,13 +136,28 @@ const ParsedRowCard = ({ row, entities, overrides, onOverride }) => {
   const jobNum = row.job?.match?.job_number || row.raw?.job_number || "";
   const truckDisplay = row.truck?.match?.truck_number || row.raw?.truck_number || "";
   const superDisplay = row.superintendent?.match?.name || row.raw?.superintendent || "";
+  const catAssigned = row.category?.match?.name;
+  const catAutoMethod = row.category?.auto_assigned; // "color", "keyword", "fallback", or undefined
+  const noCat = !row.category?.match?.id;
 
   return (
-    <div className={`rounded-lg border-l-4 border border-neutral-200 ${rowBg} p-3 mb-2`}>
+    <div className={`rounded-lg border-l-4 border ${noCat ? "border-red-300 bg-red-50/30" : "border-neutral-200"} ${noCat ? "" : rowBg} p-3 mb-2`}>
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-bold text-neutral-800 truncate">{rigDisplay}</span>
+          {catAssigned && (
+            <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+              catAutoMethod ? "bg-blue-100 text-blue-700" : "bg-neutral-100 text-neutral-600"
+            }`}>
+              → {catAssigned}
+            </span>
+          )}
+          {noCat && (
+            <span className="rounded bg-red-200 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
+              No category — select below
+            </span>
+          )}
           {isNonWorking && (
             <span className="rounded bg-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-800">
               {status.label}
@@ -285,6 +300,7 @@ export default function SchedulePhotoParser({
   const [error, setError] = useState(null);
   const [overrides, setOverrides] = useState({});
   const [applying, setApplying] = useState(false);
+  const [applyFailed, setApplyFailed] = useState(false);
   const [targetDate, setTargetDate] = useState(selectedDate);
   const fileInputRef = useRef(null);
 
@@ -367,7 +383,7 @@ export default function SchedulePhotoParser({
     }));
   };
 
-  // Apply parsed results to the schedule
+  // Apply parsed results to the schedule (with retry support)
   const handleApply = async () => {
     if (!result?.matched_rows || !onApply) return;
     if (!targetDate) {
@@ -375,6 +391,8 @@ export default function SchedulePhotoParser({
       return;
     }
     setApplying(true);
+    setApplyFailed(false);
+    setError(null);
     try {
       await onApply({
         schedule_date: targetDate,
@@ -384,6 +402,7 @@ export default function SchedulePhotoParser({
       });
       onClose?.();
     } catch (err) {
+      setApplyFailed(true);
       setError(err.message || "Failed to apply schedule data");
     } finally {
       setApplying(false);
@@ -510,10 +529,34 @@ export default function SchedulePhotoParser({
             </div>
           )}
 
-          {/* Error */}
+          {/* Error with retry */}
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              <strong>Error:</strong> {error}
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm text-red-700">
+                  <strong>Error:</strong> {error}
+                </p>
+                {applyFailed && (
+                  <button
+                    onClick={handleApply}
+                    disabled={applying}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-50"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Retry
+                  </button>
+                )}
+                {!applyFailed && !result && files.length > 0 && (
+                  <button
+                    onClick={handleParse}
+                    disabled={parsing}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-50"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Retry Parse
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
@@ -597,12 +640,21 @@ export default function SchedulePhotoParser({
                 <button
                   onClick={handleApply}
                   disabled={applying}
-                  className="flex-1 rounded-lg bg-green-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
+                  className={`flex-1 rounded-lg py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60 ${
+                    applyFailed
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
                 >
                   {applying ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Applying to {targetDate}...
+                      {applyFailed ? "Retrying..." : `Applying to ${targetDate}...`}
+                    </span>
+                  ) : applyFailed ? (
+                    <span className="inline-flex items-center gap-2">
+                      <RotateCcw className="h-4 w-4" />
+                      Retry Apply to {targetDate}
                     </span>
                   ) : (
                     `Apply ${result.matched_rows?.length || 0} Rows to ${targetDate}`

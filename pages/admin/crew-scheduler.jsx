@@ -2158,11 +2158,15 @@ function CrewScheduler() {
       const usedWorkers = new Set(assignments.filter((a) => a.worker_id).map((a) => String(a.worker_id)));
       const usedCategories = new Set(assignments.filter((a) => a.job_id && !a.notes?.startsWith("__rig_day_type__:")).map((a) => String(a.category_id)));
       const allJobs = entities?.jobs || jobs;
+      let skippedRows = 0;
 
       for (const row of rows) {
         const ov = overrides?.[row.row_number] || {};
         const catId = ov.category_id || row.category?.match?.id;
-        if (!catId) continue;
+        if (!catId) {
+          skippedRows++;
+          continue;
+        }
 
         const status = row.dayStatus || { type: "working", label: "" };
         const nonWorking = status.type !== "working";
@@ -2232,6 +2236,15 @@ function CrewScheduler() {
 
       // --- 5. Refresh the UI ---
       await fetchSchedule(targetDate, { force: true });
+
+      // Warn about skipped rows
+      if (skippedRows > 0) {
+        alert(
+          `${assignmentRows.length} assignments saved successfully.\n\n` +
+          `${skippedRows} row(s) were skipped because they couldn't be matched to a rig category. ` +
+          `Use the "Details" dropdown on each row to assign a category before applying.`
+        );
+      }
     } finally {
       setSaving(false);
     }
