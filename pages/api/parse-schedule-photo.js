@@ -175,9 +175,20 @@ async function fileToBase64(filePath, mimeType, maxDimension) {
 }
 
 // ---------------------------------------------------------------------------
-// Fetch known entities from Supabase for fuzzy matching context
+// Fetch known entities from Supabase for fuzzy matching context.
+// Cached in-memory for 5 minutes to avoid redundant DB queries when
+// multiple photos are parsed in quick succession (same schedule session).
 // ---------------------------------------------------------------------------
+const ENTITY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+let _entityCache = null;
+let _entityCacheTime = 0;
+
 async function fetchEntities() {
+  // Return cached data if fresh
+  if (_entityCache && Date.now() - _entityCacheTime < ENTITY_CACHE_TTL) {
+    return _entityCache;
+  }
+
   const supabase = createAdminSupabase();
 
   const [workers, jobs, categories, trucks, superintendents] =
@@ -209,13 +220,17 @@ async function fetchEntities() {
         .order("name"),
     ]);
 
-  return {
+  const result = {
     workers: workers.data || [],
     jobs: jobs.data || [],
     categories: categories.data || [],
     trucks: trucks.data || [],
     superintendents: superintendents.data || [],
   };
+
+  _entityCache = result;
+  _entityCacheTime = Date.now();
+  return result;
 }
 
 // ---------------------------------------------------------------------------

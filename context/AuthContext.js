@@ -188,10 +188,27 @@ export function AuthProvider({ children }) {
       finishLoading();
     });
 
+    // Re-validate the session when the tab comes back from sleep / background.
+    // Mobile browsers suspend JS timers, so the Supabase auto-refresh may not
+    // fire in time — the JWT expires and the user appears logged out.
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== 'visible' || !isMounted || !recoveryDone) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          syncTokenCookie(session);
+        }
+      } catch {
+        // Silent — the onAuthStateChange listener will handle any real expiry.
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       isMounted = false;
       clearTimeout(safetyTimer);
       authListener.subscription?.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchUserProfile, applyProfile]);
 
