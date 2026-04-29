@@ -145,6 +145,13 @@ function bidAssistantReducer(state, action) {
       // draftHistory is preserved so the per-section "Undo last AI change"
       // affordance keeps working across saves.
       const normalized = normalizeDraftPayload(action.payload);
+      // Skip the update when the incoming draft already matches both the
+      // current draft and the saved baseline. Avoids spurious re-renders if
+      // the server echoes back exactly what we sent. JSON.stringify is safe
+      // here because normalizeDraftPayload produces a fixed key order.
+      const sameAsDraft = JSON.stringify(state.draft) === JSON.stringify(normalized);
+      const sameAsSaved = JSON.stringify(state.savedDraft) === JSON.stringify(normalized);
+      if (sameAsDraft && sameAsSaved) return state;
       return {
         ...state,
         draft: normalized,
