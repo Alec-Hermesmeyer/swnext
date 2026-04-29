@@ -2148,15 +2148,19 @@ function CrewScheduler() {
     const schedule = await getOrCreateSchedule(targetDate);
     if (!schedule) throw new Error("Could not create schedule for " + targetDate);
     if (schedule.is_finalized && !confirm("This schedule is already finalized. Apply photo data anyway?")) return;
-    if (targetDate !== selectedDate) setSelectedDate(targetDate);
+    // NOTE: setSelectedDate is deferred to AFTER the DB writes + fetchSchedule.
+    // Moving it here would trigger a useEffect → fetchSchedule race that can
+    // discard the force-refreshed data via the scheduleRequestRef guard.
 
     setSaving(true);
     try {
       // --- 2b. Clear existing data so parsed results fully overwrite ---
-      await Promise.all([
+      const [delAssign, delRig] = await Promise.all([
         supabase.from("crew_assignments").delete().eq("schedule_id", schedule.id),
         supabase.from("schedule_rig_details").delete().eq("schedule_id", schedule.id),
       ]);
+      if (delAssign.error) throw new Error("Failed to clear assignments: " + delAssign.error.message);
+      if (delRig.error) throw new Error("Failed to clear rig details: " + delRig.error.message);
 
       // --- 3. Build all DB records in plain JS (no DB calls yet) ---
       const assignmentRows = [];
@@ -2255,6 +2259,10 @@ function CrewScheduler() {
 
       // --- 5. Refresh the UI ---
       await fetchSchedule(targetDate, { force: true });
+      // Now that the force fetch has completed and written to cache, it's safe
+      // to update selectedDate. The useEffect's fetchSchedule will read from
+      // the freshly-written cache instead of racing with the force fetch.
+      if (targetDate !== selectedDate) setSelectedDate(targetDate);
 
       // Warn about skipped rows
       if (skippedRows > 0) {
