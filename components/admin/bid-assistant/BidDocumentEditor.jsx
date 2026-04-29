@@ -870,6 +870,8 @@ export default function BidDocumentEditor({ state, actions }) {
               aiLoading={aiAssistLoading.assumptions}
               hasHistory={hasAssumptionsHistory}
               onRevert={() => actions.revertSection("assumptions")}
+              isDirty={dirtyMap.assumptions}
+              changeSource={aiTouchedFields.has("assumptions") ? "ai" : "manual"}
             >
               <ListEditor
                 items={draft.assumptions}
