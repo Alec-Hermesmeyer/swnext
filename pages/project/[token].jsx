@@ -380,7 +380,14 @@ function JobDetail({ job }) {
           />
           <MetricCell
             label="Days on Site"
-            value={job.scheduled_days ? String(job.scheduled_days) : "—"}
+            value={job.days_on_site ? String(job.days_on_site) : "—"}
+            sub={
+              job.days_on_site && job.calendar_days_elapsed
+                ? `${job.calendar_days_elapsed} calendar days`
+                : job.days_on_site && job.scheduled_days > job.days_on_site
+                ? `${job.scheduled_days - job.days_on_site} more scheduled`
+                : null
+            }
           />
           <MetricCell
             label="Mob Days"
