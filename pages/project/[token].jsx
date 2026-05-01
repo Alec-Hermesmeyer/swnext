@@ -383,9 +383,11 @@ function JobDetail({ job }) {
             value={job.days_on_site ? String(job.days_on_site) : "—"}
             sub={
               job.days_on_site && job.calendar_days_elapsed
-                ? `${job.calendar_days_elapsed} calendar days`
+                ? `${job.calendar_days_elapsed} calendar day${job.calendar_days_elapsed === 1 ? "" : "s"}`
                 : job.days_on_site && job.scheduled_days > job.days_on_site
                 ? `${job.scheduled_days - job.days_on_site} more scheduled`
+                : !job.days_on_site && job.scheduled_days > 0
+                ? `${job.scheduled_days} day${job.scheduled_days === 1 ? "" : "s"} scheduled`
                 : null
             }
           />
