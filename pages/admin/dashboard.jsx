@@ -9,6 +9,12 @@ import supabase from "@/components/Supabase";
 import { useAuth } from "@/context/AuthContext";
 import { readCachedValue, writeCachedValue } from "@/lib/client-cache";
 import { Lato } from "next/font/google";
+import {
+  HeadlineKpi,
+  RevenueIntelligence,
+  OperationsStatus,
+  ActionQueue,
+} from "@/components/admin/DashboardWidgets";
 
 /* Chart components — loaded client-side only (Chart.js needs <canvas>) */
 const SalesPipelineChart = dynamic(() => import("@/components/admin/DashboardCharts").then((m) => m.SalesPipelineChart), { ssr: false });
@@ -164,10 +170,25 @@ function ActivityItem({ label, detail, time, status }) {
   );
 }
 
+// Helpers shared across the dashboard for date-window math.
+const ymd = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const daysAgo = (n) => {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return ymd(d);
+};
+
 async function fetchDashboardSnapshot() {
   const today = new Date().toISOString().split("T")[0];
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
   const thirtyDaysOut = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+
+  // Revenue + activity windows.
+  const revWindow7 = daysAgo(6); // today minus 6 = inclusive 7 days
+  const revWindowPrev7 = daysAgo(13); // 14-8 days ago for WoW comparison
+  const revWindow14 = daysAgo(13); // for sparkline
+  const revWindow30 = daysAgo(29); // last 30 inclusive (used for active-jobs predicate too)
 
   const [
     { count: activeJobs },
@@ -300,6 +321,124 @@ async function fetchDashboardSnapshot() {
     }
   } catch { /* silent */ }
 
+  // ── Revenue intelligence ─────────────────────────────────────────
+  // Pulled from revenue_report_uploads (day_total = doc-stated total — the
+  // source of truth) and revenue_report_jobs (per-job rollups for "top jobs").
+  // All wrapped in try/catch so a missing migration on these tables doesn't
+  // break the dashboard.
+  let revenueLast7 = 0;
+  let revenuePrev7 = 0;
+  let revenueLast30 = 0;
+  let revenueDaily14 = []; // array of { date, total }
+  let topJobs7 = []; // array of { job_number, job_name, total }
+  try {
+    const { data: revRows } = await supabase
+      .from("revenue_report_uploads")
+      .select("report_date, day_total, parsed_revenue_sum, uploaded_at")
+      .gte("report_date", revWindow30)
+      .lte("report_date", today)
+      .not("report_date", "is", null);
+
+    // Latest upload per date wins (handles re-uploaded corrections).
+    const latestByDate = new Map();
+    for (const r of revRows || []) {
+      const existing = latestByDate.get(r.report_date);
+      if (!existing || (r.uploaded_at || "") > (existing.uploaded_at || "")) {
+        latestByDate.set(r.report_date, r);
+      }
+    }
+
+    const valFor = (row) =>
+      row?.day_total != null
+        ? Number(row.day_total)
+        : row?.parsed_revenue_sum != null
+        ? Number(row.parsed_revenue_sum)
+        : 0;
+
+    for (const [date, row] of latestByDate.entries()) {
+      const v = valFor(row);
+      if (date >= revWindow30) revenueLast30 += v;
+      if (date >= revWindow7) revenueLast7 += v;
+      if (date >= revWindowPrev7 && date < revWindow7) revenuePrev7 += v;
+    }
+
+    // 14-day daily series (zero-fill missing days so the sparkline doesn't lie).
+    for (let i = 13; i >= 0; i--) {
+      const d = daysAgo(i);
+      revenueDaily14.push({ date: d, total: valFor(latestByDate.get(d)) });
+    }
+  } catch { /* silent */ }
+
+  try {
+    const { data: jobRows } = await supabase
+      .from("revenue_report_jobs")
+      .select("job_number, job_name, customer_name, revenue, report_date")
+      .gte("report_date", revWindow7)
+      .lte("report_date", today)
+      .not("revenue", "is", null);
+
+    const byJob = new Map();
+    for (const r of jobRows || []) {
+      const key = r.job_number || r.job_name || "unknown";
+      const cur = byJob.get(key) || { job_number: r.job_number, job_name: r.job_name, customer_name: r.customer_name, total: 0 };
+      cur.total += Number(r.revenue) || 0;
+      byJob.set(key, cur);
+    }
+    topJobs7 = Array.from(byJob.values())
+      .filter((j) => j.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  } catch { /* silent */ }
+
+  // ── Currently-active jobs (matches the /admin/jobs definition) ──
+  // Active = is_active=true AND (assignment in last 30 days OR scheduled/in_progress status OR DEMO).
+  // Also count incompletes among the active set.
+  let currentlyActiveCount = 0;
+  let incompleteActiveCount = 0;
+  let staleActiveCount = 0; // is_active=true but no recent assignment, not scheduled/in_progress, not demo
+  try {
+    const { data: assignmentRows } = await supabase
+      .from("crew_assignments")
+      .select("job_id, crew_schedules!inner(schedule_date)")
+      .gte("crew_schedules.schedule_date", revWindow30)
+      .not("job_id", "is", null)
+      .order("schedule_date", { foreignTable: "crew_schedules", ascending: false })
+      .range(0, 9999);
+    const recentJobIds = new Set((assignmentRows || []).map((r) => String(r.job_id)));
+
+    const { data: allJobsForActive } = await supabase
+      .from("crew_jobs")
+      .select("id, is_active, job_status, job_name, customer_name, hiring_contractor, address, city, contract_amount, bid_amount, estimated_days, pier_count, pm_name");
+    const activeFallback = new Set(["scheduled", "in_progress"]);
+    const isDemo = (j) => String(j.job_name || "").startsWith("[DEMO]");
+
+    // Replicates assessCompleteness from /admin/jobs.
+    const COMPLETENESS_TESTS = [
+      (j) => (j.customer_name || j.hiring_contractor || "").trim() !== "",
+      (j) => String(j.address || "").trim() !== "",
+      (j) => String(j.city || "").trim() !== "",
+      (j) => Number(j.contract_amount) > 0 || Number(j.bid_amount) > 0,
+      (j) => Number(j.estimated_days) > 0,
+      (j) => Number(j.pier_count) > 0,
+      (j) => String(j.pm_name || "").trim() !== "",
+    ];
+
+    for (const j of allJobsForActive || []) {
+      if (j.is_active === false) continue;
+      const isCurrentlyActive =
+        isDemo(j) ||
+        activeFallback.has(j.job_status) ||
+        recentJobIds.has(String(j.id));
+      if (isCurrentlyActive) {
+        currentlyActiveCount += 1;
+        const missing = COMPLETENESS_TESTS.filter((t) => !t(j)).length;
+        if (missing > 0) incompleteActiveCount += 1;
+      } else {
+        staleActiveCount += 1;
+      }
+    }
+  } catch { /* silent */ }
+
   // Weekly lead & application counts (last 6 weeks, for line chart)
   let weeklyLeads = [];
   let weeklyApps = [];
@@ -353,6 +492,16 @@ async function fetchDashboardSnapshot() {
     jobStatusCounts,
     weeklyLeads,
     weeklyApps,
+    // Revenue intelligence (new)
+    revenueLast7,
+    revenuePrev7,
+    revenueLast30,
+    revenueDaily14,
+    topJobs7,
+    // "Currently active" job semantics (matches /admin/jobs)
+    currentlyActiveCount,
+    incompleteActiveCount,
+    staleActiveCount,
   };
 }
 
@@ -397,26 +546,6 @@ function DashboardTW() {
     return () => { active = false; };
   }, []);
 
-  // Calculate health score from real metrics
-  const healthScore = useMemo(() => {
-    if (!data) return 0;
-    let score = 50; // base
-    if (data.hasTodaySchedule) score += 10;
-    if (data.todayFinalized) score += 10;
-    if (data.activeJobs > 0) score += 10;
-    if (data.activeOpps > 0) score += 5;
-    if (data.recentContactSubs > 0 || data.recentJobApps > 0) score += 5;
-    if (data.activeHiring > 0) score += 5;
-    if (data.socialPosts > 0) score += 5;
-    return Math.min(score, 100);
-  }, [data]);
-
-  const healthLabel = useMemo(() => {
-    if (healthScore >= 80) return "Operations Healthy";
-    if (healthScore >= 60) return "Needs Attention";
-    return "Action Required";
-  }, [healthScore]);
-
   const money = (n) =>
     n != null
       ? Number(n).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
@@ -447,22 +576,24 @@ function DashboardTW() {
     }
   };
 
-  // Derive action items — only shown when something actually needs attention
+  // Derive action items — only shown when something actually needs attention.
+  // The new "Operations" card surfaces always-on status; this queue is just
+  // for items that need a human to do something now.
   const actionItems = useMemo(() => {
     if (!data) return [];
     const missingReports = Math.max(0, (data.todayScheduledJobsCount || 0) - (data.todayReportsCount || 0));
     const items = [
-      data.pendingScheduleRequestsCount > 0 && {
-        label: "Schedule requests pending",
-        count: data.pendingScheduleRequestsCount,
-        href: "/admin/schedule-requests",
-        tone: "amber",
-      },
       data.expiredCertsCount > 0 && {
         label: "Certs expired",
         count: data.expiredCertsCount,
         href: "/admin/certifications",
         tone: "rose",
+      },
+      data.pendingScheduleRequestsCount > 0 && {
+        label: "Schedule requests pending",
+        count: data.pendingScheduleRequestsCount,
+        href: "/admin/schedule-requests",
+        tone: "amber",
       },
       data.expiringCertsCount > 0 && {
         label: "Certs expiring ≤30d",
@@ -482,16 +613,23 @@ function DashboardTW() {
         href: "/admin/change-orders",
         tone: "amber",
       },
+      data.incompleteActiveCount > 0 && {
+        label: "Active jobs missing details",
+        count: data.incompleteActiveCount,
+        href: "/admin/jobs",
+        tone: "blue",
+      },
     ].filter(Boolean);
     return items;
   }, [data]);
 
-  const todayTone = useMemo(() => {
-    if (!data) return "neutral";
-    if (data.todayScheduledJobsCount === 0) return "neutral";
-    if (data.todayReportsCount >= data.todayScheduledJobsCount) return "emerald";
-    if (data.todayReportsCount > 0) return "amber";
-    return "rose";
+  // Week-over-week revenue delta as a percentage, for the headline KPI card.
+  const revenueWoWPct = useMemo(() => {
+    if (!data) return null;
+    const cur = Number(data.revenueLast7) || 0;
+    const prev = Number(data.revenuePrev7) || 0;
+    if (prev === 0) return null;
+    return ((cur - prev) / prev) * 100;
   }, [data]);
 
   return (
@@ -502,98 +640,25 @@ function DashboardTW() {
       </Head>
 
       <div>
-        {/* ── Hero: compact greeting + 3 KPI tiles ── */}
-        <header className="mb-6 rounded-2xl border border-neutral-200 bg-white p-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className={`${lato.className} text-2xl font-black text-neutral-900`}>
-                {getGreeting(firstName)}
-              </h1>
-              <p className="mt-0.5 text-sm text-neutral-500">
-                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-              </p>
-              {lastUpdatedAt ? (
-                <p className="mt-0.5 text-[11px] text-neutral-400">
-                  Updated {new Date(lastUpdatedAt).toLocaleTimeString()}
-                </p>
-              ) : null}
-            </div>
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
-            >
-              {refreshing ? "Refreshing..." : "Refresh"}
-            </button>
+        {/* ── Greeting strip ── */}
+        <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className={`${lato.className} text-2xl font-black text-neutral-900`}>
+              {getGreeting(firstName)}
+            </h1>
+            <p className="mt-0.5 text-sm text-neutral-500">
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+              {lastUpdatedAt ? <span className="ml-2 text-neutral-400">· Updated {new Date(lastUpdatedAt).toLocaleTimeString()}</span> : null}
+            </p>
           </div>
-
-          {!loading && data ? (
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              {/* Backlog */}
-              <Link
-                href="/admin/job-costs"
-                className="group block rounded-xl border border-neutral-200 bg-gradient-to-br from-brand/5 to-white p-4 transition-all hover:shadow-card-hover hover:border-brand/30"
-              >
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Active Backlog</p>
-                <p className={`${lato.className} mt-1 text-3xl font-black text-brand`}>{money(data.totalActiveContract)}</p>
-                <p className="mt-1 text-xs font-semibold text-neutral-500">
-                  {data.activeJobs} active job{data.activeJobs === 1 ? "" : "s"} <span className="text-brand transition-transform group-hover:translate-x-0.5 inline-block">→</span>
-                </p>
-              </Link>
-              {/* Pipeline */}
-              <Link
-                href="/admin/sales"
-                className="group block rounded-xl border border-neutral-200 bg-gradient-to-br from-amber-50 to-white p-4 transition-all hover:shadow-card-hover hover:border-amber-300"
-              >
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Sales Pipeline</p>
-                <p className={`${lato.className} mt-1 text-3xl font-black text-amber-700`}>{money(data.pipelineValue)}</p>
-                <p className="mt-1 text-xs font-semibold text-neutral-500">
-                  {data.activeOpps} open{data.wonCount ? ` · ${data.wonCount} won` : ""} <span className="text-amber-700 transition-transform group-hover:translate-x-0.5 inline-block">→</span>
-                </p>
-              </Link>
-              {/* Today */}
-              {(() => {
-                const toneBg = {
-                  neutral: "from-neutral-50 to-white",
-                  emerald: "from-emerald-50 to-white",
-                  amber: "from-amber-50 to-white",
-                  rose: "from-rose-50 to-white",
-                }[todayTone];
-                const toneText = {
-                  neutral: "text-neutral-700",
-                  emerald: "text-emerald-700",
-                  amber: "text-amber-700",
-                  rose: "text-rose-700",
-                }[todayTone];
-                const toneBorder = {
-                  neutral: "hover:border-neutral-300",
-                  emerald: "hover:border-emerald-300",
-                  amber: "hover:border-amber-300",
-                  rose: "hover:border-rose-300",
-                }[todayTone];
-                const subLine = data.todayScheduledJobsCount === 0
-                  ? "No jobs scheduled today"
-                  : data.todayReportsCount >= data.todayScheduledJobsCount
-                    ? "All reports filed"
-                    : `${data.todayScheduledJobsCount - data.todayReportsCount} outstanding`;
-                return (
-                  <Link
-                    href="/admin/daily-board"
-                    className={`group block rounded-xl border border-neutral-200 bg-gradient-to-br p-4 transition-all hover:shadow-card-hover ${toneBg} ${toneBorder}`}
-                  >
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">Today's Reports</p>
-                    <p className={`${lato.className} mt-1 text-3xl font-black ${toneText}`}>
-                      {data.todayReportsCount}<span className="text-neutral-400 font-bold"> / {data.todayScheduledJobsCount}</span>
-                    </p>
-                    <p className="mt-1 text-xs font-semibold text-neutral-500">
-                      {subLine} <span className={`${toneText} transition-transform group-hover:translate-x-0.5 inline-block`}>→</span>
-                    </p>
-                  </Link>
-                );
-              })()}
-            </div>
-          ) : null}
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 disabled:opacity-60"
+          >
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </button>
         </header>
 
         {loading ? (
@@ -605,42 +670,74 @@ function DashboardTW() {
           </div>
         ) : data ? (
           <>
-            {/* ── Action Items (only renders when something needs attention) ── */}
-            {actionItems.length > 0 ? (
-              <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                  </svg>
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-amber-800">Needs attention</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {actionItems.map((item, i) => (
-                    <Link
-                      key={i}
-                      href={item.href}
-                      className={`group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
-                        item.tone === "rose"
-                          ? "border-rose-300 bg-white text-rose-800 hover:bg-rose-50 hover:border-rose-400"
-                          : "border-amber-300 bg-white text-amber-900 hover:bg-amber-50 hover:border-amber-400"
-                      }`}
-                    >
-                      <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white ${
-                        item.tone === "rose" ? "bg-rose-600" : "bg-amber-500"
-                      }`}>
-                        {item.count}
-                      </span>
-                      <span>{item.label}</span>
-                      <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            ) : null}
+            {/* ── Zone 1: Headline KPIs ── */}
+            <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <HeadlineKpi
+                label="Revenue · Last 7 Days"
+                value={money(data.revenueLast7)}
+                sublabel={`Prior 7: ${money(data.revenuePrev7)}`}
+                delta={revenueWoWPct}
+                deltaLabel="vs prior 7"
+                href="/admin/revenue-reports"
+                accent="emerald"
+              />
+              <HeadlineKpi
+                label="Active Jobs"
+                value={data.currentlyActiveCount ?? data.activeJobs ?? 0}
+                sublabel={
+                  data.staleActiveCount > 0
+                    ? `${data.staleActiveCount} stale active need review`
+                    : "Scheduled in last 30 days"
+                }
+                href="/admin/jobs"
+                accent="navy"
+              />
+              <HeadlineKpi
+                label="Contract Backlog"
+                value={money(data.totalActiveContract)}
+                sublabel="Sum of active contracts"
+                href="/admin/job-costs"
+                accent="violet"
+              />
+              <HeadlineKpi
+                label="Sales Pipeline"
+                value={money(data.pipelineValue)}
+                sublabel={`${data.activeOpps} open${data.wonCount ? ` · ${data.wonCount} won` : ""}`}
+                href="/admin/sales"
+                accent="amber"
+              />
+            </div>
 
-            {/* ── Main grid: Sales (wider) + Jobs ── */}
+            {/* ── Zone 2: Revenue Intelligence ── */}
+            <div className="mb-6">
+              <RevenueIntelligence
+                revenueLast7={data.revenueLast7}
+                revenuePrev7={data.revenuePrev7}
+                revenueLast30={data.revenueLast30}
+                revenueDaily14={data.revenueDaily14}
+                topJobs7={data.topJobs7}
+              />
+            </div>
+
+            {/* ── Zone 3: Operations Status + Action Queue ── */}
+            <div className="mb-6 grid gap-4 lg:grid-cols-2">
+              <OperationsStatus
+                hasTodaySchedule={data.hasTodaySchedule}
+                todayFinalized={data.todayFinalized}
+                todayScheduledJobsCount={data.todayScheduledJobsCount}
+                todayReportsCount={data.todayReportsCount}
+                expiredCertsCount={data.expiredCertsCount}
+                expiringCertsCount={data.expiringCertsCount}
+                pendingScheduleRequestsCount={data.pendingScheduleRequestsCount}
+                pendingChangeOrdersCount={data.pendingChangeOrdersCount}
+                incompleteActiveCount={data.incompleteActiveCount}
+                staleActiveCount={data.staleActiveCount}
+              />
+              <ActionQueue items={actionItems} />
+            </div>
+
+            {/* ── Zone 4: Pipeline + Jobs (existing charts, kept below the fold) ── */}
             <div className="mb-6 grid gap-6 lg:grid-cols-5">
-              {/* Sales panel — charts + mini stats */}
               <section className="rounded-2xl border border-neutral-200 bg-white p-5 lg:col-span-3">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Sales Pipeline</h2>
@@ -660,10 +757,9 @@ function DashboardTW() {
                 ) : null}
               </section>
 
-              {/* Jobs panel — status chart + recent list */}
               <section className="rounded-2xl border border-neutral-200 bg-white p-5 lg:col-span-2">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Active Jobs</h2>
+                  <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Job Status</h2>
                   <Link href="/admin/jobs" className="text-xs font-semibold text-brand hover:underline">View all →</Link>
                 </div>
                 <JobStatusChart jobStatusCounts={data.jobStatusCounts || {}} />
@@ -698,7 +794,7 @@ function DashboardTW() {
               </section>
             </div>
 
-            {/* ── Trends: 3-col ── */}
+            {/* ── Zone 5: Trends + Activity ── */}
             <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               <LeadsTrendChart weeklyLeads={data.weeklyLeads || []} weeklyApps={data.weeklyApps || []} />
               <CrewOverviewChart
@@ -709,7 +805,6 @@ function DashboardTW() {
               <HiringPipelineChart hiring={data.hiring || []} />
             </div>
 
-            {/* ── Recent Activity (full-width feed) ── */}
             <section className="rounded-2xl border border-neutral-200 bg-white p-5">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className={`${lato.className} text-base font-bold text-neutral-900`}>Recent Activity</h2>
