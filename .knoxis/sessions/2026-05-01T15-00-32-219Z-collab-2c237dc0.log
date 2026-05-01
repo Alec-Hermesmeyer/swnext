@@ -58,3 +58,37 @@ Workspace: /Users/alechermesmeyer/Desktop/SWF/frontend/swnext. Review the change
 [ADDITIONAL CONTEXT]
 - Consider edge cases and error handling
 - Recent focus areas: feature
+[2026-05-01T15:26:49.249Z] CLAUDE DONE (exit 0, 297s, 79 lines):
+
+
+I'll review the changes systematically — reading the actual file state to verify correctness, then checking edge cases.
+Now let me check the MetricCell component and verify no other frontend references to `scheduled_days` were missed:
+Let me check for any client-side data transformations or the `useLiveData` hook that might need to know about the new fields:
+Good — the data flows straight from the API response into state with no client-side transformation. The new `days_on_site` and `calendar_days_elapsed` fields will pass through cleanly.
+
+Now let me run through the edge cases with a quick Node script to validate the logic:
+All edge cases pass. I found two minor issues to address. Let me simulate what the frontend sub-label renders for each case, then fix what needs fixing:
+Two minor issues found:
+1. **EC8**: "1 calendar days" — should be singular "1 calendar day"
+2. **EC2**: Jobs with *only* future dates show "—" with no hint work is scheduled — the status badge provides this context elsewhere, but let's add a fallback sub-label for this case too.
+Now verify the fix handles all cases properly:
+All edge cases render correctly now. Let me do a final read of the complete changed sections to confirm everything is clean:
+Everything is clean. Here's the full review:
+
+---
+
+## Review Summary ✅
+
+### What I Checked
+
+| Check | Result |
+|---|---|
+| **API logic correctness** — date filtering, override, calendar calc | ✅ Correct |
+| **Backward compatibility** — `scheduled_days` still returned | ✅ Preserved |
+| **Frontend consuming new fields** — `days_on_site`, `calendar_days_elapsed` | ✅ Both used |
+| **MetricCell `sub` prop** — added without breaking existing callers | ✅ Optional prop, existing callers unaffected |
+| **JobTracking "Working Days"** — switched to `days_on_site` | ✅ Updated |
+| **Progress bar** — uses `daysOnSite` not `scheduledDays` | ✅ Updated (line 241) |
+| **No client-side transformation needed** — data flows API → state → render | ✅ Clean pass-through |
+|
+[2026-05-01T15:26:52.116Z] KNOXIS (review): Claude has thoroughly reviewed the changes and verified that the 'days on site' feature and progress bar are working correctly. The review covered API logic correctness, backward compatibility, frontend consumption of new fields, and edge cases. Two minor issues were found and fixed: singular/plural grammar and adding a fallback sub-label for future-only scheduled dates. The code is clean, and the changes are well-documented. One minor note was mentioned regarding the use of UTC date, but it's not expected to cause any visible issues in practice.
