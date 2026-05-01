@@ -695,11 +695,12 @@ function JobDocuments({ job, globalDocs = [] }) {
   );
 }
 
-function MetricCell({ label, value }) {
+function MetricCell({ label, value, sub }) {
   return (
     <div className="bg-white px-4 py-4 text-center lg:px-6">
       <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">{label}</p>
       <p className="mt-1 text-xl font-black tabular-nums text-neutral-900 lg:text-2xl">{value}</p>
+      {sub ? <p className="mt-0.5 text-[10px] font-semibold text-neutral-400">{sub}</p> : null}
     </div>
   );
 }
