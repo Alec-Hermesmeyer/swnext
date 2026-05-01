@@ -380,7 +380,16 @@ function JobDetail({ job }) {
           />
           <MetricCell
             label="Days on Site"
-            value={job.scheduled_days ? String(job.scheduled_days) : "—"}
+            value={job.days_on_site ? String(job.days_on_site) : "—"}
+            sub={
+              job.days_on_site && job.calendar_days_elapsed
+                ? `${job.calendar_days_elapsed} calendar day${job.calendar_days_elapsed === 1 ? "" : "s"}`
+                : job.days_on_site && job.scheduled_days > job.days_on_site
+                ? `${job.scheduled_days - job.days_on_site} more scheduled`
+                : !job.days_on_site && job.scheduled_days > 0
+                ? `${job.scheduled_days} day${job.scheduled_days === 1 ? "" : "s"} scheduled`
+                : null
+            }
           />
           <MetricCell
             label="Mob Days"
@@ -479,7 +488,7 @@ function JobTracking({ job }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <TrackingCard
           label="Working Days"
-          value={job.scheduled_days || 0}
+          value={job.days_on_site || 0}
           sub={job.estimated_days ? `of ${job.estimated_days} est.` : null}
           tone="blue"
         />
@@ -695,11 +704,12 @@ function JobDocuments({ job, globalDocs = [] }) {
   );
 }
 
-function MetricCell({ label, value }) {
+function MetricCell({ label, value, sub }) {
   return (
     <div className="bg-white px-4 py-4 text-center lg:px-6">
       <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-400">{label}</p>
       <p className="mt-1 text-xl font-black tabular-nums text-neutral-900 lg:text-2xl">{value}</p>
+      {sub ? <p className="mt-0.5 text-[10px] font-semibold text-neutral-400">{sub}</p> : null}
     </div>
   );
 }

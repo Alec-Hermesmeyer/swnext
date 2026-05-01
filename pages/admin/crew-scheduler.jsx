@@ -12,6 +12,7 @@ import CrewCombobox from "@/components/admin/crew-scheduler/CrewCombobox";
 import JobCombobox from "@/components/admin/crew-scheduler/JobCombobox";
 import JobFormModal from "@/components/admin/crew-scheduler/JobFormModal";
 import SchedulePhotoParser from "@/components/admin/crew-scheduler/SchedulePhotoParser";
+import FellOffJobsBanner from "@/components/admin/crew-scheduler/FellOffJobsBanner";
 
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 const CREW_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -2277,8 +2278,35 @@ function CrewScheduler() {
         insertedRigDetails = data?.length ?? deduped.length;
       }
 
+      // --- 4b. Auto-activate any jobs the parser matched. Older jobs are kept
+      // in the DB but flagged is_active=false. When one resurfaces on a
+      // current schedule, treat the parser as the source of truth.
+      const matchedJobIds = [...new Set(
+        assignmentRows.map((r) => r.job_id).filter(Boolean).map(String)
+      )];
+      let activatedJobs = 0;
+      if (matchedJobIds.length > 0) {
+        console.log("[parse-apply] reactivating matched jobs", matchedJobIds.length);
+        const { data, error } = await supabase
+          .from("crew_jobs")
+          .update({ is_active: true })
+          .in("id", matchedJobIds)
+          .eq("is_active", false)
+          .select("id");
+        if (error) {
+          console.error("[parse-apply] failed to activate jobs:", error);
+        } else {
+          activatedJobs = data?.length ?? 0;
+        }
+      }
+
       // --- 5. Refresh the UI ---
       await fetchSchedule(targetDate, { force: true });
+      if (activatedJobs > 0) {
+        // Refresh jobs list so the activation is reflected in the rest of the
+        // scheduler (job dropdowns, filters, etc.).
+        try { await fetchJobs({ attempts: 2, force: true }); } catch (_) {}
+      }
       // Now that the force fetch has completed and written to cache, it's safe
       // to update selectedDate. The useEffect's fetchSchedule will read from
       // the freshly-written cache instead of racing with the force fetch.
@@ -2289,6 +2317,7 @@ function CrewScheduler() {
         targetDate,
         insertedAssignments,
         insertedRigDetails,
+        activatedJobs,
         skippedRows,
       });
       const lines = [
@@ -2296,6 +2325,9 @@ function CrewScheduler() {
         `• ${insertedAssignments} assignment row(s) saved`,
         `• ${insertedRigDetails} rig detail row(s) saved`,
       ];
+      if (activatedJobs > 0) {
+        lines.push(`• ${activatedJobs} previously-inactive job(s) re-activated`);
+      }
       if (skippedRows > 0) {
         lines.push(`• ${skippedRows} row(s) skipped (no rig category — use the "Details" dropdown to assign one).`);
       }
@@ -4757,6 +4789,13 @@ function CrewScheduler() {
                 {formatDate(selectedDate)}
               </h2>
             </div>
+
+            <FellOffJobsBanner
+              selectedDate={selectedDate}
+              todayScheduleDate={currentSchedule?.schedule_date || null}
+              todayJobIds={assignments.map((a) => a.job_id).filter(Boolean)}
+              onJobUpdated={() => fetchJobs({ attempts: 2, force: true }).catch(() => {})}
+            />
 
             <div className="print:hidden mb-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
               The scheduler opens on <span className="font-semibold">tomorrow</span> by default.

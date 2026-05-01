@@ -209,7 +209,25 @@ export default async function handler(req, res) {
       const jobReports = reportsByJob.get(job.id) || [];
       const jobDocs = docsByJob.get(job.id) || [];
 
-      const scheduledDays = agg.dates.size;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const totalScheduledDays = agg.dates.size;
+      // Only count dates on or before today as actual "days on site"
+      const pastDates = [...agg.dates].filter((d) => d <= todayStr);
+      const daysOnSiteFromSchedule = pastDates.length;
+
+      // For completed jobs, prefer the manually-entered actual_days if available
+      const dbActualDays = Number(job.actual_days) || 0;
+      const isCompleted = job.job_status === "completed";
+      const daysOnSite = isCompleted && dbActualDays > 0 ? dbActualDays : daysOnSiteFromSchedule;
+
+      // Calendar days elapsed: start_date → today (or end_date if completed)
+      let calendarDaysElapsed = null;
+      if (job.start_date) {
+        const start = new Date(job.start_date);
+        const end = isCompleted && job.end_date ? new Date(job.end_date) : new Date();
+        calendarDaysElapsed = Math.max(0, Math.round((end - start) / 86400000));
+      }
+
       const estimatedDays = Number(job.estimated_days) || 0;
       const contractAmount = Number(job.contract_amount) || 0;
 
@@ -220,7 +238,7 @@ export default async function handler(req, res) {
         .filter((c) => c.status === "pending" || c.status === "submitted")
         .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
 
-      const progress = estimatedDays > 0 ? Math.min((scheduledDays / estimatedDays) * 100, 100) : null;
+      const progress = estimatedDays > 0 ? Math.min((daysOnSite / estimatedDays) * 100, 100) : null;
 
       // Job tracking aggregates
       const weatherDays = jobReports.filter((r) => r.weather_stop).length;
@@ -261,7 +279,9 @@ export default async function handler(req, res) {
         pending_co_total: pendingCoTotal,
         adjusted_contract: contractAmount + approvedCoTotal,
         estimated_days: estimatedDays,
-        scheduled_days: scheduledDays,
+        scheduled_days: totalScheduledDays,
+        days_on_site: daysOnSite,
+        calendar_days_elapsed: calendarDaysElapsed,
         progress_pct: progress,
         // New tracking fields
         rig: job.default_rig || null,
