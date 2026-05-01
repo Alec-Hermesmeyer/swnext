@@ -486,7 +486,7 @@ function JobTracking({ job }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <TrackingCard
           label="Working Days"
-          value={job.scheduled_days || 0}
+          value={job.days_on_site || 0}
           sub={job.estimated_days ? `of ${job.estimated_days} est.` : null}
           tone="blue"
         />
