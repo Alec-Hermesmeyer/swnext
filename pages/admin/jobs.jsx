@@ -160,16 +160,28 @@ function AdminJobsPage() {
     setLoading(true);
     setErrorMessage("");
     try {
+      // Bound the assignment scan to a year to stay well under Postgres /
+      // Supabase response limits. A daily-scheduling crew accumulates
+      // thousands of assignment rows per year (5+ rigs × ~5 crew × 365),
+      // and the default response cap is 1000 rows — without bounding we'd
+      // silently truncate and the "last scheduled" map would be wrong.
+      const lookbackStart = (() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 365);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      })();
+
       // Pull jobs and assignments in parallel. Assignments are joined to
-      // crew_schedules so we know each one's actual schedule_date — used to
-      // compute "last scheduled" per job for the Active filter and the
-      // per-row recency badge.
+      // crew_schedules so we know each one's actual schedule_date.
       const [jobsRes, assignRes] = await Promise.all([
         supabase.from("crew_jobs").select("*"),
         supabase
           .from("crew_assignments")
           .select("job_id, crew_schedules!inner(schedule_date)")
-          .not("job_id", "is", null),
+          .not("job_id", "is", null)
+          .gte("crew_schedules.schedule_date", lookbackStart)
+          .order("schedule_date", { foreignTable: "crew_schedules", ascending: false })
+          .range(0, 9999),
       ]);
       if (jobsRes.error) throw jobsRes.error;
       if (assignRes.error) throw assignRes.error;
