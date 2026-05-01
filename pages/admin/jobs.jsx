@@ -25,6 +25,37 @@ const STATUS_OPTIONS = [
 ];
 const STATUS_META = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.value, s]));
 
+// "Active" is no longer just is_active=true. A job counts as active only if
+// it's been on a real schedule recently (parser/scheduler touched it),
+// OR has an upcoming-work status, OR is a demo seed used to showcase the
+// client portal. This keeps the Active tab tied to actual current work.
+const RECENT_SCHEDULE_DAYS = 30;
+const ACTIVE_FALLBACK_STATUSES = new Set(["scheduled", "in_progress"]);
+const DEMO_JOB_PREFIX = "[DEMO]";
+
+const isDemoJob = (job) => String(job?.job_name || "").startsWith(DEMO_JOB_PREFIX);
+
+function formatDaysAgo(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + "T12:00:00");
+  if (Number.isNaN(d.getTime())) return null;
+  const diffDays = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return "upcoming";
+  if (diffDays === 0) return "today";
+  if (diffDays === 1) return "yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  }
+  if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    return `${months} month${months === 1 ? "" : "s"} ago`;
+  }
+  const years = Math.floor(diffDays / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
+}
+
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest first" },
   { value: "contract_desc", label: "Largest contracts" },
@@ -107,6 +138,7 @@ function normalizeJobInput(job) {
 
 function AdminJobsPage() {
   const [jobs, setJobs] = useState([]);
+  const [lastScheduledByJob, setLastScheduledByJob] = useState(() => new Map());
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [status, setStatus] = useState(null);
@@ -128,9 +160,30 @@ function AdminJobsPage() {
     setLoading(true);
     setErrorMessage("");
     try {
-      const { data, error } = await supabase.from("crew_jobs").select("*");
-      if (error) throw error;
-      setJobs(data || []);
+      // Pull jobs and assignments in parallel. Assignments are joined to
+      // crew_schedules so we know each one's actual schedule_date — used to
+      // compute "last scheduled" per job for the Active filter and the
+      // per-row recency badge.
+      const [jobsRes, assignRes] = await Promise.all([
+        supabase.from("crew_jobs").select("*"),
+        supabase
+          .from("crew_assignments")
+          .select("job_id, crew_schedules!inner(schedule_date)")
+          .not("job_id", "is", null),
+      ]);
+      if (jobsRes.error) throw jobsRes.error;
+      if (assignRes.error) throw assignRes.error;
+
+      const lastMap = new Map();
+      for (const row of assignRes.data || []) {
+        const date = row?.crew_schedules?.schedule_date;
+        if (!row.job_id || !date) continue;
+        const existing = lastMap.get(row.job_id);
+        if (!existing || date > existing) lastMap.set(row.job_id, date);
+      }
+
+      setJobs(jobsRes.data || []);
+      setLastScheduledByJob(lastMap);
     } catch (err) {
       setErrorMessage(err?.message || "Could not load jobs.");
     } finally {
@@ -142,7 +195,23 @@ function AdminJobsPage() {
     loadData();
   }, [loadData]);
 
-  useLiveData(loadData, { realtimeTables: ["crew_jobs"] });
+  useLiveData(loadData, { realtimeTables: ["crew_jobs", "crew_assignments"] });
+
+  // Compute the cutoff date once per render. A job is "currently active"
+  // only if it's been on a schedule on or after this date.
+  const recentCutoffDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - RECENT_SCHEDULE_DAYS);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+
+  const isCurrentlyActive = useCallback((j) => {
+    if (j.is_active === false) return false;
+    if (isDemoJob(j)) return true;
+    if (ACTIVE_FALLBACK_STATUSES.has(j.job_status)) return true;
+    const lastScheduled = lastScheduledByJob.get(j.id);
+    return Boolean(lastScheduled && lastScheduled >= recentCutoffDate);
+  }, [lastScheduledByJob, recentCutoffDate]);
 
   const customerNames = useMemo(() => {
     const set = new Set();
@@ -157,25 +226,27 @@ function AdminJobsPage() {
     let active = 0, inactive = 0, inProgress = 0, completed = 0, incomplete = 0;
     let contractTotal = 0;
     jobs.forEach((j) => {
-      const isActiveJob = j.is_active !== false;
-      if (isActiveJob) active += 1;
-      else inactive += 1;
+      const currentlyActive = isCurrentlyActive(j);
+      if (currentlyActive) active += 1;
+      else if (j.is_active === false) inactive += 1;
+      // else: is_active=true but stale — counts in neither bucket; user can
+      // surface these via "All" or work them off via the fell-off banner.
       if (j.job_status === "in_progress") inProgress += 1;
       if (j.job_status === "completed") completed += 1;
-      if (isActiveJob && j.contract_amount) {
+      if (currentlyActive && j.contract_amount) {
         contractTotal += Number(j.contract_amount) || 0;
       }
-      if (isActiveJob && assessCompleteness(j).missing.length > 0) {
+      if (currentlyActive && assessCompleteness(j).missing.length > 0) {
         incomplete += 1;
       }
     });
     return { active, inactive, inProgress, completed, incomplete, contractTotal, total: jobs.length };
-  }, [jobs]);
+  }, [jobs, isCurrentlyActive]);
 
   const filtered = useMemo(() => {
     const searchLc = search.trim().toLowerCase();
     let rows = jobs.filter((j) => {
-      if (activeFilter === "active" && j.is_active === false) return false;
+      if (activeFilter === "active" && !isCurrentlyActive(j)) return false;
       if (activeFilter === "inactive" && j.is_active !== false) return false;
       if (statusFilter !== "all" && (j.job_status || "active") !== statusFilter) return false;
       if (completenessFilter === "incomplete" && assessCompleteness(j).missing.length === 0) return false;
@@ -435,6 +506,8 @@ function AdminJobsPage() {
                       key={job.id}
                       job={job}
                       busy={savingId === job.id}
+                      lastScheduledDate={lastScheduledByJob.get(job.id) || null}
+                      recentCutoffDate={recentCutoffDate}
                       onEdit={() => openEdit(job)}
                       onToggleActive={() => toggleActive(job)}
                       onQuickStatus={(next) => quickStatus(job, next)}
@@ -565,7 +638,7 @@ function Th({ children, className = "" }) {
   );
 }
 
-function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus, onSchedule }) {
+function JobRow({ job, busy, lastScheduledDate, recentCutoffDate, onEdit, onToggleActive, onQuickStatus, onSchedule }) {
   const isActive = job.is_active !== false;
   const statusMeta = STATUS_META[job.job_status || "active"] || STATUS_META.active;
   const addressLine = [job.address, job.city].filter(Boolean).join(", ");
@@ -578,6 +651,14 @@ function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus, onSchedule }
   const dotTitle = completeness.missing.length
     ? `Incomplete — missing: ${completeness.missing.join(", ")}. Click Edit to fill in.`
     : "Complete — all key fields filled in.";
+
+  const lastScheduledLabel = lastScheduledDate
+    ? `Last scheduled: ${formatDaysAgo(lastScheduledDate)}`
+    : "Never scheduled";
+  const isStaleSchedule = isActive
+    && !isDemoJob(job)
+    && (!lastScheduledDate || (recentCutoffDate && lastScheduledDate < recentCutoffDate));
+  const lastScheduledTone = isStaleSchedule ? "text-amber-600" : "text-neutral-400";
 
   return (
     <tr className={`transition-colors hover:bg-neutral-50 ${isActive ? "" : "opacity-60"}`}>
@@ -598,6 +679,7 @@ function JobRow({ job, busy, onEdit, onToggleActive, onQuickStatus, onSchedule }
             {job.scope_description ? (
               <p className="mt-0.5 truncate text-[11px] text-neutral-500">{job.scope_description}</p>
             ) : null}
+            <p className={`mt-0.5 text-[10px] ${lastScheduledTone}`}>{lastScheduledLabel}</p>
             {completeness.missing.length > 0 ? (
               <p className="mt-0.5 text-[11px] font-semibold text-amber-700 truncate max-w-[340px]">
                 {completeness.missing.length} missing: {completeness.missing.slice(0, 3).join(", ")}{completeness.missing.length > 3 ? "…" : ""}
