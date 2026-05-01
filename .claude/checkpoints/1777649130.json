@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260501-102530", "file": "/Users/alechermesmeyer/Desktop/SWF/frontend/swnext/pages/project/[token].jsx", "timestamp": "2026-05-01T15:25:30Z", "type": "post-edit", "branch": "tailwind-only", "diff_summary": " .claude/checkpoints/task-1777648913.json | 1 +  pages/project/[token].jsx                | 4 +++-  2 files changed, 4 insertions(+), 1 deletion(-) "}
