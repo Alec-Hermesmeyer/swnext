@@ -279,7 +279,9 @@ export default async function handler(req, res) {
         pending_co_total: pendingCoTotal,
         adjusted_contract: contractAmount + approvedCoTotal,
         estimated_days: estimatedDays,
-        scheduled_days: scheduledDays,
+        scheduled_days: totalScheduledDays,
+        days_on_site: daysOnSite,
+        calendar_days_elapsed: calendarDaysElapsed,
         progress_pct: progress,
         // New tracking fields
         rig: job.default_rig || null,
