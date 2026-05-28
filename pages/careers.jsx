@@ -53,8 +53,8 @@ function WhyWorkWithUs() {
       badge: "COMPENSATION"
     },
     {
-      title: "Comprehensive Benefits",
-      description: "Full health, dental, and vision insurance plus 401(k) matching, paid time off, and professional development opportunities.",
+      title: "Health & Wellness Benefits",
+      description: "Health, dental, and vision insurance along with paid time off to help you take care of yourself and your family.",
       badge: "BENEFITS"
     },
     {
