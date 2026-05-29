@@ -6,11 +6,15 @@ import { Lato } from "next/font/google";
 
 const lato = Lato({ weight: ["900"], subsets: ["latin"] });
 
+// Hide the Login entry point (and therefore the obvious path to /admin)
+// in production builds. In development the link stays visible for admin testing.
+const isProductionBuild = process.env.NODE_ENV === "production";
+
 const mobileQuickLinks = [
   { name: "Home", link: "/" },
   { name: "Contact", link: "/contact" },
   { name: "Careers", link: "/careers" },
-  { name: "Login", link: "/login" },
+  ...(isProductionBuild ? [] : [{ name: "Login", link: "/login" }]),
 ];
 
 const aboutMenu = [
@@ -132,9 +136,11 @@ const NavTailwind = () => {
               <li className="cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600">
                 <Link href="/gallery" className={`${lato.className} text-lg`}>Gallery</Link>
               </li>
-              <li className="cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600">
-                <Link href="/login" className={`${lato.className} text-lg`}>Login</Link>
-              </li>
+              {!isProductionBuild && (
+                <li className="cursor-pointer font-bold text-black h-10 w-36 flex items-center justify-center transition-all duration-500 ease-in-out hover:text-red-600">
+                  <Link href="/login" className={`${lato.className} text-lg`}>Login</Link>
+                </li>
+              )}
             </ul>
           </div>
 
