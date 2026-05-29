@@ -38,7 +38,23 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
-  
+
+  // Block /admin routes in production by rewriting them to the 404 page.
+  // `beforeFiles` runs before filesystem routing so pages/admin/* are never matched.
+  // Rewriting to `/404` makes Next.js serve the not-found page with a true 404 status.
+  // In development this returns an empty array, leaving /admin accessible for local work.
+  async rewrites() {
+    if (process.env.NODE_ENV !== 'production') {
+      return [];
+    }
+    return {
+      beforeFiles: [
+        { source: '/admin', destination: '/404' },
+        { source: '/admin/:path*', destination: '/404' },
+      ],
+    };
+  },
+
   // Webpack optimizations
   webpack: (config, { dev, isServer }) => {
     // Bundle splitting optimization
