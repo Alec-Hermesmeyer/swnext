@@ -220,7 +220,7 @@ function ProjectCategories() {
                   >
                     <div className="aspect-[4/3] overflow-hidden">
                       <Image
-                        src={`${GALLERY_BASE}/${project.filename}`}
+                        src={project.url || `${GALLERY_BASE}/${project.filename}`}
                         alt={project.title || "S&W Foundation project"}
                         width={600}
                         height={450}
