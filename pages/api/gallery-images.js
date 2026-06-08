@@ -52,8 +52,7 @@ const SEED_DATA = [
   { filename: "gal34.jpeg", category: "Infrastructure Projects", sort_order: 8 },
   { filename: "gal37.jpeg", category: "Equipment & Operations", sort_order: 9 },
   { filename: "gal41.jpeg", category: "Industrial Projects", sort_order: 8 },
-  // gal42 isn't reachable in either Supabase bucket folder yet; serve it locally from public/galleryImages/
-  { filename: "gal42.jpeg", url: "/galleryImages/gal42.jpeg", category: "Pier Drilling", sort_order: 9 },
+  { filename: "gal42.jpeg", category: "Pier Drilling", sort_order: 9 },
 ];
 
 async function ensureTable() {
