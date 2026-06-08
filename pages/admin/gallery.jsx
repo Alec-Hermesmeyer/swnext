@@ -444,7 +444,7 @@ function GalleryManagement() {
                 {/* Image */}
                 <div className="aspect-[4/3] overflow-hidden bg-neutral-100">
                   <Image
-                    src={img.url || `${GALLERY_BASE}/${img.filename}`}
+                    src={`${GALLERY_BASE}/${img.filename}`}
                     alt={img.title || img.filename}
                     width={300}
                     height={225}
