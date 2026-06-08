@@ -52,8 +52,8 @@ const SEED_DATA = [
   { filename: "gal34.jpeg", category: "Infrastructure Projects", sort_order: 8 },
   { filename: "gal37.jpeg", category: "Equipment & Operations", sort_order: 9 },
   { filename: "gal41.jpeg", category: "Industrial Projects", sort_order: 8 },
-  // gal42.jpeg is missing from galleryImages/ bucket; fall back to gal42.webp in gallery_images/
-  { filename: "gal42.jpeg", url: "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/gallery_images/gal42.webp", category: "Pier Drilling", sort_order: 9 },
+  // gal42 isn't reachable in either Supabase bucket folder yet; serve it locally from public/galleryImages/
+  { filename: "gal42.jpeg", url: "/galleryImages/gal42.jpeg", category: "Pier Drilling", sort_order: 9 },
 ];
 
 async function ensureTable() {
