@@ -10,7 +10,7 @@ import { Lato } from "next/font/google";
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 const BUCKET_NAME = "Images";
 const STORAGE_BASE = "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images";
-const GALLERY_BASE = `${STORAGE_BASE}/public/galleryImages`;
+const GALLERY_BASE = `${STORAGE_BASE}/public/gallery_images`;
 const GALLERY_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const CATEGORIES = [
