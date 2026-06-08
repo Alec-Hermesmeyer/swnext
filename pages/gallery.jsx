@@ -261,7 +261,7 @@ function ProjectCategories() {
           >
             <div className="relative max-w-5xl w-full flex-1 flex items-center justify-center min-h-0">
               <Image
-                src={`${GALLERY_BASE}/${selectedImage.filename || selectedImage.src}`}
+                src={selectedImage.url || `${GALLERY_BASE}/${selectedImage.filename || selectedImage.src}`}
                 alt={selectedImage.title || "S&W Foundation project"}
                 width={1400}
                 height={1000}
