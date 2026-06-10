@@ -7,8 +7,7 @@ import { useState, useEffect } from "react";
 import { Lato } from "next/font/google";
 const lato = Lato({ weight: ["900", "700", "400"], subsets: ["latin"] });
 
-// Gallery images are served from public/galleryImages/
-const GALLERY_BASE = "/galleryImages";
+const GALLERY_BASE = "https://edycymyofrowahspzzpg.supabase.co/storage/v1/object/public/Images/public/galleryImages";
 
 const CATEGORY_META = {
   "Pier Drilling": { description: "Commercial and industrial deep foundation drilling projects", badge: "PIER DRILLING" },
