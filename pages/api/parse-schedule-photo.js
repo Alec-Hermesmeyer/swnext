@@ -15,17 +15,11 @@ import { IncomingForm } from "formidable";
 import fs from "fs";
 import path from "path";
 import { createAdminSupabase } from "@/lib/supabase";
-// Migrated from `@/lib/schedule-parser` to the constructpilot package
-// (extracted engine + construction preset). The construction preset module
-// re-exports `buildMatchers` as a thin back-compat wrapper around the
-// generic `buildScheduleMatcher(preset, entities)` engine call. The
-// matching engine itself (`matchAllRows`, `computeSummary`) lives in the
-// preset-free engine module.
-import { buildMatchers } from "constructpilot/domain/presets/schedule-construction";
 import {
+  buildMatchers,
   matchAllRows,
   computeSummary,
-} from "constructpilot/domain/schedule-parser";
+} from "@/lib/schedule-parser";
 
 // Disable Next.js body parser so formidable can handle multipart.
 // Set explicit response size limit (default is 4MB which is too small for
