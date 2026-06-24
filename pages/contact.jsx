@@ -37,37 +37,53 @@ function ContactForm() {
   const [number, setNumber] = useState("");
   const [message, setMessage] = useState("");
   const [company, setCompany] = useState("");
+  const [website, setWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [submitError, setSubmitError] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
     setSubmitMessage("");
-    
-    // Track form submission in GA4
-    if (typeof window !== 'undefined' && window.trackFormSubmit) {
-      window.trackFormSubmit('contact_form');
+    setSubmitError(false);
+
+    if (typeof window !== "undefined" && window.trackFormSubmit) {
+      window.trackFormSubmit("contact_form");
     }
-    
+
     try {
       const response = await fetch("/api/contact-submissions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, number, message, company }),
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          number,
+          company,
+          message,
+          website,
+        }),
       });
-      if (!response.ok) {
-        throw new Error("Submission failed");
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || !json.ok) {
+        throw new Error(json.error || "Submission failed");
       }
       setName("");
       setEmail("");
       setNumber("");
       setMessage("");
       setCompany("");
+      setWebsite("");
       setSubmitMessage("Thanks. Your request has been received.");
-    } catch {
-      setSubmitMessage("We could not submit your request right now. Please try again.");
+    } catch (err) {
+      setSubmitError(true);
+      setSubmitMessage(
+        err instanceof Error && err.message
+          ? err.message
+          : "We could not submit your request right now. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -75,6 +91,16 @@ function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="rounded-2xl bg-white/90 p-0 shadow-none ring-0">
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        className="hidden"
+        aria-hidden="true"
+        value={website}
+        onChange={(e) => setWebsite(e.target.value)}
+      />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-1">
           <label className="text-sm font-semibold text-neutral-700">Your Name</label>
@@ -106,7 +132,9 @@ function ContactForm() {
         </button>
       </div>
       {submitMessage ? (
-        <p className="mt-3 text-sm text-neutral-700">{submitMessage}</p>
+        <p className={`mt-3 text-sm ${submitError ? "text-red-700" : "text-neutral-700"}`} role={submitError ? "alert" : "status"}>
+          {submitMessage}
+        </p>
       ) : null}
     </form>
   );
@@ -118,20 +146,49 @@ function CareersForm() {
   const [number, setNumber] = useState("");
   const [message, setMessage] = useState("");
   const [position, setPosition] = useState("");
+  const [website, setWebsite] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [submitError, setSubmitError] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    await supabase.from("job_form").upsert({ name, email, number, message, position });
-    await fetch("/api/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        to: "cliffw@swfoundation.com, colinw@swfoundation.com",
-        subject: "New Job Application",
-        text: `Name: ${name}\nEmail: ${email}\nNumber: ${number}\nPosition: ${position}\nMessage: ${message}`,
-      }),
-    });
-    setName(""); setEmail(""); setNumber(""); setMessage(""); setPosition("");
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitMessage("");
+    setSubmitError(false);
+
+    if (typeof window !== "undefined" && window.trackFormSubmit) {
+      window.trackFormSubmit("job_application");
+    }
+
+    try {
+      const response = await fetch("/api/job-submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ name, email, number, message, position, website }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || !json.ok) {
+        throw new Error(json.error || "Submission failed");
+      }
+      setName("");
+      setEmail("");
+      setNumber("");
+      setMessage("");
+      setPosition("");
+      setWebsite("");
+      setSubmitMessage("Thanks. Your application has been received.");
+    } catch (err) {
+      setSubmitError(true);
+      setSubmitMessage(
+        err instanceof Error && err.message
+          ? err.message
+          : "We could not submit your application right now. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const jobPositions = [
@@ -146,7 +203,17 @@ function CareersForm() {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl bg-white/90 p-0 shadow-none ring-0">
+    <form id="jobForm" onSubmit={handleSubmit} className="rounded-2xl bg-white/90 p-0 shadow-none ring-0">
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        className="hidden"
+        aria-hidden="true"
+        value={website}
+        onChange={(e) => setWebsite(e.target.value)}
+      />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-1">
           <label className="text-sm font-semibold text-neutral-700">Your Name</label>
@@ -173,8 +240,18 @@ function CareersForm() {
         <textarea aria-label="Experience" className="w-full rounded-lg border border-neutral-300 bg-white p-3 h-32 shadow-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/40" required value={message} onChange={(e)=>setMessage(e.target.value)} />
       </div>
       <div className="mt-5 flex justify-end">
-        <button className="inline-flex h-11 items-center justify-center rounded-lg bg-red-600 px-6 font-bold text-white shadow hover:bg-red-700">Submit</button>
+        <button
+          disabled={submitting}
+          className="inline-flex h-11 items-center justify-center rounded-lg bg-red-600 px-6 font-bold text-white shadow hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? "Submitting..." : "Submit"}
+        </button>
       </div>
+      {submitMessage ? (
+        <p className={`mt-3 text-sm ${submitError ? "text-red-700" : "text-neutral-700"}`} role={submitError ? "alert" : "status"}>
+          {submitMessage}
+        </p>
+      ) : null}
     </form>
   );
 }
